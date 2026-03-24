@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Zap, Mail, Phone, Lock, Eye, EyeOff, ArrowRight, ChevronDown } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
 const purple = '#c084fc'
 const darkPurple = '#4c1d95'
@@ -344,6 +345,7 @@ export default function LoginPage() {
   const [showCodes, setShowCodes] = useState(false)
   const [form, setForm] = useState({ identifier: '', password: '' })
   const [errors, setErrors] = useState({})
+  const [authError, setAuthError] = useState('')
 
   function validate() {
     const e = {}
@@ -353,12 +355,22 @@ export default function LoginPage() {
     return e
   }
 
-  function handleSubmit(ev) {
+  async function handleSubmit(ev) {
     ev.preventDefault()
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
     setLoading(true)
-    setTimeout(() => { setLoading(false); localStorage.setItem('brandiór_user', '1'); localStorage.setItem('brandiór_role', role); navigate(role === 'brand' ? '/marketplace' : '/jobs') }, 1400)
+    setAuthError('')
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: form.identifier,
+      password: form.password,
+    })
+    setLoading(false)
+    if (error) { setAuthError(error.message); return }
+    const userRole = data.user?.user_metadata?.role || role
+    localStorage.setItem('brandiór_user', data.user.id)
+    localStorage.setItem('brandiór_role', userRole)
+    navigate(userRole === 'brand' ? '/marketplace' : '/jobs')
   }
 
   function handleChange(field, value) {
@@ -422,7 +434,11 @@ export default function LoginPage() {
           {/* Social login buttons */}
           <div className="flex gap-3 mb-5">
             <button
-              onClick={() => { setLoading(true); setTimeout(() => { localStorage.setItem('brandiór_user', '1'); localStorage.setItem('brandiór_role', role); navigate(role === 'brand' ? '/marketplace' : '/jobs') }, 1200) }}
+              onClick={async () => {
+                setLoading(true)
+                await supabase.auth.signInWithOAuth({ provider: 'google' })
+                setLoading(false)
+              }}
               disabled={loading}
               className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-brand-dark text-sm border transition-all hover:bg-gray-50 disabled:opacity-60"
               style={{ borderColor: '#e9d5ff' }}
@@ -431,7 +447,11 @@ export default function LoginPage() {
               Google
             </button>
             <button
-              onClick={() => { setLoading(true); setTimeout(() => { localStorage.setItem('brandiór_user', '1'); localStorage.setItem('brandiór_role', role); navigate(role === 'brand' ? '/marketplace' : '/jobs') }, 1200) }}
+              onClick={async () => {
+                setLoading(true)
+                await supabase.auth.signInWithOAuth({ provider: 'apple' })
+                setLoading(false)
+              }}
               disabled={loading}
               className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-brand-dark text-sm border transition-all hover:bg-gray-50 disabled:opacity-60"
               style={{ borderColor: '#e9d5ff' }}
@@ -549,6 +569,9 @@ export default function LoginPage() {
               <a href="#" className="text-xs font-medium" style={{ color: purple }}>Forgot password?</a>
             </div>
 
+            {authError && (
+              <p className="text-xs text-center py-2 px-3 rounded-lg" style={{ color: pink, backgroundColor: '#fff0f5' }}>{authError}</p>
+            )}
             <button type="submit" disabled={loading}
               className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-60"
               style={{ backgroundColor: darkPurple }}>

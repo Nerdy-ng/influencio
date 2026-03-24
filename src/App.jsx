@@ -1,4 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { supabase } from './lib/supabase'
 import Landing from './pages/Landing'
 import TalentLanding from './pages/TalentLanding'
 import BrandLanding from './pages/BrandLanding'
@@ -26,6 +28,28 @@ function PublicOnly({ children }) {
 }
 
 export default function App() {
+  useEffect(() => {
+    // Restore session from Supabase on page load
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        const u = data.session.user
+        localStorage.setItem('brandiór_user', u.id)
+        localStorage.setItem('brandiór_role', u.user_metadata?.role || 'talent')
+      }
+    })
+    // Keep localStorage in sync with auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        localStorage.setItem('brandiór_user', session.user.id)
+        localStorage.setItem('brandiór_role', session.user.user_metadata?.role || 'talent')
+      } else {
+        localStorage.removeItem('brandiór_user')
+        localStorage.removeItem('brandiór_role')
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
   return (
     <Routes>
       <Route path="/"             element={<PublicOnly><Landing /></PublicOnly>} />

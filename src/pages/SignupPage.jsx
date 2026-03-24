@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Zap, Star, TrendingUp, Eye, EyeOff, ArrowRight, CheckCircle, Mail, Lock, User, ChevronLeft } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
 const pink = '#FF6B9D'
 const gold = '#D4AF37'
@@ -72,6 +73,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [errors, setErrors] = useState({})
+  const [authError, setAuthError] = useState('')
 
   function validate() {
     const e = {}
@@ -81,17 +83,29 @@ export default function SignupPage() {
     return e
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
     setLoading(true)
-    setTimeout(() => { setLoading(false); setStep('confirm') }, 1500)
+    setAuthError('')
+    const { error } = await supabase.auth.signUp({
+      email: form.email,
+      password: form.password,
+      options: { data: { full_name: form.name, role, talent_types: talentTypes } },
+    })
+    setLoading(false)
+    if (error) { setAuthError(error.message); return }
+    setStep('confirm')
   }
 
-  function handleGoogleSignup() {
+  async function handleGoogleSignup() {
     setLoading(true)
-    setTimeout(() => { setLoading(false); localStorage.setItem('brandiór_user', '1'); localStorage.setItem('brandiór_role', role); navigate(role === 'brand' ? '/marketplace' : '/jobs') }, 1200)
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { queryParams: { prompt: 'select_account' } },
+    })
+    setLoading(false)
   }
 
   function handleChange(field, value) {
@@ -295,6 +309,9 @@ export default function SignupPage() {
                 <a href="#" className="font-medium" style={{ color: purple }}>Privacy Policy</a>.
               </p>
 
+              {authError && (
+                <p className="text-xs text-center py-2 px-3 rounded-lg" style={{ color: pink, backgroundColor: '#fff0f5' }}>{authError}</p>
+              )}
               <button type="submit" disabled={loading}
                 className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-60"
                 style={{ backgroundColor: darkPurple }}>
@@ -339,7 +356,15 @@ export default function SignupPage() {
               ))}
             </div>
 
-            <button onClick={() => { localStorage.setItem('brandiór_user', '1'); localStorage.setItem('brandiór_role', role); navigate(role === 'brand' ? '/marketplace' : '/jobs') }}
+            <button onClick={async () => {
+                const { data } = await supabase.auth.getSession()
+                if (data.session) {
+                  const u = data.session.user
+                  localStorage.setItem('brandiór_user', u.id)
+                  localStorage.setItem('brandiór_role', u.user_metadata?.role || role)
+                }
+                navigate(role === 'brand' ? '/marketplace' : '/jobs')
+              }}
               className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 mb-3"
               style={{ backgroundColor: darkPurple }}>
               Go to My Dashboard <ArrowRight className="w-4 h-4" />
