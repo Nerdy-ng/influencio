@@ -152,9 +152,9 @@ export default function Navbar() {
                   </a>
                 : <Link to={href}
                     className="relative inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-xl transition-all duration-200"
-                    style={{ color: 'rgba(255,255,255,0.6)' }}
+                    style={{ color: 'rgba(255,255,255,0.8)' }}
                     onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'white' }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.6)' }}>
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.8)' }}>
                     {label}
                     {notifKey && notifs[notifKey] > 0 && (
                       <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold text-white"
