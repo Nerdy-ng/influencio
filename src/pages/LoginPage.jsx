@@ -440,24 +440,11 @@ export default function LoginPage() {
                 setLoading(false)
               }}
               disabled={loading}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-brand-dark text-sm border transition-all hover:bg-gray-50 disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-brand-dark text-sm border transition-all hover:bg-gray-50 disabled:opacity-60"
               style={{ borderColor: '#e9d5ff' }}
             >
               <GoogleIcon />
-              Google
-            </button>
-            <button
-              onClick={async () => {
-                setLoading(true)
-                await supabase.auth.signInWithOAuth({ provider: 'apple' })
-                setLoading(false)
-              }}
-              disabled={loading}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-brand-dark text-sm border transition-all hover:bg-gray-50 disabled:opacity-60"
-              style={{ borderColor: '#e9d5ff' }}
-            >
-              <AppleIcon />
-              Apple
+              Continue with Google
             </button>
           </div>
 
