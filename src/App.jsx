@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useEffect, lazy, Suspense } from 'react'
 import { supabase } from './lib/supabase'
+import ErrorBoundary from './components/ErrorBoundary'
 
 const Landing         = lazy(() => import('./pages/Landing'))
 const TalentLanding   = lazy(() => import('./pages/TalentLanding'))
@@ -60,6 +61,7 @@ export default function App() {
   }, [])
 
   return (
+    <ErrorBoundary>
     <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route path="/"             element={<PublicOnly><Landing /></PublicOnly>} />
@@ -80,5 +82,6 @@ export default function App() {
         <Route path="/admin/staff"            element={<StaffPanel />} />
       </Routes>
     </Suspense>
+    </ErrorBoundary>
   )
 }
