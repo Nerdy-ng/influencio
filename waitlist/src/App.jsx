@@ -56,32 +56,31 @@ function XIcon() {
   )
 }
 
-// Floating avatar blobs
+// Nigerian creator headshots via pravatar
 const AVATARS = [
-  { initials: 'AO', color: '#FF6B9D', top: '12%', left: '6%',  size: 48, delay: '0s' },
-  { initials: 'CK', color: '#7c3aed', top: '28%', right: '5%', size: 44, delay: '0.4s' },
-  { initials: 'FT', color: '#D4AF37', top: '60%', left: '4%',  size: 52, delay: '0.8s' },
-  { initials: 'EM', color: '#22c55e', top: '75%', right: '6%', size: 40, delay: '0.2s' },
-  { initials: 'NK', color: '#f59e0b', top: '45%', left: '8%',  size: 36, delay: '1.2s' },
-  { initials: 'TB', color: '#06b6d4', top: '15%', right: '9%', size: 38, delay: '0.6s' },
+  { photo: 'https://randomuser.me/api/portraits/women/44.jpg', name: 'Adaeze', top: '12%', left: '6%',  size: 58, delay: '0s' },
+  { photo: 'https://randomuser.me/api/portraits/men/32.jpg',   name: 'Chidi',  top: '30%', right: '5%', size: 52, delay: '0.4s' },
+  { photo: 'https://randomuser.me/api/portraits/women/68.jpg', name: 'Fatima', top: '58%', left: '4%',  size: 62, delay: '0.8s' },
+  { photo: 'https://randomuser.me/api/portraits/men/75.jpg',   name: 'Emeka',  top: '72%', right: '6%', size: 50, delay: '0.2s' },
+  { photo: 'https://randomuser.me/api/portraits/women/90.jpg', name: 'Ngozi',  top: '44%', left: '7%',  size: 48, delay: '1.2s' },
+  { photo: 'https://randomuser.me/api/portraits/men/55.jpg',   name: 'Tunde',  top: '16%', right: '8%', size: 54, delay: '0.6s' },
 ]
 
-function FloatingAvatar({ initials, color, top, left, right, size, delay }) {
+function FloatingAvatar({ photo, name, top, left, right, size, delay }) {
   return (
     <div
-      className="absolute rounded-full flex items-center justify-center text-white font-bold pointer-events-none select-none hidden lg:flex"
-      style={{
-        width: size, height: size,
-        fontSize: size * 0.3,
-        backgroundColor: color,
-        top, left, right,
-        animation: `float 6s ease-in-out infinite`,
-        animationDelay: delay,
-        opacity: 0.85,
-        boxShadow: `0 8px 24px ${color}40`,
-      }}
-    >
-      {initials}
+      className="absolute pointer-events-none select-none hidden lg:block"
+      style={{ top, left, right, animation: `float 6s ease-in-out infinite`, animationDelay: delay }}>
+      <img
+        src={photo}
+        alt={name}
+        className="rounded-full object-cover"
+        style={{
+          width: size, height: size,
+          border: '3px solid rgba(255,255,255,0.15)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+        }}
+      />
     </div>
   )
 }
@@ -125,17 +124,12 @@ export default function App() {
   const position = Math.floor(Math.random() * 400) + 800
 
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(160deg, #0d0020 0%, #1a0040 40%, #2d0060 70%, #0d0020 100%)' }}>
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: '#0d0020' }}>
 
       <style>{`
         @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          33% { transform: translateY(-12px) rotate(2deg); }
-          66% { transform: translateY(6px) rotate(-1deg); }
-        }
-        @keyframes pulse-ring {
-          0% { transform: scale(0.8); opacity: 1; }
-          100% { transform: scale(2.2); opacity: 0; }
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-14px); }
         }
         @keyframes slide-up {
           from { opacity: 0; transform: translateY(24px); }
@@ -143,15 +137,12 @@ export default function App() {
         }
       `}</style>
 
-      {/* Background glow orbs */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 70%)' }} />
-      <div className="absolute top-1/2 left-1/4 w-[400px] h-[400px] rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(255,107,157,0.08) 0%, transparent 70%)' }} />
+      {/* Top brand color bar */}
+      <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: '#FA8112' }} />
 
       {/* Dot grid */}
       <div className="absolute inset-0 pointer-events-none"
-        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(192,132,252,0.06) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
 
       {/* Floating avatars */}
       {AVATARS.map((a, i) => <FloatingAvatar key={i} {...a} />)}
@@ -169,7 +160,7 @@ export default function App() {
 
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 text-xs font-semibold tracking-wide uppercase"
-          style={{ backgroundColor: 'rgba(250,129,18,0.15)', border: '1px solid rgba(250,129,18,0.3)', color: '#FA8112' }}>
+          style={{ backgroundColor: 'rgba(250,129,18,0.12)', border: '1px solid rgba(250,129,18,0.35)', color: '#FA8112' }}>
           <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
           Coming Soon — Join the Waitlist
         </div>
@@ -178,9 +169,7 @@ export default function App() {
         <h1 className="text-4xl sm:text-6xl font-black text-center leading-tight mb-6 max-w-3xl">
           <span className="text-white">Where Creators</span>
           <br />
-          <span style={{ background: 'linear-gradient(135deg, #FF6B9D, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            & Brands
-          </span>
+          <span style={{ color: '#FA8112' }}>&amp; Brands</span>
           <br />
           <span className="text-white">Grow Together</span>
         </h1>
@@ -244,7 +233,7 @@ export default function App() {
                   <button key={r.id} type="button" onClick={() => { setRole(r.id); setIndustry('') }}
                     className="flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-2xl text-center transition-all"
                     style={role === r.id
-                      ? { backgroundColor: 'rgba(124,58,237,0.25)', border: '1.5px solid #7c3aed' }
+                      ? { backgroundColor: 'rgba(76,29,149,0.5)', border: '1.5px solid #c084fc' }
                       : { backgroundColor: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.08)' }}>
                     <span className="text-xl">{r.emoji}</span>
                     <span className="text-xs font-bold text-white">{r.label}</span>
