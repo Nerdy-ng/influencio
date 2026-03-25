@@ -26,6 +26,7 @@ const BRAND_NAV = [
   { label: 'Campaigns',      href: '/brand-dashboard?tab=orders',   notifKey: 'campaigns' },
   { label: 'Messages',       href: '/brand-dashboard?tab=messages', notifKey: 'messages' },
   { label: 'Invite Creator', href: '/brand-dashboard?tab=invite' },
+  { label: 'Post a Job',     href: '/post-job', isPostJob: true },
 ]
 
 function UserAvatar({ profile, size = 'md' }) {
@@ -140,7 +141,7 @@ export default function Navbar() {
             { label: 'Talents',      href: '#pricing',      isAnchor: true },
             { label: 'How it Works', href: '#how-it-works', isAnchor: true },
             { label: 'Marketplace',  href: '/marketplace' },
-          ]).map(({ label, href, isAnchor, notifKey }) => (
+          ]).map(({ label, href, isAnchor, notifKey, isPostJob }) => (
             <li key={label}>
               {isAnchor
                 ? <a href={href}
@@ -150,19 +151,27 @@ export default function Navbar() {
                     onMouseLeave={e => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.8)' }}>
                     {label}
                   </a>
-                : <Link to={href}
-                    className="relative inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-xl transition-all duration-200"
-                    style={{ color: 'rgba(255,255,255,0.8)' }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'white' }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.8)' }}>
-                    {label}
-                    {notifKey && notifs[notifKey] > 0 && (
-                      <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold text-white"
-                        style={{ backgroundColor: '#ef4444' }}>
-                        {notifs[notifKey] > 9 ? '9+' : notifs[notifKey]}
-                      </span>
-                    )}
-                  </Link>
+                : isPostJob
+                  ? <Link to={href}
+                      className="inline-flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-full transition-all duration-200"
+                      style={{ backgroundColor: '#FA8112', color: '#fff', boxShadow: '0 2px 12px rgba(250,129,18,0.4)' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#e07010'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = '#FA8112'}>
+                      + Post a Job
+                    </Link>
+                  : <Link to={href}
+                      className="relative inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-xl transition-all duration-200"
+                      style={{ color: 'rgba(255,255,255,0.8)' }}
+                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'white' }}
+                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.8)' }}>
+                      {label}
+                      {notifKey && notifs[notifKey] > 0 && (
+                        <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold text-white"
+                          style={{ backgroundColor: '#ef4444' }}>
+                          {notifs[notifKey] > 9 ? '9+' : notifs[notifKey]}
+                        </span>
+                      )}
+                    </Link>
               }
             </li>
           ))}
@@ -318,17 +327,23 @@ export default function Navbar() {
           <div className="h-px bg-white/5 my-1" />
           {isLoggedIn ? (
             <>
-              {(userRole === 'brand' ? BRAND_NAV : TALENT_NAV).map(({ label, href, notifKey }) => (
-                <Link key={label} to={href} onClick={() => setMobileOpen(false)}
-                  className="flex items-center justify-between text-white/70 hover:text-[#D4AF37] font-medium px-3 py-2.5 border-l-2 border-transparent hover:border-[#D4AF37] rounded-r-xl transition-all">
-                  {label}
-                  {notifKey && notifs[notifKey] > 0 && (
-                    <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold text-white"
-                      style={{ backgroundColor: '#ef4444' }}>
-                      {notifs[notifKey] > 9 ? '9+' : notifs[notifKey]}
-                    </span>
-                  )}
-                </Link>
+              {(userRole === 'brand' ? BRAND_NAV : TALENT_NAV).map(({ label, href, notifKey, isPostJob }) => (
+                isPostJob
+                  ? <Link key={label} to={href} onClick={() => setMobileOpen(false)}
+                      className="flex items-center justify-center gap-2 font-bold px-4 py-2.5 rounded-xl text-sm mb-1"
+                      style={{ backgroundColor: '#FA8112', color: '#fff' }}>
+                      + Post a Job
+                    </Link>
+                  : <Link key={label} to={href} onClick={() => setMobileOpen(false)}
+                      className="flex items-center justify-between text-white/70 hover:text-[#D4AF37] font-medium px-3 py-2.5 border-l-2 border-transparent hover:border-[#D4AF37] rounded-r-xl transition-all">
+                      {label}
+                      {notifKey && notifs[notifKey] > 0 && (
+                        <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold text-white"
+                          style={{ backgroundColor: '#ef4444' }}>
+                          {notifs[notifKey] > 9 ? '9+' : notifs[notifKey]}
+                        </span>
+                      )}
+                    </Link>
               ))}
               <button onClick={() => { setMobileOpen(false); handleLogout() }}
                 className="flex items-center gap-3 text-[#FF6B9D] font-medium px-3 py-2.5 rounded-xl w-full">

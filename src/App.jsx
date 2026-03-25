@@ -13,6 +13,7 @@ const Marketplace     = lazy(() => import('./pages/Marketplace'))
 const TalentProfilePage = lazy(() => import('./pages/TalentProfilePage'))
 const OrderForm       = lazy(() => import('./pages/OrderForm'))
 const BrandDashboard  = lazy(() => import('./pages/BrandDashboard'))
+const PostJob         = lazy(() => import('./pages/PostJob'))
 const JobListings     = lazy(() => import('./pages/JobListings'))
 const JobDetail       = lazy(() => import('./pages/JobDetail'))
 const AdminLogin      = lazy(() => import('./pages/admin/AdminLogin'))
@@ -81,6 +82,7 @@ export default function App() {
         <Route path="/marketplace/:talentId"  element={<TalentProfilePage />} />
         <Route path="/order/:packageId"       element={<OrderForm />} />
         <Route path="/brand-dashboard"        element={<BrandDashboard />} />
+        <Route path="/post-job"               element={<PostJob />} />
         <Route path="/jobs"                   element={<JobListings />} />
         <Route path="/jobs/:slug"             element={<JobDetail />} />
         <Route path="/admin/login"            element={<AdminLogin />} />

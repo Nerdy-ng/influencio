@@ -5,7 +5,7 @@ import { slugify } from '../utils/slugify'
 import {
   ArrowLeft, MapPin, Clock, DollarSign, Users,
   CheckCircle, Send, Briefcase, Calendar, BookmarkCheck, Bookmark,
-  ChevronRight,
+  ChevronRight, X, Plus,
 } from 'lucide-react'
 import Navbar from '../components/Navbar'
 
@@ -302,8 +302,20 @@ export default function JobDetail() {
 
   const [message, setMessage] = useState('')
   const [rate, setRate] = useState('')
+  const [rateCardMode, setRateCardMode] = useState(false)
+  const [rateCard, setRateCard] = useState([{ platform: '', deliverable: '', price: '' }])
   const [submitted, setSubmitted] = useState(false)
   const [saved, setSaved] = useState(false)
+
+  function addRateRow() {
+    setRateCard(r => [...r, { platform: '', deliverable: '', price: '' }])
+  }
+  function updateRateRow(i, field, val) {
+    setRateCard(r => r.map((row, idx) => idx === i ? { ...row, [field]: val } : row))
+  }
+  function removeRateRow(i) {
+    setRateCard(r => r.filter((_, idx) => idx !== i))
+  }
 
   if (!job) {
     return (
@@ -491,28 +503,74 @@ export default function JobDetail() {
             <form onSubmit={handleSubmit}>
               <h3 className="text-lg font-black mb-6" style={{ color: '#1e0040' }}>Send a Proposal</h3>
 
-              <div className="grid sm:grid-cols-2 gap-5 mb-5">
-                <div>
-                  <label className="block text-xs font-semibold mb-1.5" style={{ color: '#4b5563' }}>
-                    Your rate (₦) — optional
-                  </label>
-                  <input
-                    type="text"
-                    value={rate}
-                    onChange={e => setRate(e.target.value)}
-                    placeholder={`e.g. ${formatNGN(job.budget.min)}`}
-                    className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors"
-                    style={{ border: '1.5px solid #e9d5ff', color: '#1e0040', backgroundColor: '#faf5ff' }}
-                    onFocus={e => e.target.style.borderColor = purple}
-                    onBlur={e => e.target.style.borderColor = '#e9d5ff'}
-                  />
+              {/* Rate section */}
+              <div className="mb-5">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-xs font-semibold" style={{ color: '#4b5563' }}>Your rate</label>
+                  <div className="flex items-center gap-1 p-0.5 rounded-lg" style={{ backgroundColor: '#f3eeff' }}>
+                    <button type="button" onClick={() => setRateCardMode(false)}
+                      className="text-xs font-semibold px-3 py-1 rounded-md transition-all"
+                      style={!rateCardMode ? { backgroundColor: '#fff', color: darkPurple, boxShadow: '0 1px 4px rgba(0,0,0,0.08)' } : { color: '#9ca3af' }}>
+                      Single rate
+                    </button>
+                    <button type="button" onClick={() => setRateCardMode(true)}
+                      className="text-xs font-semibold px-3 py-1 rounded-md transition-all"
+                      style={rateCardMode ? { backgroundColor: '#fff', color: darkPurple, boxShadow: '0 1px 4px rgba(0,0,0,0.08)' } : { color: '#9ca3af' }}>
+                      Rate card
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-end">
-                  <p className="text-xs leading-relaxed" style={{ color: '#9ca3af' }}>
-                    Budget range: <span className="font-semibold" style={{ color: '#16a34a' }}>{formatNGN(job.budget.min)} – {formatNGN(job.budget.max)}</span>
-                    <br />Leave blank to discuss directly with the brand.
-                  </p>
-                </div>
+
+                {!rateCardMode ? (
+                  <div className="flex gap-3 items-end">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={rate}
+                        onChange={e => setRate(e.target.value)}
+                        placeholder={`e.g. ${formatNGN(job.budget.min)}`}
+                        className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors"
+                        style={{ border: '1.5px solid #e9d5ff', color: '#1e0040', backgroundColor: '#faf5ff' }}
+                        onFocus={e => e.target.style.borderColor = purple}
+                        onBlur={e => e.target.style.borderColor = '#e9d5ff'}
+                      />
+                    </div>
+                    <p className="text-xs pb-3" style={{ color: '#9ca3af' }}>
+                      Budget: <span className="font-semibold" style={{ color: '#16a34a' }}>{formatNGN(job.budget.min)}–{formatNGN(job.budget.max)}</span>
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded-xl overflow-hidden" style={{ border: '1.5px solid #e9d5ff' }}>
+                    <div className="grid grid-cols-12 text-[10px] font-bold uppercase text-gray-400 px-3 py-2" style={{ backgroundColor: '#faf5ff' }}>
+                      <span className="col-span-4">Platform</span>
+                      <span className="col-span-5">Deliverable</span>
+                      <span className="col-span-2 text-right">Rate (₦)</span>
+                      <span className="col-span-1" />
+                    </div>
+                    {rateCard.map((row, i) => (
+                      <div key={i} className="grid grid-cols-12 gap-1 px-2 py-1.5 border-t" style={{ borderColor: '#e9d5ff' }}>
+                        <input value={row.platform} onChange={e => updateRateRow(i, 'platform', e.target.value)}
+                          placeholder="Instagram" className="col-span-4 text-xs px-2 py-1.5 rounded-lg bg-white focus:outline-none"
+                          style={{ border: '1px solid #e9d5ff' }} />
+                        <input value={row.deliverable} onChange={e => updateRateRow(i, 'deliverable', e.target.value)}
+                          placeholder="1 Reel (60s)" className="col-span-5 text-xs px-2 py-1.5 rounded-lg bg-white focus:outline-none"
+                          style={{ border: '1px solid #e9d5ff' }} />
+                        <input value={row.price} onChange={e => updateRateRow(i, 'price', e.target.value)}
+                          placeholder="50000" type="number" className="col-span-2 text-xs px-2 py-1.5 rounded-lg bg-white focus:outline-none text-right"
+                          style={{ border: '1px solid #e9d5ff' }} />
+                        <button type="button" onClick={() => removeRateRow(i)}
+                          className="col-span-1 flex items-center justify-center text-gray-300 hover:text-red-400">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={addRateRow}
+                      className="w-full text-xs font-semibold py-2 flex items-center justify-center gap-1 transition-colors border-t"
+                      style={{ borderColor: '#e9d5ff', color: purple }}>
+                      <Plus className="w-3.5 h-3.5" /> Add row
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="mb-6">

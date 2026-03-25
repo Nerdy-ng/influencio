@@ -909,9 +909,22 @@ export default function Marketplace() {
             <span style={{ color: pink }}>Africa's Best</span>
             <span className="text-white"> Creators</span>
           </h1>
-          <p className="mb-8 text-base" style={{ color: '#c4b5fd' }}>
+          <p className="mb-6 text-base" style={{ color: '#c4b5fd' }}>
             Browse 500+ verified African talents ready to amplify your brand
           </p>
+
+          {/* Post a Job CTA */}
+          <div className="inline-flex items-center gap-3 mb-8 px-5 py-3 rounded-2xl"
+            style={{ backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)' }}>
+            <span className="text-sm text-white/70">Have a campaign in mind?</span>
+            <Link to="/post-job"
+              className="inline-flex items-center gap-1.5 text-sm font-black px-4 py-2 rounded-full transition-all"
+              style={{ backgroundColor: '#FA8112', color: '#fff', boxShadow: '0 4px 16px rgba(250,129,18,0.45)' }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = '#e07010'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = '#FA8112'}>
+              + Post a Job
+            </Link>
+          </div>
 
           {/* Search bar */}
           <div className="relative max-w-xl mx-auto">
