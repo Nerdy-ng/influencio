@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
+import { slugify } from '../utils/slugify'
 import {
   ArrowLeft, MapPin, Clock, DollarSign, Users,
   CheckCircle, Send, Briefcase, Calendar, BookmarkCheck, Bookmark,
@@ -293,9 +295,10 @@ function daysLeft(dateStr) {
 }
 
 export default function JobDetail() {
-  const { jobId } = useParams()
+  const { slug } = useParams()
   const navigate = useNavigate()
-  const job = MOCK_JOBS.find(j => j.id === jobId)
+  // Support both slug format (title-id) and legacy id-only format
+  const job = MOCK_JOBS.find(j => slug === j.id || slug.endsWith(`-${j.id}`) || slug === `${slugify(j.title)}-${j.id}`)
 
   const [message, setMessage] = useState('')
   const [rate, setRate] = useState('')
@@ -322,8 +325,19 @@ export default function JobDetail() {
     setSubmitted(true)
   }
 
+  const jobSlug = `${slugify(job.title)}-${job.id}`
+
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #e9d5ff 0%, #f3e8ff 50%, #e9d5ff 100%)' }}>
+      <Helmet>
+        <title>{job.title} | {job.niche} Job | Brandior</title>
+        <meta name="description" content={`${job.description.slice(0, 150)}... Apply on Brandior.`} />
+        <meta property="og:title" content={`${job.title} | Brandior`} />
+        <meta property="og:description" content={job.description.slice(0, 150)} />
+        <meta property="og:url" content={`https://brandior.africa/jobs/${jobSlug}`} />
+        <meta property="og:type" content="article" />
+        <link rel="canonical" href={`https://brandior.africa/jobs/${jobSlug}`} />
+      </Helmet>
       <Navbar />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 pt-24">

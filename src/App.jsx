@@ -77,11 +77,12 @@ export default function App() {
         <Route path="/login"        element={<PublicOnly><LoginPage /></PublicOnly>} />
         <Route path="/dashboard"              element={<TalentDashboard />} />
         <Route path="/marketplace"            element={<Marketplace />} />
+        <Route path="/creators/:handle"       element={<TalentProfilePage />} />
         <Route path="/marketplace/:talentId"  element={<TalentProfilePage />} />
         <Route path="/order/:packageId"       element={<OrderForm />} />
         <Route path="/brand-dashboard"        element={<BrandDashboard />} />
         <Route path="/jobs"                   element={<JobListings />} />
-        <Route path="/jobs/:jobId"            element={<JobDetail />} />
+        <Route path="/jobs/:slug"             element={<JobDetail />} />
         <Route path="/admin/login"            element={<AdminLogin />} />
         <Route path="/admin"                  element={<AdminPanel />} />
         <Route path="/admin/manager"          element={<ManagerPanel />} />

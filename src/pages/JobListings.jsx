@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
+import { slugify } from '../utils/slugify'
 import {
   Search, MapPin, Clock, DollarSign, Users, Filter, X,
   Instagram, Briefcase, ChevronRight, Bookmark, BookmarkCheck,
@@ -259,7 +261,7 @@ function JobCard({ job, saved, onToggleSave }) {
 
           {/* Title */}
           <h3 className="text-base font-bold mb-1 leading-snug">
-            <Link to={`/jobs/${job.id}`} style={{ color: '#1e0040' }}
+            <Link to={`/jobs/${slugify(job.title)}-${job.id}`} style={{ color: '#1e0040' }}
               onMouseEnter={e => e.currentTarget.style.color = '#7c3aed'}
               onMouseLeave={e => e.currentTarget.style.color = '#1e0040'}>
               {job.title}
@@ -310,7 +312,7 @@ function JobCard({ job, saved, onToggleSave }) {
                 : <Bookmark className="w-4 h-4" style={{ color: '#a78bfa' }} />
               }
             </button>
-            <Link to={`/jobs/${job.id}`}
+            <Link to={`/jobs/${slugify(job.title)}-${job.id}`}
               className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-full transition-all"
               style={{ backgroundColor: '#7c3aed', color: '#fff' }}
               onMouseEnter={e => e.currentTarget.style.backgroundColor = '#6d28d9'}
@@ -442,6 +444,15 @@ export default function JobListings() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#ffffff' }}>
+      <Helmet>
+        <title>Creator & Influencer Jobs in Nigeria | Brandior</title>
+        <meta name="description" content="Browse paid brand deals and influencer jobs in Nigeria. Find UGC, Instagram, TikTok and YouTube creator opportunities on Brandior." />
+        <meta property="og:title" content="Creator & Influencer Jobs in Nigeria | Brandior" />
+        <meta property="og:description" content="Browse paid brand deals and influencer jobs in Nigeria on Brandior." />
+        <meta property="og:url" content="https://brandior.africa/jobs" />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://brandior.africa/jobs" />
+      </Helmet>
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 pt-24">

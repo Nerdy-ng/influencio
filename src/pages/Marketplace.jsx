@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import {
   Search, MapPin, Users, Heart, CheckCircle, Star, Filter,
   Zap, X, SlidersHorizontal,
@@ -201,12 +202,12 @@ export function TalentCard({ talent, onGate }) {
   const handleView = (e) => {
     e.stopPropagation()
     if (!isRegistered) { onGate && onGate(); return }
-    navigate(`/marketplace/${talent._id || talent.id}`)
+    navigate(`/creators/${talent.handle || talent._id || talent.id}`)
   }
 
   const handleCardClick = () => {
     if (!isRegistered) { onGate && onGate(); return }
-    navigate(`/marketplace/${talent._id || talent.id}`)
+    navigate(`/creators/${talent.handle || talent._id || talent.id}`)
   }
 
   const handleMouseEnter = (e) => {
@@ -870,6 +871,15 @@ export default function Marketplace() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#faf5ff' }}>
+      <Helmet>
+        <title>Find Creators & Influencers in Nigeria | Brandior</title>
+        <meta name="description" content="Browse verified African creators and influencers for your brand campaigns. Filter by niche, platform, location and budget on Brandior." />
+        <meta property="og:title" content="Find Creators & Influencers in Nigeria | Brandior" />
+        <meta property="og:description" content="Browse verified African creators for your brand campaigns on Brandior." />
+        <meta property="og:url" content="https://brandior.africa/marketplace" />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://brandior.africa/marketplace" />
+      </Helmet>
       <Navbar />
 
       {/* Hero */}

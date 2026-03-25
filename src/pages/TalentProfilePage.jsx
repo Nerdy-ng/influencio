@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import {
   ChevronLeft, MapPin, Star, CheckCircle, Users, Heart,
   Package, Clock, RefreshCw, Shield, ExternalLink, Zap,
@@ -161,7 +162,8 @@ function SkeletonProfile() {
 }
 
 export default function TalentProfilePage() {
-  const { talentId } = useParams()
+  const { talentId, handle } = useParams()
+  const profileId = handle || talentId
   const navigate = useNavigate()
   const [talent, setTalent] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -176,7 +178,7 @@ export default function TalentProfilePage() {
       setError(null)
 
       // Preview mode: load own profile from localStorage
-      if (talentId === 'preview') {
+      if (profileId === 'preview') {
         setIsPreview(true)
         try {
           const saved = localStorage.getItem('brandiór_preview_profile')
@@ -194,7 +196,7 @@ export default function TalentProfilePage() {
       }
 
       try {
-        const res = await fetch(`${API}/talents/${talentId}`)
+        const res = await fetch(`${API}/talents/${profileId}`)
         if (!res.ok) throw new Error('Not found')
         const data = await res.json()
         if (!cancelled) setTalent(data)
@@ -206,7 +208,7 @@ export default function TalentProfilePage() {
     }
     load()
     return () => { cancelled = true }
-  }, [talentId])
+  }, [profileId])
 
   if (loading) {
     return (
@@ -236,8 +238,21 @@ export default function TalentProfilePage() {
 
   const c = talent
 
+  const creatorHandle = talent.handle || profileId
+  const creatorNiches = Array.isArray(talent.niches) ? talent.niches.join(', ') : ''
+
   return (
     <div className="min-h-screen bg-white">
+      <Helmet>
+        <title>{talent.name} — {creatorNiches} Creator | Brandior</title>
+        <meta name="description" content={`Hire ${talent.name}, a ${creatorNiches} creator on Brandior. Based in ${talent.location || 'Africa'}.`} />
+        <meta property="og:title" content={`${talent.name} | Brandior Creator`} />
+        <meta property="og:description" content={`Hire ${talent.name} for your next campaign. ${creatorNiches} creator on Brandior.`} />
+        <meta property="og:url" content={`https://brandior.africa/creators/${creatorHandle}`} />
+        <meta property="og:type" content="profile" />
+        {talent.avatar && <meta property="og:image" content={talent.avatar} />}
+        <link rel="canonical" href={`https://brandior.africa/creators/${creatorHandle}`} />
+      </Helmet>
       <Navbar />
 
       {/* Preview banner */}
