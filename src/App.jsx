@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
-import { useEffect, lazy, Suspense } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { supabase } from './lib/supabase'
 import ErrorBoundary from './components/ErrorBoundary'
 
@@ -41,6 +41,7 @@ const PUBLIC_PATHS = ['/', '/for-talents', '/for-brands', '/signup', '/login']
 
 export default function App() {
   const navigate = useNavigate()
+  const [authReady, setAuthReady] = useState(!!localStorage.getItem('brandiór_user'))
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -48,17 +49,22 @@ export default function App() {
         const role = session.user.user_metadata?.role || 'talent'
         localStorage.setItem('brandiór_user', session.user.id)
         localStorage.setItem('brandiór_role', role)
-        // Redirect to role home only when signing in from a public page
-        if (event === 'SIGNED_IN' && PUBLIC_PATHS.includes(window.location.pathname)) {
+        // Redirect on fresh sign-in or session restore from a public page
+        if (['SIGNED_IN', 'INITIAL_SESSION'].includes(event) && PUBLIC_PATHS.includes(window.location.pathname)) {
           navigate(role === 'brand' ? '/marketplace' : '/jobs', { replace: true })
         }
       } else {
         localStorage.removeItem('brandiór_user')
         localStorage.removeItem('brandiór_role')
       }
+      // Auth state is resolved — stop showing loader
+      setAuthReady(true)
     })
     return () => subscription.unsubscribe()
   }, [])
+
+  // Show spinner only on first load when we have no cached auth state
+  if (!authReady) return <PageLoader />
 
   return (
     <ErrorBoundary>
