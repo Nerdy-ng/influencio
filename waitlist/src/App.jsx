@@ -56,14 +56,14 @@ function XIcon() {
   )
 }
 
-// Nigerian creator headshots via pravatar
+// Nigerian creator headshots
 const AVATARS = [
-  { photo: 'https://randomuser.me/api/portraits/women/44.jpg', name: 'Adaeze', top: '12%', left: '6%',  size: 58, delay: '0s' },
-  { photo: 'https://randomuser.me/api/portraits/men/32.jpg',   name: 'Chidi',  top: '30%', right: '5%', size: 52, delay: '0.4s' },
-  { photo: 'https://randomuser.me/api/portraits/women/68.jpg', name: 'Fatima', top: '58%', left: '4%',  size: 62, delay: '0.8s' },
-  { photo: 'https://randomuser.me/api/portraits/men/75.jpg',   name: 'Emeka',  top: '72%', right: '6%', size: 50, delay: '0.2s' },
-  { photo: 'https://randomuser.me/api/portraits/women/90.jpg', name: 'Ngozi',  top: '44%', left: '7%',  size: 48, delay: '1.2s' },
-  { photo: 'https://randomuser.me/api/portraits/men/55.jpg',   name: 'Tunde',  top: '16%', right: '8%', size: 54, delay: '0.6s' },
+  { photo: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=120&h=120&fit=crop&crop=face', name: 'Adaeze', top: '12%', left: '6%',  size: 58, delay: '0s' },
+  { photo: 'https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=120&h=120&fit=crop&crop=face', name: 'Chidi',  top: '30%', right: '5%', size: 52, delay: '0.4s' },
+  { photo: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=120&h=120&fit=crop&crop=face', name: 'Fatima', top: '58%', left: '4%',  size: 62, delay: '0.8s' },
+  { photo: 'https://images.unsplash.com/photo-1507152832244-10d45c7eda57?w=120&h=120&fit=crop&crop=face', name: 'Emeka',  top: '72%', right: '6%', size: 50, delay: '0.2s' },
+  { photo: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=120&h=120&fit=crop&crop=face', name: 'Ngozi',  top: '44%', left: '7%',  size: 48, delay: '1.2s' },
+  { photo: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=120&h=120&fit=crop&crop=face', name: 'Tunde',  top: '16%', right: '8%', size: 54, delay: '0.6s' },
 ]
 
 function FloatingAvatar({ photo, name, top, left, right, size, delay }) {
