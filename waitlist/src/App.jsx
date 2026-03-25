@@ -11,6 +11,21 @@ const ROLES = [
   { id: 'brand',   label: 'Brand / Business',     emoji: '🏢', desc: 'I want to work with creators' },
 ]
 
+const CREATOR_INDUSTRIES = [
+  'Beauty & Skincare', 'Fashion & Style', 'Food & Cooking', 'Tech & Gadgets',
+  'Fitness & Wellness', 'Comedy & Entertainment', 'Finance & Business',
+  'Travel & Lifestyle', 'Music & Arts', 'Education', 'Gaming', 'Parenting & Family',
+  'Health & Medicine', 'Sports', 'Politics & News', 'Other',
+]
+
+const BRAND_INDUSTRIES = [
+  'FMCG & Consumer Goods', 'Fashion & Apparel', 'Beauty & Personal Care',
+  'Food & Beverage', 'Tech & Electronics', 'Finance & Fintech',
+  'Health & Pharmaceuticals', 'Telecom', 'Real Estate', 'Education & EdTech',
+  'Travel & Hospitality', 'Media & Entertainment', 'Retail & E-commerce',
+  'Automotive', 'NGO & Non-profit', 'Other',
+]
+
 const STATS = [
   { value: '2,400+', label: 'creators on waitlist' },
   { value: '180+',   label: 'brands waiting' },
@@ -75,10 +90,12 @@ export default function App() {
   const [role, setRole] = useState('creator')
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
+  const [industry, setIndustry] = useState('')
   const [loading, setLoading] = useState(false)
-  const [state, setState] = useState('idle') // idle | success | error
+  const [state, setState] = useState('idle')
   const [errorMsg, setErrorMsg] = useState('')
-  const [toast, setToast] = useState(null)
+
+  const industries = role === 'creator' ? CREATOR_INDUSTRIES : BRAND_INDUSTRIES
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -88,7 +105,7 @@ export default function App() {
 
     const { error } = await supabase
       .from('waitlist')
-      .insert([{ email: email.trim().toLowerCase(), name: name.trim(), role }])
+      .insert([{ email: email.trim().toLowerCase(), name: name.trim(), role, industry }])
 
     setLoading(false)
 
@@ -224,7 +241,7 @@ export default function App() {
               <p className="text-xs font-semibold text-center mb-4" style={{ color: 'rgba(255,255,255,0.4)' }}>I am a...</p>
               <div className="flex gap-2 mb-6">
                 {ROLES.map(r => (
-                  <button key={r.id} type="button" onClick={() => setRole(r.id)}
+                  <button key={r.id} type="button" onClick={() => { setRole(r.id); setIndustry('') }}
                     className="flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-2xl text-center transition-all"
                     style={role === r.id
                       ? { backgroundColor: 'rgba(124,58,237,0.25)', border: '1.5px solid #7c3aed' }
@@ -260,6 +277,33 @@ export default function App() {
                     onBlur={e => e.target.style.borderColor = errorMsg ? '#FF6B9D' : 'rgba(255,255,255,0.1)'}
                   />
                   {errorMsg && <p className="text-xs mt-1.5" style={{ color: '#FF6B9D' }}>{errorMsg}</p>}
+                </div>
+
+                <div className="relative">
+                  <select
+                    value={industry}
+                    onChange={e => setIndustry(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all appearance-none"
+                    style={{
+                      backgroundColor: 'rgba(255,255,255,0.07)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      color: industry ? '#fff' : 'rgba(255,255,255,0.3)',
+                    }}
+                    onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.6)'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                  >
+                    <option value="" disabled style={{ backgroundColor: '#1a0040' }}>
+                      {role === 'creator' ? 'Your content niche' : 'Your industry'}
+                    </option>
+                    {industries.map(ind => (
+                      <option key={ind} value={ind} style={{ backgroundColor: '#1a0040', color: '#fff' }}>{ind}</option>
+                    ))}
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M6 9l6 6 6-6"/>
+                    </svg>
+                  </div>
                 </div>
 
                 <button type="submit" disabled={loading}
