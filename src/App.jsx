@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import { supabase } from './lib/supabase'
 import Landing from './pages/Landing'
@@ -27,21 +27,21 @@ function PublicOnly({ children }) {
   return children
 }
 
+const PUBLIC_PATHS = ['/', '/for-talents', '/for-brands', '/signup', '/login']
+
 export default function App() {
+  const navigate = useNavigate()
+
   useEffect(() => {
-    // Restore session from Supabase on page load
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        const u = data.session.user
-        localStorage.setItem('brandiór_user', u.id)
-        localStorage.setItem('brandiór_role', u.user_metadata?.role || 'talent')
-      }
-    })
-    // Keep localStorage in sync with auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
+        const role = session.user.user_metadata?.role || 'talent'
         localStorage.setItem('brandiór_user', session.user.id)
-        localStorage.setItem('brandiór_role', session.user.user_metadata?.role || 'talent')
+        localStorage.setItem('brandiór_role', role)
+        // Redirect to role home only when signing in from a public page
+        if (event === 'SIGNED_IN' && PUBLIC_PATHS.includes(window.location.pathname)) {
+          navigate(role === 'brand' ? '/marketplace' : '/jobs', { replace: true })
+        }
       } else {
         localStorage.removeItem('brandiór_user')
         localStorage.removeItem('brandiór_role')
