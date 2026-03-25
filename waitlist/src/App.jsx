@@ -7,8 +7,8 @@ const supabase = createClient(
 )
 
 const ROLES = [
-  { id: 'creator', label: 'Creator / Influencer', emoji: '🎬', desc: 'I create content & want brand deals' },
-  { id: 'brand',   label: 'Brand / Business',     emoji: '🏢', desc: 'I want to work with creators' },
+  { id: 'creator', label: 'Talent / Creator', emoji: '🎤', desc: 'Creator, influencer, musician, artist or talent' },
+  { id: 'brand',   label: 'Brand / Business', emoji: '🏢', desc: 'I want to work with talents & creators' },
 ]
 
 const CREATOR_INDUSTRIES = [
@@ -27,7 +27,7 @@ const BRAND_INDUSTRIES = [
 ]
 
 const STATS = [
-  { value: '2,400+', label: 'creators on waitlist' },
+  { value: '2,400+', label: 'talents on waitlist' },
   { value: '180+',   label: 'brands waiting' },
   { value: '12',     label: 'African countries' },
 ]
@@ -56,14 +56,14 @@ function XIcon() {
   )
 }
 
-// Nigerian creator headshots
+// Nigerian/African talent headshots — Black African people only
 const AVATARS = [
-  { photo: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=120&h=120&fit=crop&crop=face', name: 'Adaeze', top: '12%', left: '6%',  size: 58, delay: '0s' },
-  { photo: 'https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=120&h=120&fit=crop&crop=face', name: 'Chidi',  top: '30%', right: '5%', size: 52, delay: '0.4s' },
-  { photo: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=120&h=120&fit=crop&crop=face', name: 'Fatima', top: '58%', left: '4%',  size: 62, delay: '0.8s' },
-  { photo: 'https://images.unsplash.com/photo-1507152832244-10d45c7eda57?w=120&h=120&fit=crop&crop=face', name: 'Emeka',  top: '72%', right: '6%', size: 50, delay: '0.2s' },
-  { photo: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=120&h=120&fit=crop&crop=face', name: 'Ngozi',  top: '44%', left: '7%',  size: 48, delay: '1.2s' },
-  { photo: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=120&h=120&fit=crop&crop=face', name: 'Tunde',  top: '16%', right: '8%', size: 54, delay: '0.6s' },
+  { photo: 'https://images.unsplash.com/photo-1589156280159-27698a70f29e?w=120&h=120&fit=crop&crop=face', name: 'Adaeze', top: '12%', left: '6%',  size: 58, delay: '0s' },
+  { photo: 'https://images.unsplash.com/photo-1607990281513-2c110a25bd8c?w=120&h=120&fit=crop&crop=face', name: 'Chidi',  top: '30%', right: '5%', size: 52, delay: '0.4s' },
+  { photo: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=120&h=120&fit=crop&crop=face', name: 'Fatima', top: '58%', left: '4%',  size: 62, delay: '0.8s' },
+  { photo: 'https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=120&h=120&fit=crop&crop=face', name: 'Emeka',  top: '72%', right: '6%', size: 50, delay: '0.2s' },
+  { photo: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=120&h=120&fit=crop&crop=face', name: 'Ngozi',  top: '44%', left: '7%',  size: 48, delay: '1.2s' },
+  { photo: 'https://images.unsplash.com/photo-1504257432389-52343af06ae3?w=120&h=120&fit=crop&crop=face', name: 'Tunde',  top: '16%', right: '8%', size: 54, delay: '0.6s' },
 ]
 
 function FloatingAvatar({ photo, name, top, left, right, size, delay }) {
@@ -167,7 +167,7 @@ export default function App() {
 
         {/* Headline */}
         <h1 className="text-4xl sm:text-6xl font-black text-center leading-tight mb-6 max-w-3xl">
-          <span className="text-white">Where Creators</span>
+          <span className="text-white">Where Talents</span>
           <br />
           <span style={{ color: '#FA8112' }}>&amp; Brands</span>
           <br />
@@ -175,8 +175,8 @@ export default function App() {
         </h1>
 
         <p className="text-center text-base sm:text-lg mb-10 max-w-xl leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
-          Africa's first platform built for creator-brand partnerships.
-          Real deals. Real growth. Launching soon across Nigeria, Ghana, Kenya & beyond.
+          Africa's first platform connecting talents — creators, influencers, musicians, artists &amp; more — with brands that want to grow.
+          Launching soon across Nigeria, Ghana, Kenya &amp; beyond.
         </p>
 
         {/* Stats */}
@@ -282,7 +282,7 @@ export default function App() {
                     onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
                   >
                     <option value="" disabled style={{ backgroundColor: '#1a0040' }}>
-                      {role === 'creator' ? 'Your content niche' : 'Your industry'}
+                      {role === 'creator' ? 'Your niche or field' : 'Your industry'}
                     </option>
                     {industries.map(ind => (
                       <option key={ind} value={ind} style={{ backgroundColor: '#1a0040', color: '#fff' }}>{ind}</option>
