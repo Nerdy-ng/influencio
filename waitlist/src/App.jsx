@@ -225,7 +225,7 @@ export default function App() {
             <div className="rounded-3xl p-8" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(20px)' }}>
 
               {/* Role toggle */}
-              <p className="text-xs font-semibold text-center mb-4" style={{ color: 'rgba(255,255,255,0.4)' }}>I am a...</p>
+              <p className="text-xs font-semibold text-center mb-4" style={{ color: '#ec4899' }}>I am a...</p>
               <div className="flex gap-2 mb-6">
                 {ROLES.map(r => (
                   <button key={r.id} type="button" onClick={() => { setRole(r.id); setIndustry('') }}
