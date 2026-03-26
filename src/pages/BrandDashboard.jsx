@@ -477,7 +477,7 @@ function FindTalentsTab() {
         {filtered.map(t => {
           const tier = TIER_INFO[t.tier]
           return (
-            <Link key={t.id} to={`/marketplace/${t.id}`}
+            <Link key={t.id} to={`/creators/${t.handle || t.id}`}
               className="flex items-start gap-4 p-4 rounded-2xl transition-all hover:-translate-y-0.5"
               style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 8px rgba(192,132,252,0.07)' }}>
               {/* Avatar */}
@@ -875,7 +875,7 @@ function TalentMiniCard({ talent }) {
         </div>
         <span className="text-xs font-bold" style={{ color: pink }}>From ₦{talent.from.toLocaleString('en')}</span>
       </div>
-      <Link to={`/marketplace/${talent.id}`}
+      <Link to={`/creators/${talent.handle || talent.id}`}
         className="w-full text-center text-xs font-semibold py-2 rounded-xl text-white transition-opacity hover:opacity-90"
         style={{ backgroundColor: darkPurple }}>
         View Profile
@@ -1215,7 +1215,7 @@ function FavoritesTab() {
               </p>
               {/* Actions */}
               <div className="flex gap-2 mt-auto">
-                <Link to={`/marketplace/${talent._id || talent.id}`}
+                <Link to={`/creators/${talent.handle || talent._id || talent.id}`}
                   className="flex-1 text-center text-xs font-semibold py-2 rounded-xl text-white"
                   style={{ backgroundColor: darkPurple }}>
                   View Profile

@@ -215,7 +215,7 @@ export default function Navbar() {
                   <div className="border-t" style={{ borderColor: '#f3eeff' }} />
 
                   {/* View public profile */}
-                  <Link to="/marketplace/preview" target="_blank" rel="noopener noreferrer"
+                  <Link to={`/creators/${profile?.handle || profile?.nickname || 'me'}`} target="_blank" rel="noopener noreferrer"
                     onClick={() => setUserOpen(false)}
                     className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium w-full transition-colors"
                     style={{ color: '#7c3aed' }}

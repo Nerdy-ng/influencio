@@ -250,7 +250,7 @@ function AvatarMenu({ profile, activeTab, setActiveTab }) {
 
           <div className="border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }} />
 
-          <Link to="/marketplace/preview" target="_blank" rel="noopener noreferrer"
+          <Link to={`/creators/${profile?.handle || profile?.nickname || 'me'}`} target="_blank" rel="noopener noreferrer"
             onClick={() => setOpen(false)}
             className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium w-full transition-colors"
             style={{ color: '#c084fc' }}
