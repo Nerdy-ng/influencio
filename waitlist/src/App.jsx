@@ -222,7 +222,7 @@ export default function App() {
               </div>
             </div>
           ) : (
-            <div className="rounded-3xl p-8" style={{ backgroundColor: 'rgba(192,132,252,0.12)', border: '1px solid rgba(236,72,153,0.5)', backdropFilter: 'blur(20px)' }}>
+            <div className="rounded-3xl p-8" style={{ backgroundColor: 'rgba(76,29,149,0.5)', border: '1px solid rgba(236,72,153,0.5)', backdropFilter: 'blur(20px)' }}>
 
               {/* Role toggle */}
               <p className="text-xs font-semibold text-center mb-4" style={{ color: '#ec4899' }}>I am a...</p>
@@ -232,7 +232,7 @@ export default function App() {
                     className="flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-2xl text-center transition-all"
                     style={role === r.id
                       ? { backgroundColor: 'rgba(192,132,252,0.25)', border: '1.5px solid #c084fc' }
-                      : { backgroundColor: 'rgba(236,72,153,0.15)', border: '1.5px solid rgba(236,72,153,0.4)' }}>
+                      : { backgroundColor: 'rgba(76,29,149,0.6)', border: '1.5px solid #7c3aed' }}>
                     <span className="text-xl">{r.emoji}</span>
                     <span className="text-xs font-bold text-white">{r.label}</span>
                     <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.5)' }}>{r.desc}</span>
