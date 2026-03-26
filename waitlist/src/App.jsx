@@ -232,7 +232,7 @@ export default function App() {
                     className="flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-2xl text-center transition-all"
                     style={role === r.id
                       ? { backgroundColor: 'rgba(192,132,252,0.25)', border: '1.5px solid #c084fc' }
-                      : { backgroundColor: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(236,72,153,0.3)' }}>
+                      : { backgroundColor: 'rgba(236,72,153,0.15)', border: '1.5px solid rgba(236,72,153,0.4)' }}>
                     <span className="text-xl">{r.emoji}</span>
                     <span className="text-xs font-bold text-white">{r.label}</span>
                     <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.5)' }}>{r.desc}</span>
