@@ -190,7 +190,7 @@ export default function App() {
         {/* Form card */}
         <div className="w-full max-w-md">
           {state === 'success' ? (
-            <div className="rounded-3xl p-8 text-center" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', backdropFilter: 'blur(20px)', animation: 'slide-up 0.5s ease' }}>
+            <div className="rounded-3xl p-8 text-center" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(236,72,153,0.5)', backdropFilter: 'blur(20px)', animation: 'slide-up 0.5s ease' }}>
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
                 style={{ background: 'linear-gradient(135deg, #dcfce7, #bbf7d0)' }}>
                 <CheckIcon />
@@ -222,7 +222,7 @@ export default function App() {
               </div>
             </div>
           ) : (
-            <div className="rounded-3xl p-8" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(20px)' }}>
+            <div className="rounded-3xl p-8" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(236,72,153,0.5)', backdropFilter: 'blur(20px)' }}>
 
               {/* Role toggle */}
               <p className="text-xs font-semibold text-center mb-4" style={{ color: '#ec4899' }}>I am a...</p>
@@ -232,7 +232,7 @@ export default function App() {
                     className="flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-2xl text-center transition-all"
                     style={role === r.id
                       ? { backgroundColor: 'rgba(192,132,252,0.25)', border: '1.5px solid #c084fc' }
-                      : { backgroundColor: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.08)' }}>
+                      : { backgroundColor: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(236,72,153,0.3)' }}>
                     <span className="text-xl">{r.emoji}</span>
                     <span className="text-xs font-bold text-white">{r.label}</span>
                     <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.5)' }}>{r.desc}</span>
@@ -247,9 +247,9 @@ export default function App() {
                   onChange={e => setName(e.target.value)}
                   placeholder="Your name"
                   className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-white/30 focus:outline-none transition-all"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
-                  onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.6)'}
-                  onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                  style={{ backgroundColor: 'rgba(255,255,255,0.07)', border: '1px solid rgba(236,72,153,0.4)' }}
+                  onFocus={e => e.target.style.borderColor = '#ec4899'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(236,72,153,0.4)'}
                 />
                 <div>
                   <input
@@ -259,9 +259,9 @@ export default function App() {
                     placeholder="Email address *"
                     required
                     className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-white/30 focus:outline-none transition-all"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.07)', border: `1px solid ${errorMsg ? '#FF6B9D' : 'rgba(255,255,255,0.1)'}` }}
-                    onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.6)'}
-                    onBlur={e => e.target.style.borderColor = errorMsg ? '#FF6B9D' : 'rgba(255,255,255,0.1)'}
+                    style={{ backgroundColor: 'rgba(255,255,255,0.07)', border: `1px solid ${errorMsg ? '#FF6B9D' : 'rgba(236,72,153,0.4)'}` }}
+                    onFocus={e => e.target.style.borderColor = '#ec4899'}
+                    onBlur={e => e.target.style.borderColor = errorMsg ? '#FF6B9D' : 'rgba(236,72,153,0.4)'}
                   />
                   {errorMsg && <p className="text-xs mt-1.5" style={{ color: '#FF6B9D' }}>{errorMsg}</p>}
                 </div>
@@ -273,11 +273,11 @@ export default function App() {
                     className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all appearance-none"
                     style={{
                       backgroundColor: 'rgba(255,255,255,0.07)',
-                      border: '1px solid rgba(255,255,255,0.1)',
+                      border: '1px solid rgba(236,72,153,0.4)',
                       color: industry ? '#fff' : 'rgba(255,255,255,0.3)',
                     }}
-                    onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.6)'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                    onFocus={e => e.target.style.borderColor = '#ec4899'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(236,72,153,0.4)'}
                   >
                     <option value="" disabled style={{ backgroundColor: '#1a0040' }}>
                       {role === 'creator' ? 'Your niche or field' : 'Your industry'}
@@ -320,7 +320,7 @@ export default function App() {
               { emoji: '📊', title: 'Analytics & Growth', desc: 'Track campaign performance and grow your creator business.' },
             ].map(f => (
               <div key={f.title} className="rounded-2xl p-5 text-center"
-                style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(236,72,153,0.3)' }}>
                 <span className="text-2xl block mb-3">{f.emoji}</span>
                 <p className="text-sm font-bold text-white mb-1">{f.title}</p>
                 <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>{f.desc}</p>
