@@ -58,12 +58,12 @@ function XIcon() {
 
 // Nigerian/African talent headshots — confirmed Black African color photos
 const AVATARS = [
-  { photo: 'https://images.unsplash.com/photo-RcqKOjX0ZHE?w=120&h=120&fit=crop&crop=face', name: 'Adaeze', top: '12%', left: '6%',  size: 58, delay: '0s' },
-  { photo: 'https://images.unsplash.com/photo-5kfaw18UsHk?w=120&h=120&fit=crop&crop=face', name: 'Chidi',  top: '30%', right: '5%', size: 52, delay: '0.4s' },
-  { photo: 'https://images.unsplash.com/photo-i2hoD-C2RUA?w=120&h=120&fit=crop&crop=face', name: 'Fatima', top: '58%', left: '4%',  size: 62, delay: '0.8s' },
-  { photo: 'https://images.unsplash.com/photo-klW7yZeJ5OE?w=120&h=120&fit=crop&crop=face', name: 'Emeka',  top: '72%', right: '6%', size: 50, delay: '0.2s' },
-  { photo: 'https://images.unsplash.com/photo--DAKCUUWee8?w=120&h=120&fit=crop&crop=face', name: 'Ngozi',  top: '44%', left: '7%',  size: 48, delay: '1.2s' },
-  { photo: 'https://images.unsplash.com/photo-UzSPiVmnkAA?w=120&h=120&fit=crop&crop=face', name: 'Tunde',  top: '16%', right: '8%', size: 54, delay: '0.6s' },
+  { photo: 'https://images.unsplash.com/photo-1531300185372-b7cbe2eddf0b?w=120&h=120&fit=crop&crop=face', name: 'Adaeze', top: '12%', left: '6%',  size: 58, delay: '0s' },
+  { photo: 'https://images.unsplash.com/photo-1507207908229-c59ddb730e40?w=120&h=120&fit=crop&crop=face', name: 'Chidi',  top: '30%', right: '5%', size: 52, delay: '0.4s' },
+  { photo: 'https://images.unsplash.com/photo-1530785602389-07594beb8b73?w=120&h=120&fit=crop&crop=face', name: 'Fatima', top: '58%', left: '4%',  size: 62, delay: '0.8s' },
+  { photo: 'https://images.unsplash.com/photo-1773672726538-885c0d878033?w=120&h=120&fit=crop&crop=face', name: 'Emeka',  top: '72%', right: '6%', size: 50, delay: '0.2s' },
+  { photo: 'https://images.unsplash.com/photo-1683147876693-ea495fbc6eea?w=120&h=120&fit=crop&crop=face', name: 'Ngozi',  top: '44%', left: '7%',  size: 48, delay: '1.2s' },
+  { photo: 'https://images.unsplash.com/photo-1505421031134-e57263cae630?w=120&h=120&fit=crop&crop=face', name: 'Tunde',  top: '16%', right: '8%', size: 54, delay: '0.6s' },
 ]
 
 function FloatingAvatar({ photo, name, top, left, right, size, delay }) {
