@@ -268,7 +268,7 @@ export default function OrderForm() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         {/* Back */}
         <button
-          onClick={() => navigate(talentId ? `/marketplace/${talentId}` : '/marketplace')}
+          onClick={() => navigate(talentId ? `/creators/${talentId}` : '/marketplace')}
           className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 mb-8 transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
