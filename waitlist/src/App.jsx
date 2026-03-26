@@ -108,13 +108,19 @@ export default function App() {
 
     if (error) {
       if (error.code === '23505') {
-        // Already on waitlist
         setState('success')
       } else {
         setErrorMsg('Something went wrong. Please try again.')
       }
       return
     }
+
+    // Send welcome email via edge function
+    fetch('https://ruepnwhgehcwfeekkpjb.supabase.co/functions/v1/send-waitlist-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim().toLowerCase(), name: name.trim(), role }),
+    }).catch(() => {}) // fail silently — don't block the success screen
 
     setState('success')
   }
