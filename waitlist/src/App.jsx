@@ -225,8 +225,9 @@ export default function App() {
             <div className="rounded-3xl p-8" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(20px)' }}>
 
               {/* Role toggle */}
-              <p className="text-xs font-semibold text-center mb-4" style={{ color: '#ec4899' }}>I am a...</p>
-              <div className="flex gap-2 mb-6">
+              <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: 'rgba(236,72,153,0.08)', border: '1px solid rgba(236,72,153,0.25)' }}>
+              <p className="text-xs font-semibold text-center mb-3" style={{ color: '#ec4899' }}>I am a...</p>
+              <div className="flex gap-2">
                 {ROLES.map(r => (
                   <button key={r.id} type="button" onClick={() => { setRole(r.id); setIndustry('') }}
                     className="flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-2xl text-center transition-all"
@@ -238,6 +239,7 @@ export default function App() {
                     <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}>{r.desc}</span>
                   </button>
                 ))}
+              </div>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-3">
