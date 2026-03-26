@@ -222,7 +222,7 @@ export default function App() {
               </div>
             </div>
           ) : (
-            <div className="rounded-3xl p-8" style={{ backgroundColor: 'rgba(76,29,149,0.5)', border: '1px solid rgba(236,72,153,0.5)', backdropFilter: 'blur(20px)' }}>
+            <div className="rounded-3xl p-8" style={{ backgroundColor: 'rgba(76,29,149,0.2)', border: '1px solid rgba(236,72,153,0.5)', backdropFilter: 'blur(20px)' }}>
 
               {/* Role toggle */}
               <p className="text-xs font-semibold text-center mb-4" style={{ color: '#ec4899' }}>I am a...</p>
