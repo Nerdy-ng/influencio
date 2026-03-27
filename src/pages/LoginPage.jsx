@@ -374,10 +374,9 @@ export default function LoginPage() {
     })
     setLoading(false)
     if (error) { setAuthError(error.message); return }
-    const userRole = data.user?.user_metadata?.role || role
     localStorage.setItem('brandiór_user', data.user.id)
-    localStorage.setItem('brandiór_role', userRole)
-    navigate(userRole === 'brand' ? '/marketplace' : '/jobs')
+    localStorage.setItem('brandiór_role', role)
+    navigate(role === 'brand' ? '/brand-dashboard' : '/dashboard')
   }
 
   function handleChange(field, value) {

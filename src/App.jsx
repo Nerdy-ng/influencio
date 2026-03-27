@@ -81,21 +81,26 @@ export default function App() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        const role = session.user.user_metadata?.role
-        localStorage.setItem('brandiór_user', session.user.id)
-        // If role is missing (e.g. Google OAuth without role selection), send to role picker
-        if (!role) {
-          localStorage.removeItem('brandiór_role')
-          if (['SIGNED_IN'].includes(event)) {
+        const metaRole = session.user.user_metadata?.role
+
+        if (event === 'SIGNED_IN') {
+          // LoginPage/SignupPage already set brandiór_user, brandiór_role and called navigate.
+          // Only handle Google OAuth here (no role in metadata yet → send to role picker).
+          localStorage.setItem('brandiór_user', session.user.id)
+          if (!metaRole && !localStorage.getItem('brandiór_role')) {
+            localStorage.removeItem('brandiór_role')
             navigate('/signup?step=role&oauth=1', { replace: true })
           }
-        } else {
-          localStorage.setItem('brandiór_role', role)
-          // Redirect on fresh sign-in or session restore from a public page (not admin)
-          const path = window.location.pathname
-          const isAdminPath = ADMIN_PATHS.some(p => path.startsWith(p))
-          if (['SIGNED_IN', 'INITIAL_SESSION'].includes(event) && PUBLIC_PATHS.includes(path) && !isAdminPath) {
-            navigate(role === 'brand' ? '/marketplace' : '/jobs', { replace: true })
+        } else if (event === 'INITIAL_SESSION') {
+          // Page refresh — restore state from localStorage (set at login time).
+          // Only fall back to metadata if localStorage is empty.
+          localStorage.setItem('brandiór_user', session.user.id)
+          if (!localStorage.getItem('brandiór_role')) {
+            if (metaRole) {
+              localStorage.setItem('brandiór_role', metaRole)
+            } else {
+              navigate('/signup?step=role&oauth=1', { replace: true })
+            }
           }
         }
       } else {
