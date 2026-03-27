@@ -368,15 +368,19 @@ export default function LoginPage() {
     if (Object.keys(errs).length) { setErrors(errs); return }
     setLoading(true)
     setAuthError('')
-    const { data, error } = await supabase.auth.signInWithPassword({
+    // Store selected role before login so onAuthStateChange can use it
+    sessionStorage.setItem('brandiór_pending_role', role)
+    const { error } = await supabase.auth.signInWithPassword({
       email: form.identifier,
       password: form.password,
     })
     setLoading(false)
-    if (error) { setAuthError(error.message); return }
-    localStorage.setItem('brandiór_user', data.user.id)
-    localStorage.setItem('brandiór_role', role)
-    navigate(role === 'brand' ? '/brand-dashboard' : '/dashboard')
+    if (error) {
+      sessionStorage.removeItem('brandiór_pending_role')
+      setAuthError(error.message)
+      return
+    }
+    // Redirect is handled by onAuthStateChange in App.jsx
   }
 
   function handleChange(field, value) {
