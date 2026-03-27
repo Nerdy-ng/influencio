@@ -256,7 +256,7 @@ export default function PostJob() {
                   onChange={e => set('title', e.target.value)}
                   placeholder="e.g. Instagram Reel for Skincare Product Launch"
                   className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none"
-                  style={{ border: `1.5px solid ${errors.title ? pink : '#e9d5ff'}`, backgroundColor: '#faf5ff' }}
+                  style={{ border: `1.5px solid ${errors.title ? pink : '#e9d5ff'}`, backgroundColor: '#faf5ff', color: '#1e0040' }}
                 />
                 {errors.title && <p className="text-xs mt-1" style={{ color: pink }}>{errors.title}</p>}
               </div>
@@ -299,7 +299,7 @@ export default function PostJob() {
                   value={form.contentType}
                   onChange={e => set('contentType', e.target.value)}
                   className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none"
-                  style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf5ff', color: form.contentType ? '#1e0040' : '#9ca3af' }}>
+                  style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf5ff', color: '#1e0040', color: form.contentType ? '#1e0040' : '#9ca3af' }}>
                   <option value="">Select content type</option>
                   {CONTENT_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -319,7 +319,7 @@ export default function PostJob() {
                   onChange={e => set('budgetMin', e.target.value)}
                   placeholder="e.g. 50000"
                   className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none"
-                  style={{ border: `1.5px solid ${errors.budgetMin ? pink : '#e9d5ff'}`, backgroundColor: '#faf5ff' }}
+                  style={{ border: `1.5px solid ${errors.budgetMin ? pink : '#e9d5ff'}`, backgroundColor: '#faf5ff', color: '#1e0040' }}
                 />
                 {errors.budgetMin && <p className="text-xs mt-1" style={{ color: pink }}>{errors.budgetMin}</p>}
               </div>
@@ -331,7 +331,7 @@ export default function PostJob() {
                   onChange={e => set('budgetMax', e.target.value)}
                   placeholder="e.g. 150000"
                   className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none"
-                  style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf5ff' }}
+                  style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf5ff', color: '#1e0040' }}
                 />
               </div>
               <div>
@@ -341,7 +341,7 @@ export default function PostJob() {
                   value={form.deadline}
                   onChange={e => set('deadline', e.target.value)}
                   className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none"
-                  style={{ border: `1.5px solid ${errors.deadline ? pink : '#e9d5ff'}`, backgroundColor: '#faf5ff' }}
+                  style={{ border: `1.5px solid ${errors.deadline ? pink : '#e9d5ff'}`, backgroundColor: '#faf5ff', color: '#1e0040' }}
                 />
                 {errors.deadline && <p className="text-xs mt-1" style={{ color: pink }}>{errors.deadline}</p>}
               </div>
@@ -352,7 +352,7 @@ export default function PostJob() {
                   onChange={e => set('location', e.target.value)}
                   placeholder="e.g. Lagos (remote okay)"
                   className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none"
-                  style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf5ff' }}
+                  style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf5ff', color: '#1e0040' }}
                 />
               </div>
             </div>
@@ -370,7 +370,7 @@ export default function PostJob() {
                   rows={5}
                   placeholder="Tell creators what the campaign is about, what you expect, and what makes this exciting..."
                   className="w-full px-4 py-3 rounded-xl text-sm resize-none focus:outline-none"
-                  style={{ border: `1.5px solid ${errors.description ? pink : '#e9d5ff'}`, backgroundColor: '#faf5ff' }}
+                  style={{ border: `1.5px solid ${errors.description ? pink : '#e9d5ff'}`, backgroundColor: '#faf5ff', color: '#1e0040' }}
                 />
                 {errors.description && <p className="text-xs mt-1" style={{ color: pink }}>{errors.description}</p>}
               </div>
@@ -382,7 +382,7 @@ export default function PostJob() {
                   onChange={e => set('followersRequired', e.target.value)}
                   placeholder="e.g. 5K+"
                   className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none"
-                  style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf5ff' }}
+                  style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf5ff', color: '#1e0040' }}
                 />
               </div>
 
@@ -396,7 +396,7 @@ export default function PostJob() {
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addReq() } }}
                     placeholder="Add a requirement and press Enter"
                     className="flex-1 px-4 py-2.5 rounded-xl text-sm focus:outline-none"
-                    style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf5ff' }}
+                    style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf5ff', color: '#1e0040' }}
                   />
                   <button type="button" onClick={addReq}
                     className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"

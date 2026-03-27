@@ -1260,7 +1260,7 @@ export default function TalentDashboard() {
                         <input required value={newWork.title} onChange={e => setNewWork(w => ({ ...w, title: e.target.value }))}
                           placeholder="e.g. GlowSerum Instagram Reel"
                           className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                          style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }} />
+                          style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff', color: '#1e0040' }} />
                       </div>
 
                       {/* ── Brand ── */}
@@ -1269,7 +1269,7 @@ export default function TalentDashboard() {
                         <input value={newWork.brand} onChange={e => setNewWork(w => ({ ...w, brand: e.target.value }))}
                           placeholder="e.g. GlowLab Skincare"
                           className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                          style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }} />
+                          style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff', color: '#1e0040' }} />
                       </div>
 
                       {/* ── Description ── */}
@@ -1278,7 +1278,7 @@ export default function TalentDashboard() {
                         <textarea value={newWork.desc} onChange={e => setNewWork(w => ({ ...w, desc: e.target.value }))}
                           placeholder="Brief description of the campaign…"
                           rows={2} className="w-full px-4 py-3 rounded-xl text-sm outline-none resize-none"
-                          style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }} />
+                          style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff', color: '#1e0040' }} />
                       </div>
 
                       {/* ── Actions ── */}
