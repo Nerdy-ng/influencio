@@ -63,7 +63,8 @@ const talentOptions = [
 export default function SignupPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [step, setStep] = useState('role')
+  const isOAuthRolePicker = searchParams.get('oauth') === '1'
+  const [step, setStep] = useState(isOAuthRolePicker ? 'role' : 'role')
   const [role, setRole] = useState(() => {
     const r = searchParams.get('role')
     return r === 'brand' ? 'brand' : 'talent'
@@ -97,6 +98,14 @@ export default function SignupPage() {
     setLoading(false)
     if (error) { setAuthError(error.message); return }
     setStep('confirm')
+  }
+
+  async function handleOAuthRoleSave() {
+    setLoading(true)
+    await supabase.auth.updateUser({ data: { role } })
+    localStorage.setItem('brandiór_role', role)
+    setLoading(false)
+    navigate(role === 'brand' ? '/marketplace' : '/jobs', { replace: true })
   }
 
   async function handleGoogleSignup() {
@@ -142,11 +151,15 @@ export default function SignupPage() {
             </div>
 
             <button
-              onClick={() => setStep(role === 'talent' ? 'talent' : 'form')}
-              className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all"
+              onClick={() => isOAuthRolePicker ? handleOAuthRoleSave() : setStep(role === 'talent' ? 'talent' : 'form')}
+              disabled={loading}
+              className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-60"
               style={{ backgroundColor: darkPurple }}
             >
-              Continue <ArrowRight className="w-4 h-4" />
+              {loading
+                ? <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                : isOAuthRolePicker ? <>Save & Continue <ArrowRight className="w-4 h-4" /></> : <>Continue <ArrowRight className="w-4 h-4" /></>
+              }
             </button>
 
             <p className="text-center text-brand-dark/35 text-xs mt-5">

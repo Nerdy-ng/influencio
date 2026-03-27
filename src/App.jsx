@@ -48,12 +48,20 @@ export default function App() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        const role = session.user.user_metadata?.role || 'talent'
+        const role = session.user.user_metadata?.role
         localStorage.setItem('brandiór_user', session.user.id)
-        localStorage.setItem('brandiór_role', role)
-        // Redirect on fresh sign-in or session restore from a public page
-        if (['SIGNED_IN', 'INITIAL_SESSION'].includes(event) && PUBLIC_PATHS.includes(window.location.pathname)) {
-          navigate(role === 'brand' ? '/marketplace' : '/jobs', { replace: true })
+        // If role is missing (e.g. Google OAuth without role selection), send to role picker
+        if (!role) {
+          localStorage.removeItem('brandiór_role')
+          if (['SIGNED_IN'].includes(event)) {
+            navigate('/signup?step=role&oauth=1', { replace: true })
+          }
+        } else {
+          localStorage.setItem('brandiór_role', role)
+          // Redirect on fresh sign-in or session restore from a public page
+          if (['SIGNED_IN', 'INITIAL_SESSION'].includes(event) && PUBLIC_PATHS.includes(window.location.pathname)) {
+            navigate(role === 'brand' ? '/marketplace' : '/jobs', { replace: true })
+          }
         }
       } else {
         localStorage.removeItem('brandiór_user')
