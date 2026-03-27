@@ -11,6 +11,7 @@ import Navbar from '../components/Navbar'
 
 const pink = '#FF6B9D'
 const purple = '#7c3aed'
+const darkPurple = '#4c1d95'
 
 function IgIcon() {
   return (
