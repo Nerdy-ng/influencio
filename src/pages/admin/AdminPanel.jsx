@@ -223,7 +223,22 @@ export default function AdminPanel() {
     maintenanceMode: false,
     emailNotifications: true,
     countries: ["Nigeria", "South Africa", "Kenya"],
+    logoUrl: localStorage.getItem('brandior_admin_logo') || '',
   });
+  const [logoPreview, setLogoPreview] = useState(localStorage.getItem('brandior_admin_logo') || '')
+
+  function handleLogoUpload(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const url = ev.target.result
+      setLogoPreview(url)
+      setSettings(s => ({ ...s, logoUrl: url }))
+      localStorage.setItem('brandior_admin_logo', url)
+    }
+    reader.readAsDataURL(file)
+  }
 
   // Search/filter state
   const [userSearch, setUserSearch] = useState("");
@@ -862,6 +877,36 @@ export default function AdminPanel() {
     <div className="max-w-2xl space-y-6">
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 space-y-5">
         <h3 className="font-semibold text-gray-900">Platform Identity</h3>
+
+        {/* Logo Upload */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Brand Logo</label>
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden bg-gray-50 flex-shrink-0">
+              {logoPreview
+                ? <img src={logoPreview} alt="Logo" className="w-full h-full object-contain" />
+                : <span className="text-xs text-gray-400 text-center px-1">No logo</span>
+              }
+            </div>
+            <div className="flex-1">
+              <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-indigo-400 hover:text-indigo-600 transition-colors">
+                <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                Upload new logo
+              </label>
+              <p className="text-xs text-gray-400 mt-1.5">PNG, JPG or SVG. Recommended: 200×200px</p>
+              {logoPreview && (
+                <button
+                  type="button"
+                  onClick={() => { setLogoPreview(''); setSettings(s => ({ ...s, logoUrl: '' })); localStorage.removeItem('brandior_admin_logo') }}
+                  className="text-xs text-red-400 hover:text-red-600 mt-1 transition-colors"
+                >
+                  Remove logo
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Platform Name</label>
           <input
