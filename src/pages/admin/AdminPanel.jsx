@@ -196,8 +196,94 @@ const NAV_ITEMS = [
   { id: "content", label: "Content", Icon: Globe },
   { id: "ai-police", label: "AI Police", Icon: ShieldAlert, badge: true, badgeColor: "#ef4444" },
   { id: "financials", label: "Financials", Icon: DollarSign },
+  { id: "legal", label: "Legal", Icon: Pencil },
   { id: "settings", label: "Settings", Icon: Settings },
 ];
+
+// ─── DEFAULT LEGAL CONTENT ────────────────────────────────────────────────────
+
+const DEFAULT_TERMS = `## Terms & Conditions
+
+Last updated: March 2026
+
+## 1. Acceptance of Terms
+By accessing or using Brandior ("the Platform"), you agree to be bound by these Terms and Conditions. If you do not agree, please do not use the Platform.
+
+## 2. Description of Service
+Brandior is a talent and creator marketplace that connects African talents (creators, influencers, musicians, artists) with brands seeking to run campaigns and partnerships.
+
+## 3. User Accounts
+You must provide accurate information when creating an account. You are responsible for maintaining the security of your account credentials.
+
+## 4. Payments & Fees
+Brandior charges a platform fee on successful transactions. All payments are processed securely. Brandior is not responsible for disputes between talents and brands outside the platform.
+
+## 5. Content & Conduct
+Users must not post misleading, offensive, or illegal content. Brandior reserves the right to remove any content or suspend any account that violates these terms.
+
+## 6. Intellectual Property
+Content posted by users remains their property. By posting on Brandior, you grant us a licence to display that content on the Platform.
+
+## 7. Limitation of Liability
+Brandior is not liable for any indirect, incidental, or consequential damages arising from use of the Platform.
+
+## 8. Governing Law
+These terms are governed by the laws of the Federal Republic of Nigeria.
+
+## 9. Contact
+For questions about these terms, contact us at support@brandior.africa`
+
+const DEFAULT_PRIVACY = `## Privacy Policy
+
+Last updated: March 2026
+
+## 1. Information We Collect
+We collect information you provide directly (name, email, role, industry) and usage data (pages visited, actions taken on the Platform).
+
+## 2. How We Use Your Information
+We use your information to operate the Platform, send relevant notifications, improve our services, and comply with legal obligations.
+
+## 3. Data Sharing
+We do not sell your personal data. We may share data with trusted service providers (e.g. Supabase, Resend) strictly to operate the Platform.
+
+## 4. Data Storage
+Your data is stored securely on Supabase servers. We implement industry-standard security measures to protect your information.
+
+## 5. Your Rights
+You have the right to access, correct, or delete your personal data at any time. Contact us at support@brandior.africa to make a request.
+
+## 6. Cookies
+We use cookies to maintain your session and improve your experience. See our Cookie Policy for details.
+
+## 7. Changes to This Policy
+We may update this policy from time to time. We will notify you of significant changes via email.
+
+## 8. Contact
+For privacy-related enquiries, contact support@brandior.africa`
+
+const DEFAULT_COOKIES = `## Cookie Policy
+
+Last updated: March 2026
+
+## What Are Cookies
+Cookies are small text files stored on your device when you visit a website. They help us recognise you and remember your preferences.
+
+## Cookies We Use
+
+### Essential Cookies
+Required for the Platform to function. These include session cookies that keep you logged in.
+
+### Analytics Cookies
+Help us understand how users interact with the Platform so we can improve it. We do not share this data with third parties for advertising.
+
+### Preference Cookies
+Remember your settings and preferences (e.g. your selected role, language).
+
+## Managing Cookies
+You can control cookies through your browser settings. Disabling essential cookies may affect Platform functionality.
+
+## Contact
+For questions about our use of cookies, contact support@brandior.africa`
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 
@@ -217,6 +303,20 @@ export default function AdminPanel() {
   const [approvalHistory, setApprovalHistory] = useState([]);
   const [transactions] = useState(MOCK_TRANSACTIONS);
   const [platformFee, setPlatformFee] = useState("10");
+  const [legalDocs, setLegalDocs] = useState({
+    terms: localStorage.getItem('brandior_legal_terms') || DEFAULT_TERMS,
+    privacy: localStorage.getItem('brandior_legal_privacy') || DEFAULT_PRIVACY,
+    cookies: localStorage.getItem('brandior_legal_cookies') || DEFAULT_COOKIES,
+  })
+  const [activeLegalDoc, setActiveLegalDoc] = useState('terms')
+
+  function saveLegalDocs() {
+    localStorage.setItem('brandior_legal_terms', legalDocs.terms)
+    localStorage.setItem('brandior_legal_privacy', legalDocs.privacy)
+    localStorage.setItem('brandior_legal_cookies', legalDocs.cookies)
+    showToast('Legal documents saved successfully.')
+  }
+
   const [settings, setSettings] = useState({
     platformName: "Brandiór",
     tagline: "Connect. Create. Convert.",
@@ -971,6 +1071,54 @@ export default function AdminPanel() {
 
   const renderAiPolice = () => <AdminModerationDashboard />;
 
+  const renderLegal = () => (
+    <div className="max-w-3xl space-y-6">
+      {/* Tab switcher */}
+      <div className="flex gap-2">
+        {[
+          { id: 'terms', label: 'Terms & Conditions', href: '/terms' },
+          { id: 'privacy', label: 'Privacy Policy', href: '/privacy' },
+          { id: 'cookies', label: 'Cookie Policy', href: '/cookies' },
+        ].map(doc => (
+          <button key={doc.id} onClick={() => setActiveLegalDoc(doc.id)}
+            className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+            style={activeLegalDoc === doc.id
+              ? { backgroundColor: '#4f46e5', color: '#fff' }
+              : { backgroundColor: '#f1f5f9', color: '#64748b' }}>
+            {doc.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-gray-900">
+            {activeLegalDoc === 'terms' ? 'Terms & Conditions' : activeLegalDoc === 'privacy' ? 'Privacy Policy' : 'Cookie Policy'}
+          </h3>
+          <a href={`/${activeLegalDoc === 'terms' ? 'terms' : activeLegalDoc === 'privacy' ? 'privacy' : 'cookies'}`}
+            target="_blank" rel="noopener noreferrer"
+            className="text-xs font-medium text-indigo-500 hover:text-indigo-700 flex items-center gap-1">
+            <Eye className="w-3.5 h-3.5" /> View live page
+          </a>
+        </div>
+        <p className="text-xs text-gray-400">Edit the content below. Use blank lines to separate paragraphs. Start a line with ## for a heading.</p>
+        <textarea
+          value={legalDocs[activeLegalDoc]}
+          onChange={e => setLegalDocs(d => ({ ...d, [activeLegalDoc]: e.target.value }))}
+          rows={24}
+          className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm text-gray-700 outline-none focus:border-indigo-400 font-mono resize-y leading-relaxed"
+          placeholder="Enter document content..."
+        />
+      </div>
+
+      <button onClick={saveLegalDocs}
+        className="w-full py-3 rounded-xl text-sm font-semibold text-white"
+        style={{ backgroundColor: '#4f46e5' }}>
+        Save Changes
+      </button>
+    </div>
+  )
+
   const TAB_CONTENT = {
     overview: renderOverview,
     users: renderUsers,
@@ -981,6 +1129,7 @@ export default function AdminPanel() {
     content: () => <CmsEditor />,
     "ai-police": renderAiPolice,
     financials: renderFinancials,
+    legal: renderLegal,
     settings: renderSettings,
   };
 

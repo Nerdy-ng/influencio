@@ -20,6 +20,7 @@ const AdminLogin      = lazy(() => import('./pages/admin/AdminLogin'))
 const AdminPanel      = lazy(() => import('./pages/admin/AdminPanel'))
 const ManagerPanel    = lazy(() => import('./pages/admin/ManagerPanel'))
 const StaffPanel      = lazy(() => import('./pages/admin/StaffPanel'))
+const LegalPage       = lazy(() => import('./pages/LegalPage'))
 
 function PageLoader() {
   return (
@@ -89,6 +90,9 @@ export default function App() {
         <Route path="/admin"                  element={<AdminPanel />} />
         <Route path="/admin/manager"          element={<ManagerPanel />} />
         <Route path="/admin/staff"            element={<StaffPanel />} />
+        <Route path="/terms"                  element={<LegalPage />} />
+        <Route path="/privacy"                element={<LegalPage />} />
+        <Route path="/cookies"                element={<LegalPage />} />
       </Routes>
     </Suspense>
     </ErrorBoundary>
