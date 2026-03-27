@@ -40,6 +40,7 @@ function PublicOnly({ children }) {
 }
 
 const PUBLIC_PATHS = ['/', '/for-talents', '/for-brands', '/signup', '/login']
+const ADMIN_PATHS = ['/admin', '/admin/login', '/admin/manager', '/admin/staff']
 
 export default function App() {
   const navigate = useNavigate()
@@ -58,8 +59,10 @@ export default function App() {
           }
         } else {
           localStorage.setItem('brandiór_role', role)
-          // Redirect on fresh sign-in or session restore from a public page
-          if (['SIGNED_IN', 'INITIAL_SESSION'].includes(event) && PUBLIC_PATHS.includes(window.location.pathname)) {
+          // Redirect on fresh sign-in or session restore from a public page (not admin)
+          const path = window.location.pathname
+          const isAdminPath = ADMIN_PATHS.some(p => path.startsWith(p))
+          if (['SIGNED_IN', 'INITIAL_SESSION'].includes(event) && PUBLIC_PATHS.includes(path) && !isAdminPath) {
             navigate(role === 'brand' ? '/marketplace' : '/jobs', { replace: true })
           }
         }
