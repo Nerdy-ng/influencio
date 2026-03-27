@@ -552,13 +552,13 @@ export default function JobDetail() {
                       <div key={i} className="grid grid-cols-12 gap-1 px-2 py-1.5 border-t" style={{ borderColor: '#e9d5ff' }}>
                         <input value={row.platform} onChange={e => updateRateRow(i, 'platform', e.target.value)}
                           placeholder="Instagram" className="col-span-4 text-xs px-2 py-1.5 rounded-lg bg-white focus:outline-none"
-                          style={{ border: '1px solid #e9d5ff' }} />
+                          style={{ border: '1px solid #e9d5ff', color: '#1e0040' }} />
                         <input value={row.deliverable} onChange={e => updateRateRow(i, 'deliverable', e.target.value)}
                           placeholder="1 Reel (60s)" className="col-span-5 text-xs px-2 py-1.5 rounded-lg bg-white focus:outline-none"
-                          style={{ border: '1px solid #e9d5ff' }} />
+                          style={{ border: '1px solid #e9d5ff', color: '#1e0040' }} />
                         <input value={row.price} onChange={e => updateRateRow(i, 'price', e.target.value)}
                           placeholder="50000" type="number" className="col-span-2 text-xs px-2 py-1.5 rounded-lg bg-white focus:outline-none text-right"
-                          style={{ border: '1px solid #e9d5ff' }} />
+                          style={{ border: '1px solid #e9d5ff', color: '#1e0040' }} />
                         <button type="button" onClick={() => removeRateRow(i)}
                           className="col-span-1 flex items-center justify-center text-gray-300 hover:text-red-400">
                           <X className="w-3.5 h-3.5" />
