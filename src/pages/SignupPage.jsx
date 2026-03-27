@@ -45,7 +45,9 @@ function RoleCard({ role, selected, onSelect }) {
         style={{ backgroundColor: selected ? `${accent}15` : '#f3eeff' }}>
         <Icon className="w-4 h-4" style={{ color: selected ? accent : '#a855f7' }} />
       </div>
-      <p className="font-bold text-brand-dark text-sm mb-0.5 capitalize">{role}</p>
+      <p className="font-bold text-brand-dark text-sm mb-0.5">
+        {isTalent ? 'Work with Brands' : 'Hire Creators'}
+      </p>
       <p className="text-brand-dark/40 text-xs leading-relaxed">
         {isTalent ? 'Monetise your audience & land brand deals' : 'Find talents & launch campaigns'}
       </p>
