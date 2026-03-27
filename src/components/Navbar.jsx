@@ -149,7 +149,7 @@ export default function Navbar() {
         {/* Desktop nav */}
         <ul className="hidden md:flex items-center gap-1 flex-1 justify-center">
           {(isLoggedIn ? (userRole === 'brand' ? BRAND_NAV : TALENT_NAV) : [
-            { label: 'Work with Brands', href: '/jobs' },
+            { label: 'Work with Brands', href: '#pricing', isAnchor: true },
             { label: 'Hire Talents', href: '#talents',      isAnchor: true },
             { label: 'How it Works', href: '#how-it-works', isAnchor: true },
             { label: 'Marketplace',  href: '/marketplace' },
