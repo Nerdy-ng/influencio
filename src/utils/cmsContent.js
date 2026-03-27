@@ -41,10 +41,10 @@ export const CMS_DEFAULTS = {
     },
     showcase: {
       section_label: 'Talent Marketplace',
-      section_title: 'Meet Your Next',
-      section_title_highlight: 'Brand Partners',
-      section_subtitle: 'Talents bringing culture, creativity, and community to every campaign.',
-      cta_text: 'Browse All Talents',
+      section_title: 'Hire',
+      section_title_highlight: 'Talents',
+      section_subtitle: 'Creators bringing culture, creativity, and community to every campaign.',
+      cta_text: 'Hire Talents',
     },
     footer_cta: {
       headline: 'Ready to grow with the Hive?',

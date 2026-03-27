@@ -139,10 +139,10 @@ router.get('/conversations/:id/messages', (req, res) => {
   res.json({ messages: thread })
 })
 
-// POST /api/messages/conversations/:id/messages — send a message
+// POST /api/messages/conversations/:id/messages — send a message (text or offer)
 router.post('/conversations/:id/messages', (req, res) => {
   const { id } = req.params
-  const { senderId, senderType, body } = req.body
+  const { senderId, senderType, body, type, offerData } = req.body
   if (!senderId || !senderType || !body?.trim()) {
     return res.status(400).json({ error: 'senderId, senderType, and body are required' })
   }
@@ -156,6 +156,8 @@ router.post('/conversations/:id/messages', (req, res) => {
     senderId,
     senderType,
     body: body.trim(),
+    type: type || 'text',
+    offerData: type === 'offer' ? { ...offerData, status: 'pending' } : undefined,
     createdAt: new Date().toISOString(),
     read: false,
   }
@@ -168,6 +170,16 @@ router.post('/conversations/:id/messages', (req, res) => {
   else conv.unreadBrand += 1
 
   res.status(201).json({ message: msg })
+})
+
+// PATCH /api/messages/:msgId/offer — update offer status (accepted | declined | countered)
+router.patch('/:msgId/offer', (req, res) => {
+  const { msgId } = req.params
+  const { status } = req.body // 'accepted' | 'declined'
+  const msg = messages.find(m => m.id === msgId)
+  if (!msg || msg.type !== 'offer') return res.status(404).json({ error: 'Offer message not found' })
+  msg.offerData = { ...msg.offerData, status }
+  res.json({ message: msg })
 })
 
 // PATCH /api/messages/conversations/:id/read — mark all messages as read for a user

@@ -9,6 +9,8 @@ import {
 import AdminModerationDashboard from "../../components/AdminModerationDashboard";
 import { getModerationStats } from "../../utils/moderationEngine";
 import CmsEditor from "../../components/admin/CmsEditor";
+import { LOGO_SLOTS, getLogo, setLogo, removeLogo } from "../../lib/brandSettings";
+import { getAllSettings, saveAllSettings } from "../../lib/siteSettings";
 
 // ─── MOCK DATA ────────────────────────────────────────────────────────────────
 
@@ -302,7 +304,7 @@ export default function AdminPanel() {
   const [approvals, setApprovals] = useState(MOCK_APPROVALS);
   const [approvalHistory, setApprovalHistory] = useState([]);
   const [transactions] = useState(MOCK_TRANSACTIONS);
-  const [platformFee, setPlatformFee] = useState("10");
+  const [platformFee, setPlatformFee] = useState(() => getAllSettings().platformFee || "10");
   const [legalDocs, setLegalDocs] = useState({
     terms: localStorage.getItem('brandior_legal_terms') || DEFAULT_TERMS,
     privacy: localStorage.getItem('brandior_legal_privacy') || DEFAULT_PRIVACY,
@@ -317,27 +319,37 @@ export default function AdminPanel() {
     showToast('Legal documents saved successfully.')
   }
 
-  const [settings, setSettings] = useState({
-    platformName: "Brandiór",
-    tagline: "Connect. Create. Convert.",
-    maintenanceMode: false,
-    emailNotifications: true,
-    countries: ["Nigeria", "South Africa", "Kenya"],
-    logoUrl: localStorage.getItem('brandior_admin_logo') || '',
+  const [settings, setSettings] = useState(() => {
+    const saved = getAllSettings()
+    return {
+      platformName:       saved.platformName,
+      tagline:            saved.tagline,
+      maintenanceMode:    saved.maintenanceMode,
+      emailNotifications: saved.emailNotifications,
+      countries:          saved.countries,
+    }
   });
-  const [logoPreview, setLogoPreview] = useState(localStorage.getItem('brandior_admin_logo') || '')
+  const [logos, setLogos] = useState({
+    header: getLogo('header'),
+    footer: getLogo('footer'),
+    auth:   getLogo('auth'),
+  })
 
-  function handleLogoUpload(e) {
+  function handleLogoUpload(slot, e) {
     const file = e.target.files[0]
     if (!file) return
     const reader = new FileReader()
     reader.onload = (ev) => {
       const url = ev.target.result
-      setLogoPreview(url)
-      setSettings(s => ({ ...s, logoUrl: url }))
-      localStorage.setItem('brandior_admin_logo', url)
+      setLogo(slot, url)
+      setLogos(prev => ({ ...prev, [slot]: url }))
     }
     reader.readAsDataURL(file)
+  }
+
+  function handleLogoRemove(slot) {
+    removeLogo(slot)
+    setLogos(prev => ({ ...prev, [slot]: '' }))
   }
 
   // Search/filter state
@@ -931,7 +943,7 @@ export default function AdminPanel() {
             min="1" max="50"
           />
           <button
-            onClick={() => showToast("Platform fee updated successfully.")}
+            onClick={() => { saveAllSettings({ platformFee }); showToast("Platform fee updated successfully.") }}
             className="px-4 py-1.5 rounded-lg text-sm font-medium text-white"
             style={{ backgroundColor: "#4f46e5" }}
           >
@@ -978,33 +990,34 @@ export default function AdminPanel() {
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 space-y-5">
         <h3 className="font-semibold text-gray-900">Platform Identity</h3>
 
-        {/* Logo Upload */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Brand Logo</label>
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden bg-gray-50 flex-shrink-0">
-              {logoPreview
-                ? <img src={logoPreview} alt="Logo" className="w-full h-full object-contain" />
-                : <span className="text-xs text-gray-400 text-center px-1">No logo</span>
-              }
+        {/* Logo Upload — labeled slots */}
+        <div className="space-y-4">
+          <label className="block text-sm font-semibold text-gray-800">Logo Slots</label>
+          <p className="text-xs text-gray-400 -mt-2">Each slot controls a specific area of the platform. Changes take effect immediately.</p>
+          {Object.entries(LOGO_SLOTS).map(([slot, { label }]) => (
+            <div key={slot} className="flex items-center gap-4 p-3 rounded-xl border border-gray-100 bg-gray-50">
+              <div className="w-14 h-14 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden bg-white flex-shrink-0">
+                {logos[slot]
+                  ? <img src={logos[slot]} alt={label} className="w-full h-full object-contain" />
+                  : <span className="text-[10px] text-gray-400 text-center px-1 leading-tight">No logo</span>
+                }
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-800 mb-1">{label}</p>
+                <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-700 hover:border-indigo-400 hover:text-indigo-600 transition-colors">
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleLogoUpload(slot, e)} />
+                  {logos[slot] ? 'Replace' : 'Upload'}
+                </label>
+                {logos[slot] && (
+                  <button type="button" onClick={() => handleLogoRemove(slot)}
+                    className="ml-2 text-xs text-red-400 hover:text-red-600 transition-colors">
+                    Remove
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="flex-1">
-              <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-indigo-400 hover:text-indigo-600 transition-colors">
-                <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
-                Upload new logo
-              </label>
-              <p className="text-xs text-gray-400 mt-1.5">PNG, JPG or SVG. Recommended: 200×200px</p>
-              {logoPreview && (
-                <button
-                  type="button"
-                  onClick={() => { setLogoPreview(''); setSettings(s => ({ ...s, logoUrl: '' })); localStorage.removeItem('brandior_admin_logo') }}
-                  className="text-xs text-red-400 hover:text-red-600 mt-1 transition-colors"
-                >
-                  Remove logo
-                </button>
-              )}
-            </div>
-          </div>
+          ))}
+          <p className="text-xs text-gray-400">PNG, JPG or SVG. Recommended: 200×200px or wider for header/footer.</p>
         </div>
 
         <div>
@@ -1060,7 +1073,10 @@ export default function AdminPanel() {
       </div>
 
       <button
-        onClick={() => showToast("Settings saved successfully.")}
+        onClick={() => {
+          saveAllSettings({ ...settings, platformFee })
+          showToast("Settings saved successfully.")
+        }}
         className="w-full py-3 rounded-xl text-sm font-semibold text-white"
         style={{ backgroundColor: "#4f46e5" }}
       >

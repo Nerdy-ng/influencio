@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Menu, X, Zap, LayoutDashboard, ImagePlus, TrendingUp, Wallet, Mail, Settings, UserPlus, HelpCircle, Eye, LogOut } from 'lucide-react'
+import { getLogo } from '../lib/brandSettings'
+import { getSetting } from '../lib/siteSettings'
+import { logout } from '../lib/logout'
 
 const NAV_ITEMS = [
   { id: 'profile',      label: 'My Profile',      icon: LayoutDashboard, href: '/dashboard' },
@@ -56,6 +59,8 @@ export default function Navbar() {
 
   const joinRef = useRef(null)
   const userRef = useRef(null)
+  const [headerLogo, setHeaderLogo] = useState(() => getLogo('header'))
+  const [platformName, setPlatformName] = useState(() => getSetting('platformName'))
 
   function loadNotifs() {
     try {
@@ -78,11 +83,17 @@ export default function Navbar() {
       }
     }
     load()
+    function onLogoUpdate() { setHeaderLogo(getLogo('header')) }
+    function onSettingsUpdate(e) { if (e.detail?.key === 'platformName') setPlatformName(e.detail.value) }
     window.addEventListener('storage', load)
     window.addEventListener('brandiór:notification', loadNotifs)
+    window.addEventListener('brandior:logo-updated', onLogoUpdate)
+    window.addEventListener('brandior:settings-updated', onSettingsUpdate)
     return () => {
       window.removeEventListener('storage', load)
       window.removeEventListener('brandiór:notification', loadNotifs)
+      window.removeEventListener('brandior:logo-updated', onLogoUpdate)
+      window.removeEventListener('brandior:settings-updated', onSettingsUpdate)
     }
   }, [])
 
@@ -95,13 +106,11 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  function handleLogout() {
-    localStorage.removeItem('brandiór_user')
-    localStorage.removeItem('brandiór_role')
-    localStorage.removeItem('brandiór_preview_profile')
+  async function handleLogout() {
     setIsLoggedIn(false)
     setProfile(null)
     setUserOpen(false)
+    await logout()
     navigate('/')
   }
 
@@ -128,17 +137,20 @@ export default function Navbar() {
             }
           }}
           className="flex items-center gap-2 flex-shrink-0">
-          <div className="w-8 h-8 rounded-lg border border-white/20 flex items-center justify-center" style={{ backgroundColor: '#4c1d95' }}>
-            <Zap className="w-4 h-4 text-brand-orange" />
-          </div>
-          <span className="text-xl font-bold text-white tracking-tight">Brandiór</span>
+          {headerLogo
+            ? <img src={headerLogo} alt="Brandior" className="w-8 h-8 rounded-lg object-contain" />
+            : <div className="w-8 h-8 rounded-lg border border-white/20 flex items-center justify-center" style={{ backgroundColor: '#4c1d95' }}>
+                <Zap className="w-4 h-4 text-brand-orange" />
+              </div>
+          }
+          <span className="text-xl font-bold text-white tracking-tight">{platformName}</span>
         </Link>
 
         {/* Desktop nav */}
         <ul className="hidden md:flex items-center gap-1 flex-1 justify-center">
           {(isLoggedIn ? (userRole === 'brand' ? BRAND_NAV : TALENT_NAV) : [
             { label: 'Brands',       href: '#talents',      isAnchor: true },
-            { label: 'Talents',      href: '#pricing',      isAnchor: true },
+            { label: 'Hire Talents', href: '#pricing',      isAnchor: true },
             { label: 'How it Works', href: '#how-it-works', isAnchor: true },
             { label: 'Marketplace',  href: '/marketplace' },
           ]).map(({ label, href, isAnchor, notifKey, isPostJob }) => (

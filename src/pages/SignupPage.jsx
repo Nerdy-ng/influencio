@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Zap, Star, TrendingUp, Eye, EyeOff, ArrowRight, CheckCircle, Mail, Lock, User, ChevronLeft } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { getLogo } from '../lib/brandSettings'
 
 const pink = '#FF6B9D'
 const gold = '#D4AF37'
@@ -77,6 +78,12 @@ export default function SignupPage() {
   const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [errors, setErrors] = useState({})
   const [authError, setAuthError] = useState('')
+  const [authLogo, setAuthLogo] = useState(() => getLogo('auth'))
+  useEffect(() => {
+    function onLogoUpdate() { setAuthLogo(getLogo('auth')) }
+    window.addEventListener('brandior:logo-updated', onLogoUpdate)
+    return () => window.removeEventListener('brandior:logo-updated', onLogoUpdate)
+  }, [])
 
   function validate() {
     const e = {}
@@ -132,9 +139,12 @@ export default function SignupPage() {
 
       {/* Logo */}
       <Link to="/" className="flex items-center gap-2 mb-8">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: darkPurple }}>
-          <Zap className="w-4 h-4" style={{ color: '#FA8112' }} />
-        </div>
+        {authLogo
+          ? <img src={authLogo} alt="Brandior" className="w-8 h-8 rounded-lg object-contain" />
+          : <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: darkPurple }}>
+              <Zap className="w-4 h-4" style={{ color: '#FA8112' }} />
+            </div>
+        }
         <span className="text-lg font-bold tracking-tight" style={{ color: darkPurple }}>Brandiór</span>
       </Link>
 

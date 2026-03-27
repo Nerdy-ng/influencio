@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
+import { logout } from '../lib/logout'
 import {
   Zap, BadgeCheck, MapPin, Camera, Star,
   TrendingUp, Users, Heart, MessageCircle, Eye, EyeOff, ChevronRight,
@@ -180,6 +181,8 @@ const AVATAR_NAV = [
 function AvatarMenu({ profile, activeTab, setActiveTab }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
+  const navigateTo = useNavigate()
+
   useEffect(() => {
     const handler = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
     document.addEventListener('mousedown', handler)
@@ -189,6 +192,12 @@ function AvatarMenu({ profile, activeTab, setActiveTab }) {
   function navigate(id) {
     setActiveTab(id)
     setOpen(false)
+  }
+
+  async function handleLogout() {
+    setOpen(false)
+    await logout()
+    navigateTo('/')
   }
 
   return (
@@ -258,13 +267,13 @@ function AvatarMenu({ profile, activeTab, setActiveTab }) {
             onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
             <Eye className="w-3.5 h-3.5" /> View Public Profile
           </Link>
-          <Link to="/login" onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium w-full transition-colors"
+          <button onClick={handleLogout}
+            className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium w-full text-left transition-colors"
             style={{ color: '#FF6B9D' }}
             onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,107,157,0.08)'}
             onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
             <LogOut className="w-3.5 h-3.5" /> Log Out
-          </Link>
+          </button>
         </div>
       )}
     </div>
@@ -592,6 +601,7 @@ function JobsTab() {
 export default function TalentDashboard() {
   const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'jobs')
+  const initialConvId = searchParams.get('conv')
   const [profile, setProfile] = useState(emptyProfile)
   const [hashInput, setHashInput] = useState('')
   const [saved, setSaved] = useState(false)
@@ -1904,7 +1914,7 @@ export default function TalentDashboard() {
           )}
           {/* ── MESSAGES TAB ── */}
           {activeTab === 'messages' && (
-            <MessagingPanel userId="talent_001" userType="talent" />
+            <MessagingPanel userId="talent_001" userType="talent" initialConvId={initialConvId} />
           )}
 
           {/* ── INVITE TAB ── */}

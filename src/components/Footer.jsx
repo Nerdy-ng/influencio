@@ -1,4 +1,7 @@
+import { useState, useEffect } from 'react'
 import { Zap, Camera, Linkedin, PlayCircle, X } from 'lucide-react'
+import { getLogo } from '../lib/brandSettings'
+import { getSetting } from '../lib/siteSettings'
 
 const links = {
   Product:  ['How it Works', 'For Talents', 'For Brands', 'Pricing', 'Enterprise'],
@@ -15,17 +18,32 @@ const socials = [
 ]
 
 export default function Footer() {
+  const [footerLogo, setFooterLogo] = useState(() => getLogo('footer'))
+  const [platformName, setPlatformName] = useState(() => getSetting('platformName'))
+  useEffect(() => {
+    function onLogoUpdate() { setFooterLogo(getLogo('footer')) }
+    function onSettingsUpdate(e) { if (e.detail?.key === 'platformName') setPlatformName(e.detail.value) }
+    window.addEventListener('brandior:logo-updated', onLogoUpdate)
+    window.addEventListener('brandior:settings-updated', onSettingsUpdate)
+    return () => {
+      window.removeEventListener('brandior:logo-updated', onLogoUpdate)
+      window.removeEventListener('brandior:settings-updated', onSettingsUpdate)
+    }
+  }, [])
+
   return (
     <footer className="bg-[#0a0a0a] text-white border-t border-brand-cream/5">
       <div className="max-w-7xl mx-auto px-6 py-16">
         <div className="grid grid-cols-2 lg:grid-cols-6 gap-10 mb-14">
           <div className="col-span-2">
             <div className="flex items-center gap-2 mb-5">
-              <div className="w-8 h-8 rounded-lg bg-brand-dark border border-brand-cream/10 flex items-center justify-center">
-                {/* logo spark icon in orange — small, contained */}
-                <Zap className="w-4 h-4 text-brand-orange" />
-              </div>
-              <span className="text-xl font-bold text-white">Brandior</span>
+              {footerLogo
+                ? <img src={footerLogo} alt="Brandior" className="w-8 h-8 rounded-lg object-contain" />
+                : <div className="w-8 h-8 rounded-lg bg-brand-dark border border-brand-cream/10 flex items-center justify-center">
+                    <Zap className="w-4 h-4 text-brand-orange" />
+                  </div>
+              }
+              <span className="text-xl font-bold text-white">{platformName}</span>
             </div>
             <p className="text-white/30 text-sm leading-relaxed max-w-xs mb-6">
               Nigeria's platform where micro & macro talents connect with SMB brands for
@@ -58,7 +76,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-brand-cream/5 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-white/20 text-sm">© {new Date().getFullYear()} Brandior Inc. All rights reserved.</p>
+          <p className="text-white/20 text-sm">© {new Date().getFullYear()} {platformName} Inc. All rights reserved.</p>
           <div className="flex items-center gap-6">
             {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map(item => (
               <a key={item} href="#" className="text-white/20 hover:text-white/50 text-xs transition-colors">{item}</a>

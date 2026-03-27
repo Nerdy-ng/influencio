@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import {
   ChevronLeft, MapPin, Star, CheckCircle, Users, Heart,
-  Package, Clock, RefreshCw, Shield, ExternalLink, Zap,
+  Package, Clock, RefreshCw, Shield, ExternalLink, Zap, MessageCircle, Loader2,
 } from 'lucide-react'
 import { useFavorites } from '../hooks/useFavorites'
 
@@ -169,7 +169,35 @@ export default function TalentProfilePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isPreview, setIsPreview] = useState(false)
+  const [messaging, setMessaging] = useState(false)
   const { toggle, isFav } = useFavorites()
+
+  async function startConversation() {
+    const brandId = localStorage.getItem('brandiór_user') || 'brand_demo'
+    const brandName = localStorage.getItem('brandiór_brand_name') || 'Brand'
+    if (!talent) return
+    setMessaging(true)
+    try {
+      const res = await fetch(`${API}/messages/conversations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          brandId,
+          talentId: talent._id || talent.id || profileId,
+          talentName: talent.name,
+          brandName,
+          talentAvatar: talent.avatar || null,
+        }),
+      })
+      const data = await res.json()
+      const convId = data.conversation?.id
+      navigate(`/brand-dashboard?tab=messages${convId ? `&conv=${convId}` : ''}`)
+    } catch {
+      navigate('/brand-dashboard?tab=messages')
+    } finally {
+      setMessaging(false)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -322,6 +350,20 @@ export default function TalentProfilePage() {
                     style={{ color: isFav(c._id || c.id) ? pink : '#6b7280' }} />
                   {isFav(c._id || c.id) ? 'Saved' : 'Save'}
                 </button>
+
+                {!isPreview && (
+                  <button
+                    onClick={startConversation}
+                    disabled={messaging}
+                    className="flex items-center gap-1.5 text-xs font-bold px-4 py-1.5 rounded-full text-white transition-colors disabled:opacity-60"
+                    style={{ backgroundColor: darkPurple }}
+                  >
+                    {messaging
+                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      : <MessageCircle className="w-3.5 h-3.5" />}
+                    Message
+                  </button>
+                )}
               </div>
 
               <p className="text-sm text-gray-400 mb-2">@{c.handle}</p>
@@ -401,7 +443,32 @@ export default function TalentProfilePage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Packages */}
           <div className="lg:col-span-2">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Packages &amp; Pricing</h2>
+            {/* Primary CTA — negotiate first */}
+            {!isPreview && (
+              <div className="rounded-3xl p-5 mb-5 flex flex-col sm:flex-row items-start sm:items-center gap-4"
+                style={{ background: 'linear-gradient(135deg, #4c1d95, #7c3aed)', color: 'white' }}>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-base mb-0.5">Work with {c.name.split(' ')[0]} on your terms</p>
+                  <p className="text-sm text-purple-200">Message directly, discuss your project, and negotiate a custom deal — no upfront commitment.</p>
+                </div>
+                <button
+                  onClick={startConversation}
+                  disabled={messaging}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-colors flex-shrink-0"
+                  style={{ backgroundColor: 'white', color: darkPurple }}
+                >
+                  {messaging ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
+                  Start a Conversation
+                </button>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Rate Card</h2>
+              <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: '#f3f4f6', color: '#6b7280' }}>
+                Fixed packages · or negotiate above
+              </span>
+            </div>
             <div className="flex flex-col gap-4">
               {(c.packages || []).map(pkg => (
                 <PackageCard key={pkg._id} pkg={pkg} talent={c} />
@@ -469,6 +536,19 @@ export default function TalentProfilePage() {
                 ))}
               </ul>
             </div>
+
+            {/* Message CTA sidebar */}
+            {!isPreview && (
+              <button
+                onClick={startConversation}
+                disabled={messaging}
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm text-white transition-colors disabled:opacity-60"
+                style={{ backgroundColor: darkPurple }}
+              >
+                {messaging ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
+                Message {c.name.split(' ')[0]}
+              </button>
+            )}
 
             {/* Escrow note */}
             <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-start gap-2.5">

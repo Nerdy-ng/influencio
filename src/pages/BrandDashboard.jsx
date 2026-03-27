@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
+import { logout } from '../lib/logout'
 import {
   LayoutDashboard, ShoppingBag, CheckCircle, Wallet, Settings,
   Bell, ChevronDown, ChevronRight, X, AlertCircle, Shield, Loader2,
@@ -523,8 +524,10 @@ function FindTalentsTab() {
 export default function BrandDashboard() {
   const [searchParams] = useSearchParams()
   const newOrderId = searchParams.get('newOrder')
+  const initialTab = searchParams.get('tab')
+  const initialConvId = searchParams.get('conv')
 
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState(initialTab || 'overview')
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -696,7 +699,7 @@ export default function BrandDashboard() {
               )}
               {activeTab === 'favorites' && <FavoritesTab />}
               {activeTab === 'messages' && (
-                <MessagingPanel userId="brand_demo" userType="brand" />
+                <MessagingPanel userId="brand_demo" userType="brand" initialConvId={initialConvId} />
               )}
               {activeTab === 'invite' && <InviteTab userType="brand" />}
               {activeTab === 'settings' && (
@@ -731,11 +734,20 @@ export default function BrandDashboard() {
 function BrandAvatarMenu() {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
+  const navigate = useNavigate()
+
   useEffect(() => {
     const handler = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
+  async function handleLogout() {
+    setOpen(false)
+    await logout()
+    navigate('/')
+  }
+
   return (
     <div className="relative" ref={ref}>
       <button onClick={() => setOpen(v => !v)} className="relative focus:outline-none">
@@ -751,13 +763,14 @@ function BrandAvatarMenu() {
             <p className="text-white text-sm font-semibold">Brand Account</p>
             <p className="text-white/35 text-xs">brand@brandiór.co</p>
           </div>
-          <Link to="/login" onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-4 py-3 text-sm font-medium w-full transition-colors"
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2.5 px-4 py-3 text-sm font-medium w-full transition-colors text-left"
             style={{ color: '#c4b5fd' }}
             onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(196,181,253,0.08)'}
             onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
             <LogOut className="w-4 h-4" /> Log Out
-          </Link>
+          </button>
         </div>
       )}
     </div>

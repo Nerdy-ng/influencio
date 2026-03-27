@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Zap, Mail, Phone, Lock, Eye, EyeOff, ArrowRight, ChevronDown } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { getLogo } from '../lib/brandSettings'
 
 const purple = '#c084fc'
 const darkPurple = '#4c1d95'
@@ -346,6 +347,12 @@ export default function LoginPage() {
   const [form, setForm] = useState({ identifier: '', password: '' })
   const [errors, setErrors] = useState({})
   const [authError, setAuthError] = useState('')
+  const [authLogo, setAuthLogo] = useState(() => getLogo('auth'))
+  useEffect(() => {
+    function onLogoUpdate() { setAuthLogo(getLogo('auth')) }
+    window.addEventListener('brandior:logo-updated', onLogoUpdate)
+    return () => window.removeEventListener('brandior:logo-updated', onLogoUpdate)
+  }, [])
 
   function validate() {
     const e = {}
@@ -407,9 +414,12 @@ export default function LoginPage() {
 
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: darkPurple }}>
-            <Zap className="w-4 h-4" style={{ color: '#FA8112' }} />
-          </div>
+          {authLogo
+            ? <img src={authLogo} alt="Brandior" className="w-8 h-8 rounded-lg object-contain" />
+            : <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: darkPurple }}>
+                <Zap className="w-4 h-4" style={{ color: '#FA8112' }} />
+              </div>
+          }
           <span className="text-lg font-bold tracking-tight" style={{ color: darkPurple }}>Brandiór</span>
         </Link>
 

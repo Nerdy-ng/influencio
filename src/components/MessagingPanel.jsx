@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Send, MessageSquare, Search, ChevronLeft, Circle, Inbox, MailOpen, ShoppingBag, SlidersHorizontal, Star, EyeOff, MoreVertical, Eye } from 'lucide-react'
+import { Send, MessageSquare, Search, ChevronLeft, Circle, Inbox, MailOpen, ShoppingBag, SlidersHorizontal, Star, EyeOff, MoreVertical, Eye, DollarSign, Check, X, ChevronDown } from 'lucide-react'
 
 const API = 'http://localhost:3001/api'
 const purple = '#7c3aed'
@@ -131,9 +131,85 @@ function MessageBubble({ msg, isMine }) {
         </div>
         <p className={`text-[10px] mt-1 text-gray-400 ${isMine ? 'text-right' : 'text-left'}`}>
           {timeAgo(msg.createdAt)}
-          {isMine && (
-            <span className="ml-1">{msg.read ? '✓✓' : '✓'}</span>
+          {isMine && <span className="ml-1">{msg.read ? '✓✓' : '✓'}</span>}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ── Offer card bubble ─────────────────────────────────────────────────────────
+function OfferBubble({ msg, isMine, onRespond }) {
+  const offer = msg.offerData || {}
+  const status = offer.status || 'pending'
+
+  const statusConfig = {
+    pending: { label: 'Awaiting response', bg: '#f3e8ff', border: '#e9d5ff', color: purple },
+    accepted: { label: 'Offer accepted', bg: '#f0fdf4', border: '#86efac', color: '#16a34a' },
+    declined: { label: 'Offer declined', bg: '#fef2f2', border: '#fca5a5', color: '#dc2626' },
+  }
+  const sc = statusConfig[status] || statusConfig.pending
+
+  return (
+    <div className={`flex ${isMine ? 'justify-end' : 'justify-start'} mb-3`}>
+      <div className="max-w-[80%] w-80">
+        <div className="rounded-2xl overflow-hidden shadow-sm" style={{ border: `1px solid ${sc.border}`, backgroundColor: sc.bg }}>
+          {/* Header */}
+          <div className="flex items-center gap-2 px-4 py-3" style={{ backgroundColor: darkPurple }}>
+            <DollarSign className="w-4 h-4 text-orange-300 flex-shrink-0" />
+            <span className="text-sm font-bold text-white">Custom Offer</span>
+            {status !== 'pending' && (
+              <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full text-white"
+                style={{ backgroundColor: status === 'accepted' ? '#16a34a' : '#dc2626' }}>
+                {status === 'accepted' ? '✓ Accepted' : '✗ Declined'}
+              </span>
+            )}
+          </div>
+
+          {/* Amount */}
+          {offer.amount && (
+            <div className="px-4 pt-3">
+              <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Proposed Budget</p>
+              <p className="text-2xl font-extrabold mt-0.5" style={{ color: pink }}>
+                ₦{Number(offer.amount).toLocaleString('en')}
+              </p>
+            </div>
           )}
+
+          {/* Note */}
+          <div className="px-4 py-3">
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Project Brief</p>
+            <p className="text-sm text-gray-700 leading-relaxed">{msg.body}</p>
+          </div>
+
+          {/* Status / Actions */}
+          <div className="px-4 pb-3">
+            {status === 'pending' && !isMine ? (
+              <div className="flex gap-2 mt-1">
+                <button
+                  onClick={() => onRespond(msg.id, 'accepted')}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold text-white transition-colors"
+                  style={{ backgroundColor: '#16a34a' }}
+                >
+                  <Check className="w-3.5 h-3.5" /> Accept
+                </button>
+                <button
+                  onClick={() => onRespond(msg.id, 'declined')}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-colors"
+                  style={{ backgroundColor: '#fef2f2', color: '#dc2626', border: '1px solid #fca5a5' }}
+                >
+                  <X className="w-3.5 h-3.5" /> Decline
+                </button>
+              </div>
+            ) : status === 'pending' && isMine ? (
+              <p className="text-xs text-center py-1" style={{ color: purple }}>Waiting for response…</p>
+            ) : (
+              <p className="text-xs text-center py-1 font-medium" style={{ color: sc.color }}>{sc.label}</p>
+            )}
+          </div>
+        </div>
+        <p className={`text-[10px] mt-1 text-gray-400 ${isMine ? 'text-right' : 'text-left'}`}>
+          {timeAgo(msg.createdAt)}
         </p>
       </div>
     </div>
@@ -157,9 +233,9 @@ function EmptyThread({ otherName }) {
 }
 
 // ── Main MessagingPanel ───────────────────────────────────────────────────────
-export default function MessagingPanel({ userId, userType }) {
+export default function MessagingPanel({ userId, userType, initialConvId }) {
   const [conversations, setConversations] = useState([])
-  const [activeConvId, setActiveConvId] = useState(null)
+  const [activeConvId, setActiveConvId] = useState(initialConvId || null)
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
@@ -168,7 +244,9 @@ export default function MessagingPanel({ userId, userType }) {
   const [showFilters, setShowFilters] = useState(false)
   const [favConvs, setFavConvs] = useState({})   // { convId: true }
   const [hiddenConvs, setHiddenConvs] = useState({}) // { convId: true }
-  const [mobileView, setMobileView] = useState('list') // 'list' | 'thread'
+  const [mobileView, setMobileView] = useState(initialConvId ? 'thread' : 'list') // 'list' | 'thread'
+  const [showOfferPanel, setShowOfferPanel] = useState(false)
+  const [offerAmount, setOfferAmount] = useState('')
 
   const bottomRef = useRef(null)
   const pollRef = useRef(null)
@@ -257,13 +335,13 @@ export default function MessagingPanel({ userId, userType }) {
     setInput('')
     setSending(true)
 
-    // Optimistic update
     const optimistic = {
       id: `opt_${Date.now()}`,
       conversationId: activeConvId,
       senderId: userId,
       senderType: userType,
       body,
+      type: 'text',
       createdAt: new Date().toISOString(),
       read: false,
     }
@@ -280,6 +358,57 @@ export default function MessagingPanel({ userId, userType }) {
       })
     } catch { /* optimistic already shown */ }
     setSending(false)
+  }
+
+  // ── Send offer ────────────────────────────────────────────────────────────────
+  async function sendOffer(e) {
+    e.preventDefault()
+    if (!input.trim() || !activeConvId || sending) return
+    const body = input.trim()
+    const amount = offerAmount.replace(/[^0-9]/g, '')
+    setInput('')
+    setOfferAmount('')
+    setShowOfferPanel(false)
+    setSending(true)
+
+    const optimistic = {
+      id: `opt_offer_${Date.now()}`,
+      conversationId: activeConvId,
+      senderId: userId,
+      senderType: userType,
+      body,
+      type: 'offer',
+      offerData: { amount, status: 'pending' },
+      createdAt: new Date().toISOString(),
+      read: false,
+    }
+    setMessages(prev => [...prev, optimistic])
+    setConversations(prev => prev.map(c =>
+      c.id === activeConvId ? { ...c, lastMessage: '💰 Offer sent', lastMessageAt: optimistic.createdAt } : c
+    ))
+
+    try {
+      await fetch(`${API}/messages/conversations/${activeConvId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ senderId: userId, senderType: userType, body, type: 'offer', offerData: { amount } }),
+      })
+    } catch { /* optimistic shown */ }
+    setSending(false)
+  }
+
+  // ── Respond to offer (talent side) ───────────────────────────────────────────
+  async function respondToOffer(msgId, status) {
+    setMessages(prev => prev.map(m =>
+      m.id === msgId ? { ...m, offerData: { ...m.offerData, status } } : m
+    ))
+    try {
+      await fetch(`${API}/messages/${msgId}/offer`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+    } catch { /* optimistic shown */ }
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -446,41 +575,105 @@ export default function MessagingPanel({ userId, userType }) {
               {messages.length === 0 ? (
                 <EmptyThread otherName={otherName} />
               ) : (
-                messages.map(msg => (
-                  <MessageBubble
-                    key={msg.id}
-                    msg={msg}
-                    isMine={msg.senderId === userId}
-                  />
-                ))
+                messages.map(msg =>
+                  msg.type === 'offer' ? (
+                    <OfferBubble
+                      key={msg.id}
+                      msg={msg}
+                      isMine={msg.senderId === userId}
+                      onRespond={respondToOffer}
+                    />
+                  ) : (
+                    <MessageBubble
+                      key={msg.id}
+                      msg={msg}
+                      isMine={msg.senderId === userId}
+                    />
+                  )
+                )
               )}
               <div ref={bottomRef} />
             </div>
 
+            {/* Offer panel */}
+            {showOfferPanel && (
+              <form onSubmit={sendOffer}
+                className="px-4 pt-3 pb-1"
+                style={{ borderTop: '1px solid #f3e8ff', backgroundColor: '#faf5ff' }}>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                    <DollarSign className="w-3.5 h-3.5" style={{ color: purple }} />
+                    Make an Offer
+                  </p>
+                  <button type="button" onClick={() => setShowOfferPanel(false)}>
+                    <X className="w-4 h-4 text-gray-400" />
+                  </button>
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm font-semibold text-gray-600">₦</span>
+                  <input
+                    value={offerAmount}
+                    onChange={e => setOfferAmount(e.target.value)}
+                    placeholder="Proposed budget (optional)"
+                    className="flex-1 text-sm bg-white border border-purple-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-purple-100"
+                  />
+                </div>
+                <div className="flex items-end gap-2">
+                  <textarea
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    placeholder="Describe your project, deliverables, timeline…"
+                    rows={2}
+                    className="flex-1 text-sm bg-white border border-purple-200 rounded-xl px-3 py-2 outline-none resize-none focus:ring-2 focus:ring-purple-100"
+                    style={{ maxHeight: 100 }}
+                  />
+                  <button type="submit" disabled={!input.trim() || sending}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-white disabled:opacity-40"
+                    style={{ backgroundColor: darkPurple }}>
+                    Send
+                  </button>
+                </div>
+              </form>
+            )}
+
             {/* Input */}
-            <form onSubmit={sendMessage}
-              className="flex items-end gap-3 px-4 py-4"
-              style={{ borderTop: '1px solid #f3e8ff' }}>
-              <div className="flex-1 flex items-end rounded-2xl overflow-hidden px-4 py-2.5"
-                style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff', minHeight: 46 }}>
-                <textarea
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && !e.shiftKey) sendMessage(e)
-                  }}
-                  placeholder="Type a message…"
-                  rows={1}
-                  className="flex-1 text-sm text-gray-800 bg-transparent outline-none resize-none leading-relaxed"
-                  style={{ maxHeight: 120 }}
-                />
-              </div>
-              <button type="submit" disabled={!input.trim() || sending}
-                className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 transition-opacity disabled:opacity-40"
-                style={{ backgroundColor: darkPurple }}>
-                <Send className="w-4 h-4 text-white" />
-              </button>
-            </form>
+            {!showOfferPanel && (
+              <form onSubmit={sendMessage}
+                className="flex items-end gap-2 px-4 py-3"
+                style={{ borderTop: '1px solid #f3e8ff' }}>
+                {/* Offer trigger — brand only */}
+                {userType === 'brand' && (
+                  <button
+                    type="button"
+                    onClick={() => setShowOfferPanel(true)}
+                    title="Make an Offer"
+                    className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 transition-colors"
+                    style={{ backgroundColor: '#f3e8ff', color: purple }}
+                  >
+                    <DollarSign className="w-4 h-4" />
+                  </button>
+                )}
+                <div className="flex-1 flex items-end rounded-2xl overflow-hidden px-4 py-2.5"
+                  style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff', minHeight: 46 }}>
+                  <textarea
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.shiftKey) sendMessage(e)
+                    }}
+                    placeholder="Type a message…"
+                    rows={1}
+                    className="flex-1 text-sm text-gray-800 bg-transparent outline-none resize-none leading-relaxed"
+                    style={{ maxHeight: 120 }}
+                  />
+                </div>
+                <button type="submit" disabled={!input.trim() || sending}
+                  className="w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0 transition-opacity disabled:opacity-40"
+                  style={{ backgroundColor: darkPurple }}>
+                  <Send className="w-4 h-4 text-white" />
+                </button>
+              </form>
+            )}
           </>
         )}
       </div>
