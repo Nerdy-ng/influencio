@@ -103,7 +103,10 @@ export default function SignupPage() {
     setLoading(true)
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { queryParams: { prompt: 'select_account' } },
+      options: {
+        redirectTo: 'https://app.brandior.africa',
+        queryParams: { prompt: 'select_account' },
+      },
     })
     setLoading(false)
   }

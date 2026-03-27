@@ -436,7 +436,7 @@ export default function LoginPage() {
             <button
               onClick={async () => {
                 setLoading(true)
-                await supabase.auth.signInWithOAuth({ provider: 'google' })
+                await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: 'https://app.brandior.africa' } })
                 setLoading(false)
               }}
               disabled={loading}
