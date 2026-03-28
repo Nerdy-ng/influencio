@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Zap, Mail, Phone, Lock, Eye, EyeOff, ArrowRight, ChevronDown } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getLogo } from '../lib/brandSettings'
@@ -338,7 +338,11 @@ function TalentIllustration() {
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const [role, setRole] = useState('talent')
+  const [searchParams] = useSearchParams()
+  const [role, setRole] = useState(() => {
+    const r = searchParams.get('role')
+    return r === 'brand' ? 'brand' : 'talent'
+  })
   const [method, setMethod] = useState('email')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)

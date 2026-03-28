@@ -422,7 +422,7 @@ export default function BrandLanding() {
               Browse Creators
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <Link to="/login"
+            <Link to="/login?role=brand"
               className="flex items-center justify-center gap-2 border border-white/15 text-white/70 font-semibold px-9 py-4 rounded-full transition-all text-sm"
               onMouseEnter={e => { e.currentTarget.style.borderColor = '#c084fc'; e.currentTarget.style.color = '#c084fc' }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.color = '' }}>

@@ -1914,7 +1914,7 @@ export default function TalentDashboard() {
           )}
           {/* ── MESSAGES TAB ── */}
           {activeTab === 'messages' && (
-            <MessagingPanel userId="talent_001" userType="talent" initialConvId={initialConvId} />
+            <MessagingPanel userId={localStorage.getItem('brandiór_user') || 'talent_001'} userType="talent" initialConvId={initialConvId} />
           )}
 
           {/* ── INVITE TAB ── */}
