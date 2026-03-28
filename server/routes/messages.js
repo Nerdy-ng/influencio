@@ -99,11 +99,8 @@ router.get('/conversations/:id', (req, res) => {
   res.json({ conversation: conv })
 })
 
-// POST /api/messages/conversations — start or get existing conversation between brand + talent
-router.post('/conversations', (req, res) => {
-  const { brandId, talentId, talentName, brandName, talentAvatar, orderId, orderTitle } = req.body
-  if (!brandId || !talentId) return res.status(400).json({ error: 'brandId and talentId required' })
-
+// Shared helper — also used by applications route
+export function createConversation(brandId, talentId, talentName, brandName, talentAvatar, orderId, orderTitle) {
   let conv = conversations.find(c => c.brandId === brandId && c.talentId === talentId)
   if (!conv) {
     conv = {
@@ -123,6 +120,14 @@ router.post('/conversations', (req, res) => {
     }
     conversations.push(conv)
   }
+  return conv
+}
+
+// POST /api/messages/conversations — start or get existing conversation between brand + talent
+router.post('/conversations', (req, res) => {
+  const { brandId, talentId, talentName, brandName, talentAvatar, orderId, orderTitle } = req.body
+  if (!brandId || !talentId) return res.status(400).json({ error: 'brandId and talentId required' })
+  const conv = createConversation(brandId, talentId, talentName, brandName, talentAvatar, orderId, orderTitle)
   res.json({ conversation: conv })
 })
 

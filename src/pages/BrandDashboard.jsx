@@ -5,6 +5,7 @@ import {
   LayoutDashboard, ShoppingBag, CheckCircle, Wallet, Settings,
   Bell, ChevronDown, ChevronRight, X, AlertCircle, Shield, Loader2,
   ExternalLink, Download, RotateCcw, Zap, Menu, Mail, Heart, MapPin, Star, Users, Search, UserPlus, LogOut,
+  Inbox, Clock, ThumbsUp, ThumbsDown, MessageSquare, FileText,
 } from 'lucide-react'
 import MessagingPanel from '../components/MessagingPanel'
 import InviteTab from '../components/InviteTab'
@@ -401,14 +402,15 @@ function StatCard({ label, value, icon: Icon, color }) {
 }
 
 const NAV_ITEMS = [
-  { id: 'overview',   label: 'Overview',      icon: LayoutDashboard },
-  { id: 'active',     label: 'Active Campaigns', icon: ShoppingBag },
-  { id: 'completed',  label: 'Completed',     icon: CheckCircle },
-  { id: 'favorites',  label: 'Saved Talents', icon: Heart },
-  { id: 'messages',   label: 'Messages',      icon: Mail },
-  { id: 'payments',   label: 'Payments',      icon: Wallet },
-  { id: 'invite',     label: 'Invite Creators', icon: UserPlus },
-  { id: 'settings',   label: 'Settings',      icon: Settings },
+  { id: 'overview',      label: 'Overview',        icon: LayoutDashboard },
+  { id: 'applications',  label: 'Applications',    icon: Inbox },
+  { id: 'active',        label: 'Active Campaigns',icon: ShoppingBag },
+  { id: 'completed',     label: 'Completed',       icon: CheckCircle },
+  { id: 'favorites',     label: 'Saved Talents',   icon: Heart },
+  { id: 'messages',      label: 'Messages',        icon: Mail },
+  { id: 'payments',      label: 'Payments',        icon: Wallet },
+  { id: 'invite',        label: 'Invite Creators', icon: UserPlus },
+  { id: 'settings',      label: 'Settings',        icon: Settings },
 ]
 
 const MOCK_TALENTS = [
@@ -517,6 +519,214 @@ function FindTalentsTab() {
           Browse all talents in Marketplace →
         </Link>
       </div>
+    </div>
+  )
+}
+
+// ── ApplicationsTab ───────────────────────────────────────────────────────────
+function ApplicationsTab({ setActiveTab, showToast }) {
+  const [apps, setApps] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [expanded, setExpanded] = useState(null)
+  const [acting, setActing] = useState(null)
+  const brandId = localStorage.getItem('brandiór_user') || 'brand_demo'
+
+  async function fetchApps() {
+    try {
+      const res = await fetch(`${API}/applications`)
+      const data = await res.json()
+      setApps(data.applications || [])
+    } catch {
+      setApps([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { fetchApps() }, [])
+
+  async function handleDecision(appId, status) {
+    setActing(appId)
+    try {
+      const res = await fetch(`${API}/applications/${appId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, brandId, brandName: 'Brand' }),
+      })
+      const data = await res.json()
+      if (data.application) {
+        setApps(prev => prev.map(a => a.id === appId ? data.application : a))
+        if (status === 'accepted') {
+          showToast('Proposal accepted! A message thread has been opened.')
+          if (data.application.conversationId) {
+            setTimeout(() => setActiveTab('messages'), 800)
+          }
+        } else {
+          showToast('Proposal declined.')
+        }
+      }
+    } catch {
+      showToast('Something went wrong. Try again.', 'error')
+    } finally {
+      setActing(null)
+    }
+  }
+
+  const pending = apps.filter(a => a.status === 'pending')
+  const decided = apps.filter(a => a.status !== 'pending')
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-20">
+      <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
+    </div>
+  )
+
+  if (apps.length === 0) return (
+    <div className="text-center py-20">
+      <Inbox className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+      <p className="font-semibold text-gray-500 mb-1">No proposals yet</p>
+      <p className="text-sm text-gray-400 mb-6">When creators apply to your campaigns, they'll show up here.</p>
+      <Link to="/post-job" className="inline-flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-full text-white"
+        style={{ backgroundColor: purple }}>
+        <FileText className="w-4 h-4" /> Post a Campaign
+      </Link>
+    </div>
+  )
+
+  function AppCard({ app }) {
+    const isOpen = expanded === app.id
+    const statusColors = {
+      pending:  { bg: '#fef9c3', color: '#854d0e', label: 'Pending Review' },
+      accepted: { bg: '#dcfce7', color: '#166534', label: 'Accepted' },
+      rejected: { bg: '#fef2f2', color: '#991b1b', label: 'Declined' },
+    }
+    const sc = statusColors[app.status] || statusColors.pending
+
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-4 flex items-start gap-3">
+          <img src={app.talentAvatar} alt={app.talentName}
+            className="w-11 h-11 rounded-full object-cover flex-shrink-0"
+            onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(app.talentName)}&background=4c1d95&color=fff&size=44` }} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="font-bold text-gray-900 text-sm">{app.talentName}</p>
+                {app.talentHandle && <p className="text-xs text-gray-400">{app.talentHandle}</p>}
+              </div>
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                style={{ backgroundColor: sc.bg, color: sc.color }}>
+                {sc.label}
+              </span>
+            </div>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Applied to: <span className="font-medium text-gray-700">{app.jobTitle}</span>
+            </p>
+            {app.rate && (
+              <p className="text-xs font-semibold mt-1" style={{ color: '#16a34a' }}>
+                Proposed rate: ₦{Number(app.rate).toLocaleString('en')}
+              </p>
+            )}
+            <p className="text-xs text-gray-400 mt-1">{timeAgo(app.createdAt)}</p>
+          </div>
+        </div>
+
+        {/* Proposal message preview/expand */}
+        <div className="px-4 pb-3">
+          <button onClick={() => setExpanded(isOpen ? null : app.id)}
+            className="text-xs font-semibold flex items-center gap-1 mb-2"
+            style={{ color: purple }}>
+            <MessageSquare className="w-3.5 h-3.5" />
+            {isOpen ? 'Hide proposal' : 'View proposal'}
+            <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+          </button>
+          {isOpen && (
+            <div className="rounded-xl p-3 text-sm text-gray-700 leading-relaxed mb-3"
+              style={{ backgroundColor: '#faf5ff', border: '1px solid #e9d5ff' }}>
+              {app.message}
+              {app.rateCard && app.rateCard.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-purple-100">
+                  <p className="text-xs font-bold text-gray-500 mb-2">RATE CARD</p>
+                  <div className="space-y-1">
+                    {app.rateCard.map((row, i) => (
+                      <div key={i} className="flex justify-between text-xs">
+                        <span className="text-gray-600">{row.platform} — {row.deliverable}</span>
+                        <span className="font-semibold text-gray-800">₦{Number(row.price || 0).toLocaleString('en')}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {app.status === 'pending' && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleDecision(app.id, 'accepted')}
+                disabled={acting === app.id}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all"
+                style={{ backgroundColor: '#dcfce7', color: '#166534' }}>
+                {acting === app.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ThumbsUp className="w-3.5 h-3.5" />}
+                Accept & Message
+              </button>
+              <button
+                onClick={() => handleDecision(app.id, 'rejected')}
+                disabled={acting === app.id}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all"
+                style={{ backgroundColor: '#fef2f2', color: '#991b1b' }}>
+                <ThumbsDown className="w-3.5 h-3.5" />
+                Decline
+              </button>
+            </div>
+          )}
+
+          {app.status === 'accepted' && app.conversationId && (
+            <button onClick={() => setActiveTab('messages')}
+              className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition-all"
+              style={{ backgroundColor: '#f3e8ff', color: purple }}>
+              <Mail className="w-3.5 h-3.5" /> Open Message Thread
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-black text-gray-900">Proposals</h2>
+          <p className="text-sm text-gray-400 mt-0.5">{pending.length} pending review</p>
+        </div>
+        <Link to="/post-job" className="flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-full text-white"
+          style={{ backgroundColor: purple }}>
+          <FileText className="w-3.5 h-3.5" /> Post Campaign
+        </Link>
+      </div>
+
+      {pending.length > 0 && (
+        <div className="mb-6">
+          <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">
+            New Proposals ({pending.length})
+          </p>
+          <div className="space-y-3">
+            {pending.map(app => <AppCard key={app.id} app={app} />)}
+          </div>
+        </div>
+      )}
+
+      {decided.length > 0 && (
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">
+            Reviewed ({decided.length})
+          </p>
+          <div className="space-y-3">
+            {decided.map(app => <AppCard key={app.id} app={app} />)}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -666,6 +876,9 @@ export default function BrandDashboard() {
           ) : (
             <>
               {activeTab === 'talents' && <FindTalentsTab />}
+              {activeTab === 'applications' && (
+                <ApplicationsTab setActiveTab={setActiveTab} showToast={showToast} />
+              )}
               {activeTab === 'overview' && (
                 <OverviewTab
                   activeOrders={activeOrders}

@@ -8,6 +8,7 @@ import ordersRouter        from './routes/orders.js'
 import paymentsRouter      from './routes/payments.js'
 import notificationsRouter from './routes/notifications.js'
 import messagesRouter      from './routes/messages.js'
+import applicationsRouter  from './routes/applications.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname  = dirname(__filename)
@@ -58,6 +59,7 @@ app.use('/api/orders',        ordersRouter)
 app.use('/api/payments',      paymentsRouter)
 app.use('/api/notifications', notificationsRouter)
 app.use('/api/messages',     messagesRouter)
+app.use('/api/applications', applicationsRouter)
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  404 handler for unmatched /api/* routes

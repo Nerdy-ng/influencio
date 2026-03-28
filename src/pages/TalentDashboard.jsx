@@ -8,8 +8,10 @@ import {
   LayoutDashboard, Settings, LogOut, Upload, CheckCircle, Link2,
   HelpCircle, Send, Ticket, ChevronDown, AlertCircle, CheckSquare,
   Wallet, ArrowDownLeft, ArrowUpRight, CreditCard, Hash, Globe, Building2,
-  PieChart, BarChart2, Tag, ImagePlus, FileText, Mail, UserPlus,
+  PieChart, BarChart2, Tag, ImagePlus, FileText, Mail, UserPlus, Inbox, Clock,
 } from 'lucide-react'
+
+const TALENT_API = 'http://localhost:3001/api'
 import MessagingPanel from '../components/MessagingPanel'
 import InviteTab from '../components/InviteTab'
 
@@ -167,15 +169,16 @@ const emptyProfile = {
 }
 
 const AVATAR_NAV = [
-  { id: 'jobs',         label: 'Browse Jobs',      icon: Briefcase,     href: '/jobs' },
-  { id: 'profile',      label: 'My Profile',       icon: LayoutDashboard },
-  { id: 'portfolio',    label: 'Portfolio',         icon: ImagePlus },
-  { id: 'overview',     label: 'Analytics',         icon: TrendingUp },
-  { id: 'transactions', label: 'Transactions',      icon: Wallet },
-  { id: 'messages',     label: 'Messages',          icon: Mail },
-  { id: 'settings',     label: 'Profile Settings',  icon: Settings },
-  { id: 'invite',       label: 'Invite Brands',     icon: UserPlus },
-  { id: 'support',      label: 'Support',           icon: HelpCircle },
+  { id: 'jobs',         label: 'Browse Jobs',       icon: Briefcase,      href: '/jobs' },
+  { id: 'applications', label: 'My Applications',   icon: Inbox },
+  { id: 'profile',      label: 'My Profile',        icon: LayoutDashboard },
+  { id: 'portfolio',    label: 'Portfolio',          icon: ImagePlus },
+  { id: 'overview',     label: 'Analytics',          icon: TrendingUp },
+  { id: 'transactions', label: 'Transactions',       icon: Wallet },
+  { id: 'messages',     label: 'Messages',           icon: Mail },
+  { id: 'settings',     label: 'Profile Settings',   icon: Settings },
+  { id: 'invite',       label: 'Invite Brands',      icon: UserPlus },
+  { id: 'support',      label: 'Support',            icon: HelpCircle },
 ]
 
 function AvatarMenu({ profile, activeTab, setActiveTab }) {
@@ -598,6 +601,116 @@ function JobsTab() {
   )
 }
 
+// ── MyApplicationsTab ─────────────────────────────────────────────────────────
+function MyApplicationsTab({ setActiveTab }) {
+  const [apps, setApps] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [expanded, setExpanded] = useState(null)
+  const talentId = localStorage.getItem('brandiór_user') || 'talent_demo'
+
+  useEffect(() => {
+    async function fetchApps() {
+      try {
+        const res = await fetch(`${TALENT_API}/applications?talentId=${talentId}`)
+        const data = await res.json()
+        setApps(data.applications || [])
+      } catch {
+        setApps([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchApps()
+    const interval = setInterval(fetchApps, 15000)
+    return () => clearInterval(interval)
+  }, [talentId])
+
+  const STATUS = {
+    pending:  { label: 'Under Review', bg: '#fef9c3', color: '#854d0e', icon: Clock },
+    accepted: { label: 'Accepted!',    bg: '#dcfce7', color: '#166534', icon: CheckCircle },
+    rejected: { label: 'Not Selected', bg: '#f3f4f6', color: '#6b7280', icon: X },
+  }
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-20">
+      <div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" />
+    </div>
+  )
+
+  if (apps.length === 0) return (
+    <div className="text-center py-20">
+      <Inbox className="w-12 h-12 mx-auto mb-4 opacity-30" style={{ color: purple }} />
+      <p className="font-semibold mb-1" style={{ color: darkPurple }}>No proposals sent yet</p>
+      <p className="text-sm text-gray-400 mb-6">Browse open campaigns and submit your first proposal.</p>
+      <button onClick={() => setActiveTab('jobs')}
+        className="inline-flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-full text-white"
+        style={{ backgroundColor: darkPurple }}>
+        <Briefcase className="w-4 h-4" /> Browse Jobs
+      </button>
+    </div>
+  )
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <div className="mb-6">
+        <h2 className="text-xl font-black" style={{ color: darkPurple }}>My Proposals</h2>
+        <p className="text-sm text-gray-400 mt-0.5">{apps.length} proposal{apps.length !== 1 ? 's' : ''} submitted</p>
+      </div>
+      <div className="space-y-3">
+        {apps.map(app => {
+          const sc = STATUS[app.status] || STATUS.pending
+          const StatusIcon = sc.icon
+          const isOpen = expanded === app.id
+          return (
+            <div key={app.id} className="bg-white rounded-2xl shadow-sm overflow-hidden"
+              style={{ border: '1.5px solid #e9d5ff' }}>
+              <div className="p-4">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div>
+                    <p className="font-bold text-gray-900">{app.jobTitle}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Submitted {new Date(app.createdAt).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                  </div>
+                  <span className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: sc.bg, color: sc.color }}>
+                    <StatusIcon className="w-3 h-3" />
+                    {sc.label}
+                  </span>
+                </div>
+                {app.rate && (
+                  <p className="text-xs font-semibold mb-2" style={{ color: '#16a34a' }}>
+                    Proposed rate: ₦{Number(app.rate).toLocaleString('en')}
+                  </p>
+                )}
+                <button onClick={() => setExpanded(isOpen ? null : app.id)}
+                  className="text-xs font-semibold flex items-center gap-1"
+                  style={{ color: purple }}>
+                  {isOpen ? 'Hide message' : 'View message'}
+                  <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+                </button>
+                {isOpen && (
+                  <div className="mt-3 p-3 rounded-xl text-sm text-gray-700 leading-relaxed"
+                    style={{ backgroundColor: '#faf5ff', border: '1px solid #e9d5ff' }}>
+                    {app.message}
+                  </div>
+                )}
+              </div>
+              {app.status === 'accepted' && (
+                <div className="px-4 pb-3">
+                  <button onClick={() => setActiveTab('messages')}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold"
+                    style={{ backgroundColor: darkPurple, color: 'white' }}>
+                    <Mail className="w-4 h-4" /> Go to Messages
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function TalentDashboard() {
   const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'jobs')
@@ -753,7 +866,7 @@ export default function TalentDashboard() {
     setTimeout(() => setSaved(false), 2500)
   }
 
-  const tabs = ['profile', 'overview', 'transactions', 'settings', 'support']
+  const tabs = ['profile', 'applications', 'overview', 'transactions', 'settings', 'support']
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: '#f9f5ff' }}>
@@ -768,7 +881,7 @@ export default function TalentDashboard() {
           style={{ backgroundColor: 'rgba(249,245,255,0.95)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #e9d5ff' }}>
           <div>
             <h1 className="font-black text-brand-dark text-lg capitalize">
-              {activeTab === 'jobs' ? 'Browse Jobs' : activeTab === 'profile' ? 'My Profile' : activeTab === 'settings' ? 'Profile Settings' : activeTab === 'portfolio' ? 'Portfolio' : activeTab}
+              {activeTab === 'jobs' ? 'Browse Jobs' : activeTab === 'profile' ? 'My Profile' : activeTab === 'settings' ? 'Profile Settings' : activeTab === 'portfolio' ? 'Portfolio' : activeTab === 'applications' ? 'My Proposals' : activeTab}
             </h1>
             <p className="text-brand-dark/40 text-xs">Manage your talent presence on Brandiór</p>
           </div>
@@ -812,6 +925,9 @@ export default function TalentDashboard() {
 
           {/* ── JOBS TAB ── */}
           {activeTab === 'jobs' && <JobsTab />}
+
+          {/* ── MY APPLICATIONS TAB ── */}
+          {activeTab === 'applications' && <MyApplicationsTab setActiveTab={setActiveTab} />}
 
           {/* ── PROFILE TAB ── */}
           {activeTab === 'profile' && (

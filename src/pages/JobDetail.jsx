@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
+
+const API = 'http://localhost:3001/api'
 import { Helmet } from 'react-helmet-async'
 import { slugify } from '../utils/slugify'
 import {
   ArrowLeft, MapPin, Clock, DollarSign, Users,
   CheckCircle, Send, Briefcase, Calendar, BookmarkCheck, Bookmark,
-  ChevronRight, X, Plus,
+  ChevronRight, X, Plus, Loader2,
 } from 'lucide-react'
 import Navbar from '../components/Navbar'
 
@@ -52,6 +54,7 @@ const PLATFORM_ICONS = {
 const MOCK_JOBS = [
   {
     id: 'j1',
+    brandId: null,
     brand: 'GlowUp Cosmetics',
     brandInitials: 'GC',
     brandColor: '#FF6B9D',
@@ -81,6 +84,7 @@ const MOCK_JOBS = [
   },
   {
     id: 'j2',
+    brandId: null,
     brand: 'Tecno Mobile Nigeria',
     brandInitials: 'TM',
     brandColor: '#3b82f6',
@@ -109,6 +113,7 @@ const MOCK_JOBS = [
   },
   {
     id: 'j3',
+    brandId: null,
     brand: 'Naija Bites',
     brandInitials: 'NB',
     brandColor: '#f97316',
@@ -137,6 +142,7 @@ const MOCK_JOBS = [
   },
   {
     id: 'j4',
+    brandId: null,
     brand: 'FitNaija',
     brandInitials: 'FN',
     brandColor: '#22c55e',
@@ -166,6 +172,7 @@ const MOCK_JOBS = [
   },
   {
     id: 'j5',
+    brandId: null,
     brand: 'Punchline Comedy',
     brandInitials: 'PC',
     brandColor: '#eab308',
@@ -194,6 +201,7 @@ const MOCK_JOBS = [
   },
   {
     id: 'j6',
+    brandId: null,
     brand: 'WealthUp Finance',
     brandInitials: 'WF',
     brandColor: '#10b981',
@@ -222,6 +230,7 @@ const MOCK_JOBS = [
   },
   {
     id: 'j7',
+    brandId: null,
     brand: 'Ada Collections',
     brandInitials: 'AC',
     brandColor: '#a78bfa',
@@ -251,6 +260,7 @@ const MOCK_JOBS = [
   },
   {
     id: 'j8',
+    brandId: null,
     brand: 'TravelNaija',
     brandInitials: 'TN',
     brandColor: '#06b6d4',
@@ -306,6 +316,7 @@ export default function JobDetail() {
   const [rateCardMode, setRateCardMode] = useState(false)
   const [rateCard, setRateCard] = useState([{ platform: '', deliverable: '', price: '' }])
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [saved, setSaved] = useState(false)
 
   function addRateRow() {
@@ -332,9 +343,27 @@ export default function JobDetail() {
   const deadlineText = daysLeft(job.deadline)
   const isExpiring = deadlineText !== 'Expired' && parseInt(deadlineText) <= 3
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
-    if (!message.trim()) return
+    if (!message.trim() || submitting) return
+    setSubmitting(true)
+    const talentId = localStorage.getItem('brandiór_user')
+    try {
+      await fetch(`${API}/applications`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobId: job.id,
+          jobTitle: job.title,
+          brandId: job.brandId,
+          talentId: talentId || 'talent_demo',
+          message,
+          rate: rateCardMode ? null : (rate || null),
+          rateCard: rateCardMode ? rateCard : null,
+        }),
+      })
+    } catch { /* server may be offline — still show success to user */ }
+    setSubmitting(false)
     setSubmitted(true)
   }
 
@@ -598,15 +627,17 @@ export default function JobDetail() {
                   Your profile will be shared with the brand when you apply.
                 </p>
                 <button type="submit"
-                  disabled={!message.trim()}
+                  disabled={!message.trim() || submitting}
                   className="flex items-center gap-2 px-8 py-3 rounded-full text-sm font-bold transition-all"
                   style={{
-                    backgroundColor: message.trim() ? purple : '#e9d5ff',
-                    color: message.trim() ? '#fff' : '#a78bfa',
-                    cursor: message.trim() ? 'pointer' : 'not-allowed',
+                    backgroundColor: message.trim() && !submitting ? purple : '#e9d5ff',
+                    color: message.trim() && !submitting ? '#fff' : '#a78bfa',
+                    cursor: message.trim() && !submitting ? 'pointer' : 'not-allowed',
                   }}>
-                  <Send className="w-4 h-4" />
-                  Submit Proposal
+                  {submitting
+                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                    : <Send className="w-4 h-4" />}
+                  {submitting ? 'Submitting…' : 'Submit Proposal'}
                 </button>
               </div>
             </form>
