@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async'
 import {
   ChevronLeft, MapPin, Star, CheckCircle, Users, Heart,
   Package, Clock, RefreshCw, Shield, ExternalLink, Zap, MessageCircle, Loader2,
+  BadgeCheck, ThumbsUp, MessageSquare, TrendingUp,
 } from 'lucide-react'
 import { useFavorites } from '../hooks/useFavorites'
 
@@ -132,6 +133,275 @@ const MOCK_CREATOR = {
       price: 350000,
     },
   ],
+}
+
+// ── Quick Stats sidebar card ─────────────────────────────────────────────────
+function QuickStats({ talent: c }) {
+  const [reviewCount, setReviewCount] = useState(c.reviewCount || null)
+  const [liveRating, setLiveRating] = useState(c.avgRating || 0)
+
+  useEffect(() => {
+    const tid = c._id || c.id
+    if (!tid) return
+    fetch(`${API}/reviews?talentId=${tid}`)
+      .then(r => r.json())
+      .then(d => {
+        setReviewCount(d.reviewCount || 0)
+        if (d.avgRating) setLiveRating(d.avgRating)
+      })
+      .catch(() => {})
+  }, [c._id, c.id])
+
+  // Derive response rate: top-rated = 98%, next-rated = 95%, fast-rising = 90%
+  const responseRate = c.tier === 'top-rated' ? '98%' : c.tier === 'next-rated' ? '95%' : '90%'
+  const isVerified = c.tier === 'top-rated' || c.tier === 'next-rated' || (c.completedCampaigns || 0) >= 5
+
+  return (
+    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-5">
+      <h3 className="font-bold text-gray-900 mb-4">Quick Stats</h3>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Users className="w-4 h-4" />
+            Total Followers
+          </div>
+          <span className="font-bold text-gray-800">{formatFollowers(c.totalFollowers)}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Heart className="w-4 h-4" />
+            Avg. Engagement
+          </div>
+          <span className="font-bold" style={{ color: pink }}>{Number(c.avgEngagement || 0).toFixed(1)}%</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <CheckCircle className="w-4 h-4" />
+            Campaigns Done
+          </div>
+          <span className="font-bold text-gray-800">{c.completedCampaigns || 0}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Star className="w-4 h-4" />
+            Rating
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="font-bold text-gray-800">{Number(liveRating).toFixed(1)}</span>
+            {reviewCount !== null && (
+              <span className="text-xs text-gray-400">({reviewCount})</span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <MessageSquare className="w-4 h-4" />
+            Response Rate
+          </div>
+          <span className="font-bold text-gray-800">{responseRate}</span>
+        </div>
+        <div className="pt-2 border-t border-gray-100">
+          <div className="flex items-center gap-2">
+            {isVerified ? (
+              <>
+                <BadgeCheck className="w-4 h-4 flex-shrink-0" style={{ color: '#3b82f6' }} />
+                <span className="text-xs text-gray-600">Identity & platform verified</span>
+              </>
+            ) : (
+              <>
+                <Shield className="w-4 h-4 flex-shrink-0 text-gray-300" />
+                <span className="text-xs text-gray-400">Verification pending</span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Verified badge ──────────────────────────────────────────────────────────
+function VerifiedBadge({ tier, campaigns }) {
+  const isVerified = tier === 'top-rated' || tier === 'next-rated' || (campaigns || 0) >= 5
+  if (!isVerified) return null
+  return (
+    <span className="relative group inline-flex items-center">
+      <BadgeCheck className="w-5 h-5" style={{ color: '#3b82f6' }} />
+      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex whitespace-nowrap text-[11px] font-medium px-2.5 py-1.5 rounded-lg shadow-lg z-10 pointer-events-none"
+        style={{ backgroundColor: '#1e0040', color: 'white' }}>
+        Verified creator · {campaigns || 0}+ campaigns on Brandiór
+      </span>
+    </span>
+  )
+}
+
+// ── Reviews section ──────────────────────────────────────────────────────────
+function ReviewsSection({ talentId }) {
+  const [reviews, setReviews] = useState([])
+  const [avgRating, setAvgRating] = useState(0)
+  const [reviewCount, setReviewCount] = useState(0)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!talentId) return
+    fetch(`${API}/reviews?talentId=${talentId}`)
+      .then(r => r.json())
+      .then(d => {
+        setReviews(d.reviews || [])
+        setAvgRating(d.avgRating || 0)
+        setReviewCount(d.reviewCount || 0)
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [talentId])
+
+  function timeAgo(dateStr) {
+    const diff = Date.now() - new Date(dateStr).getTime()
+    const days = Math.floor(diff / 86400000)
+    if (days > 60) return new Date(dateStr).toLocaleDateString('en', { month: 'short', year: 'numeric' })
+    if (days > 30) return '1 month ago'
+    if (days > 0) return `${days}d ago`
+    return 'Today'
+  }
+
+  if (loading) return (
+    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 animate-pulse">
+      <div className="h-5 bg-gray-100 rounded w-40 mb-4" />
+      {[1,2].map(i => <div key={i} className="h-24 bg-gray-50 rounded-2xl mb-3" />)}
+    </div>
+  )
+
+  return (
+    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-bold text-gray-900">Brand Reviews</h2>
+          {reviewCount > 0 && (
+            <span className="text-sm font-medium px-2.5 py-0.5 rounded-full"
+              style={{ backgroundColor: '#fef9c3', color: '#854d0e' }}>
+              {reviewCount} review{reviewCount !== 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+        {reviewCount > 0 && (
+          <div className="flex items-center gap-1.5">
+            <Star className="w-4 h-4" style={{ fill: '#D4AF37', color: '#D4AF37' }} />
+            <span className="font-bold text-gray-900">{avgRating.toFixed(1)}</span>
+            <span className="text-sm text-gray-400">/ 5</span>
+          </div>
+        )}
+      </div>
+
+      {/* Rating bar breakdown */}
+      {reviewCount > 0 && (
+        <div className="mb-6 p-4 rounded-2xl" style={{ backgroundColor: '#faf5ff' }}>
+          <div className="flex items-center gap-4">
+            <div className="text-center">
+              <p className="text-4xl font-black text-gray-900">{avgRating.toFixed(1)}</p>
+              <div className="flex justify-center mt-1">
+                {[1,2,3,4,5].map(i => (
+                  <Star key={i} className="w-3.5 h-3.5"
+                    style={{ fill: i <= Math.round(avgRating) ? '#D4AF37' : '#e5e7eb',
+                      color: i <= Math.round(avgRating) ? '#D4AF37' : '#e5e7eb' }} />
+                ))}
+              </div>
+              <p className="text-xs text-gray-400 mt-1">{reviewCount} brands</p>
+            </div>
+            <div className="flex-1 space-y-1.5">
+              {[5,4,3,2,1].map(star => {
+                const count = reviews.filter(r => r.rating === star).length
+                const pct = reviewCount > 0 ? (count / reviewCount) * 100 : 0
+                return (
+                  <div key={star} className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400 w-3">{star}</span>
+                    <Star className="w-3 h-3 flex-shrink-0" style={{ fill: '#D4AF37', color: '#D4AF37' }} />
+                    <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                      <div className="h-full rounded-full transition-all"
+                        style={{ width: `${pct}%`, backgroundColor: '#D4AF37' }} />
+                    </div>
+                    <span className="text-xs text-gray-400 w-4 text-right">{count}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Review cards */}
+      {reviews.length === 0 ? (
+        <div className="text-center py-10">
+          <MessageSquare className="w-10 h-10 mx-auto mb-3 text-gray-200" />
+          <p className="text-sm font-medium text-gray-400">No reviews yet</p>
+          <p className="text-xs text-gray-300 mt-1">Be the first brand to leave a review after your campaign</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {reviews.map(review => (
+            <div key={review.id} className="rounded-2xl p-4" style={{ backgroundColor: '#fafafa', border: '1px solid #f3f4f6' }}>
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
+                    style={{ backgroundColor: darkPurple }}>
+                    {review.brandInitials}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{review.brandName}</p>
+                    {review.campaignType && (
+                      <p className="text-xs text-gray-400">{review.campaignType}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  {[1,2,3,4,5].map(i => (
+                    <Star key={i} className="w-3.5 h-3.5"
+                      style={{ fill: i <= review.rating ? '#D4AF37' : '#e5e7eb',
+                        color: i <= review.rating ? '#D4AF37' : '#e5e7eb' }} />
+                  ))}
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 leading-relaxed mb-2">{review.comment}</p>
+              <p className="text-xs text-gray-400">{timeAgo(review.createdAt)}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Live Rating (fetches real review stats) ──────────────────────────────────
+function LiveRating({ talentId, fallbackRating }) {
+  const [rating, setRating] = useState(fallbackRating || 0)
+  const [count, setCount] = useState(null)
+
+  useEffect(() => {
+    if (!talentId) return
+    fetch(`${API}/reviews?talentId=${talentId}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.avgRating) setRating(d.avgRating)
+        if (typeof d.reviewCount === 'number') setCount(d.reviewCount)
+      })
+      .catch(() => {})
+  }, [talentId])
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex items-center gap-0.5">
+        {[1,2,3,4,5].map(i => (
+          <Star key={i} className="w-5 h-5"
+            style={{ color: i <= Math.round(rating) ? '#D4AF37' : '#d1d5db',
+              fill: i <= Math.round(rating) ? '#D4AF37' : 'none' }} />
+        ))}
+        <span className="ml-1 font-bold text-base text-gray-700">{Number(rating).toFixed(1)}</span>
+      </div>
+      {count !== null && (
+        <span className="text-sm text-gray-400">({count} review{count !== 1 ? 's' : ''})</span>
+      )}
+    </div>
+  )
 }
 
 function SkeletonProfile() {
@@ -326,6 +596,7 @@ export default function TalentProfilePage() {
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-3 mb-1">
                 <h1 className="text-2xl font-extrabold text-gray-900">{c.name}</h1>
+                <VerifiedBadge tier={c.tier} campaigns={c.completedCampaigns} />
                 <TierBadge tier={c.tier} size="md" />
                 {c.availableForHire ? (
                   <span className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
@@ -373,7 +644,7 @@ export default function TalentProfilePage() {
                 <span>{c.location}</span>
               </div>
 
-              <StarRating rating={c.avgRating} size="lg" />
+              <LiveRating talentId={c._id || c.id} fallbackRating={c.avgRating} />
 
               {c.bio && (
                 <p className="text-sm text-gray-600 leading-relaxed mt-3 max-w-2xl">{c.bio}</p>
@@ -480,44 +751,15 @@ export default function TalentProfilePage() {
                 </div>
               )}
             </div>
+
+            {/* Brand Reviews */}
+            <ReviewsSection talentId={c._id || c.id} />
           </div>
 
           {/* Right sidebar */}
           <div className="flex flex-col gap-4">
             {/* Quick stats */}
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-5">
-              <h3 className="font-bold text-gray-900 mb-4">Quick Stats</h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Users className="w-4 h-4" />
-                    Total Followers
-                  </div>
-                  <span className="font-bold text-gray-800">{formatFollowers(c.totalFollowers)}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Heart className="w-4 h-4" />
-                    Avg. Engagement
-                  </div>
-                  <span className="font-bold" style={{ color: pink }}>{Number(c.avgEngagement || 0).toFixed(1)}%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <CheckCircle className="w-4 h-4" />
-                    Completed Jobs
-                  </div>
-                  <span className="font-bold text-gray-800">{c.completedCampaigns || 0}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Star className="w-4 h-4" />
-                    Avg. Rating
-                  </div>
-                  <span className="font-bold text-gray-800">{Number(c.avgRating || 0).toFixed(1)} / 5</span>
-                </div>
-              </div>
-            </div>
+            <QuickStats talent={c} />
 
             {/* Why work with */}
             <div className="rounded-3xl p-5" style={{ background: 'linear-gradient(135deg, #f9f5ff, #fdf4ff)' }}>

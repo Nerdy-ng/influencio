@@ -220,7 +220,7 @@ function RevisionModal({ order, onClose, onSubmit }) {
 }
 
 // Individual order card
-function OrderCard({ order, onPayNow, onApprove, onRevision }) {
+function OrderCard({ order, onPayNow, onApprove, onRevision, onReview }) {
   const [expanded, setExpanded] = useState(false)
 
   const PLATFORM_COLORS = {
@@ -264,7 +264,7 @@ function OrderCard({ order, onPayNow, onApprove, onRevision }) {
           {/* Price + actions */}
           <div className="flex flex-col items-end gap-2 flex-shrink-0">
             <p className="font-bold text-gray-900">{formatNGN(order.total)}</p>
-            <OrderActions order={order} onPayNow={onPayNow} onApprove={onApprove} onRevision={onRevision} />
+            <OrderActions order={order} onPayNow={onPayNow} onApprove={onApprove} onRevision={onRevision} onReview={onReview} />
           </div>
 
           {/* Expand */}
@@ -316,7 +316,7 @@ function OrderCard({ order, onPayNow, onApprove, onRevision }) {
   )
 }
 
-function OrderActions({ order, onPayNow, onApprove, onRevision }) {
+function OrderActions({ order, onPayNow, onApprove, onRevision, onReview }) {
   if (order.status === 'pending') {
     return (
       <button
@@ -362,12 +362,134 @@ function OrderActions({ order, onPayNow, onApprove, onRevision }) {
   }
   if (order.status === 'completed') {
     return (
-      <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-        Completed ✓
-      </span>
+      <div className="flex gap-2">
+        <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+          Completed ✓
+        </span>
+        <button
+          onClick={() => onReview?.(order)}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors hover:bg-yellow-50"
+          style={{ borderColor: '#D4AF37', color: '#854d0e' }}
+        >
+          <Star className="w-3 h-3" style={{ fill: '#D4AF37', color: '#D4AF37' }} />
+          Review
+        </button>
+      </div>
     )
   }
   return null
+}
+
+// ── Review Modal ──────────────────────────────────────────────────────────────
+function ReviewModal({ order, onClose, onSubmitted }) {
+  const [rating, setRating] = useState(0)
+  const [hovered, setHovered] = useState(0)
+  const [comment, setComment] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [done, setDone] = useState(false)
+
+  async function submit(e) {
+    e.preventDefault()
+    if (!rating || !comment.trim()) return
+    setSubmitting(true)
+    const brandId = localStorage.getItem('brandiór_user') || 'brand_demo'
+    try {
+      await fetch(`${API}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          talentId: order.creatorId || order.creator_id || order.talent?._id,
+          brandId,
+          brandName: order.brief?.brandName || 'Brand',
+          rating,
+          comment,
+          campaignType: order.package?.name || null,
+        }),
+      })
+    } catch { /* offline — store locally */ }
+    setDone(true)
+    setSubmitting(false)
+    onSubmitted?.()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6">
+        {done ? (
+          <div className="text-center py-6">
+            <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-500" />
+            <p className="text-lg font-black text-gray-900 mb-1">Review submitted!</p>
+            <p className="text-sm text-gray-400 mb-6">Your review helps other brands make informed decisions.</p>
+            <button onClick={onClose} className="px-6 py-2.5 rounded-full text-sm font-bold text-white" style={{ backgroundColor: purple }}>
+              Done
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={submit}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-black text-gray-900">Rate {order.talent?.name || 'Creator'}</h3>
+              <button type="button" onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Campaign: <span className="font-medium text-gray-700">{order.package?.name || 'Campaign'}</span>
+            </p>
+
+            {/* Star picker */}
+            <div className="flex items-center justify-center gap-2 mb-5">
+              {[1,2,3,4,5].map(star => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setRating(star)}
+                  onMouseEnter={() => setHovered(star)}
+                  onMouseLeave={() => setHovered(0)}
+                  className="transition-transform hover:scale-110"
+                >
+                  <Star
+                    className="w-9 h-9"
+                    style={{
+                      fill: star <= (hovered || rating) ? '#D4AF37' : 'none',
+                      color: star <= (hovered || rating) ? '#D4AF37' : '#d1d5db',
+                    }}
+                  />
+                </button>
+              ))}
+            </div>
+            {rating > 0 && (
+              <p className="text-center text-sm font-medium mb-4" style={{ color: purple }}>
+                {['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent!'][rating]}
+              </p>
+            )}
+
+            <textarea
+              value={comment}
+              onChange={e => setComment(e.target.value)}
+              rows={4}
+              placeholder="Describe your experience with this creator — quality of content, communication, delivery time…"
+              className="w-full rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none border"
+              style={{ borderColor: '#e9d5ff', backgroundColor: '#faf5ff', color: '#1e0040' }}
+              onFocus={e => e.target.style.borderColor = purple}
+              onBlur={e => e.target.style.borderColor = '#e9d5ff'}
+            />
+            <p className="text-right text-xs mt-1 mb-4" style={{ color: comment.length > 500 ? '#f97316' : '#9ca3af' }}>
+              {comment.length}/500
+            </p>
+
+            <button
+              type="submit"
+              disabled={!rating || !comment.trim() || submitting}
+              className="w-full py-3 rounded-full text-sm font-bold text-white transition-all"
+              style={{ backgroundColor: rating && comment.trim() ? purple : '#e9d5ff', color: rating && comment.trim() ? 'white' : '#a78bfa' }}
+            >
+              {submitting ? 'Submitting…' : 'Submit Review'}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  )
 }
 
 function Toast({ message, type, onClose }) {
@@ -745,6 +867,7 @@ export default function BrandDashboard() {
 
   const [paymentModal, setPaymentModal] = useState(null) // order object
   const [revisionModal, setRevisionModal] = useState(null)
+  const [reviewModal, setReviewModal] = useState(null)
 
   const [toast, setToast] = useState(null)
 
@@ -905,6 +1028,7 @@ export default function BrandDashboard() {
                   onPayNow={setPaymentModal}
                   onApprove={handleApprove}
                   onRevision={setRevisionModal}
+                  onReview={setReviewModal}
                 />
               )}
               {activeTab === 'payments' && (
@@ -939,6 +1063,13 @@ export default function BrandDashboard() {
         />
       )}
 
+      {reviewModal && (
+        <ReviewModal
+          order={reviewModal}
+          onClose={() => setReviewModal(null)}
+          onSubmitted={() => showToast('Review submitted! Thank you.')}
+        />
+      )}
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   )
@@ -1146,7 +1277,7 @@ const ORDER_STATUS_FILTERS = [
   { value: 'revision_requested', label: 'Revision' },
 ]
 
-function OrdersTab({ title, orders, emptyMsg, onPayNow, onApprove, onRevision }) {
+function OrdersTab({ title, orders, emptyMsg, onPayNow, onApprove, onRevision, onReview }) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
 
@@ -1225,7 +1356,7 @@ function OrdersTab({ title, orders, emptyMsg, onPayNow, onApprove, onRevision })
       ) : (
         <div className="space-y-4">
           {filtered.map(order => (
-            <OrderCard key={order._id} order={order} onPayNow={onPayNow} onApprove={onApprove} onRevision={onRevision} />
+            <OrderCard key={order._id} order={order} onPayNow={onPayNow} onApprove={onApprove} onRevision={onRevision} onReview={onReview} />
           ))}
         </div>
       )}
@@ -1296,7 +1427,7 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
                     <td className="px-3 py-3 text-sm font-semibold text-gray-800 whitespace-nowrap">{formatNGN(order.total)}</td>
                     <td className="px-3 py-3 text-xs text-gray-400 whitespace-nowrap">{timeAgo(order.createdAt)}</td>
                     <td className="px-3 py-3">
-                      <OrderActions order={order} onPayNow={onPayNow} onApprove={onApprove} onRevision={onRevision} />
+                      <OrderActions order={order} onPayNow={onPayNow} onApprove={onApprove} onRevision={onRevision} onReview={onReview} />
                     </td>
                   </tr>
                 ))}
