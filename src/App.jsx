@@ -92,8 +92,8 @@ export default function App() {
             navigate('/signup?step=role&oauth=1', { replace: true })
           }
         } else if (event === 'INITIAL_SESSION') {
-          // Page refresh — brandiór_role in localStorage is already correct (set at login)
           localStorage.setItem('brandiór_user', session.user.id)
+          // Trust localStorage role set at login time — never override with Supabase metadata
           if (!localStorage.getItem('brandiór_role')) {
             if (metaRole) {
               localStorage.setItem('brandiór_role', metaRole)

@@ -377,14 +377,9 @@ export default function LoginPage() {
       setAuthError(error.message)
       return
     }
-    // Update role in Supabase metadata to match what the user selected
-    if (data.user.user_metadata?.role !== role) {
-      await supabase.auth.updateUser({ data: { role } })
-    }
     localStorage.setItem('brandiór_user', data.user.id)
     localStorage.setItem('brandiór_role', role)
-    // Full page load to avoid React Router race with onAuthStateChange
-    window.location.href = role === 'brand' ? '/brand-dashboard' : '/dashboard'
+    window.location.replace(role === 'brand' ? '/brand-dashboard' : '/dashboard')
   }
 
   function handleChange(field, value) {
