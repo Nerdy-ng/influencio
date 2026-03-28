@@ -219,14 +219,64 @@ function RevisionModal({ order, onClose, onSubmit }) {
   )
 }
 
+function PlatformIcon({ platform, size = 16 }) {
+  const s = size
+  if (platform === 'Instagram') return (
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="url(#ig_od)"/>
+      <circle cx="12" cy="12" r="4.5" stroke="white" strokeWidth="1.8"/>
+      <circle cx="17.5" cy="6.5" r="1.2" fill="white"/>
+      <defs>
+        <linearGradient id="ig_od" x1="0" y1="24" x2="24" y2="0" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#F9CE34"/><stop offset="0.35" stopColor="#EE2A7B"/><stop offset="1" stopColor="#6228D7"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  )
+  if (platform === 'TikTok') return (
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="#010101"/>
+      <path d="M17 8.5a3.5 3.5 0 01-3.5-3.5V4h-2.1v10.8a1.9 1.9 0 11-1.9-1.9c.17 0 .34.02.5.06V10.8a4 4 0 10 4 4V8.67A5.56 5.56 0 0017 9.5V8.5z" fill="#69C9D0"/>
+      <path d="M16.5 8.17a5.56 5.56 0 01-2.5-.67v6.3a4 4 0 11-4-4c.17 0 .34.02.5.06V7.7a6.1 6.1 0 00-.5-.02 6 6 0 100 12 6 6 0 006-6V8.17h-.5z" fill="white" fillOpacity="0.15"/>
+      <path d="M10.5 9.88V7.7a6.1 6.1 0 00-.5-.02 6 6 0 100 12 6 6 0 006-6V5h-2.1v4.8A3.5 3.5 0 0110.5 9.88z" fill="#EE1D52" fillOpacity="0.4"/>
+    </svg>
+  )
+  if (platform === 'YouTube') return (
+    <svg width={s} height={s} viewBox="0 0 24 24">
+      <rect width="24" height="24" rx="6" fill="#FF0000"/>
+      <path fill="white" d="M19.8 8.2a2 2 0 00-1.4-1.4C17 6.5 12 6.5 12 6.5s-5 0-6.4.3A2 2 0 004.2 8.2 20 20 0 004 12a20 20 0 00.2 3.8 2 2 0 001.4 1.4c1.4.3 6.4.3 6.4.3s5 0 6.4-.3a2 2 0 001.4-1.4A20 20 0 0020 12a20 20 0 00-.2-3.8zM10.5 14.5V9.5l4.3 2.5-4.3 2.5z"/>
+    </svg>
+  )
+  if (platform === 'Twitter' || platform === 'Twitter/X') return (
+    <svg width={s} height={s} viewBox="0 0 24 24">
+      <rect width="24" height="24" rx="6" fill="#000"/>
+      <path fill="white" d="M17.75 4h-2.6L12 8.1 8.85 4H3.5l5.9 8L3.5 20h2.6L10 15.6 13.15 20h5.35l-6.1-8.3L17.75 4zm-3.1 13.5L5.7 5.5h1.6l9 12H14.65z"/>
+    </svg>
+  )
+  if (platform === 'Facebook') return (
+    <svg width={s} height={s} viewBox="0 0 24 24">
+      <rect width="24" height="24" rx="6" fill="#1877F2"/>
+      <path fill="white" d="M15.5 8H13.5V6.5c0-.6.4-.8.7-.8H15V4h-2.1C10.8 4 10.5 5.5 10.5 7v1H9v2h1.5V20h2.5v-9.5H15l.5-2.5z"/>
+    </svg>
+  )
+  if (platform === 'Snapchat') return (
+    <svg width={s} height={s} viewBox="0 0 24 24">
+      <rect width="24" height="24" rx="6" fill="#FFFC00"/>
+      <path fill="#000" d="M12 4c-2.4 0-4 1.8-4 4v1.5c-.4.1-.8.3-1 .7-.2.4 0 .8.4 1 .4.2.6.2.7.3-.3.8-1 1.8-2.1 2 .1.3.6.5 1.5.7.1.3.2.7.4.9.2.2.4.2.6.1.3-.1.7-.2 1.1-.2.4 0 .8.2 1.4.6.5.3.9.5 1.5.5.6 0 1-.2 1.5-.5.6-.4 1-.6 1.4-.6.4 0 .8.1 1.1.2.2.1.4.1.6-.1.2-.2.3-.6.4-.9.9-.2 1.4-.4 1.5-.7-1.1-.2-1.8-1.2-2.1-2 .1-.1.3-.1.7-.3.4-.2.6-.6.4-1-.2-.4-.6-.6-1-.7V8c0-2.2-1.6-4-4-4z"/>
+    </svg>
+  )
+  // Generic fallback
+  return (
+    <span className="inline-flex items-center justify-center rounded font-bold text-white text-[9px]"
+      style={{ width: s, height: s, backgroundColor: '#6b7280', fontSize: s * 0.45 }}>
+      {(platform || '?')[0]}
+    </span>
+  )
+}
+
 // Individual order card
 function OrderCard({ order, onPayNow, onApprove, onRevision, onReview }) {
   const [expanded, setExpanded] = useState(false)
-
-  const PLATFORM_COLORS = {
-    Instagram: '#E1306C', TikTok: '#010101', YouTube: '#FF0000', Twitter: '#1DA1F2', Facebook: '#1877F2',
-  }
-  const platformColor = PLATFORM_COLORS[order.package?.platform] || '#6b7280'
 
   return (
     <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
@@ -252,8 +302,8 @@ function OrderCard({ order, onPayNow, onApprove, onRevision, onReview }) {
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <span className="text-sm font-medium text-gray-800">{order.package?.name}</span>
               {order.package?.platform && (
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: platformColor }}>
-                  {order.package.platform}
+                <span title={order.package.platform} className="inline-flex items-center rounded-lg overflow-hidden flex-shrink-0" style={{ lineHeight: 0 }}>
+                  <PlatformIcon platform={order.package.platform} size={20} />
                 </span>
               )}
             </div>
