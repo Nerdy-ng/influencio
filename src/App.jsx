@@ -84,20 +84,12 @@ export default function App() {
         const metaRole = session.user.user_metadata?.role
 
         if (event === 'SIGNED_IN') {
-          // Read the role the user selected on the login page (stored before signIn call)
-          const pendingRole = sessionStorage.getItem('brandiór_pending_role')
-          sessionStorage.removeItem('brandiór_pending_role')
-          const role = pendingRole || metaRole
-
-          if (!role) {
-            // Google OAuth with no role yet — send to role picker
-            localStorage.setItem('brandiór_user', session.user.id)
+          // LoginPage already set localStorage + used window.location.href to redirect.
+          // Only handle Google OAuth (no role in metadata → send to role picker).
+          localStorage.setItem('brandiór_user', session.user.id)
+          if (!metaRole && !localStorage.getItem('brandiór_role')) {
             localStorage.removeItem('brandiór_role')
             navigate('/signup?step=role&oauth=1', { replace: true })
-          } else {
-            localStorage.setItem('brandiór_user', session.user.id)
-            localStorage.setItem('brandiór_role', role)
-            navigate(role === 'brand' ? '/brand-dashboard' : '/dashboard', { replace: true })
           }
         } else if (event === 'INITIAL_SESSION') {
           // Page refresh — brandiór_role in localStorage is already correct (set at login)
