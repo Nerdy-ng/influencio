@@ -452,6 +452,7 @@ export default function LoginPage() {
             <button
               onClick={async () => {
                 setLoading(true)
+                sessionStorage.setItem('brandiór_pending_role', role)
                 await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: 'https://app.brandior.africa' } })
                 setLoading(false)
               }}

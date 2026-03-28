@@ -84,12 +84,20 @@ export default function App() {
         const metaRole = session.user.user_metadata?.role
 
         if (event === 'SIGNED_IN') {
-          // LoginPage already set localStorage + used window.location.href to redirect.
-          // Only handle Google OAuth (no role in metadata → send to role picker).
           localStorage.setItem('brandiór_user', session.user.id)
-          if (!metaRole && !localStorage.getItem('brandiór_role')) {
-            localStorage.removeItem('brandiór_role')
-            navigate('/signup?step=role&oauth=1', { replace: true })
+          // Pick up role the user selected before Google OAuth redirect
+          const pendingRole = sessionStorage.getItem('brandiór_pending_role')
+          if (pendingRole) {
+            sessionStorage.removeItem('brandiór_pending_role')
+            localStorage.setItem('brandiór_role', pendingRole)
+            navigate(pendingRole === 'brand' ? '/brand-dashboard' : '/dashboard', { replace: true })
+          } else if (!localStorage.getItem('brandiór_role')) {
+            if (metaRole) {
+              localStorage.setItem('brandiór_role', metaRole)
+              navigate(metaRole === 'brand' ? '/brand-dashboard' : '/dashboard', { replace: true })
+            } else {
+              navigate('/signup?step=role&oauth=1', { replace: true })
+            }
           }
         } else if (event === 'INITIAL_SESSION') {
           localStorage.setItem('brandiór_user', session.user.id)
