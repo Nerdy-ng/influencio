@@ -4,7 +4,8 @@ import {
   LayoutDashboard, Users, Briefcase, Shield, Bell, Tag,
   DollarSign, Settings, LogOut, ChevronDown, Search, X,
   CheckCircle, XCircle, AlertTriangle, MoreVertical, Plus,
-  TrendingUp, Activity, Check, ArrowUpRight, Eye, ShieldAlert, Pencil, Save, Globe
+  TrendingUp, Activity, Check, ArrowUpRight, Eye, ShieldAlert, Pencil, Save, Globe,
+  SlidersHorizontal, Star, Zap, BadgeCheck, RotateCcw, Info, ChevronUp, ChevronRight,
 } from "lucide-react";
 import AdminModerationDashboard from "../../components/AdminModerationDashboard";
 import { getModerationStats } from "../../utils/moderationEngine";
@@ -26,6 +27,73 @@ const MOCK_USERS = [
   { id: 9, name: "Biodun Alabi", email: "biodun@mail.com", role: "Talent", tier: "fast-rising", location: "Kano", joined: "Mar 10, 2025", status: "active", avatar: "BA", verified: false },
   { id: 10, name: "Pepsi Nigeria", email: "marketing@pepsi.ng", role: "Brand", tier: "premium", location: "Lagos", joined: "Sep 1, 2024", status: "suspended", avatar: "PN", verified: true },
 ];
+
+// ─── RANKING ALGORITHM DATA ───────────────────────────────────────────────────
+
+const RANKING_TALENTS = [
+  { id: 't1', name: 'Adaeze Okafor',    handle: '@adaeze.creates',  avatar: 'AO', tier: 'top-rated',   niches: ['Beauty','Fashion'],      location: 'Lagos',        rating: 4.9, campaigns: 89, followers: 280000, engagement: 4.8, verified: true,  profilePct: 100, joinedDays: 480 },
+  { id: 't2', name: 'Tunde Bakare',     handle: '@tundebakare',     avatar: 'TB', tier: 'top-rated',   niches: ['Tech','Gadgets'],        location: 'Lagos',        rating: 4.9, campaigns: 72, followers: 120000, engagement: 5.1, verified: true,  profilePct: 100, joinedDays: 390 },
+  { id: 't3', name: 'Ngozi Nnaji',      handle: '@ngozi.style',     avatar: 'NN', tier: 'top-rated',   niches: ['Fashion','Lifestyle'],   location: 'Abuja',        rating: 4.7, campaigns: 54, followers: 95000,  engagement: 4.2, verified: true,  profilePct: 95,  joinedDays: 310 },
+  { id: 't4', name: 'Chiamaka Eze',     handle: '@chiamaka.tv',     avatar: 'CE', tier: 'next-rated',  niches: ['Food','Cooking'],        location: 'Enugu',        rating: 4.6, campaigns: 31, followers: 61000,  engagement: 6.3, verified: false, profilePct: 90,  joinedDays: 240 },
+  { id: 't5', name: 'Emeka Obi',        handle: '@emeka.fitness',   avatar: 'EO', tier: 'next-rated',  niches: ['Fitness','Wellness'],    location: 'Lagos',        rating: 4.5, campaigns: 22, followers: 34000,  engagement: 4.9, verified: false, profilePct: 85,  joinedDays: 185 },
+  { id: 't6', name: 'Fatima Usman',     handle: '@fatima.vibes',    avatar: 'FU', tier: 'next-rated',  niches: ['Beauty','Comedy'],       location: 'Kano',         rating: 4.4, campaigns: 18, followers: 48000,  engagement: 5.7, verified: false, profilePct: 80,  joinedDays: 160 },
+  { id: 't7', name: 'Sola Adesanya',    handle: '@solacomedy',      avatar: 'SA', tier: 'fast-rising', niches: ['Comedy','Entertainment'],location: 'Ibadan',       rating: 4.2, campaigns: 8,  followers: 28000,  engagement: 7.1, verified: false, profilePct: 70,  joinedDays: 95  },
+  { id: 't8', name: 'Amara Nwachukwu',  handle: '@amara.eats',      avatar: 'AN', tier: 'fast-rising', niches: ['Food','Travel'],         location: 'Port Harcourt',rating: 4.1, campaigns: 5,  followers: 15000,  engagement: 8.2, verified: false, profilePct: 65,  joinedDays: 60  },
+  { id: 't9', name: 'Biodun Alabi',     handle: '@biodun.creates',  avatar: 'BA', tier: 'fast-rising', niches: ['Finance','Business'],    location: 'Kano',         rating: 3.9, campaigns: 3,  followers: 9500,   engagement: 6.4, verified: false, profilePct: 55,  joinedDays: 40  },
+  { id: 't10',name: 'Chisom Igwe',      handle: '@chisom.style',    avatar: 'CI', tier: 'fast-rising', niches: ['Fashion','Beauty'],      location: 'Owerri',       rating: 4.3, campaigns: 6,  followers: 12000,  engagement: 9.1, verified: false, profilePct: 60,  joinedDays: 52  },
+]
+
+const WEIGHT_DEFAULTS = {
+  balanced:     { rating: 20, campaigns: 20, followers: 15, engagement: 20, tier: 15, verified: 5, profilePct: 5 },
+  qualityFirst: { rating: 35, campaigns: 30, followers: 5,  engagement: 15, tier: 10, verified: 3, profilePct: 2 },
+  reachFirst:   { rating: 10, campaigns: 10, followers: 35, engagement: 30, tier: 10, verified: 3, profilePct: 2 },
+  risingStars:  { rating: 15, campaigns: 5,  followers: 10, engagement: 30, tier: 5,  verified: 5, profilePct: 30 },
+  topTier:      { rating: 20, campaigns: 25, followers: 10, engagement: 15, tier: 25, verified: 5, profilePct: 0 },
+}
+
+const WEIGHT_META = [
+  { key: 'rating',     label: 'Avg Rating',          desc: 'Brand satisfaction score (0–5)',              color: '#D4AF37', max: 5,      icon: '⭐' },
+  { key: 'campaigns',  label: 'Completed Campaigns',  desc: 'Proven track record on the platform',         color: '#22c55e', max: 100,    icon: '✅' },
+  { key: 'followers',  label: 'Total Followers',       desc: 'Audience reach across all platforms',         color: '#3b82f6', max: 500000, icon: '👥' },
+  { key: 'engagement', label: 'Engagement Rate',       desc: 'Audience quality and interaction (0–10%)',    color: '#ec4899', max: 10,     icon: '💫' },
+  { key: 'tier',       label: 'Tier Level',            desc: 'Platform recognition (fast-rising→top-rated)',color: '#8b5cf6', max: 1,      icon: '🏅' },
+  { key: 'verified',   label: 'Verified Status',       desc: 'Identity and social accounts verified',       color: '#06b6d4', max: 1,      icon: '🔒' },
+  { key: 'profilePct', label: 'Profile Completeness',  desc: 'How complete the creator\'s profile is',      color: '#f97316', max: 100,    icon: '📋' },
+]
+
+const TIER_SCORE = { 'top-rated': 1.0, 'next-rated': 0.6, 'fast-rising': 0.25 }
+
+const RANKING_KEY = 'brandior_ranking_config'
+
+function calcScore(talent, weights, rules) {
+  const w = weights
+  const total = Object.values(w).reduce((s, v) => s + v, 0) || 1
+
+  const signals = {
+    rating:     talent.rating / 5,
+    campaigns:  Math.min(talent.campaigns, 100) / 100,
+    followers:  Math.min(talent.followers, 500000) / 500000,
+    engagement: Math.min(talent.engagement, 10) / 10,
+    tier:       TIER_SCORE[talent.tier] || 0,
+    verified:   talent.verified ? 1 : 0,
+    profilePct: talent.profilePct / 100,
+  }
+
+  let score = 0
+  const breakdown = {}
+  for (const key of Object.keys(signals)) {
+    const contribution = (signals[key] * (w[key] || 0)) / total
+    breakdown[key] = Math.round(contribution * 1000) / 10
+    score += contribution
+  }
+
+  // Boost rules
+  if (rules.pinVerified && talent.verified) score = Math.min(score + 0.1, 1)
+  if (rules.boostNewcomers && talent.joinedDays < 90) score = Math.min(score + 0.05, 1)
+  if (rules.highEngagementBoost && talent.engagement > 7) score = Math.min(score + 0.05, 1)
+
+  return { score: Math.round(score * 1000) / 10, breakdown }
+}
 
 const MOCK_JOBS = [
   { id: "J01", brand: "Tecno Mobile", title: "Instagram Reel Campaign – CAMON 30", platform: "Instagram", budget: "₦850,000", posted: "Mar 18, 2025", status: "active", labels: ["Featured"] },
@@ -189,17 +257,18 @@ function Modal({ title, onClose, children }) {
 // ─── NAV CONFIG ───────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
-  { id: "overview", label: "Overview", Icon: LayoutDashboard },
-  { id: "users", label: "Users", Icon: Users },
-  { id: "jobs", label: "Job Board", Icon: Briefcase },
-  { id: "team", label: "Team", Icon: Shield },
-  { id: "approvals", label: "Approvals", Icon: Bell, badge: true },
-  { id: "labels", label: "Labels", Icon: Tag },
-  { id: "content", label: "Content", Icon: Globe },
-  { id: "ai-police", label: "AI Police", Icon: ShieldAlert, badge: true, badgeColor: "#ef4444" },
-  { id: "financials", label: "Financials", Icon: DollarSign },
-  { id: "legal", label: "Legal", Icon: Pencil },
-  { id: "settings", label: "Settings", Icon: Settings },
+  { id: "overview",  label: "Overview",   Icon: LayoutDashboard },
+  { id: "users",     label: "Users",      Icon: Users },
+  { id: "rankings",  label: "Rankings",   Icon: SlidersHorizontal },
+  { id: "jobs",      label: "Job Board",  Icon: Briefcase },
+  { id: "team",      label: "Team",       Icon: Shield },
+  { id: "approvals", label: "Approvals",  Icon: Bell, badge: true },
+  { id: "labels",    label: "Labels",     Icon: Tag },
+  { id: "content",   label: "Content",    Icon: Globe },
+  { id: "ai-police", label: "AI Police",  Icon: ShieldAlert, badge: true, badgeColor: "#ef4444" },
+  { id: "financials",label: "Financials", Icon: DollarSign },
+  { id: "legal",     label: "Legal",      Icon: Pencil },
+  { id: "settings",  label: "Settings",   Icon: Settings },
 ];
 
 // ─── DEFAULT LEGAL CONTENT ────────────────────────────────────────────────────
@@ -311,6 +380,19 @@ export default function AdminPanel() {
     cookies: localStorage.getItem('brandior_legal_cookies') || DEFAULT_COOKIES,
   })
   const [activeLegalDoc, setActiveLegalDoc] = useState('terms')
+
+  // Ranking algorithm state
+  const [rankWeights, setRankWeights] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(RANKING_KEY + '_weights')) || WEIGHT_DEFAULTS.balanced }
+    catch { return WEIGHT_DEFAULTS.balanced }
+  })
+  const [rankRules, setRankRules] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(RANKING_KEY + '_rules')) || { pinVerified: false, suppressSuspended: true, boostNewcomers: false, highEngagementBoost: false } }
+    catch { return { pinVerified: false, suppressSuspended: true, boostNewcomers: false, highEngagementBoost: false } }
+  })
+  const [rankPreset, setRankPreset] = useState('balanced')
+  const [rankSaved, setRankSaved] = useState(false)
+  const [rankExpanded, setRankExpanded] = useState(null)
 
   function saveLegalDocs() {
     localStorage.setItem('brandior_legal_terms', legalDocs.terms)
@@ -1135,6 +1217,312 @@ export default function AdminPanel() {
     </div>
   )
 
+  // ── Rankings Algorithm ──────────────────────────────────────────────────────
+  function applyPreset(preset) {
+    setRankWeights({ ...WEIGHT_DEFAULTS[preset] })
+    setRankPreset(preset)
+  }
+
+  function updateWeight(key, val) {
+    setRankWeights(w => ({ ...w, [key]: Number(val) }))
+    setRankPreset('custom')
+  }
+
+  function saveRanking() {
+    localStorage.setItem(RANKING_KEY + '_weights', JSON.stringify(rankWeights))
+    localStorage.setItem(RANKING_KEY + '_rules', JSON.stringify(rankRules))
+    setRankSaved(true)
+    setTimeout(() => setRankSaved(false), 2500)
+  }
+
+  function resetRanking() {
+    applyPreset('balanced')
+    setRankRules({ pinVerified: false, suppressSuspended: true, boostNewcomers: false, highEngagementBoost: false })
+  }
+
+  const rankedTalents = [...RANKING_TALENTS]
+    .map(t => ({ ...t, ...calcScore(t, rankWeights, rankRules) }))
+    .sort((a, b) => b.score - a.score)
+
+  const TIER_BADGE = {
+    'top-rated':   { label: 'Top Rated',   bg: '#D4AF3720', color: '#D4AF37' },
+    'next-rated':  { label: 'Next Rated',  bg: '#3b82f620', color: '#3b82f6' },
+    'fast-rising': { label: 'Fast Rising', bg: '#22c55e20', color: '#22c55e' },
+  }
+
+  const PRESET_INFO = [
+    { key: 'balanced',     label: 'Balanced',       desc: 'Equal weighting across all signals' },
+    { key: 'qualityFirst', label: 'Quality First',  desc: 'Prioritise rating + proven campaigns' },
+    { key: 'reachFirst',   label: 'Reach First',    desc: 'Maximise follower count and engagement' },
+    { key: 'risingStars',  label: 'Rising Stars',   desc: 'Surface new talent with high engagement' },
+    { key: 'topTier',      label: 'Top Tier Only',  desc: 'Heavy weight on tier and track record' },
+  ]
+
+  const BOOST_RULES = [
+    { key: 'pinVerified',        label: 'Pin verified creators',     desc: 'Give verified creators a +10% score bump' },
+    { key: 'suppressSuspended',  label: 'Suppress suspended accounts', desc: 'Hide suspended creators from suggestions' },
+    { key: 'boostNewcomers',     label: 'Boost newcomers',           desc: '+5% for creators who joined in the last 90 days' },
+    { key: 'highEngagementBoost',label: 'Boost high engagement',     desc: '+5% for creators with engagement rate above 7%' },
+  ]
+
+  const totalWeight = Object.values(rankWeights).reduce((s, v) => s + v, 0)
+
+  const renderRankings = () => (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <SlidersHorizontal className="w-5 h-5 text-indigo-500" />
+            Ranking Algorithm
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">Configure how creator profiles are ranked and suggested to brands.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={resetRanking}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-500 hover:bg-gray-50 transition-colors">
+            <RotateCcw className="w-4 h-4" /> Reset
+          </button>
+          <button onClick={saveRanking}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all"
+            style={{ backgroundColor: rankSaved ? '#16a34a' : '#4f46e5' }}>
+            {rankSaved ? <><CheckCircle className="w-4 h-4" /> Saved!</> : <><Save className="w-4 h-4" /> Save Algorithm</>}
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+
+        {/* ── Left: Config panel ── */}
+        <div className="xl:col-span-2 space-y-5">
+
+          {/* Presets */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-5">
+            <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <Zap className="w-4 h-4 text-yellow-500" /> Quick Presets
+            </h3>
+            <div className="grid grid-cols-1 gap-2">
+              {PRESET_INFO.map(p => (
+                <button key={p.key} onClick={() => applyPreset(p.key)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all border"
+                  style={{
+                    backgroundColor: rankPreset === p.key ? '#eef2ff' : '#fafafa',
+                    borderColor: rankPreset === p.key ? '#6366f1' : '#e5e7eb',
+                  }}>
+                  <div className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: rankPreset === p.key ? '#4f46e5' : '#d1d5db' }} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-800">{p.label}</p>
+                    <p className="text-xs text-gray-400 truncate">{p.desc}</p>
+                  </div>
+                  {rankPreset === p.key && <Check className="w-4 h-4 ml-auto flex-shrink-0 text-indigo-500" />}
+                </button>
+              ))}
+              {rankPreset === 'custom' && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-gray-500"
+                  style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a' }}>
+                  <Info className="w-3.5 h-3.5 text-yellow-500 flex-shrink-0" />
+                  Custom configuration active
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Weight sliders */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-gray-800">Signal Weights</h3>
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: Math.abs(totalWeight - 100) > 5 ? '#fef2f2' : '#f0fdf4',
+                  color: Math.abs(totalWeight - 100) > 5 ? '#991b1b' : '#166534' }}>
+                Total: {totalWeight}
+              </span>
+            </div>
+            <div className="space-y-4">
+              {WEIGHT_META.map(({ key, label, desc, color, icon }) => {
+                const val = rankWeights[key] || 0
+                const pct = totalWeight > 0 ? Math.round((val / totalWeight) * 100) : 0
+                return (
+                  <div key={key}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm">{icon}</span>
+                        <span className="text-sm font-medium text-gray-700">{label}</span>
+                        <span className="group relative">
+                          <Info className="w-3 h-3 text-gray-300 cursor-help" />
+                          <span className="absolute left-5 top-0 hidden group-hover:block whitespace-nowrap text-[11px] bg-gray-800 text-white px-2 py-1 rounded-lg z-10 pointer-events-none">
+                            {desc}
+                          </span>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400">{pct}%</span>
+                        <span className="text-sm font-bold w-6 text-right" style={{ color }}>{val}</span>
+                      </div>
+                    </div>
+                    <div className="relative">
+                      <input type="range" min={0} max={50} step={1} value={val}
+                        onChange={e => updateWeight(key, e.target.value)}
+                        className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                        style={{ accentColor: color }} />
+                      <div className="absolute top-0 left-0 h-2 rounded-full pointer-events-none"
+                        style={{ width: `${(val / 50) * 100}%`, backgroundColor: color + '40' }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Boost rules */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-5">
+            <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-indigo-500" /> Boost Rules
+            </h3>
+            <div className="space-y-3">
+              {BOOST_RULES.map(rule => (
+                <label key={rule.key} className="flex items-start gap-3 cursor-pointer group">
+                  <div className="mt-0.5 flex-shrink-0">
+                    <input type="checkbox" checked={rankRules[rule.key] || false}
+                      onChange={e => setRankRules(r => ({ ...r, [rule.key]: e.target.checked }))}
+                      className="sr-only" />
+                    <div onClick={() => setRankRules(r => ({ ...r, [rule.key]: !r[rule.key] }))}
+                      className="w-8 h-5 rounded-full transition-colors flex items-center cursor-pointer"
+                      style={{ backgroundColor: rankRules[rule.key] ? '#4f46e5' : '#e5e7eb' }}>
+                      <div className="w-3.5 h-3.5 bg-white rounded-full shadow transition-transform mx-0.5"
+                        style={{ transform: rankRules[rule.key] ? 'translateX(12px)' : 'translateX(0)' }} />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">{rule.label}</p>
+                    <p className="text-xs text-gray-400">{rule.desc}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Right: Live rankings preview ── */}
+        <div className="xl:col-span-3">
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-gray-800">Live Rankings Preview</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Updates in real time as you adjust weights</p>
+              </div>
+              <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600">
+                {rankedTalents.length} creators
+              </span>
+            </div>
+
+            <div className="divide-y divide-gray-50">
+              {rankedTalents.map((talent, idx) => {
+                const tb = TIER_BADGE[talent.tier] || TIER_BADGE['fast-rising']
+                const isExpanded = rankExpanded === talent.id
+                const topScore = rankedTalents[0].score
+
+                return (
+                  <div key={talent.id}>
+                    <div className="px-5 py-3.5 flex items-center gap-3 hover:bg-gray-50 transition-colors">
+                      {/* Rank number */}
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 font-bold text-sm"
+                        style={{
+                          backgroundColor: idx === 0 ? '#D4AF37' : idx === 1 ? '#e5e7eb' : idx === 2 ? '#fed7aa' : '#f3f4f6',
+                          color: idx < 3 ? '#fff' : '#9ca3af',
+                        }}>
+                        {idx + 1}
+                      </div>
+
+                      {/* Avatar */}
+                      <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold text-sm"
+                        style={{ backgroundColor: '#4f46e5' }}>
+                        {talent.avatar}
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{talent.name}</p>
+                          {talent.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0 text-blue-500" />}
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <p className="text-xs text-gray-400 truncate">{talent.handle}</p>
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded flex-shrink-0"
+                            style={{ backgroundColor: tb.bg, color: tb.color }}>
+                            {tb.label}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Score + bar */}
+                      <div className="flex flex-col items-end gap-1.5 flex-shrink-0 min-w-[90px]">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm font-black text-gray-900">{talent.score}</span>
+                          <span className="text-xs text-gray-400">/ 100</span>
+                        </div>
+                        <div className="w-20 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                          <div className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${topScore > 0 ? (talent.score / topScore) * 100 : 0}%`,
+                              backgroundColor: idx === 0 ? '#D4AF37' : '#4f46e5',
+                            }} />
+                        </div>
+                      </div>
+
+                      {/* Expand toggle */}
+                      <button onClick={() => setRankExpanded(isExpanded ? null : talent.id)}
+                        className="p-1 text-gray-300 hover:text-gray-600 flex-shrink-0">
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                      </button>
+                    </div>
+
+                    {/* Breakdown row */}
+                    {isExpanded && (
+                      <div className="px-5 pb-4 pt-1 bg-gray-50">
+                        <p className="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-2">Score breakdown</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          {WEIGHT_META.map(({ key, label, color, icon }) => {
+                            const contrib = talent.breakdown[key] || 0
+                            return (
+                              <div key={key} className="bg-white rounded-xl p-2.5 border border-gray-100">
+                                <p className="text-[10px] text-gray-400 mb-0.5">{icon} {label}</p>
+                                <p className="text-sm font-bold" style={{ color }}>+{contrib.toFixed(1)}</p>
+                                <div className="h-1 rounded-full mt-1.5 bg-gray-100 overflow-hidden">
+                                  <div className="h-full rounded-full" style={{ width: `${Math.min(contrib * 5, 100)}%`, backgroundColor: color }} />
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                        <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-gray-500">
+                          <span>Rating: <strong className="text-gray-700">{talent.rating} ★</strong></span>
+                          <span>Campaigns: <strong className="text-gray-700">{talent.campaigns}</strong></span>
+                          <span>Followers: <strong className="text-gray-700">{talent.followers.toLocaleString()}</strong></span>
+                          <span>Engagement: <strong className="text-gray-700">{talent.engagement}%</strong></span>
+                          <span>Location: <strong className="text-gray-700">{talent.location}</strong></span>
+                          <span>Profile: <strong className="text-gray-700">{talent.profilePct}%</strong></span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Footer note */}
+            <div className="px-5 py-3 border-t border-gray-100 bg-gray-50 flex items-start gap-2">
+              <Info className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-gray-400">
+                This ranking is applied in the marketplace discovery feed and brand suggestion panels. Save to publish changes.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
   const TAB_CONTENT = {
     overview: renderOverview,
     users: renderUsers,
@@ -1147,6 +1535,7 @@ export default function AdminPanel() {
     financials: renderFinancials,
     legal: renderLegal,
     settings: renderSettings,
+    rankings: renderRankings,
   };
 
   if (!adminUser) return null;
