@@ -115,8 +115,8 @@ export default function App() {
       return
     }
 
-    // Send welcome email via edge function
-    fetch('https://ruepnwhgehcwfeekkpjb.supabase.co/functions/v1/send-waitlist-email', {
+    // Send welcome email via Vercel serverless function
+    fetch('/api/send-waitlist-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email.trim().toLowerCase(), name: name.trim(), role, industry }),
