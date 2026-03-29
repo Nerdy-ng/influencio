@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const { email, name, role } = await req.json()
+    const { email, name, role, industry } = await req.json()
 
     const firstName = name?.split(' ')[0] || 'there'
     const isCreator = role === 'creator'
@@ -141,6 +141,35 @@ serve(async (req) => {
     })
 
     const data = await res.json()
+
+    // ── Admin alert ──────────────────────────────────────────────────────────
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM,
+        to: ['nerd.owl.integrated@gmail.com'],
+        subject: `🔔 New waitlist signup — ${name} (${isCreator ? 'Talent' : 'Brand'})`,
+        html: `
+          <div style="font-family:Arial,sans-serif;background:#0d0020;padding:32px;color:#fff;border-radius:12px;">
+            <p style="color:#c084fc;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 12px;">New Waitlist Subscriber</p>
+            <h2 style="margin:0 0 20px;font-size:22px;">${name}</h2>
+            <table cellpadding="0" cellspacing="0">
+              <tr><td style="color:rgba(255,255,255,0.45);font-size:13px;padding:4px 0;width:90px;">Email</td><td style="color:#fff;font-size:13px;padding:4px 0;">${email}</td></tr>
+              <tr><td style="color:rgba(255,255,255,0.45);font-size:13px;padding:4px 0;">Role</td><td style="color:${isCreator ? '#FF6B9D' : '#c084fc'};font-size:13px;font-weight:700;padding:4px 0;">${isCreator ? 'Talent / Creator' : 'Brand / Business'}</td></tr>
+              ${industry ? `<tr><td style="color:rgba(255,255,255,0.45);font-size:13px;padding:4px 0;">Industry</td><td style="color:#fff;font-size:13px;padding:4px 0;">${industry}</td></tr>` : ''}
+              <tr><td style="color:rgba(255,255,255,0.45);font-size:13px;padding:4px 0;">Signed up</td><td style="color:#fff;font-size:13px;padding:4px 0;">${new Date().toUTCString()}</td></tr>
+            </table>
+            <div style="margin-top:24px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08);">
+              <a href="https://supabase.com/dashboard/project/ruepnwhgehcwfeekkpjb/editor" style="background:#4c1d95;color:#fff;font-size:12px;font-weight:700;padding:10px 20px;border-radius:100px;text-decoration:none;display:inline-block;">View in Supabase →</a>
+            </div>
+          </div>
+        `,
+      }),
+    }).catch(() => {}) // fail silently — don't block subscriber email
 
     return new Response(JSON.stringify(data), {
       headers: {

@@ -119,7 +119,7 @@ export default function App() {
     fetch('https://ruepnwhgehcwfeekkpjb.supabase.co/functions/v1/send-waitlist-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email.trim().toLowerCase(), name: name.trim(), role }),
+      body: JSON.stringify({ email: email.trim().toLowerCase(), name: name.trim(), role, industry }),
     }).catch(() => {}) // fail silently — don't block the success screen
 
     setState('success')
