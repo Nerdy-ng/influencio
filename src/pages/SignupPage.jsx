@@ -50,7 +50,7 @@ function RoleCard({ role, selected, onSelect }) {
         {isTalent ? 'Talent' : 'Brand'}
       </p>
       <p className="text-brand-dark/40 text-xs leading-relaxed">
-        {isTalent ? 'Monetise your audience & land brand deals' : 'Find talents & launch campaigns'}
+        {isTalent ? 'Monetize your talent & audience' : 'Find creators & launch campaigns'}
       </p>
     </button>
   )

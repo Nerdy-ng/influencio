@@ -775,6 +775,76 @@ function MyApplicationsTab({ setActiveTab }) {
   )
 }
 
+function AccountSettingsCard({ settingsEditMode, realEmail }) {
+  const [newEmail, setNewEmail] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (realEmail) setNewEmail(realEmail)
+  }, [realEmail])
+
+  async function handleUpdate() {
+    setError('')
+    const updates = {}
+    if (newEmail && newEmail !== realEmail) updates.email = newEmail
+    if (newPassword.length >= 8) updates.password = newPassword
+    if (!Object.keys(updates).length) { setError('Nothing to update.'); return }
+    setSaving(true)
+    const { error: err } = await supabase.auth.updateUser(updates)
+    setSaving(false)
+    if (err) { setError(err.message); return }
+    setSaved(true)
+    setNewPassword('')
+    setTimeout(() => setSaved(false), 2500)
+  }
+
+  return (
+    <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+      <p className="font-bold text-brand-dark mb-4">Account Settings</p>
+      <div className="space-y-4">
+        <div>
+          <label className="text-xs font-medium text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Email Address</label>
+          {settingsEditMode ? (
+            <input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)}
+              placeholder="your@email.com"
+              className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none"
+              style={{ border: `1px solid ${purple}50`, backgroundColor: '#f9f5ff' }} />
+          ) : (
+            <p className="text-sm py-1" style={{ color: realEmail ? '#0a0a0a' : 'rgba(10,0,32,0.25)' }}>
+              {realEmail || 'your@email.com'}
+            </p>
+          )}
+        </div>
+        <div>
+          <label className="text-xs font-medium text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Change Password</label>
+          {settingsEditMode ? (
+            <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
+              placeholder="New password (min 8 chars)"
+              className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none"
+              style={{ border: `1px solid ${purple}50`, backgroundColor: '#f9f5ff' }} />
+          ) : (
+            <p className="text-sm text-brand-dark/25 italic py-1">••••••••</p>
+          )}
+        </div>
+        {error && <p className="text-xs" style={{ color: '#ef4444' }}>{error}</p>}
+        {settingsEditMode && (
+          <button onClick={handleUpdate} disabled={saving}
+            className="px-5 py-2.5 rounded-full text-sm font-bold text-white flex items-center gap-2 disabled:opacity-60"
+            style={{ backgroundColor: saved ? '#16a34a' : darkPurple }}>
+            {saving
+              ? <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              : saved ? <><CheckCircle className="w-4 h-4" /> Saved!</> : 'Update Account'
+            }
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function TalentDashboard() {
   const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'jobs')
@@ -2033,32 +2103,7 @@ export default function TalentDashboard() {
                 <EditableField label="Official / Legal Name" value={profile.name} onChange={v => updateField('name', v)} placeholder="Your full legal name" isEditing={settingsEditMode} />
               </div>
 
-              <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
-                <p className="font-bold text-brand-dark mb-4">Account Settings</p>
-                <div className="space-y-4">
-                  {[
-                    { label: 'Email Address', placeholder: 'your@email.com', type: 'email' },
-                    { label: 'Change Password', placeholder: '••••••••', type: 'password' },
-                  ].map(({ label, placeholder, type }) => (
-                    <div key={label}>
-                      <label className="text-xs font-medium text-brand-dark/40 uppercase tracking-widest mb-1.5 block">{label}</label>
-                      {settingsEditMode ? (
-                        <input type={type} placeholder={placeholder}
-                          className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none"
-                          style={{ border: `1px solid ${purple}50`, backgroundColor: '#f9f5ff' }} />
-                      ) : (
-                        <p className="text-sm text-brand-dark/25 italic py-1">{placeholder}</p>
-                      )}
-                    </div>
-                  ))}
-                  {settingsEditMode && (
-                    <button className="px-5 py-2.5 rounded-full text-sm font-bold text-white"
-                      style={{ backgroundColor: darkPurple }}>
-                      Update Account
-                    </button>
-                  )}
-                </div>
-              </div>
+              <AccountSettingsCard settingsEditMode={settingsEditMode} realEmail={profile.email} />
 
               <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
                 <div className="flex items-center justify-between mb-4">
