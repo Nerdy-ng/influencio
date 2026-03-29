@@ -11,6 +11,7 @@ import MessagingPanel from '../components/MessagingPanel'
 import InviteTab from '../components/InviteTab'
 import { useFavorites } from '../hooks/useFavorites'
 import { supabase } from '../lib/supabase'
+import OnboardingTour from '../components/OnboardingTour'
 
 const API = 'http://localhost:3001/api'
 
@@ -920,6 +921,8 @@ export default function BrandDashboard() {
   const [reviewModal, setReviewModal] = useState(null)
 
   const [toast, setToast] = useState(null)
+  const brandUserId = localStorage.getItem('brandiór_user') || 'guest'
+  const [showTour, setShowTour] = useState(() => !localStorage.getItem(`brandior_tour_done_${brandUserId}`))
 
   const showToast = (message, type = 'success') => setToast({ message, type })
 
@@ -986,6 +989,13 @@ export default function BrandDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
+      {showTour && (
+        <OnboardingTour
+          role="brand"
+          onClose={() => setShowTour(false)}
+          setActiveTab={setActiveTab}
+        />
+      )}
       {/* Sidebar */}
       <>
         {/* Desktop sidebar */}

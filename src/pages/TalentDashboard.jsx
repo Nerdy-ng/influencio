@@ -15,6 +15,7 @@ const TALENT_API = 'http://localhost:3001/api'
 import MessagingPanel from '../components/MessagingPanel'
 import { supabase } from '../lib/supabase'
 import InviteTab from '../components/InviteTab'
+import OnboardingTour from '../components/OnboardingTour'
 
 const pink = '#FF6B9D'
 const gold = '#D4AF37'
@@ -787,6 +788,8 @@ export default function TalentDashboard() {
   const [settingsEditMode, setSettingsEditMode] = useState(false)
   const [profileSnapshot, setProfileSnapshot] = useState(null)
   const [unreadMessages, setUnreadMessages] = useState(0)
+  const userId = localStorage.getItem('brandiór_user') || 'guest'
+  const [showTour, setShowTour] = useState(() => !localStorage.getItem(`brandior_tour_done_${userId}`))
 
   // Load real email from Supabase session
   useEffect(() => {
@@ -943,6 +946,13 @@ export default function TalentDashboard() {
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: '#f9f5ff' }}>
+      {showTour && (
+        <OnboardingTour
+          role="talent"
+          onClose={() => setShowTour(false)}
+          setActiveTab={setActiveTab}
+        />
+      )}
       <Sidebar active={activeTab} setActive={tab => {
         if (settingsEditMode) { cancelEditSettings() }
         setActiveTab(tab)
