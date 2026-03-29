@@ -152,7 +152,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: FROM,
         to: ['nerd.owl.integrated@gmail.com'],
-        subject: `🔔 New waitlist signup — ${name} (${isCreator ? 'Talent' : 'Brand'})`,
+        subject: `🔔 New ${isCreator ? 'Talent' : 'Brand'} — ${name}`,
         html: `
           <div style="font-family:Arial,sans-serif;background:#0d0020;padding:32px;color:#fff;border-radius:12px;">
             <p style="color:#c084fc;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 12px;">New Waitlist Subscriber</p>
