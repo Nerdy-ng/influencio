@@ -13,6 +13,7 @@ import {
 
 const TALENT_API = 'http://localhost:3001/api'
 import MessagingPanel from '../components/MessagingPanel'
+import { supabase } from '../lib/supabase'
 import InviteTab from '../components/InviteTab'
 
 const pink = '#FF6B9D'
@@ -134,6 +135,7 @@ const mockOAuthData = {
 const emptyProfile = {
   name: '',
   nickname: '',
+  email: '',
   handle: '',
   location: '',
   niches: [],
@@ -500,13 +502,68 @@ const MOCK_JOBS = [
   { id: 8, brand: 'TechHub Africa',      initials: 'TH', verified: true,  title: 'LinkedIn Thought Leadership Post',     budget: '₦120,000', budgetRange: '₦80K–₦200K',  platform: 'LinkedIn',  niche: 'Finance & Business',   deadline: '12 days left', minFollowers: '10K+',  engagement: '3%+', tags: ['LinkedIn','B2B','Thought Leader'], accent: '#3b82f6', featured: false },
 ]
 
-function JobsTab() {
+function NewUserWelcomeBanner({ completion, setActiveTab }) {
+  if (completion >= 40) return null
+  return (
+    <div className="rounded-2xl p-5 mb-2" style={{ background: 'linear-gradient(135deg, #1a0035 0%, #3d0080 100%)', border: '1px solid rgba(192,132,252,0.25)' }}>
+      <p className="text-[11px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: '#c084fc' }}>Getting Started</p>
+      <h3 className="text-white font-bold text-base mb-1">Complete your profile to apply for campaigns</h3>
+      <p className="text-white/45 text-sm mb-4">Brands won't be able to hire you until your profile is set up.</p>
+      <div className="flex flex-wrap gap-4 mb-4">
+        {[
+          { n: 1, label: 'Add your name & bio' },
+          { n: 2, label: 'Connect a social account' },
+          { n: 3, label: 'Set your rates' },
+        ].map(({ n, label }) => (
+          <div key={n} className="flex items-center gap-2 text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
+              style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: '#c084fc', border: '1px solid rgba(192,132,252,0.3)' }}>{n}</div>
+            {label}
+          </div>
+        ))}
+      </div>
+      <button onClick={() => setActiveTab('settings')}
+        className="px-5 py-2 rounded-full text-xs font-bold text-white transition-opacity hover:opacity-80"
+        style={{ backgroundColor: '#7c3aed' }}>
+        Complete Profile →
+      </button>
+    </div>
+  )
+}
+
+function JobsTab({ completion = 100, setActiveTab }) {
   const [filter, setFilter] = useState('All')
+  const [applyWarning, setApplyWarning] = useState(false)
   const platforms = ['All', 'Instagram', 'TikTok', 'YouTube', 'LinkedIn']
   const filtered = filter === 'All' ? MOCK_JOBS : MOCK_JOBS.filter(j => j.platform === filter)
 
+  function handleApply() {
+    if (completion < 40) {
+      setApplyWarning(true)
+      setTimeout(() => setApplyWarning(false), 4000)
+    } else {
+      window.location.href = '/jobs'
+    }
+  }
+
   return (
     <div className="space-y-5">
+      <NewUserWelcomeBanner completion={completion} setActiveTab={setActiveTab} />
+
+      {applyWarning && (
+        <div className="flex items-start gap-3 rounded-2xl px-4 py-3" style={{ backgroundColor: '#fef9c3', border: '1px solid #fde047' }}>
+          <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#854d0e' }} />
+          <div>
+            <p className="text-sm font-semibold" style={{ color: '#854d0e' }}>Complete your profile first</p>
+            <p className="text-xs mt-0.5" style={{ color: '#92400e' }}>Brands need to see your name, bio, and at least one social account before you can apply.</p>
+          </div>
+          <button onClick={() => setActiveTab('settings')} className="ml-auto text-xs font-bold px-3 py-1 rounded-full flex-shrink-0"
+            style={{ backgroundColor: '#854d0e', color: 'white' }}>
+            Set Up →
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="rounded-2xl p-5" style={{ background: 'linear-gradient(135deg, #1a0035 0%, #3d0080 100%)' }}>
         <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: '#c084fc' }}>Brand Campaigns</p>
@@ -585,7 +642,7 @@ function JobsTab() {
                 <span className="flex items-center gap-0.5"><TrendingUp className="w-3 h-3" />{job.engagement}</span>
                 <span className="flex items-center gap-0.5"><Briefcase className="w-3 h-3" />{job.deadline}</span>
               </div>
-              <button className="text-[11px] font-bold px-3 py-1.5 rounded-full text-white transition-all"
+              <button onClick={handleApply} className="text-[11px] font-bold px-3 py-1.5 rounded-full text-white transition-all hover:opacity-80"
                 style={{ backgroundColor: job.accent }}>
                 Apply Now
               </button>
@@ -723,6 +780,15 @@ export default function TalentDashboard() {
   const [showRatingDetail, setShowRatingDetail] = useState(false)
   const [settingsEditMode, setSettingsEditMode] = useState(false)
   const [profileSnapshot, setProfileSnapshot] = useState(null)
+
+  // Load real email from Supabase session
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.email) {
+        setProfile(p => ({ ...p, email: session.user.email }))
+      }
+    })
+  }, [])
 
   // Keep public preview in sync with latest profile data
   useEffect(() => {
@@ -924,7 +990,7 @@ export default function TalentDashboard() {
           </div>
 
           {/* ── JOBS TAB ── */}
-          {activeTab === 'jobs' && <JobsTab />}
+          {activeTab === 'jobs' && <JobsTab completion={completion} setActiveTab={setActiveTab} />}
 
           {/* ── MY APPLICATIONS TAB ── */}
           {activeTab === 'applications' && <MyApplicationsTab setActiveTab={setActiveTab} />}

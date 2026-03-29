@@ -10,9 +10,9 @@ import {
 import MessagingPanel from '../components/MessagingPanel'
 import InviteTab from '../components/InviteTab'
 import { useFavorites } from '../hooks/useFavorites'
+import { supabase } from '../lib/supabase'
 
 const API = 'http://localhost:3001/api'
-const BRAND_ID = 'brand_demo'
 
 const pink = '#FF6B9D'
 const darkPurple = '#4c1d95'
@@ -924,13 +924,14 @@ export default function BrandDashboard() {
   const showToast = (message, type = 'success') => setToast({ message, type })
 
   const fetchOrders = useCallback(async () => {
+    const brandId = localStorage.getItem('brandiór_user') || 'guest'
     try {
-      const res = await fetch(`${API}/orders?brandId=${BRAND_ID}`)
+      const res = await fetch(`${API}/orders?brandId=${brandId}`)
       if (!res.ok) throw new Error('Fetch failed')
       const data = await res.json()
       setOrders(Array.isArray(data) ? data : data.orders || [])
     } catch {
-      setOrders(generateMockOrders())
+      setOrders([])
     } finally {
       setLoading(false)
     }
@@ -1127,6 +1128,7 @@ export default function BrandDashboard() {
 
 function BrandAvatarMenu() {
   const [open, setOpen] = useState(false)
+  const [userEmail, setUserEmail] = useState('')
   const ref = useRef(null)
   const navigate = useNavigate()
 
@@ -1134,6 +1136,12 @@ function BrandAvatarMenu() {
     const handler = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.email) setUserEmail(session.user.email)
+    })
   }, [])
 
   async function handleLogout() {
@@ -1146,16 +1154,16 @@ function BrandAvatarMenu() {
     <div className="relative" ref={ref}>
       <button onClick={() => setOpen(v => !v)} className="relative focus:outline-none">
         <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white" style={{ backgroundColor: darkPurple }}>
-          B
+          {userEmail ? userEmail[0].toUpperCase() : 'B'}
         </div>
         <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-500 ring-2 ring-white" title="Online" />
       </button>
       {open && (
-        <div className="absolute right-0 top-11 w-44 rounded-2xl shadow-xl overflow-hidden z-50"
+        <div className="absolute right-0 top-11 w-52 rounded-2xl shadow-xl overflow-hidden z-50"
           style={{ backgroundColor: '#1e0a3c', border: '1px solid rgba(196,181,253,0.15)' }}>
           <div className="px-4 py-3 border-b" style={{ borderColor: 'rgba(196,181,253,0.1)' }}>
             <p className="text-white text-sm font-semibold">Brand Account</p>
-            <p className="text-white/35 text-xs">brand@brandiór.co</p>
+            <p className="text-white/35 text-xs truncate">{userEmail || 'Loading...'}</p>
           </div>
           <button
             onClick={handleLogout}
@@ -1292,9 +1300,38 @@ function TalentMiniCard({ talent }) {
 }
 
 function OverviewTab({ activeOrders, pendingReview, completedOrders, setActiveTab }) {
+  const isNewAccount = activeOrders.length === 0 && completedOrders.length === 0
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-gray-900">Overview</h2>
+
+      {/* New account onboarding */}
+      {isNewAccount && (
+        <div className="rounded-2xl p-6" style={{ background: 'linear-gradient(135deg, #1a0035 0%, #3d0080 100%)', border: '1px solid rgba(124,58,237,0.3)' }}>
+          <p className="text-[11px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: '#c4b5fd' }}>Getting Started</p>
+          <h3 className="text-white font-bold text-lg mb-1">Launch your first creator campaign</h3>
+          <p className="text-white/45 text-sm mb-5">Find the right creators, order campaign packages, and track results — all in one place.</p>
+          <div className="flex flex-wrap gap-5 mb-5">
+            {[
+              { n: 1, label: 'Browse the marketplace' },
+              { n: 2, label: 'Order a campaign package' },
+              { n: 3, label: 'Track your results here' },
+            ].map(({ n, label }) => (
+              <div key={n} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: '#c4b5fd', border: '1px solid rgba(196,181,253,0.3)' }}>{n}</div>
+                {label}
+              </div>
+            ))}
+          </div>
+          <Link to="/marketplace"
+            className="inline-block px-5 py-2.5 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-80"
+            style={{ backgroundColor: '#7c3aed' }}>
+            Browse Creators →
+          </Link>
+        </div>
+      )}
 
       {/* Stat cards */}
       <div className="grid grid-cols-3 gap-4">
@@ -1643,7 +1680,19 @@ function FavoritesTab() {
 
 function SettingsTab() {
   const [saved, setSaved] = useState(false)
-  const [form, setForm] = useState({ brandName: 'My Brand', email: 'brand@example.com', website: '', notifications: true })
+  const [form, setForm] = useState({ brandName: '', email: '', website: '', notifications: true })
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setForm(f => ({
+          ...f,
+          email: session.user.email || '',
+          brandName: session.user.user_metadata?.display_name || session.user.user_metadata?.full_name || '',
+        }))
+      }
+    })
+  }, [])
 
   const handleSave = () => {
     setSaved(true)
