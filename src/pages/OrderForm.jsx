@@ -4,6 +4,7 @@ import {
   ChevronLeft, Shield, CheckCircle, Clock, RefreshCw,
   Zap, AlertCircle, Loader2,
 } from 'lucide-react'
+import { getSetting } from '../lib/siteSettings'
 
 const API = 'http://localhost:3001/api'
 
@@ -245,7 +246,8 @@ export default function OrderForm() {
   }
 
   const platformColor = pkg ? (PLATFORM_COLORS[pkg.platform] || '#6b7280') : darkPurple
-  const platformFee = pkg ? Math.round(pkg.price * 0.1) : 0
+  const platformFeePercent = Number(getSetting('platformFee')) / 100 || 0.1
+  const platformFee = pkg ? Math.round(pkg.price * platformFeePercent) : 0
   const total = pkg ? pkg.price + platformFee : 0
 
   return (

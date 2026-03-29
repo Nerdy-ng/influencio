@@ -63,8 +63,11 @@ function MaintenanceGate({ children }) {
 }
 
 // Logged-out → show the page. Logged-in → send to role home.
+// Exception: allow /signup?step=complete for new Google users to complete profile.
 function PublicOnly({ children }) {
   if (localStorage.getItem('brandiór_user')) {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('step') === 'complete') return children  // profile completion allowed while logged in
     const role = localStorage.getItem('brandiór_role')
     return <Navigate to={role === 'talent' ? '/jobs' : '/marketplace'} replace />
   }
@@ -87,14 +90,26 @@ export default function App() {
           localStorage.setItem('brandiór_user', session.user.id)
           // Pick up role the user selected before Google OAuth redirect
           const pendingRole = sessionStorage.getItem('brandiór_pending_role')
+          const isNewSignup  = sessionStorage.getItem('brandiór_new_signup') === '1'
           if (pendingRole) {
             sessionStorage.removeItem('brandiór_pending_role')
+            sessionStorage.removeItem('brandiór_new_signup')
             localStorage.setItem('brandiór_role', pendingRole)
-            navigate(pendingRole === 'brand' ? '/brand-dashboard' : '/dashboard', { replace: true })
+            if (isNewSignup) {
+              // New Google signup — send to profile completion
+              navigate(`/signup?step=complete&oauth=1&role=${pendingRole}`, { replace: true })
+            } else {
+              navigate(pendingRole === 'brand' ? '/brand-dashboard' : '/dashboard', { replace: true })
+            }
           } else if (!localStorage.getItem('brandiór_role')) {
             if (metaRole) {
               localStorage.setItem('brandiór_role', metaRole)
-              navigate(metaRole === 'brand' ? '/brand-dashboard' : '/dashboard', { replace: true })
+              const profileComplete = session.user.user_metadata?.profile_complete
+              if (!profileComplete) {
+                navigate(`/signup?step=complete&oauth=1&role=${metaRole}`, { replace: true })
+              } else {
+                navigate(metaRole === 'brand' ? '/brand-dashboard' : '/dashboard', { replace: true })
+              }
             } else {
               navigate('/signup?step=role&oauth=1', { replace: true })
             }

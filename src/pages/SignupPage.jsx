@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Zap, Star, TrendingUp, Eye, EyeOff, ArrowRight, CheckCircle, Mail, Lock, User, ChevronLeft } from 'lucide-react'
+import { Zap, Star, TrendingUp, Eye, EyeOff, ArrowRight, CheckCircle, Mail, Lock, User, ChevronLeft, MapPin, Briefcase, FileText } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getLogo } from '../lib/brandSettings'
 
@@ -63,13 +63,30 @@ const talentOptions = [
   { id: 'Product Reviewer',  emoji: '⭐', desc: 'Honest reviews & unboxings' },
 ]
 
+const TALENT_NICHES = [
+  'Beauty & Skincare', 'Fashion & Style', 'Food & Cooking', 'Tech & Gadgets',
+  'Fitness & Wellness', 'Travel & Lifestyle', 'Comedy', 'Entertainment',
+  'Music', 'Finance & Business', 'Gaming', 'Parenting',
+]
+
+const BRAND_INDUSTRIES = [
+  'FMCG / Consumer Goods', 'Technology', 'Fashion & Apparel', 'Food & Beverage',
+  'Finance & Fintech', 'Health & Wellness', 'Entertainment & Media', 'E-commerce',
+  'Hospitality & Travel', 'Education', 'Real Estate', 'Automotive',
+]
+
 export default function SignupPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const isOAuthRolePicker = searchParams.get('oauth') === '1'
-  const [step, setStep] = useState(isOAuthRolePicker ? 'role' : 'role')
+  const isProfileComplete = searchParams.get('step') === 'complete'
+
+  const [step, setStep] = useState(() => {
+    if (isProfileComplete) return 'complete'
+    return 'role'
+  })
   const [role, setRole] = useState(() => {
-    const r = searchParams.get('role')
+    const r = searchParams.get('role') || localStorage.getItem('brandiór_role')
     return r === 'brand' ? 'brand' : 'talent'
   })
   const [talentTypes, setTalentTypes] = useState([])
@@ -79,11 +96,25 @@ export default function SignupPage() {
   const [errors, setErrors] = useState({})
   const [authError, setAuthError] = useState('')
   const [authLogo, setAuthLogo] = useState(() => getLogo('auth'))
+
+  // Profile completion state (for Google OAuth new users)
+  const [profile, setProfile] = useState({ displayName: '', bio: '', location: '', niches: [], industry: '' })
+
   useEffect(() => {
     function onLogoUpdate() { setAuthLogo(getLogo('auth')) }
     window.addEventListener('brandior:logo-updated', onLogoUpdate)
     return () => window.removeEventListener('brandior:logo-updated', onLogoUpdate)
   }, [])
+
+  // Pre-fill display name from Google session on the complete step
+  useEffect(() => {
+    if (step === 'complete') {
+      supabase.auth.getSession().then(({ data }) => {
+        const name = data.session?.user?.user_metadata?.full_name || data.session?.user?.user_metadata?.name || ''
+        if (name) setProfile(p => ({ ...p, displayName: p.displayName || name }))
+      })
+    }
+  }, [step])
 
   function validate() {
     const e = {}
@@ -114,10 +145,14 @@ export default function SignupPage() {
     await supabase.auth.updateUser({ data: { role } })
     localStorage.setItem('brandiór_role', role)
     setLoading(false)
-    navigate(role === 'brand' ? '/marketplace' : '/jobs', { replace: true })
+    // Go to profile completion for new users, otherwise dashboard
+    navigate(`/signup?step=complete&oauth=1&role=${role}`, { replace: true })
   }
 
   async function handleGoogleSignup() {
+    // Store role and new-user flag so App.jsx can redirect properly after OAuth
+    sessionStorage.setItem('brandiór_pending_role', role)
+    sessionStorage.setItem('brandiór_new_signup', '1')
     setLoading(true)
     await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -127,6 +162,36 @@ export default function SignupPage() {
       },
     })
     setLoading(false)
+  }
+
+  async function handleCompleteProfile() {
+    if (!profile.displayName.trim()) {
+      setErrors({ displayName: 'Please enter your name' })
+      return
+    }
+    if (role === 'talent' && profile.niches.length === 0) {
+      setErrors({ niches: 'Select at least one niche' })
+      return
+    }
+    if (role === 'brand' && !profile.industry) {
+      setErrors({ industry: 'Please select your industry' })
+      return
+    }
+    setLoading(true)
+    await supabase.auth.updateUser({
+      data: {
+        full_name: profile.displayName,
+        bio: profile.bio,
+        location: profile.location,
+        niches: profile.niches,
+        industry: profile.industry,
+        profile_complete: true,
+        role,
+      }
+    })
+    localStorage.setItem('brandiór_role', role)
+    setLoading(false)
+    navigate(role === 'brand' ? '/brand-dashboard' : '/dashboard', { replace: true })
   }
 
   function handleChange(field, value) {
@@ -346,6 +411,147 @@ export default function SignupPage() {
               Already have an account?{' '}
               <Link to="/login" className="font-semibold" style={{ color: darkPurple }}>Log in</Link>
             </p>
+          </div>
+        )}
+
+        {/* STEP: COMPLETE PROFILE (new Google OAuth users) */}
+        {step === 'complete' && (
+          <div>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: `${pink}15` }}>
+                <CheckCircle className="w-5 h-5" style={{ color: pink }} />
+              </div>
+              <div>
+                <h1 className="text-xl font-black text-brand-dark leading-tight">Almost there!</h1>
+                <p className="text-brand-dark/40 text-xs">Complete your profile so {role === 'brand' ? 'talents' : 'brands'} can find you.</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {/* Display name */}
+              <div>
+                <label className="text-brand-dark/50 text-xs font-medium mb-1.5 block">
+                  {role === 'brand' ? 'Brand / Company Name' : 'Your Full Name'}
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-dark/25" />
+                  <input
+                    type="text"
+                    value={profile.displayName}
+                    onChange={e => { setProfile(p => ({ ...p, displayName: e.target.value })); setErrors(er => ({ ...er, displayName: '' })) }}
+                    placeholder={role === 'brand' ? 'GlowUp Cosmetics Ltd' : 'Amara Osei'}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-brand-dark placeholder-brand-dark/25 outline-none transition-all"
+                    style={{ border: errors.displayName ? `1.5px solid ${pink}` : '1.5px solid #e9d5ff' }}
+                  />
+                </div>
+                {errors.displayName && <p className="text-xs mt-1" style={{ color: pink }}>{errors.displayName}</p>}
+              </div>
+
+              {/* Talent: niche selection */}
+              {role === 'talent' && (
+                <div>
+                  <label className="text-brand-dark/50 text-xs font-medium mb-2 block">
+                    Your Niche(s) <span className="text-brand-dark/30">(select all that apply)</span>
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {TALENT_NICHES.map(n => {
+                      const sel = profile.niches.includes(n)
+                      return (
+                        <button key={n} type="button"
+                          onClick={() => {
+                            setProfile(p => ({ ...p, niches: sel ? p.niches.filter(x => x !== n) : [...p.niches, n] }))
+                            setErrors(er => ({ ...er, niches: '' }))
+                          }}
+                          className="px-2.5 py-1 rounded-full text-xs font-medium border transition-all"
+                          style={sel
+                            ? { backgroundColor: darkPurple, color: '#fff', borderColor: darkPurple }
+                            : { backgroundColor: '#f3eeff', color: '#7c3aed', borderColor: '#e9d5ff' }
+                          }>
+                          {n}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {errors.niches && <p className="text-xs mt-1" style={{ color: pink }}>{errors.niches}</p>}
+                </div>
+              )}
+
+              {/* Brand: industry selection */}
+              {role === 'brand' && (
+                <div>
+                  <label className="text-brand-dark/50 text-xs font-medium mb-1.5 block">Industry</label>
+                  <div className="relative">
+                    <Briefcase className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-dark/25" />
+                    <select
+                      value={profile.industry}
+                      onChange={e => { setProfile(p => ({ ...p, industry: e.target.value })); setErrors(er => ({ ...er, industry: '' })) }}
+                      className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-brand-dark outline-none transition-all appearance-none"
+                      style={{ border: errors.industry ? `1.5px solid ${pink}` : '1.5px solid #e9d5ff' }}
+                    >
+                      <option value="">Select your industry…</option>
+                      {BRAND_INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
+                    </select>
+                  </div>
+                  {errors.industry && <p className="text-xs mt-1" style={{ color: pink }}>{errors.industry}</p>}
+                </div>
+              )}
+
+              {/* Bio */}
+              <div>
+                <label className="text-brand-dark/50 text-xs font-medium mb-1.5 block">
+                  Short Bio <span className="text-brand-dark/30">(optional)</span>
+                </label>
+                <div className="relative">
+                  <FileText className="absolute left-3.5 top-3 w-4 h-4 text-brand-dark/25" />
+                  <textarea
+                    value={profile.bio}
+                    onChange={e => setProfile(p => ({ ...p, bio: e.target.value }))}
+                    placeholder={role === 'brand'
+                      ? 'Tell talents what your brand is about…'
+                      : 'Describe your content style and what you bring to brands…'}
+                    rows={3}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-brand-dark placeholder-brand-dark/25 outline-none transition-all resize-none"
+                    style={{ border: '1.5px solid #e9d5ff' }}
+                  />
+                </div>
+              </div>
+
+              {/* Location */}
+              <div>
+                <label className="text-brand-dark/50 text-xs font-medium mb-1.5 block">
+                  Location <span className="text-brand-dark/30">(optional)</span>
+                </label>
+                <div className="relative">
+                  <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-dark/25" />
+                  <input
+                    type="text"
+                    value={profile.location}
+                    onChange={e => setProfile(p => ({ ...p, location: e.target.value }))}
+                    placeholder="Lagos, Nigeria"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-brand-dark placeholder-brand-dark/25 outline-none transition-all"
+                    style={{ border: '1.5px solid #e9d5ff' }}
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={handleCompleteProfile}
+                disabled={loading}
+                className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-60"
+                style={{ backgroundColor: darkPurple }}>
+                {loading
+                  ? <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  : <>Complete & Go to Dashboard <ArrowRight className="w-4 h-4" /></>
+                }
+              </button>
+
+              <button
+                onClick={() => navigate(role === 'brand' ? '/brand-dashboard' : '/dashboard', { replace: true })}
+                className="w-full py-2 text-xs text-brand-dark/35 hover:text-brand-dark/60 transition-colors text-center">
+                Skip for now — I'll complete my profile later
+              </button>
+            </div>
           </div>
         )}
 

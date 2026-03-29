@@ -20,9 +20,13 @@ const socials = [
 export default function Footer() {
   const [footerLogo, setFooterLogo] = useState(() => getLogo('footer'))
   const [platformName, setPlatformName] = useState(() => getSetting('platformName'))
+  const [tagline, setTagline] = useState(() => getSetting('tagline'))
   useEffect(() => {
     function onLogoUpdate() { setFooterLogo(getLogo('footer')) }
-    function onSettingsUpdate(e) { if (e.detail?.key === 'platformName') setPlatformName(e.detail.value) }
+    function onSettingsUpdate(e) {
+      if (e.detail?.key === 'platformName') setPlatformName(e.detail.value)
+      if (e.detail?.key === 'tagline') setTagline(e.detail.value)
+    }
     window.addEventListener('brandior:logo-updated', onLogoUpdate)
     window.addEventListener('brandior:settings-updated', onSettingsUpdate)
     return () => {
@@ -46,8 +50,7 @@ export default function Footer() {
               <span className="text-xl font-bold text-white">{platformName}</span>
             </div>
             <p className="text-white/30 text-sm leading-relaxed max-w-xs mb-6">
-              Nigeria's platform where micro & macro talents connect with SMB brands for
-              authentic campaigns and long-term partnerships.
+              {tagline}
             </p>
             <div className="flex items-center gap-3">
               {socials.map(({ Icon, label }) => (

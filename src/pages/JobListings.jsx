@@ -9,6 +9,23 @@ import {
 } from 'lucide-react'
 import Navbar from '../components/Navbar'
 
+// Admin label badge component
+function AdminLabelBadge({ label }) {
+  const map = {
+    Urgent:      { bg: '#fee2e2', color: '#dc2626', text: '🔥 Urgent' },
+    Featured:    { bg: '#ede9fe', color: '#7c3aed', text: '⭐ Featured' },
+    'Staff Pick': { bg: '#dbeafe', color: '#1d4ed8', text: '👍 Staff Pick' },
+  }
+  const s = map[label]
+  if (!s) return null
+  return (
+    <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold mr-1"
+      style={{ backgroundColor: s.bg, color: s.color }}>
+      {s.text}
+    </span>
+  )
+}
+
 const purple = '#c084fc'
 const gold = '#D4AF37'
 
@@ -243,13 +260,20 @@ function daysLeft(dateStr) {
   return `${days} days left`
 }
 
-function JobCard({ job, saved, onToggleSave }) {
+function JobCard({ job, saved, onToggleSave, adminLabels = [] }) {
   const deadlineText = daysLeft(job.deadline)
   const isExpiring = deadlineText !== 'Expired' && parseInt(deadlineText) <= 3
+  const allLabels = [...new Set([...(job.isUrgent ? ['Urgent'] : []), ...adminLabels])]
 
   return (
     <div className="p-6 rounded-2xl transition-all hover:shadow-md"
       style={{ backgroundColor: '#f3e8ff', border: '1.5px solid #e9d5ff' }}>
+      {/* Admin labels row */}
+      {allLabels.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-3">
+          {allLabels.map(l => <AdminLabelBadge key={l} label={l} />)}
+        </div>
+      )}
       <div className="flex items-start justify-between gap-4">
 
         {/* Left: all job info */}
@@ -396,6 +420,16 @@ export default function JobListings() {
   const [openSections, setOpenSections] = useState({ niche: true, platform: true, budget: true })
   function toggleSection(key) { setOpenSections(s => ({ ...s, [key]: !s[key] })) }
   const searchRef = useRef(null)
+
+  // Admin-controlled job labels from localStorage
+  const [adminJobLabels, setAdminJobLabels] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('brandior_admin_job_labels')) || {} } catch { return {} }
+  })
+  useEffect(() => {
+    function onLabelsUpdated(e) { setAdminJobLabels(e.detail || {}) }
+    window.addEventListener('brandior:labels-updated', onLabelsUpdated)
+    return () => window.removeEventListener('brandior:labels-updated', onLabelsUpdated)
+  }, [])
 
   const suggestions = buildSuggestions(search)
 
@@ -671,7 +705,7 @@ export default function JobListings() {
             <div className="flex flex-col gap-4">
               {filtered.length > 0 ? (
                 filtered.map(job => (
-                  <JobCard key={job.id} job={job} saved={saved.has(job.id)} onToggleSave={toggleSave} />
+                  <JobCard key={job.id} job={job} saved={saved.has(job.id)} onToggleSave={toggleSave} adminLabels={adminJobLabels[job.id] || []} />
                 ))
               ) : (
                 <div className="text-center py-20">

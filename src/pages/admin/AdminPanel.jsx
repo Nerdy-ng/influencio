@@ -106,6 +106,18 @@ const MOCK_JOBS = [
   { id: "J08", brand: "Pepsi Nigeria", title: "Naija Vibes Music Collaboration", platform: "Instagram", budget: "₦1,800,000", posted: "Mar 5, 2025", status: "active", labels: ["Featured", "Staff Pick"] },
 ];
 
+// Job board listings (mirrors JobListings.jsx MOCK_JOBS) — labels here affect the public job board
+const JOBBOARD_JOBS = [
+  { id: 'j1', brand: 'GlowUp Cosmetics',     title: 'Instagram Reel — Skincare Routine Feature'          },
+  { id: 'j2', brand: 'Tecno Mobile Nigeria', title: 'TikTok Viral Push — New Smartphone Unboxing'        },
+  { id: 'j3', brand: 'Naija Bites',          title: 'Food Review — Restaurant Campaign Series'            },
+  { id: 'j4', brand: 'FitNaija',             title: 'YouTube Fitness Series — 4-Part Collaboration'       },
+  { id: 'j5', brand: 'Punchline Comedy',     title: 'TikTok Comedy Skit — Show Promo'                    },
+  { id: 'j6', brand: 'WealthUp Finance',     title: 'Instagram Carousel — Investment Tips for Gen Z'      },
+  { id: 'j7', brand: 'Ada Collections',      title: 'Fashion Lookbook — New Season Styles'               },
+  { id: 'j8', brand: 'TravelNaija',          title: 'YouTube Vlog — Hidden Gems of Nigeria Series'        },
+];
+
 const MOCK_MANAGERS = [
   { id: 1, name: "Jane Okonkwo", email: "jane@brandior.co", role: "Manager", status: "Active", lastLogin: "Today, 09:14 AM", avatar: "JO" },
   { id: 2, name: "Chidi Eze", email: "chidi@brandior.co", role: "Manager", status: "Active", lastLogin: "Yesterday, 3:22 PM", avatar: "CE" },
@@ -365,9 +377,18 @@ export default function AdminPanel() {
   const [toast, setToast] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);
 
-  // State for various tabs
-  const [users, setUsers] = useState(MOCK_USERS);
-  const [jobs, setJobs] = useState(MOCK_JOBS);
+  // State for various tabs — initialized from localStorage so changes survive reload
+  const [users, setUsers] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('brandior_admin_users')) || MOCK_USERS } catch { return MOCK_USERS }
+  });
+  const [jobs, setJobs] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('brandior_admin_jobs')) || MOCK_JOBS } catch { return MOCK_JOBS }
+  });
+  // Job board labels (j1-j8) — controls public job board badges
+  const [jobBoardLabels, setJobBoardLabels] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('brandior_admin_job_labels')) || {} } catch { return {} }
+  });
+  const [newCountry, setNewCountry] = useState('');
   const [managers, setManagers] = useState(MOCK_MANAGERS);
   const [staffList, setStaffList] = useState(MOCK_STAFF);
   const [approvals, setApprovals] = useState(MOCK_APPROVALS);
@@ -467,6 +488,10 @@ export default function AdminPanel() {
     if (user) setAdminUser(JSON.parse(user));
   }, [navigate]);
 
+  // Persist users and jobs to localStorage whenever they change
+  useEffect(() => { localStorage.setItem('brandior_admin_users', JSON.stringify(users)) }, [users])
+  useEffect(() => { localStorage.setItem('brandior_admin_jobs', JSON.stringify(jobs)) }, [jobs])
+
   const showToast = (message, type = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
@@ -480,6 +505,21 @@ export default function AdminPanel() {
 
   const handleApprovalAction = (id, action) => {
     const item = approvals.find((a) => a.id === id);
+    if (action === 'approved' && item) {
+      if (item.type === 'Verify Talent') {
+        setUsers(prev => prev.map(u => u.name === item.target ? { ...u, verified: true } : u))
+      } else if (item.type === 'Suspend User') {
+        setUsers(prev => prev.map(u => u.name === item.target ? { ...u, status: 'suspended' } : u))
+      } else if (item.type === 'Delete Job') {
+        const jobId = item.target.replace('Job #', '')
+        setJobs(prev => prev.filter(j => j.id !== jobId))
+      } else if (item.type === 'Feature Job') {
+        const jobId = item.target.replace('Job #', '')
+        setJobs(prev => prev.map(j => j.id === jobId ? { ...j, labels: [...new Set([...(j.labels || []), 'Featured'])] } : j))
+      } else if (item.type === 'Process Refund') {
+        showToast(`Refund initiated for ${item.target}.`, 'info')
+      }
+    }
     setApprovals((prev) => prev.filter((a) => a.id !== id));
     setApprovalHistory((prev) => [{ ...item, status: action, reviewedAt: "Just now" }, ...prev]);
     showToast(`Request ${action === "approved" ? "approved" : "rejected"} successfully.`);
@@ -542,6 +582,18 @@ export default function AdminPanel() {
     );
   };
 
+  // Toggles labels for the public job board (j1–j8 IDs) and persists to localStorage
+  const handleToggleJobBoardLabel = (jobId, label) => {
+    setJobBoardLabels(prev => {
+      const current = prev[jobId] || []
+      const updated = current.includes(label) ? current.filter(l => l !== label) : [...current, label]
+      const next = { ...prev, [jobId]: updated }
+      localStorage.setItem('brandior_admin_job_labels', JSON.stringify(next))
+      window.dispatchEvent(new CustomEvent('brandior:labels-updated', { detail: next }))
+      return next
+    })
+  };
+
   const handleSaveUser = () => {
     setUsers(prev => prev.map(u => u.id === editUser.id ? editUser : u));
     setEditUser(null);
@@ -599,7 +651,7 @@ export default function AdminPanel() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Total Users", value: users.length, icon: Users, color: "#4f46e5" },
-          { label: "Active Campaigns", value: "34", icon: Activity, color: "#0ea5e9" },
+          { label: "Active Jobs", value: jobs.filter(j => j.status === 'active').length, icon: Activity, color: "#0ea5e9" },
           { label: "Total Revenue", value: "₦48.2M", icon: DollarSign, color: "#16a34a" },
           { label: "Pending Approvals", value: pendingCount, icon: Bell, color: "#d97706" },
         ].map((s) => (
@@ -925,7 +977,9 @@ export default function AdminPanel() {
                 <button onClick={() => handleApprovalAction(item.id, "rejected")} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white" style={{ backgroundColor: "#dc2626" }}>
                   <X className="w-3 h-3" /> Reject
                 </button>
-                <button className="px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:bg-gray-50">
+                <button
+                  onClick={() => showToast(`Escalated "${item.type}" to senior admin.`, 'info')}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:bg-gray-50">
                   Escalate
                 </button>
               </div>
@@ -956,8 +1010,8 @@ export default function AdminPanel() {
       <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100 flex items-start gap-3">
         <Tag className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" />
         <div>
-          <p className="font-semibold text-indigo-900 text-sm">Admin-Controlled Labels</p>
-          <p className="text-sm text-indigo-700 mt-0.5">Labels are admin-controlled signals visible to talents and brands. Only you can assign Urgent, Featured, and Staff Pick labels to job listings.</p>
+          <p className="font-semibold text-indigo-900 text-sm">Public Job Board Labels</p>
+          <p className="text-sm text-indigo-700 mt-0.5">Labels are admin-controlled signals visible to creators on the job board. Changes take effect immediately — no save required.</p>
         </div>
       </div>
 
@@ -972,26 +1026,29 @@ export default function AdminPanel() {
           </div>
         </div>
         <div className="divide-y divide-gray-50">
-          {jobs.map((job) => (
-            <div key={job.id} className="px-5 py-3 hover:bg-gray-50/50 transition-colors">
-              <div className="grid grid-cols-12 gap-4 items-center">
-                <div className="col-span-4">
-                  <p className="text-sm font-medium text-gray-900 truncate">{job.title}</p>
-                  <p className="text-xs text-gray-400">{job.id}</p>
-                </div>
-                <div className="col-span-2 text-xs text-gray-600">{job.brand}</div>
-                <div className="col-span-2 flex justify-center">
-                  <Toggle checked={job.labels.includes("Urgent")} onChange={() => handleToggleLabel(job.id, "Urgent")} />
-                </div>
-                <div className="col-span-2 flex justify-center">
-                  <Toggle checked={job.labels.includes("Featured")} onChange={() => handleToggleLabel(job.id, "Featured")} />
-                </div>
-                <div className="col-span-2 flex justify-center">
-                  <Toggle checked={job.labels.includes("Staff Pick")} onChange={() => handleToggleLabel(job.id, "Staff Pick")} />
+          {JOBBOARD_JOBS.map((job) => {
+            const labels = jobBoardLabels[job.id] || []
+            return (
+              <div key={job.id} className="px-5 py-3 hover:bg-gray-50/50 transition-colors">
+                <div className="grid grid-cols-12 gap-4 items-center">
+                  <div className="col-span-4">
+                    <p className="text-sm font-medium text-gray-900 truncate">{job.title}</p>
+                    <p className="text-xs text-gray-400">{job.id}</p>
+                  </div>
+                  <div className="col-span-2 text-xs text-gray-600">{job.brand}</div>
+                  <div className="col-span-2 flex justify-center">
+                    <Toggle checked={labels.includes("Urgent")} onChange={() => handleToggleJobBoardLabel(job.id, "Urgent")} />
+                  </div>
+                  <div className="col-span-2 flex justify-center">
+                    <Toggle checked={labels.includes("Featured")} onChange={() => handleToggleJobBoardLabel(job.id, "Featured")} />
+                  </div>
+                  <div className="col-span-2 flex justify-center">
+                    <Toggle checked={labels.includes("Staff Pick")} onChange={() => handleToggleJobBoardLabel(job.id, "Staff Pick")} />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     </div>
@@ -1142,14 +1199,42 @@ export default function AdminPanel() {
 
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <h3 className="font-semibold text-gray-900 mb-4">Allowed Countries</h3>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 mb-3">
           {settings.countries.map((c) => (
             <span key={c} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium" style={{ backgroundColor: "#dcfce7", color: "#16a34a" }}>
               <CheckCircle className="w-3.5 h-3.5" /> {c}
+              <button
+                onClick={() => setSettings(s => ({ ...s, countries: s.countries.filter(x => x !== c) }))}
+                className="ml-0.5 hover:text-red-500 transition-colors text-green-600 font-bold"
+                title="Remove">×</button>
             </span>
           ))}
-          <button className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm border-2 border-dashed border-gray-300 text-gray-500 hover:border-gray-400">
-            <Plus className="w-3.5 h-3.5" /> Add Country
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={newCountry}
+            onChange={e => setNewCountry(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && newCountry.trim() && !settings.countries.includes(newCountry.trim())) {
+                setSettings(s => ({ ...s, countries: [...s.countries, newCountry.trim()] }))
+                setNewCountry('')
+              }
+            }}
+            placeholder="e.g. Ghana"
+            className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400 w-40"
+          />
+          <button
+            onClick={() => {
+              const trimmed = newCountry.trim()
+              if (trimmed && !settings.countries.includes(trimmed)) {
+                setSettings(s => ({ ...s, countries: [...s.countries, trimmed] }))
+                setNewCountry('')
+              }
+            }}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium text-white"
+            style={{ backgroundColor: '#4f46e5' }}>
+            <Plus className="w-3.5 h-3.5" /> Add
           </button>
         </div>
       </div>
@@ -1231,6 +1316,7 @@ export default function AdminPanel() {
   function saveRanking() {
     localStorage.setItem(RANKING_KEY + '_weights', JSON.stringify(rankWeights))
     localStorage.setItem(RANKING_KEY + '_rules', JSON.stringify(rankRules))
+    window.dispatchEvent(new CustomEvent('brandior:rankings-updated', { detail: { weights: rankWeights, rules: rankRules } }))
     setRankSaved(true)
     setTimeout(() => setRankSaved(false), 2500)
   }
