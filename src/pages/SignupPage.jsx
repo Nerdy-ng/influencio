@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Zap, Star, TrendingUp, Eye, EyeOff, ArrowRight, CheckCircle, Mail, Lock, User, ChevronLeft, MapPin, Briefcase, FileText } from 'lucide-react'
+import { Zap, Star, TrendingUp, Eye, EyeOff, ArrowRight, CheckCircle, Mail, Lock, User, ChevronLeft, MapPin, Briefcase, FileText, Globe, Hash, Building2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getLogo } from '../lib/brandSettings'
 
@@ -92,7 +92,7 @@ export default function SignupPage() {
   const [talentTypes, setTalentTypes] = useState([])
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [form, setForm] = useState({ name: '', email: '', password: '' })
+  const [form, setForm] = useState({ name: '', email: '', password: '', handle: '', website: '', industry: '' })
   const [errors, setErrors] = useState({})
   const [authError, setAuthError] = useState('')
   const [authLogo, setAuthLogo] = useState(() => getLogo('auth'))
@@ -118,9 +118,10 @@ export default function SignupPage() {
 
   function validate() {
     const e = {}
-    if (!form.name.trim()) e.name = 'Full name is required'
+    if (!form.name.trim()) e.name = role === 'brand' ? 'Brand name is required' : 'Full name is required'
     if (!form.email.includes('@')) e.email = 'Enter a valid email'
     if (form.password.length < 8) e.password = 'Password must be at least 8 characters'
+    if (role === 'brand' && !form.industry) e.industry = 'Please select your industry'
     return e
   }
 
@@ -133,7 +134,15 @@ export default function SignupPage() {
     const { error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
-      options: { data: { full_name: form.name, role, talent_types: talentTypes } },
+      options: {
+        data: {
+          full_name: form.name,
+          role,
+          talent_types: talentTypes,
+          ...(role === 'talent' && form.handle ? { handle: form.handle } : {}),
+          ...(role === 'brand' ? { industry: form.industry, website: form.website } : {}),
+        },
+      },
     })
     setLoading(false)
     if (error) { setAuthError(error.message); return }
@@ -300,68 +309,70 @@ export default function SignupPage() {
           </div>
         )}
 
-        {/* STEP: REGISTRATION FORM */}
-        {step === 'form' && (
+        {/* STEP: REGISTRATION FORM — TALENT */}
+        {step === 'form' && role === 'talent' && (
           <div>
-            <button onClick={() => setStep('role')} className="flex items-center gap-1 text-brand-dark/35 hover:text-brand-dark text-xs mb-5 transition-colors">
+            <button onClick={() => setStep('talent')} className="flex items-center gap-1 text-brand-dark/35 hover:text-brand-dark text-xs mb-5 transition-colors">
               <ChevronLeft className="w-3.5 h-3.5" /> Back
             </button>
 
-            <h1 className="text-2xl font-black text-brand-dark mb-1">
-              {role === 'talent' ? 'Join as a Talent' : 'Join as a Brand'}
-            </h1>
-            <p className="text-brand-dark/40 text-sm mb-6">Free forever. No credit card required.</p>
-
-            {/* Social login buttons */}
-            <div className="flex gap-3 mb-4">
-              <button
-                onClick={handleGoogleSignup}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-brand-dark text-sm border transition-all hover:bg-gray-50 disabled:opacity-60"
-                style={{ borderColor: '#e9d5ff' }}
-              >
-                <GoogleIcon />
-                Continue with Google
-              </button>
+            {/* Talent header badge */}
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: `${pink}15`, border: `1.5px solid ${pink}30` }}>
+                <Star className="w-5 h-5" style={{ color: pink }} />
+              </div>
+              <div>
+                <h1 className="text-xl font-black text-brand-dark leading-tight">Create your Talent account</h1>
+                <p className="text-brand-dark/40 text-xs">Get discovered by brands looking for creators like you</p>
+              </div>
             </div>
 
-            {/* Divider */}
+            {/* Google */}
+            <button onClick={handleGoogleSignup} disabled={loading}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-brand-dark text-sm border transition-all hover:bg-gray-50 disabled:opacity-60 mb-4"
+              style={{ borderColor: '#e9d5ff' }}>
+              <GoogleIcon /> Continue with Google
+            </button>
             <div className="flex items-center gap-3 mb-4">
               <div className="flex-1 h-px bg-brand-dark/8" />
               <span className="text-brand-dark/30 text-xs">or sign up with email</span>
               <div className="flex-1 h-px bg-brand-dark/8" />
             </div>
 
-            {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="text-brand-dark/50 text-xs font-medium mb-1.5 block">Full Name</label>
                 <div className="relative">
                   <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-dark/25" />
-                  <input
-                    type="text"
-                    value={form.name}
-                    onChange={e => handleChange('name', e.target.value)}
+                  <input type="text" value={form.name} onChange={e => handleChange('name', e.target.value)}
                     placeholder="Amara Osei"
                     className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-brand-dark placeholder-brand-dark/25 outline-none transition-all"
-                    style={{ border: errors.name ? `1.5px solid ${pink}` : '1.5px solid #e9d5ff' }}
-                  />
+                    style={{ border: errors.name ? `1.5px solid ${pink}` : '1.5px solid #e9d5ff' }} />
                 </div>
                 {errors.name && <p className="text-xs mt-1" style={{ color: pink }}>{errors.name}</p>}
+              </div>
+
+              <div>
+                <label className="text-brand-dark/50 text-xs font-medium mb-1.5 block">Creator Handle <span className="text-brand-dark/30">(optional)</span></label>
+                <div className="relative">
+                  <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-dark/25" />
+                  <input type="text" value={form.handle} onChange={e => handleChange('handle', e.target.value)}
+                    placeholder="yourhandle"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-brand-dark placeholder-brand-dark/25 outline-none transition-all"
+                    style={{ border: '1.5px solid #e9d5ff' }} />
+                </div>
+                <p className="text-[10px] text-brand-dark/30 mt-1">Your public @username on Brandiór</p>
               </div>
 
               <div>
                 <label className="text-brand-dark/50 text-xs font-medium mb-1.5 block">Email Address</label>
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-dark/25" />
-                  <input
-                    type="email"
-                    value={form.email}
-                    onChange={e => handleChange('email', e.target.value)}
+                  <input type="email" value={form.email} onChange={e => handleChange('email', e.target.value)}
                     placeholder="amara@example.com"
                     className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-brand-dark placeholder-brand-dark/25 outline-none transition-all"
-                    style={{ border: errors.email ? `1.5px solid ${pink}` : '1.5px solid #e9d5ff' }}
-                  />
+                    style={{ border: errors.email ? `1.5px solid ${pink}` : '1.5px solid #e9d5ff' }} />
                 </div>
                 {errors.email && <p className="text-xs mt-1" style={{ color: pink }}>{errors.email}</p>}
               </div>
@@ -370,14 +381,10 @@ export default function SignupPage() {
                 <label className="text-brand-dark/50 text-xs font-medium mb-1.5 block">Password</label>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-dark/25" />
-                  <input
-                    type={showPass ? 'text' : 'password'}
-                    value={form.password}
-                    onChange={e => handleChange('password', e.target.value)}
+                  <input type={showPass ? 'text' : 'password'} value={form.password} onChange={e => handleChange('password', e.target.value)}
                     placeholder="Minimum 8 characters"
                     className="w-full pl-10 pr-11 py-3 rounded-xl text-sm text-brand-dark placeholder-brand-dark/25 outline-none transition-all"
-                    style={{ border: errors.password ? `1.5px solid ${pink}` : '1.5px solid #e9d5ff' }}
-                  />
+                    style={{ border: errors.password ? `1.5px solid ${pink}` : '1.5px solid #e9d5ff' }} />
                   <button type="button" onClick={() => setShowPass(v => !v)}
                     className="absolute right-3.5 top-1/2 -translate-y-1/2 text-brand-dark/25 hover:text-brand-dark/50 transition-colors">
                     {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -388,22 +395,135 @@ export default function SignupPage() {
 
               <p className="text-brand-dark/30 text-[11px] leading-relaxed">
                 By creating an account you agree to our{' '}
-                <a href="#" className="font-medium" style={{ color: purple }}>Terms of Service</a>{' '}
-                and{' '}
-                <a href="#" className="font-medium" style={{ color: purple }}>Privacy Policy</a>.
+                <a href="/terms" className="font-medium" style={{ color: purple }}>Terms of Service</a>{' '}
+                and <a href="/privacy" className="font-medium" style={{ color: purple }}>Privacy Policy</a>.
               </p>
+              {authError && <p className="text-xs text-center py-2 px-3 rounded-lg" style={{ color: pink, backgroundColor: '#fff0f5' }}>{authError}</p>}
 
-              {authError && (
-                <p className="text-xs text-center py-2 px-3 rounded-lg" style={{ color: pink, backgroundColor: '#fff0f5' }}>{authError}</p>
-              )}
+              <button type="submit" disabled={loading}
+                className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-60"
+                style={{ backgroundColor: pink }}>
+                {loading ? <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  : <>Create Talent Account <ArrowRight className="w-4 h-4" /></>}
+              </button>
+            </form>
+
+            <p className="text-center text-brand-dark/35 text-xs mt-5">
+              Already have an account?{' '}
+              <Link to="/login" className="font-semibold" style={{ color: darkPurple }}>Log in</Link>
+            </p>
+          </div>
+        )}
+
+        {/* STEP: REGISTRATION FORM — BRAND */}
+        {step === 'form' && role === 'brand' && (
+          <div>
+            <button onClick={() => setStep('role')} className="flex items-center gap-1 text-brand-dark/35 hover:text-brand-dark text-xs mb-5 transition-colors">
+              <ChevronLeft className="w-3.5 h-3.5" /> Back
+            </button>
+
+            {/* Brand header badge */}
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: `${purple}18`, border: `1.5px solid ${purple}30` }}>
+                <Building2 className="w-5 h-5" style={{ color: purple }} />
+              </div>
+              <div>
+                <h1 className="text-xl font-black text-brand-dark leading-tight">Create your Brand account</h1>
+                <p className="text-brand-dark/40 text-xs">Find and hire creators for your campaigns</p>
+              </div>
+            </div>
+
+            {/* Google */}
+            <button onClick={handleGoogleSignup} disabled={loading}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-brand-dark text-sm border transition-all hover:bg-gray-50 disabled:opacity-60 mb-4"
+              style={{ borderColor: '#e9d5ff' }}>
+              <GoogleIcon /> Continue with Google
+            </button>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-brand-dark/8" />
+              <span className="text-brand-dark/30 text-xs">or sign up with email</span>
+              <div className="flex-1 h-px bg-brand-dark/8" />
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="text-brand-dark/50 text-xs font-medium mb-1.5 block">Brand / Company Name</label>
+                <div className="relative">
+                  <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-dark/25" />
+                  <input type="text" value={form.name} onChange={e => handleChange('name', e.target.value)}
+                    placeholder="GlowUp Cosmetics Ltd"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-brand-dark placeholder-brand-dark/25 outline-none transition-all"
+                    style={{ border: errors.name ? `1.5px solid ${pink}` : '1.5px solid #e9d5ff' }} />
+                </div>
+                {errors.name && <p className="text-xs mt-1" style={{ color: pink }}>{errors.name}</p>}
+              </div>
+
+              <div>
+                <label className="text-brand-dark/50 text-xs font-medium mb-1.5 block">Industry</label>
+                <div className="relative">
+                  <Briefcase className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-dark/25 pointer-events-none" />
+                  <select value={form.industry} onChange={e => handleChange('industry', e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-brand-dark outline-none transition-all appearance-none bg-white"
+                    style={{ border: errors.industry ? `1.5px solid ${pink}` : '1.5px solid #e9d5ff' }}>
+                    <option value="">Select your industry…</option>
+                    {BRAND_INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
+                  </select>
+                </div>
+                {errors.industry && <p className="text-xs mt-1" style={{ color: pink }}>{errors.industry}</p>}
+              </div>
+
+              <div>
+                <label className="text-brand-dark/50 text-xs font-medium mb-1.5 block">Work Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-dark/25" />
+                  <input type="email" value={form.email} onChange={e => handleChange('email', e.target.value)}
+                    placeholder="hello@yourbrand.com"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-brand-dark placeholder-brand-dark/25 outline-none transition-all"
+                    style={{ border: errors.email ? `1.5px solid ${pink}` : '1.5px solid #e9d5ff' }} />
+                </div>
+                {errors.email && <p className="text-xs mt-1" style={{ color: pink }}>{errors.email}</p>}
+              </div>
+
+              <div>
+                <label className="text-brand-dark/50 text-xs font-medium mb-1.5 block">Company Website <span className="text-brand-dark/30">(optional)</span></label>
+                <div className="relative">
+                  <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-dark/25" />
+                  <input type="url" value={form.website} onChange={e => handleChange('website', e.target.value)}
+                    placeholder="https://yourbrand.com"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-brand-dark placeholder-brand-dark/25 outline-none transition-all"
+                    style={{ border: '1.5px solid #e9d5ff' }} />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-brand-dark/50 text-xs font-medium mb-1.5 block">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-dark/25" />
+                  <input type={showPass ? 'text' : 'password'} value={form.password} onChange={e => handleChange('password', e.target.value)}
+                    placeholder="Minimum 8 characters"
+                    className="w-full pl-10 pr-11 py-3 rounded-xl text-sm text-brand-dark placeholder-brand-dark/25 outline-none transition-all"
+                    style={{ border: errors.password ? `1.5px solid ${pink}` : '1.5px solid #e9d5ff' }} />
+                  <button type="button" onClick={() => setShowPass(v => !v)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-brand-dark/25 hover:text-brand-dark/50 transition-colors">
+                    {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {errors.password && <p className="text-xs mt-1" style={{ color: pink }}>{errors.password}</p>}
+              </div>
+
+              <p className="text-brand-dark/30 text-[11px] leading-relaxed">
+                By creating an account you agree to our{' '}
+                <a href="/terms" className="font-medium" style={{ color: purple }}>Terms of Service</a>{' '}
+                and <a href="/privacy" className="font-medium" style={{ color: purple }}>Privacy Policy</a>.
+              </p>
+              {authError && <p className="text-xs text-center py-2 px-3 rounded-lg" style={{ color: pink, backgroundColor: '#fff0f5' }}>{authError}</p>}
+
               <button type="submit" disabled={loading}
                 className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-60"
                 style={{ backgroundColor: darkPurple }}>
-                {loading ? (
-                  <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                ) : (
-                  <>Create Account <ArrowRight className="w-4 h-4" /></>
-                )}
+                {loading ? <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  : <>Create Brand Account <ArrowRight className="w-4 h-4" /></>}
               </button>
             </form>
 
