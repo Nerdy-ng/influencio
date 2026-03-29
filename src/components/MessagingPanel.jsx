@@ -233,7 +233,7 @@ function EmptyThread({ otherName }) {
 }
 
 // ── Main MessagingPanel ───────────────────────────────────────────────────────
-export default function MessagingPanel({ userId, userType, initialConvId }) {
+export default function MessagingPanel({ userId, userType, initialConvId, onUnreadChange }) {
   const [conversations, setConversations] = useState([])
   const [activeConvId, setActiveConvId] = useState(initialConvId || null)
   const [messages, setMessages] = useState([])
@@ -435,6 +435,10 @@ export default function MessagingPanel({ userId, userType, initialConvId }) {
 
   const totalUnread = conversations.reduce((sum, c) =>
     sum + (userType === 'brand' ? c.unreadBrand : c.unreadTalent), 0)
+
+  useEffect(() => {
+    onUnreadChange?.(totalUnread)
+  }, [totalUnread, onUnreadChange])
 
   // ── Render ────────────────────────────────────────────────────────────────────
   return (

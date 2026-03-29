@@ -187,6 +187,12 @@ function AvatarMenu({ profile, activeTab, setActiveTab }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   const navigateTo = useNavigate()
+  const [realEmail, setRealEmail] = useState('')
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.email) setRealEmail(session.user.email)
+    })
+  }, [])
 
   useEffect(() => {
     const handler = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
@@ -234,7 +240,7 @@ function AvatarMenu({ profile, activeTab, setActiveTab }) {
             )}
             <div className="min-w-0">
               <p className="text-white text-sm font-semibold truncate">{profile.nickname || 'Your Profile'}</p>
-              <p className="text-white/35 text-xs truncate">{profile.email || 'talent@brandiór.co'}</p>
+              <p className="text-white/35 text-xs truncate">{realEmail || profile.email || ''}</p>
             </div>
           </div>
 
@@ -780,6 +786,7 @@ export default function TalentDashboard() {
   const [showRatingDetail, setShowRatingDetail] = useState(false)
   const [settingsEditMode, setSettingsEditMode] = useState(false)
   const [profileSnapshot, setProfileSnapshot] = useState(null)
+  const [unreadMessages, setUnreadMessages] = useState(0)
 
   // Load real email from Supabase session
   useEffect(() => {
@@ -954,11 +961,10 @@ export default function TalentDashboard() {
           <div className="flex items-center gap-3">
             <button onClick={() => setActiveTab('messages')} className="relative p-2 rounded-xl hover:bg-white transition-colors">
               <Mail className="w-5 h-5 text-brand-dark/40" />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
+              {unreadMessages > 0 && <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />}
             </button>
             <button className="relative p-2 rounded-xl hover:bg-white transition-colors">
               <Bell className="w-5 h-5 text-brand-dark/40" />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
             </button>
             {/* Tier badge */}
             {(() => { const t = TIERS[profile.tier]; return (
@@ -2096,7 +2102,7 @@ export default function TalentDashboard() {
           )}
           {/* ── MESSAGES TAB ── */}
           {activeTab === 'messages' && (
-            <MessagingPanel userId={localStorage.getItem('brandiór_user') || 'talent_001'} userType="talent" initialConvId={initialConvId} />
+            <MessagingPanel userId={localStorage.getItem('brandiór_user') || ''} userType="talent" initialConvId={initialConvId} onUnreadChange={setUnreadMessages} />
           )}
 
           {/* ── INVITE TAB ── */}

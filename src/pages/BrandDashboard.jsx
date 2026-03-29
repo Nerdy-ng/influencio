@@ -442,7 +442,7 @@ function ReviewModal({ order, onClose, onSubmitted }) {
     e.preventDefault()
     if (!rating || !comment.trim()) return
     setSubmitting(true)
-    const brandId = localStorage.getItem('brandiór_user') || 'brand_demo'
+    const brandId = localStorage.getItem('brandiór_user') || ''
     try {
       await fetch(`${API}/reviews`, {
         method: 'POST',
@@ -701,7 +701,7 @@ function ApplicationsTab({ setActiveTab, showToast }) {
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(null)
   const [acting, setActing] = useState(null)
-  const brandId = localStorage.getItem('brandiór_user') || 'brand_demo'
+  const brandId = localStorage.getItem('brandiór_user') || ''
 
   async function fetchApps() {
     try {
@@ -1087,7 +1087,7 @@ export default function BrandDashboard() {
               )}
               {activeTab === 'favorites' && <FavoritesTab />}
               {activeTab === 'messages' && (
-                <MessagingPanel userId={localStorage.getItem('brandiór_user') || 'brand_demo'} userType="brand" initialConvId={initialConvId} />
+                <MessagingPanel userId={localStorage.getItem('brandiór_user') || ''} userType="brand" initialConvId={initialConvId} />
               )}
               {activeTab === 'invite' && <InviteTab userType="brand" />}
               {activeTab === 'settings' && (
