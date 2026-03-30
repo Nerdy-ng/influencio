@@ -219,9 +219,18 @@ export default function App() {
       {/* Top brand color bar */}
       <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: '#FA8112' }} />
 
-      {/* Dot grid */}
-      <div className="absolute inset-0 pointer-events-none"
-        style={{ backgroundImage: 'radial-gradient(circle, rgba(192,132,252,0.06) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
+      {/* Background pattern */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage: `
+          linear-gradient(rgba(124,58,237,0.07) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(124,58,237,0.07) 1px, transparent 1px)
+        `,
+        backgroundSize: '48px 48px',
+      }} />
+      {/* Glow blobs */}
+      <div className="absolute pointer-events-none" style={{ top: '-10%', left: '-10%', width: '50%', height: '50%', background: 'radial-gradient(ellipse, rgba(124,58,237,0.15) 0%, transparent 70%)', borderRadius: '50%' }} />
+      <div className="absolute pointer-events-none" style={{ bottom: '-10%', right: '-10%', width: '50%', height: '50%', background: 'radial-gradient(ellipse, rgba(250,129,18,0.08) 0%, transparent 70%)', borderRadius: '50%' }} />
+      <div className="absolute pointer-events-none" style={{ top: '40%', right: '20%', width: '30%', height: '30%', background: 'radial-gradient(ellipse, rgba(236,72,153,0.07) 0%, transparent 70%)', borderRadius: '50%' }} />
 
       {/* Floating avatars */}
       {AVATARS.map((a, i) => <FloatingAvatar key={i} {...a} />)}
