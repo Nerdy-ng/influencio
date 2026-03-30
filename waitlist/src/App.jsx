@@ -212,6 +212,7 @@ export default function App() {
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Open+Sans:wght@400;500;600&display=swap');
+        @import url('https://api.fontshare.com/v2/css?f[]=satoshi@700,900&display=swap');
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-14px); }
@@ -273,7 +274,7 @@ export default function App() {
         </div>
 
         {/* Headline */}
-        <h1 className="text-4xl sm:text-6xl font-black text-center leading-[1.1] mb-5 max-w-2xl">
+        <h1 className="text-4xl sm:text-6xl font-black text-center leading-[1.1] mb-5 max-w-2xl" style={{ fontFamily: "'Satoshi', sans-serif" }}>
           <span className="text-white">Don't Shine in the Dark.</span>
           <br />
           <span style={{ color: '#FA8112' }}>Get SEEN.</span>
