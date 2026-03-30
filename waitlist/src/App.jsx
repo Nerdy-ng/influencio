@@ -435,7 +435,7 @@ export default function App() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 text-left">
             <div className="flex-1">
-              <p className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: '#FA8112' }}>For SMBs</p>
+              <p className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: '#FA8112' }}>For Brands</p>
               <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
                 Access a curated pool of talent ready to scale your brand.
               </p>
