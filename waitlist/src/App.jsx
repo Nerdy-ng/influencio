@@ -306,8 +306,8 @@ export default function App() {
                 {/* Sliding pill */}
                 <div className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-xl transition-transform duration-300 ease-in-out"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(236,72,153,0.35), rgba(236,72,153,0.2))',
-                    border: '1.5px solid #ec4899',
+                    background: 'linear-gradient(135deg, rgba(250,129,18,0.3), rgba(250,129,18,0.15))',
+                    border: '1.5px solid #FA8112',
                     transform: role === 'creator' ? 'translateX(0)' : 'translateX(calc(100% + 8px))',
                   }} />
                 {ROLES.map(r => (
