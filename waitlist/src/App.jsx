@@ -433,7 +433,7 @@ export default function App() {
                 style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(124,58,237,0.3)' }}>
                 <span className="text-2xl block mb-3">{f.emoji}</span>
                 <p className="text-sm font-bold text-white mb-1">{f.title}</p>
-                <p className="text-xs leading-relaxed text-white">{f.desc}</p>
+                <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>{f.desc}</p>
               </div>
             ))}
           </div>
