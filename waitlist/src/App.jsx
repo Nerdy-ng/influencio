@@ -328,7 +328,7 @@ export default function App() {
             <div className="rounded-3xl p-8" style={{ backgroundColor: 'rgba(76,29,149,0.2)', border: '1px solid rgba(124,58,237,0.25)', backdropFilter: 'blur(20px)' }}>
 
               {/* Role toggle */}
-              <div className="flex gap-3 mb-6">
+              <div className="flex gap-5 mb-6">
                 {ROLES.map(r => {
                   const isSelected = role === r.id
                   const isCreator = r.id === 'creator'
