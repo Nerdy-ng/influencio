@@ -226,7 +226,7 @@ export default function App() {
               </div>
             </div>
           ) : (
-            <div className="rounded-3xl p-8" style={{ backgroundColor: 'rgba(76,29,149,0.2)', border: '1px solid #7c3aed', backdropFilter: 'blur(20px)' }}>
+            <div className="rounded-3xl p-8" style={{ backgroundColor: 'rgba(76,29,149,0.2)', border: '1px solid rgba(124,58,237,0.25)', backdropFilter: 'blur(20px)' }}>
 
               {/* Role toggle */}
               <div className="relative flex mb-6 rounded-2xl p-1" style={{ backgroundColor: 'rgba(76,29,149,0.6)', border: '1.5px solid #7c3aed' }}>
