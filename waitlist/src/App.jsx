@@ -254,9 +254,9 @@ export default function App() {
                   onChange={e => setName(e.target.value)}
                   placeholder="Your name"
                   className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-white/30 focus:outline-none transition-all"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.07)', border: '1px solid rgba(124,58,237,0.5)' }}
-                  onFocus={e => e.target.style.borderColor = '#c084fc'}
-                  onBlur={e => e.target.style.borderColor = 'rgba(124,58,237,0.5)'}
+                  style={{ backgroundColor: 'rgba(255,255,255,0.07)', border: '1px solid rgba(124,58,237,0.2)' }}
+                  onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.6)'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(124,58,237,0.2)'}
                 />
                 <div>
                   <input
@@ -266,9 +266,9 @@ export default function App() {
                     placeholder="Email address *"
                     required
                     className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-white/30 focus:outline-none transition-all"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.07)', border: `1px solid ${errorMsg ? '#FF6B9D' : 'rgba(124,58,237,0.5)'}` }}
-                    onFocus={e => e.target.style.borderColor = '#c084fc'}
-                    onBlur={e => e.target.style.borderColor = errorMsg ? '#FF6B9D' : 'rgba(124,58,237,0.5)'}
+                    style={{ backgroundColor: 'rgba(255,255,255,0.07)', border: `1px solid ${errorMsg ? '#FF6B9D' : 'rgba(124,58,237,0.2)'}` }}
+                    onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.6)'}
+                    onBlur={e => e.target.style.borderColor = errorMsg ? '#FF6B9D' : 'rgba(124,58,237,0.2)'}
                   />
                   {errorMsg && <p className="text-xs mt-1.5" style={{ color: '#FF6B9D' }}>{errorMsg}</p>}
                 </div>
@@ -280,11 +280,11 @@ export default function App() {
                     className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all appearance-none"
                     style={{
                       backgroundColor: 'rgba(255,255,255,0.07)',
-                      border: '1px solid rgba(124,58,237,0.5)',
+                      border: '1px solid rgba(124,58,237,0.2)',
                       color: industry ? '#fff' : 'rgba(255,255,255,0.3)',
                     }}
                     onFocus={e => e.target.style.borderColor = '#c084fc'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(124,58,237,0.5)'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(124,58,237,0.2)'}
                   >
                     <option value="" disabled style={{ backgroundColor: '#1a0040' }}>
                       {role === 'creator' ? 'Your niche or field' : 'Your industry'}
