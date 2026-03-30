@@ -267,7 +267,7 @@ export default function App() {
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-10 text-xs font-semibold tracking-wide uppercase"
           style={{ backgroundColor: 'rgba(250,129,18,0.12)', border: '1px solid rgba(250,129,18,0.35)', color: '#FA8112' }}>
           <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-          Coming Soon — Join the Waitlist
+          Coming Soon
         </div>
 
         {/* Headline */}
@@ -326,6 +326,8 @@ export default function App() {
             </div>
           ) : (
             <div className="rounded-3xl p-8" style={{ backgroundColor: 'rgba(76,29,149,0.2)', border: '1px solid rgba(124,58,237,0.25)', backdropFilter: 'blur(20px)' }}>
+
+              <p className="text-center text-xs font-semibold uppercase tracking-widest mb-5" style={{ color: '#FA8112' }}>Join the Waitlist</p>
 
               {/* Role toggle */}
               <div className="relative flex mb-6 rounded-2xl p-1" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(124,58,237,0.2)' }}>
