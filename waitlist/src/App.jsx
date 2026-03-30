@@ -228,13 +228,17 @@ export default function App() {
             <div className="rounded-3xl p-8" style={{ backgroundColor: 'rgba(76,29,149,0.2)', border: '1px solid #7c3aed', backdropFilter: 'blur(20px)' }}>
 
               {/* Role toggle */}
-              <div className="flex gap-2 mb-6">
+              <div className="relative flex mb-6 rounded-2xl p-1" style={{ backgroundColor: 'rgba(76,29,149,0.6)', border: '1.5px solid #7c3aed' }}>
+                {/* Sliding pill */}
+                <div className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-xl transition-transform duration-300 ease-in-out"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(236,72,153,0.35), rgba(236,72,153,0.2))',
+                    border: '1.5px solid #ec4899',
+                    transform: role === 'creator' ? 'translateX(0)' : 'translateX(calc(100% + 8px))',
+                  }} />
                 {ROLES.map(r => (
                   <button key={r.id} type="button" onClick={() => { setRole(r.id); setIndustry('') }}
-                    className="flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-2xl text-center transition-all"
-                    style={role === r.id
-                      ? { backgroundColor: 'rgba(192,132,252,0.25)', border: '1.5px solid #c084fc' }
-                      : { backgroundColor: 'rgba(76,29,149,0.6)', border: '1.5px solid #7c3aed' }}>
+                    className="relative flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-xl text-center z-10">
                     <span className="text-xl">{r.emoji}</span>
                     <span className="text-xs font-bold text-white">{r.label}</span>
                     <span className="text-[10px] text-white">{r.desc}</span>
@@ -305,7 +309,7 @@ export default function App() {
                 </button>
               </form>
 
-              <p className="text-center text-xs mt-4 text-white">
+              <p className="text-center text-xs mt-4" style={{ color: 'rgba(255,255,255,0.35)' }}>
                 No spam. Unsubscribe anytime.
               </p>
             </div>
