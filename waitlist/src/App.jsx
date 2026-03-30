@@ -207,7 +207,7 @@ export default function App() {
   const position = Math.floor(Math.random() * 400) + 800
 
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: '#0d0020' }}>
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: '#160035' }}>
       <SocialProofToast item={toastItem} visible={toastVisible} />
 
       <style>{`
