@@ -29,7 +29,7 @@ const BRAND_INDUSTRIES = [
 const STATS = [
   { value: '2,400+', label: 'talents on waitlist' },
   { value: '180+',   label: 'brands waiting' },
-  { value: '12',     label: 'African countries' },
+  { value: '1',      label: 'Platform' },
 ]
 
 function ZapIcon() {
@@ -171,26 +171,22 @@ export default function App() {
 
         {/* Headline */}
         <h1 className="text-4xl sm:text-6xl font-black text-center leading-tight mb-6 max-w-3xl">
-          <span className="text-white">Where Talents</span>
+          <span className="text-white">Don't Shine in the Dark,</span>
           <br />
-          <span style={{ color: '#FA8112' }}>&amp; Brands</span>
-          <br />
-          <span className="text-white">Grow Together</span>
+          <span style={{ color: '#FA8112' }}>Get SEEN</span>
         </h1>
 
-        <p className="text-center text-base sm:text-lg mb-10 max-w-xl leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
-          Africa's first platform connecting talents — creators, influencers, musicians, artists &amp; more — with brands that want to grow.
-          Launching soon across Nigeria, Ghana, Kenya &amp; beyond.
-        </p>
-
-        {/* Stats */}
-        <div className="flex items-center gap-8 mb-10">
-          {STATS.map(s => (
-            <div key={s.label} className="text-center">
-              <p className="text-xl font-black text-white">{s.value}</p>
-              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{s.label}</p>
-            </div>
-          ))}
+        <div className="text-center max-w-xl mb-10">
+          <p className="text-base sm:text-lg leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            Running a business is demanding. Staying creative is a challenge.
+          </p>
+          <p className="text-base sm:text-lg leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            Too often, brilliant brands and talented creators are <em>"shining in the dark"</em> — working hard but failing to find each other.
+          </p>
+          <p className="text-base sm:text-lg font-bold text-white mb-1">Brandior is the bridge.</p>
+          <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            A platform where businesses of all sizes and creators connect, collaborate, and conquer together.
+          </p>
         </div>
 
         {/* Form card */}
@@ -316,14 +312,47 @@ export default function App() {
           )}
         </div>
 
+        {/* Stats */}
+        <div className="flex items-center gap-8 mt-10 mb-4">
+          {STATS.map(s => (
+            <div key={s.label} className="text-center">
+              <p className="text-xl font-black text-white">{s.value}</p>
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{s.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Pitch section */}
+        <div className="mt-10 max-w-xl w-full rounded-2xl p-7 text-center"
+          style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(124,58,237,0.3)' }}>
+          <p className="text-sm font-semibold mb-5" style={{ color: 'rgba(255,255,255,0.7)' }}>
+            No agency friction. Just human-led partnerships that drive real growth.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 text-left">
+            <div className="flex-1">
+              <p className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: '#FA8112' }}>For SMBs</p>
+              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                Access a curated pool of talent ready to scale your brand.
+              </p>
+            </div>
+            <div className="w-px hidden sm:block" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }} />
+            <div className="flex-1">
+              <p className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: '#c084fc' }}>For Micro-Talent</p>
+              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                Get seen by brands that value your unique voice, not just your follower count.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Features teaser */}
         <div className="mt-14 max-w-2xl w-full">
           <p className="text-center text-xs font-semibold uppercase tracking-widest mb-6" style={{ color: 'rgba(255,255,255,0.3)' }}>What's coming</p>
           <div className="grid sm:grid-cols-3 gap-4">
             {[
               { emoji: '🎯', title: 'Direct Brand Deals', desc: 'No middlemen. Connect directly with brands that match your niche.' },
-              { emoji: '💰', title: 'Fair Pricing Tools', desc: 'Rate cards, proposal builder, and transparent payment protection.' },
-              { emoji: '📊', title: 'Analytics & Growth', desc: 'Track campaign performance and grow your creator business.' },
+              { emoji: '💰', title: 'Fair Pricing Tools', desc: 'Rate cards, custom pricing, and transparent payment protection.' },
+              { emoji: '📊', title: 'Analytics & Growth', desc: 'Track campaign performance and grow your business.' },
             ].map(f => (
               <div key={f.title} className="rounded-2xl p-5 text-center"
                 style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(236,72,153,0.3)' }}>
