@@ -130,7 +130,6 @@ export default function App() {
     <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: '#0d0020' }}>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500&family=Playfair+Display:wght@700&display=swap');
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-14px); }
@@ -139,8 +138,8 @@ export default function App() {
           from { opacity: 0; transform: translateY(24px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        .font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .font-playfair { font-family: 'Playfair Display', serif; }
+        .font-jakarta { font-family: Arial, sans-serif; }
+        .font-playfair { font-family: Arial, sans-serif; }
       `}</style>
 
       {/* Top brand color bar */}
