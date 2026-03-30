@@ -47,6 +47,13 @@ const SIGNUPS = [
   { name: 'Uche P.', city: 'Owerri', role: 'creator' },
   { name: 'Yemi S.', city: 'Abeokuta', role: 'brand' },
   { name: 'Adaeze I.', city: 'Lagos', role: 'creator' },
+  { name: 'Sipho M.', city: 'Johannesburg', role: 'brand' },
+  { name: 'Ayasha N.', city: 'Cape Town', role: 'creator' },
+  { name: 'Lerato K.', city: 'Johannesburg', role: 'creator' },
+  { name: 'Thabo D.', city: 'Cape Town', role: 'brand' },
+  { name: 'Zara A.', city: 'London', role: 'brand' },
+  { name: 'Kofi B.', city: 'London', role: 'creator' },
+  { name: 'Blessing E.', city: 'London', role: 'creator' },
 ]
 
 function SocialProofToast({ item, visible }) {
