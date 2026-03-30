@@ -327,33 +327,24 @@ export default function App() {
           ) : (
             <div className="rounded-3xl p-8" style={{ backgroundColor: 'rgba(76,29,149,0.2)', border: '1px solid rgba(124,58,237,0.25)', backdropFilter: 'blur(20px)' }}>
 
-              {/* Role toggle */}
-              <div className="flex gap-3 mb-6">
+              {/* Role tabs */}
+              <div className="flex mb-6 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.15)' }}>
                 {ROLES.map(r => {
                   const isSelected = role === r.id
                   const isCreator = r.id === 'creator'
                   const accentColor = isCreator ? '#ec4899' : '#c084fc'
                   return (
                     <button key={r.id} type="button" onClick={() => { setRole(r.id); setIndustry('') }}
-                      className="flex-1 rounded-2xl p-4 text-left transition-all duration-200 relative overflow-hidden"
-                      style={{
-                        backgroundColor: '#ffffff',
-                        border: isSelected ? `2px solid ${accentColor}` : '2px solid #e9d5ff',
-                        boxShadow: isSelected ? `0 4px 20px ${accentColor}30` : 'none',
+                      className="flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-semibold transition-all duration-200"
+                      style={isSelected ? {
+                        backgroundColor: accentColor,
+                        color: '#ffffff',
+                      } : {
+                        backgroundColor: 'rgba(255,255,255,0.05)',
+                        color: 'rgba(255,255,255,0.5)',
                       }}>
-                      {isSelected && (
-                        <span className="absolute top-2.5 right-2.5 text-xs" style={{ color: accentColor }}>✓</span>
-                      )}
-                      <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2"
-                        style={{ backgroundColor: isSelected ? `${accentColor}18` : '#f3eeff' }}>
-                        <span className="text-base">{r.emoji}</span>
-                      </div>
-                      <p className="font-bold text-sm mb-0.5" style={{ color: '#1a0040' }}>
-                        {isCreator ? 'Talent' : 'Brand'}
-                      </p>
-                      <p className="text-xs leading-relaxed" style={{ color: 'rgba(26,0,64,0.45)' }}>
-                        {isCreator ? 'Monetize your talent & audience' : 'Find creators & launch campaigns'}
-                      </p>
+                      <span>{r.emoji}</span>
+                      <span>{isCreator ? 'Talent' : 'Brand'}</span>
                     </button>
                   )
                 })}
