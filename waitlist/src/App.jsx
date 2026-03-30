@@ -186,7 +186,7 @@ export default function App() {
             {' '}— working hard but failing to find each other.
           </p>
           <div className="pt-1">
-            <p className="text-lg sm:text-xl font-black text-white">Brandior is the bridge.</p>
+            <p className="text-lg sm:text-xl font-black" style={{ color: '#ec4899' }}>Brandior Is The Bridge.</p>
             <p className="text-sm mt-1 leading-relaxed text-white">
               A platform where businesses of all sizes and creators connect, collaborate, and conquer together.
             </p>
