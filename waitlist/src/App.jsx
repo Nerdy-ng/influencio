@@ -328,17 +328,30 @@ export default function App() {
             <div className="rounded-3xl p-8" style={{ backgroundColor: 'rgba(76,29,149,0.2)', border: '1px solid rgba(124,58,237,0.25)', backdropFilter: 'blur(20px)' }}>
 
               {/* Role toggle */}
-              <div className="relative flex mb-6 rounded-2xl p-1" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(124,58,237,0.2)' }}>
-{ROLES.map(r => (
-                  <button key={r.id} type="button" onClick={() => { setRole(r.id); setIndustry('') }}
-                    className="relative flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-xl text-center z-10 transition-colors duration-200"
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(236,72,153,0.15)'; e.currentTarget.style.outline = '1.5px solid #ec4899' }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.outline = 'none' }}>
-                    <span className="text-xl">{r.emoji}</span>
-                    <span className="text-xs font-bold" style={{ color: r.id === 'creator' ? '#ec4899' : '#c084fc' }}>{r.label}</span>
-                    <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.5)' }}>{r.desc}</span>
-                  </button>
-                ))}
+              <div className="flex gap-3 mb-6">
+                {ROLES.map(r => {
+                  const isSelected = role === r.id
+                  const isCreator = r.id === 'creator'
+                  const accentColor = isCreator ? '#ec4899' : '#c084fc'
+                  return (
+                    <button key={r.id} type="button" onClick={() => { setRole(r.id); setIndustry('') }}
+                      className="flex-1 flex flex-col items-center gap-1.5 py-4 px-3 rounded-2xl text-center transition-all duration-200"
+                      style={isSelected ? {
+                        backgroundColor: isCreator ? 'rgba(236,72,153,0.15)' : 'rgba(192,132,252,0.15)',
+                        border: `2px solid ${accentColor}`,
+                        boxShadow: `0 0 16px ${accentColor}33`,
+                      } : {
+                        backgroundColor: 'rgba(255,255,255,0.04)',
+                        border: '2px solid rgba(255,255,255,0.1)',
+                      }}
+                      onMouseEnter={e => { if (!isSelected) { e.currentTarget.style.borderColor = accentColor; e.currentTarget.style.backgroundColor = isCreator ? 'rgba(236,72,153,0.08)' : 'rgba(192,132,252,0.08)' }}}
+                      onMouseLeave={e => { if (!isSelected) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)' }}}>
+                      <span className="text-2xl">{r.emoji}</span>
+                      <span className="text-sm font-bold" style={{ color: isSelected ? accentColor : 'rgba(255,255,255,0.7)' }}>{r.label}</span>
+                      <span className="text-[10px] leading-tight" style={{ color: isSelected ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.35)' }}>{r.desc}</span>
+                    </button>
+                  )
+                })}
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-3">
