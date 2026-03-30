@@ -149,18 +149,26 @@ export default function App() {
 
   useEffect(() => {
     let index = Math.floor(Math.random() * SIGNUPS.length)
+    let interval
+
     const show = () => {
       index = (index + 1) % SIGNUPS.length
       setToastItem(SIGNUPS[index])
       setToastVisible(true)
-      setTimeout(() => setToastVisible(false), 3500)
+      setTimeout(() => setToastVisible(false), 4000)
     }
-    const timer = setTimeout(() => {
+
+    // First popup at 5 seconds
+    const firstTimer = setTimeout(() => {
       show()
-      const interval = setInterval(show, 6000)
-      return () => clearInterval(interval)
-    }, 2000)
-    return () => clearTimeout(timer)
+      // Subsequent popups every 27 seconds, visible for 17 seconds each cycle
+      interval = setInterval(show, 17000)
+    }, 5000)
+
+    return () => {
+      clearTimeout(firstTimer)
+      clearInterval(interval)
+    }
   }, [])
 
   const industries = role === 'creator' ? CREATOR_INDUSTRIES : BRAND_INDUSTRIES
