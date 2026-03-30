@@ -442,7 +442,7 @@ export default function App() {
             </div>
             <div className="w-px hidden sm:block" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }} />
             <div className="flex-1">
-              <p className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: '#c084fc' }}>For Micro-Talent</p>
+              <p className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: '#c084fc' }}>For Talent</p>
               <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
                 Get seen by brands that value your voice, not just your follower count.
               </p>
