@@ -28,7 +28,7 @@ const BRAND_INDUSTRIES = [
 
 const STATS = [
   { value: '2,400+', label: 'talents on waitlist' },
-  { value: '180+',   label: 'brands waiting' },
+  { value: '556+',   label: 'brands waiting' },
 ]
 
 const SIGNUPS = [
