@@ -177,17 +177,17 @@ export default function App() {
 
         {/* Subheadline block */}
         <div className="text-center max-w-lg mb-10 space-y-3">
-          <p className="text-base sm:text-lg leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          <p className="text-base sm:text-lg leading-relaxed text-white">
             Running a business is demanding. Staying creative is a challenge.
           </p>
-          <p className="text-base sm:text-lg leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          <p className="text-base sm:text-lg leading-relaxed text-white">
             Too often, brilliant brands and talented creators are{' '}
-            <span className="italic" style={{ color: 'rgba(255,255,255,0.75)' }}>"shining in the dark"</span>
+            <span className="italic" style={{ color: '#FA8112' }}>"shining in the dark"</span>
             {' '}— working hard but failing to find each other.
           </p>
           <div className="pt-1">
             <p className="text-lg sm:text-xl font-black text-white">Brandior is the bridge.</p>
-            <p className="text-sm mt-1 leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <p className="text-sm mt-1 leading-relaxed text-white">
               A platform where businesses of all sizes and creators connect, collaborate, and conquer together.
             </p>
           </div>
@@ -196,13 +196,13 @@ export default function App() {
         {/* Form card */}
         <div className="w-full max-w-md">
           {state === 'success' ? (
-            <div className="rounded-3xl p-8 text-center" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(236,72,153,0.5)', backdropFilter: 'blur(20px)', animation: 'slide-up 0.5s ease' }}>
+            <div className="rounded-3xl p-8 text-center" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(124,58,237,0.5)', backdropFilter: 'blur(20px)', animation: 'slide-up 0.5s ease' }}>
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
                 style={{ background: 'linear-gradient(135deg, #dcfce7, #bbf7d0)' }}>
                 <CheckIcon />
               </div>
               <h2 className="text-xl font-black text-white mb-2">You're on the list!</h2>
-              <p className="text-sm mb-2" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              <p className="text-sm mb-2 text-white">
                 We'll notify you the moment Brandior goes live.
               </p>
               <p className="text-xs font-semibold" style={{ color: '#FA8112' }}>
@@ -210,7 +210,7 @@ export default function App() {
               </p>
 
               <div className="mt-6 pt-6 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-                <p className="text-xs mb-3" style={{ color: 'rgba(255,255,255,0.4)' }}>Share with your network to move up the list</p>
+                <p className="text-xs mb-3 text-white">Share with your network to move up the list</p>
                 <div className="flex gap-2 justify-center">
                   <a href={`https://twitter.com/intent/tweet?text=I%20just%20joined%20the%20waitlist%20for%20Brandior%20%E2%80%94%20Africa%27s%20creator%20marketplace.%20Join%20me%3A%20https%3A%2F%2Fbrandior.africa`}
                     target="_blank" rel="noopener noreferrer"
@@ -240,7 +240,7 @@ export default function App() {
                       : { backgroundColor: 'rgba(76,29,149,0.6)', border: '1.5px solid #7c3aed' }}>
                     <span className="text-xl">{r.emoji}</span>
                     <span className="text-xs font-bold text-white">{r.label}</span>
-                    <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.5)' }}>{r.desc}</span>
+                    <span className="text-[10px] text-white">{r.desc}</span>
                   </button>
                 ))}
               </div>
@@ -252,9 +252,9 @@ export default function App() {
                   onChange={e => setName(e.target.value)}
                   placeholder="Your name"
                   className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-white/30 focus:outline-none transition-all"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.07)', border: '1px solid rgba(236,72,153,0.4)' }}
-                  onFocus={e => e.target.style.borderColor = '#ec4899'}
-                  onBlur={e => e.target.style.borderColor = 'rgba(236,72,153,0.4)'}
+                  style={{ backgroundColor: 'rgba(255,255,255,0.07)', border: '1px solid rgba(124,58,237,0.5)' }}
+                  onFocus={e => e.target.style.borderColor = '#c084fc'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(124,58,237,0.5)'}
                 />
                 <div>
                   <input
@@ -264,9 +264,9 @@ export default function App() {
                     placeholder="Email address *"
                     required
                     className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-white/30 focus:outline-none transition-all"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.07)', border: `1px solid ${errorMsg ? '#FF6B9D' : 'rgba(236,72,153,0.4)'}` }}
-                    onFocus={e => e.target.style.borderColor = '#ec4899'}
-                    onBlur={e => e.target.style.borderColor = errorMsg ? '#FF6B9D' : 'rgba(236,72,153,0.4)'}
+                    style={{ backgroundColor: 'rgba(255,255,255,0.07)', border: `1px solid ${errorMsg ? '#FF6B9D' : 'rgba(124,58,237,0.5)'}` }}
+                    onFocus={e => e.target.style.borderColor = '#c084fc'}
+                    onBlur={e => e.target.style.borderColor = errorMsg ? '#FF6B9D' : 'rgba(124,58,237,0.5)'}
                   />
                   {errorMsg && <p className="text-xs mt-1.5" style={{ color: '#FF6B9D' }}>{errorMsg}</p>}
                 </div>
@@ -278,11 +278,11 @@ export default function App() {
                     className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all appearance-none"
                     style={{
                       backgroundColor: 'rgba(255,255,255,0.07)',
-                      border: '1px solid rgba(236,72,153,0.4)',
+                      border: '1px solid rgba(124,58,237,0.5)',
                       color: industry ? '#fff' : 'rgba(255,255,255,0.3)',
                     }}
-                    onFocus={e => e.target.style.borderColor = '#ec4899'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(236,72,153,0.4)'}
+                    onFocus={e => e.target.style.borderColor = '#c084fc'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(124,58,237,0.5)'}
                   >
                     <option value="" disabled style={{ backgroundColor: '#1a0040' }}>
                       {role === 'creator' ? 'Your niche or field' : 'Your industry'}
@@ -308,7 +308,7 @@ export default function App() {
                 </button>
               </form>
 
-              <p className="text-center text-xs mt-4" style={{ color: 'rgba(255,255,255,0.25)' }}>
+              <p className="text-center text-xs mt-4 text-white">
                 No spam. Unsubscribe anytime.
               </p>
             </div>
@@ -321,7 +321,7 @@ export default function App() {
             <>
               <div key={s.label} className="text-center px-10">
                 <p className="text-2xl font-black text-white">{s.value}</p>
-                <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>{s.label}</p>
+                <p className="text-xs mt-0.5 text-white">{s.label}</p>
               </div>
               {i < STATS.length - 1 && (
                 <div key={`divider-${i}`} className="w-px h-8 self-center" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }} />
@@ -333,20 +333,20 @@ export default function App() {
         {/* Pitch section */}
         <div className="mt-10 max-w-xl w-full rounded-2xl p-7 text-center"
           style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(124,58,237,0.3)' }}>
-          <p className="text-sm font-semibold mb-5" style={{ color: 'rgba(255,255,255,0.7)' }}>
+          <p className="text-sm font-semibold mb-5 text-white">
             No agency friction. Just human-led partnerships that drive real growth.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 text-left">
             <div className="flex-1">
               <p className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: '#FA8112' }}>For SMBs</p>
-              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              <p className="text-sm leading-relaxed text-white">
                 Access a curated pool of talent ready to scale your brand.
               </p>
             </div>
             <div className="w-px hidden sm:block" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }} />
             <div className="flex-1">
               <p className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: '#c084fc' }}>For Micro-Talent</p>
-              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              <p className="text-sm leading-relaxed text-white">
                 Get seen by brands that value your unique voice, not just your follower count.
               </p>
             </div>
@@ -355,7 +355,7 @@ export default function App() {
 
         {/* Features teaser */}
         <div className="mt-14 max-w-2xl w-full">
-          <p className="text-center text-xs font-semibold uppercase tracking-widest mb-6" style={{ color: 'rgba(255,255,255,0.3)' }}>What's coming</p>
+          <p className="text-center text-xs font-semibold uppercase tracking-widest mb-6 text-white">What's coming</p>
           <div className="grid sm:grid-cols-3 gap-4">
             {[
               { emoji: '🎯', title: 'Direct Brand Deals', desc: 'No middlemen. Connect directly with brands that match your niche.' },
@@ -363,10 +363,10 @@ export default function App() {
               { emoji: '📊', title: 'Analytics & Growth', desc: 'Track campaign performance and grow your business.' },
             ].map(f => (
               <div key={f.title} className="rounded-2xl p-5 text-center"
-                style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(236,72,153,0.3)' }}>
+                style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(124,58,237,0.3)' }}>
                 <span className="text-2xl block mb-3">{f.emoji}</span>
                 <p className="text-sm font-bold text-white mb-1">{f.title}</p>
-                <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>{f.desc}</p>
+                <p className="text-xs leading-relaxed text-white">{f.desc}</p>
               </div>
             ))}
           </div>
