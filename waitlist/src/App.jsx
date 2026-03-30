@@ -328,20 +328,22 @@ export default function App() {
             <div className="rounded-3xl p-8" style={{ backgroundColor: 'rgba(76,29,149,0.2)', border: '1px solid rgba(124,58,237,0.25)', backdropFilter: 'blur(20px)' }}>
 
               {/* Role tabs */}
-              <div className="flex mb-6 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.15)' }}>
+              <div className="flex gap-3 mb-6">
                 {ROLES.map(r => {
                   const isSelected = role === r.id
                   const isCreator = r.id === 'creator'
                   const accentColor = isCreator ? '#ec4899' : '#c084fc'
                   return (
                     <button key={r.id} type="button" onClick={() => { setRole(r.id); setIndustry('') }}
-                      className="flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-semibold transition-all duration-200"
+                      className="flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-semibold rounded-xl transition-all duration-200"
                       style={isSelected ? {
                         backgroundColor: accentColor,
                         color: '#ffffff',
+                        border: `2px solid ${accentColor}`,
                       } : {
                         backgroundColor: 'rgba(255,255,255,0.05)',
                         color: 'rgba(255,255,255,0.5)',
+                        border: '2px solid rgba(255,255,255,0.15)',
                       }}>
                       <span>{r.emoji}</span>
                       <span>{isCreator ? 'Talent' : 'Brand'}</span>
