@@ -430,7 +430,7 @@ export default function App() {
 
         {/* Pitch section */}
         <div className="mt-10 max-w-xl w-full rounded-2xl p-7 text-center">
-          <p className="text-sm mb-5" style={{ color: 'rgba(255,255,255,0.6)' }}>
+          <p className="text-sm mb-5 text-white">
             No agency friction. No hidden charges. 100% free registration.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 text-left">
