@@ -29,7 +29,6 @@ const BRAND_INDUSTRIES = [
 const STATS = [
   { value: '2,400+', label: 'talents on waitlist' },
   { value: '180+',   label: 'brands waiting' },
-  { value: '1',      label: 'Platform' },
 ]
 
 function ZapIcon() {
@@ -155,7 +154,7 @@ export default function App() {
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-16">
 
         {/* Logo */}
-        <div className="flex items-center gap-2.5 mb-12">
+        <div className="flex items-center gap-2.5 mb-10">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#4c1d95' }}>
             <ZapIcon />
           </div>
@@ -163,30 +162,35 @@ export default function App() {
         </div>
 
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 text-xs font-semibold tracking-wide uppercase"
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-10 text-xs font-semibold tracking-wide uppercase"
           style={{ backgroundColor: 'rgba(250,129,18,0.12)', border: '1px solid rgba(250,129,18,0.35)', color: '#FA8112' }}>
           <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
           Coming Soon — Join the Waitlist
         </div>
 
         {/* Headline */}
-        <h1 className="text-4xl sm:text-6xl font-black text-center leading-tight mb-6 max-w-3xl">
-          <span className="text-white">Don't Shine in the Dark,</span>
+        <h1 className="text-4xl sm:text-6xl font-black text-center leading-[1.1] mb-5 max-w-2xl">
+          <span className="text-white">Don't Shine in the Dark.</span>
           <br />
-          <span style={{ color: '#FA8112' }}>Get SEEN</span>
+          <span style={{ color: '#FA8112' }}>Get SEEN.</span>
         </h1>
 
-        <div className="text-center max-w-xl mb-10">
-          <p className="text-base sm:text-lg leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
+        {/* Subheadline block */}
+        <div className="text-center max-w-lg mb-10 space-y-3">
+          <p className="text-base sm:text-lg leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
             Running a business is demanding. Staying creative is a challenge.
           </p>
-          <p className="text-base sm:text-lg leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
-            Too often, brilliant brands and talented creators are <em>"shining in the dark"</em> — working hard but failing to find each other.
+          <p className="text-base sm:text-lg leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            Too often, brilliant brands and talented creators are{' '}
+            <span className="italic" style={{ color: 'rgba(255,255,255,0.75)' }}>"shining in the dark"</span>
+            {' '}— working hard but failing to find each other.
           </p>
-          <p className="text-base sm:text-lg font-bold text-white mb-1">Brandior is the bridge.</p>
-          <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
-            A platform where businesses of all sizes and creators connect, collaborate, and conquer together.
-          </p>
+          <div className="pt-1">
+            <p className="text-lg sm:text-xl font-black text-white">Brandior is the bridge.</p>
+            <p className="text-sm mt-1 leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              A platform where businesses of all sizes and creators connect, collaborate, and conquer together.
+            </p>
+          </div>
         </div>
 
         {/* Form card */}
@@ -313,12 +317,17 @@ export default function App() {
         </div>
 
         {/* Stats */}
-        <div className="flex items-center gap-8 mt-10 mb-4">
-          {STATS.map(s => (
-            <div key={s.label} className="text-center">
-              <p className="text-xl font-black text-white">{s.value}</p>
-              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{s.label}</p>
-            </div>
+        <div className="flex items-center justify-center gap-0 mt-10 mb-4">
+          {STATS.map((s, i) => (
+            <>
+              <div key={s.label} className="text-center px-10">
+                <p className="text-2xl font-black text-white">{s.value}</p>
+                <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>{s.label}</p>
+              </div>
+              {i < STATS.length - 1 && (
+                <div key={`divider-${i}`} className="w-px h-8 self-center" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }} />
+              )}
+            </>
           ))}
         </div>
 
