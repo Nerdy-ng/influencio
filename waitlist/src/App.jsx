@@ -334,7 +334,7 @@ export default function App() {
         {/* Pitch section */}
         <div className="mt-10 max-w-xl w-full rounded-2xl p-7 text-center"
           style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(124,58,237,0.3)' }}>
-          <p className="text-sm font-semibold mb-5 text-white">
+          <p className="text-sm mb-5" style={{ color: 'rgba(255,255,255,0.6)' }}>
             No agency friction. Just human-led partnerships that drive real growth.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 text-left">
@@ -347,8 +347,8 @@ export default function App() {
             <div className="w-px hidden sm:block" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }} />
             <div className="flex-1">
               <p className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: '#c084fc' }}>For Micro-Talent</p>
-              <p className="text-sm leading-relaxed text-white">
-                Get seen by brands that value your unique voice, not just your follower count.
+              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                Get seen by brands that value your voice, not just your follower count.
               </p>
             </div>
           </div>
