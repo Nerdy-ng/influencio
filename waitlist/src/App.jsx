@@ -284,8 +284,8 @@ export default function App() {
           </p>
 <div className="pt-1">
             <p className="text-xl sm:text-2xl font-bold tracking-tight" style={{ fontFamily: "'Roboto', sans-serif", background: 'linear-gradient(135deg, #7c3aed, #c084fc, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Brandior Is The Bridge.</p>
-            <p className="text-sm mt-1 leading-relaxed text-white" style={{ fontFamily: "'Open Sans', sans-serif" }}>
-              A platform where businesses of all sizes and creators connect, collaborate, and conquer together.
+            <p className="text-sm mt-1 leading-relaxed" style={{ fontFamily: "'Open Sans', sans-serif", color: '#FA8112' }}>
+              Join the Waitlist
             </p>
           </div>
         </div>
@@ -326,8 +326,6 @@ export default function App() {
             </div>
           ) : (
             <div className="rounded-3xl p-8" style={{ backgroundColor: 'rgba(76,29,149,0.2)', border: '1px solid rgba(124,58,237,0.25)', backdropFilter: 'blur(20px)' }}>
-
-              <p className="text-center text-xs font-semibold uppercase tracking-widest mb-5" style={{ color: '#FA8112' }}>Join the Waitlist</p>
 
               {/* Role toggle */}
               <div className="relative flex mb-6 rounded-2xl p-1" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(124,58,237,0.2)' }}>
