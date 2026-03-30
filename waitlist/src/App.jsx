@@ -341,8 +341,8 @@ export default function App() {
                         border: `2px solid ${accentColor}`,
                         boxShadow: `0 0 16px ${accentColor}33`,
                       } : {
-                        backgroundColor: 'rgba(255,255,255,0.04)',
-                        border: '2px solid rgba(255,255,255,0.1)',
+                        backgroundColor: 'rgba(255,255,255,0.06)',
+                        border: '2px solid rgba(255,255,255,0.25)',
                       }}
                       onMouseEnter={e => { if (!isSelected) { e.currentTarget.style.borderColor = accentColor; e.currentTarget.style.backgroundColor = isCreator ? 'rgba(236,72,153,0.08)' : 'rgba(192,132,252,0.08)' }}}
                       onMouseLeave={e => { if (!isSelected) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)' }}}>
