@@ -185,7 +185,7 @@ export default function App() {
           </p>
 <div className="pt-1">
             <p className="text-xl sm:text-2xl font-bold tracking-tight" style={{ color: '#c084fc', fontFamily: "'Roboto', sans-serif" }}>Brandior Is The Bridge.</p>
-            <p className="text-sm mt-1 leading-relaxed text-white" style={{ fontFamily: "'Roboto', sans-serif" }}>
+            <p className="text-sm mt-1 leading-relaxed" style={{ fontFamily: "'Roboto', sans-serif", color: 'rgba(255,255,255,0.5)' }}>
               A platform where businesses of all sizes and creators connect, collaborate, and conquer together.
             </p>
           </div>
