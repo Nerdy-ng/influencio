@@ -312,7 +312,9 @@ export default function App() {
                   }} />
                 {ROLES.map(r => (
                   <button key={r.id} type="button" onClick={() => { setRole(r.id); setIndustry('') }}
-                    className="relative flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-xl text-center z-10">
+                    className="relative flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-xl text-center z-10 transition-colors duration-200"
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(236,72,153,0.15)'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
                     <span className="text-xl">{r.emoji}</span>
                     <span className="text-xs font-bold text-white">{r.label}</span>
                     <span className="text-[10px] text-white">{r.desc}</span>
