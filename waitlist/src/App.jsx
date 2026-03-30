@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -30,6 +30,53 @@ const STATS = [
   { value: '2,400+', label: 'talents on waitlist' },
   { value: '180+',   label: 'brands waiting' },
 ]
+
+const SIGNUPS = [
+  { name: 'Amaka O.', city: 'Lagos', role: 'creator' },
+  { name: 'Tunde B.', city: 'Abuja', role: 'brand' },
+  { name: 'Chioma N.', city: 'Port Harcourt', role: 'creator' },
+  { name: 'Emeka D.', city: 'Lagos', role: 'creator' },
+  { name: 'Ngozi F.', city: 'Enugu', role: 'creator' },
+  { name: 'Seun A.', city: 'Ibadan', role: 'brand' },
+  { name: 'Fatima M.', city: 'Kano', role: 'creator' },
+  { name: 'Bola K.', city: 'Lagos', role: 'brand' },
+  { name: 'Chidi E.', city: 'Onitsha', role: 'creator' },
+  { name: 'Aisha Y.', city: 'Kaduna', role: 'creator' },
+  { name: 'Deji O.', city: 'Benin City', role: 'brand' },
+  { name: 'Kemi R.', city: 'Lagos', role: 'creator' },
+  { name: 'Uche P.', city: 'Owerri', role: 'creator' },
+  { name: 'Yemi S.', city: 'Abeokuta', role: 'brand' },
+  { name: 'Adaeze I.', city: 'Lagos', role: 'creator' },
+]
+
+function SocialProofToast({ item, visible }) {
+  return (
+    <div
+      className="fixed bottom-6 left-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-500"
+      style={{
+        backgroundColor: 'rgba(13,0,32,0.92)',
+        border: '1px solid rgba(124,58,237,0.3)',
+        backdropFilter: 'blur(16px)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(16px)',
+        pointerEvents: 'none',
+      }}>
+      <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0"
+        style={{ background: item.role === 'creator' ? 'linear-gradient(135deg,#ec4899,#c084fc)' : 'linear-gradient(135deg,#7c3aed,#c084fc)' }}>
+        {item.name[0]}
+      </div>
+      <div>
+        <p className="text-white text-xs font-semibold leading-tight">
+          {item.name} just joined from {item.city}
+        </p>
+        <p className="text-xs mt-0.5" style={{ color: item.role === 'creator' ? '#ec4899' : '#c084fc' }}>
+          {item.role === 'creator' ? 'Talent / Creator' : 'Brand / Business'}
+        </p>
+      </div>
+    </div>
+  )
+}
 
 function ZapIcon() {
   return (
@@ -90,6 +137,24 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [state, setState] = useState('idle')
   const [errorMsg, setErrorMsg] = useState('')
+  const [toastItem, setToastItem] = useState(SIGNUPS[0])
+  const [toastVisible, setToastVisible] = useState(false)
+
+  useEffect(() => {
+    let index = Math.floor(Math.random() * SIGNUPS.length)
+    const show = () => {
+      index = (index + 1) % SIGNUPS.length
+      setToastItem(SIGNUPS[index])
+      setToastVisible(true)
+      setTimeout(() => setToastVisible(false), 3500)
+    }
+    const timer = setTimeout(() => {
+      show()
+      const interval = setInterval(show, 6000)
+      return () => clearInterval(interval)
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [])
 
   const industries = role === 'creator' ? CREATOR_INDUSTRIES : BRAND_INDUSTRIES
 
@@ -128,6 +193,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: '#0d0020' }}>
+      <SocialProofToast item={toastItem} visible={toastVisible} />
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Open+Sans:wght@400;500;600&display=swap');
