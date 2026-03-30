@@ -184,7 +184,7 @@ export default function App() {
             Running a business is demanding. Staying creative is a challenge.
           </p>
 <div className="pt-1">
-            <p className="font-playfair text-xl sm:text-2xl" style={{ color: '#ec4899' }}>Brandior Is The Bridge.</p>
+            <p className="font-playfair text-xl sm:text-2xl" style={{ color: '#c084fc' }}>Brandior Is The Bridge.</p>
             <p className="text-sm mt-1 leading-relaxed text-white" style={{ fontFamily: "'Open Sans', sans-serif" }}>
               A platform where businesses of all sizes and creators connect, collaborate, and conquer together.
             </p>
@@ -333,8 +333,7 @@ export default function App() {
         </div>
 
         {/* Pitch section */}
-        <div className="mt-10 max-w-xl w-full rounded-2xl p-7 text-center"
-          style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(124,58,237,0.3)' }}>
+        <div className="mt-10 max-w-xl w-full rounded-2xl p-7 text-center">
           <p className="text-sm mb-5" style={{ color: 'rgba(255,255,255,0.6)' }}>
             No agency friction. Just human-led partnerships that drive real growth.
           </p>
