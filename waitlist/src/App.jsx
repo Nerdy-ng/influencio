@@ -184,7 +184,7 @@ export default function App() {
             Running a business is demanding. Staying creative is a challenge.
           </p>
 <div className="pt-1">
-            <p className="font-playfair text-xl sm:text-2xl" style={{ color: '#c084fc' }}>Brandior Is The Bridge.</p>
+            <p className="text-xl sm:text-2xl font-bold tracking-tight" style={{ color: '#c084fc', fontFamily: "'Roboto', sans-serif" }}>Brandior Is The Bridge.</p>
             <p className="text-sm mt-1 leading-relaxed text-white" style={{ fontFamily: "'Roboto', sans-serif" }}>
               A platform where businesses of all sizes and creators connect, collaborate, and conquer together.
             </p>
