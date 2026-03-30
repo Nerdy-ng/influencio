@@ -328,27 +328,32 @@ export default function App() {
             <div className="rounded-3xl p-8" style={{ backgroundColor: 'rgba(76,29,149,0.2)', border: '1px solid rgba(124,58,237,0.25)', backdropFilter: 'blur(20px)' }}>
 
               {/* Role toggle */}
-              <div className="flex gap-5 mb-6">
+              <div className="flex gap-3 mb-6">
                 {ROLES.map(r => {
                   const isSelected = role === r.id
                   const isCreator = r.id === 'creator'
                   const accentColor = isCreator ? '#ec4899' : '#c084fc'
                   return (
                     <button key={r.id} type="button" onClick={() => { setRole(r.id); setIndustry('') }}
-                      className="flex-1 flex flex-col items-center gap-1.5 py-4 px-3 rounded-2xl text-center transition-all duration-200"
-                      style={isSelected ? {
-                        backgroundColor: isCreator ? 'rgba(236,72,153,0.15)' : 'rgba(192,132,252,0.15)',
-                        border: `2px solid ${accentColor}`,
-                        boxShadow: `0 0 16px ${accentColor}33`,
-                      } : {
-                        backgroundColor: 'rgba(255,255,255,0.06)',
-                        border: '2px solid rgba(255,255,255,0.25)',
-                      }}
-                      onMouseEnter={e => { if (!isSelected) { e.currentTarget.style.borderColor = accentColor; e.currentTarget.style.backgroundColor = isCreator ? 'rgba(236,72,153,0.08)' : 'rgba(192,132,252,0.08)' }}}
-                      onMouseLeave={e => { if (!isSelected) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)' }}}>
-                      <span className="text-2xl">{r.emoji}</span>
-                      <span className="text-sm font-bold" style={{ color: isSelected ? accentColor : 'rgba(255,255,255,0.7)' }}>{r.label}</span>
-                      <span className="text-[10px] leading-tight" style={{ color: isSelected ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.35)' }}>{r.desc}</span>
+                      className="flex-1 rounded-2xl p-4 text-left transition-all duration-200 relative overflow-hidden"
+                      style={{
+                        backgroundColor: '#ffffff',
+                        border: isSelected ? `2px solid ${accentColor}` : '2px solid #e9d5ff',
+                        boxShadow: isSelected ? `0 4px 20px ${accentColor}30` : 'none',
+                      }}>
+                      {isSelected && (
+                        <span className="absolute top-2.5 right-2.5 text-xs" style={{ color: accentColor }}>✓</span>
+                      )}
+                      <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2"
+                        style={{ backgroundColor: isSelected ? `${accentColor}18` : '#f3eeff' }}>
+                        <span className="text-base">{r.emoji}</span>
+                      </div>
+                      <p className="font-bold text-sm mb-0.5" style={{ color: '#1a0040' }}>
+                        {isCreator ? 'Talent' : 'Brand'}
+                      </p>
+                      <p className="text-xs leading-relaxed" style={{ color: 'rgba(26,0,64,0.45)' }}>
+                        {isCreator ? 'Monetize your talent & audience' : 'Find creators & launch campaigns'}
+                      </p>
                     </button>
                   )
                 })}
