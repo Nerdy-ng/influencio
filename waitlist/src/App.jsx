@@ -183,7 +183,7 @@ export default function App() {
           <p className="text-base sm:text-lg leading-relaxed text-white">
             Too often, brilliant brands and talented creators are{' '}
             <span className="italic" style={{ color: '#FA8112' }}>"shining in the dark"</span>
-            {' '}— working hard but failing to find each other.
+            {' '}working hard but failing to find each other.
           </p>
           <div className="pt-1">
             <p className="text-lg sm:text-xl font-black" style={{ color: '#ec4899' }}>Brandior Is The Bridge.</p>
