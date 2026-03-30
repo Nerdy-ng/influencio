@@ -7,7 +7,7 @@ const supabase = createClient(
 )
 
 const ROLES = [
-  { id: 'creator', label: 'Talent / Creator', emoji: '🎤', desc: 'Creator, influencer, musician, artist or talent' },
+  { id: 'creator', label: 'Talent / Creator', emoji: '🎤', desc: 'Creator, influencer or talent' },
   { id: 'brand',   label: 'Brand / Business', emoji: '🏢', desc: 'I want to work with talents & creators' },
 ]
 
