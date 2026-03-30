@@ -226,18 +226,24 @@ export default function App() {
       {/* Top brand color bar */}
       <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: '#FA8112' }} />
 
-      {/* Subtle grid */}
-      <div className="absolute inset-0 pointer-events-none" style={{
+      {/* Subtle grid — stops at 65% height */}
+      <div className="absolute left-0 right-0 top-0 pointer-events-none" style={{
+        height: '65%',
         backgroundImage: `
           linear-gradient(rgba(124,58,237,0.06) 1px, transparent 1px),
           linear-gradient(90deg, rgba(124,58,237,0.06) 1px, transparent 1px)
         `,
         backgroundSize: '80px 80px',
+        maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
+        WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
       }} />
       {/* Glowing nodes */}
-      <div className="absolute inset-0 pointer-events-none" style={{
+      <div className="absolute left-0 right-0 top-0 pointer-events-none" style={{
+        height: '65%',
         backgroundImage: 'radial-gradient(circle, rgba(192,132,252,0.1) 1px, transparent 1px)',
         backgroundSize: '80px 80px',
+        maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
+        WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
       }} />
       {/* Glow blobs */}
       <div className="absolute pointer-events-none" style={{ top: '-10%', left: '-10%', width: '55%', height: '55%', background: 'radial-gradient(ellipse, rgba(124,58,237,0.18) 0%, transparent 70%)', borderRadius: '50%' }} />
