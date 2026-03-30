@@ -256,11 +256,8 @@ export default function App() {
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-16">
 
         {/* Logo */}
-        <div className="flex items-center gap-2.5 mb-10">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#4c1d95' }}>
-            <ZapIcon />
-          </div>
-          <span className="text-2xl font-black text-white tracking-tight">Brandior</span>
+        <div className="mb-10">
+          <img src="/logo.png" alt="Brandior" className="h-12 w-auto" />
         </div>
 
         {/* Badge */}
