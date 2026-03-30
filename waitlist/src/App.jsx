@@ -234,7 +234,6 @@ export default function App() {
       {/* Glow blobs */}
       <div className="absolute pointer-events-none" style={{ top: '-10%', left: '-10%', width: '55%', height: '55%', background: 'radial-gradient(ellipse, rgba(124,58,237,0.18) 0%, transparent 70%)', borderRadius: '50%' }} />
       <div className="absolute pointer-events-none" style={{ bottom: '-10%', right: '-10%', width: '50%', height: '50%', background: 'radial-gradient(ellipse, rgba(250,129,18,0.1) 0%, transparent 70%)', borderRadius: '50%' }} />
-      <div className="absolute pointer-events-none" style={{ top: '35%', right: '15%', width: '30%', height: '30%', background: 'radial-gradient(ellipse, rgba(236,72,153,0.08) 0%, transparent 70%)', borderRadius: '50%' }} />
 
       {/* Floating avatars */}
       {AVATARS.map((a, i) => <FloatingAvatar key={i} {...a} />)}
