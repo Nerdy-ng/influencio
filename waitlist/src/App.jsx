@@ -337,8 +337,8 @@ export default function App() {
                     onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(236,72,153,0.15)'; e.currentTarget.style.outline = '1.5px solid #ec4899' }}
                     onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.outline = 'none' }}>
                     <span className="text-xl">{r.emoji}</span>
-                    <span className="text-xs font-bold text-white">{r.label}</span>
-                    <span className="text-[10px] text-white">{r.desc}</span>
+                    <span className="text-xs font-bold" style={{ color: r.id === 'creator' ? '#ec4899' : '#c084fc' }}>{r.label}</span>
+                    <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.5)' }}>{r.desc}</span>
                   </button>
                 ))}
               </div>
