@@ -303,14 +303,7 @@ export default function App() {
 
               {/* Role toggle */}
               <div className="relative flex mb-6 rounded-2xl p-1" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(124,58,237,0.2)' }}>
-                {/* Sliding pill */}
-                <div className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-xl transition-transform duration-300 ease-in-out"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(250,129,18,0.3), rgba(250,129,18,0.15))',
-                    border: '1.5px solid #FA8112',
-                    transform: role === 'creator' ? 'translateX(0)' : 'translateX(calc(100% + 8px))',
-                  }} />
-                {ROLES.map(r => (
+{ROLES.map(r => (
                   <button key={r.id} type="button" onClick={() => { setRole(r.id); setIndustry('') }}
                     className="relative flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-xl text-center z-10 transition-colors duration-200"
                     onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(236,72,153,0.15)'}
