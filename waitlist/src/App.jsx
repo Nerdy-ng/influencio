@@ -130,6 +130,7 @@ export default function App() {
     <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: '#0d0020' }}>
 
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500&family=Playfair+Display:wght@700&display=swap');
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-14px); }
@@ -138,6 +139,8 @@ export default function App() {
           from { opacity: 0; transform: translateY(24px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        .font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .font-playfair { font-family: 'Playfair Display', serif; }
       `}</style>
 
       {/* Top brand color bar */}
@@ -177,12 +180,12 @@ export default function App() {
 
         {/* Subheadline block */}
         <div className="text-center max-w-lg mb-10 space-y-3">
-          <p className="text-base sm:text-lg leading-relaxed text-white">
+          <p className="font-jakarta text-base sm:text-lg leading-relaxed text-white">
             Running a business is demanding. Staying creative is a challenge.
           </p>
 <div className="pt-1">
-            <p className="text-lg sm:text-xl font-black" style={{ color: '#ec4899' }}>Brandior Is The Bridge.</p>
-            <p className="text-sm mt-1 leading-relaxed text-white">
+            <p className="font-playfair text-xl sm:text-2xl" style={{ color: '#ec4899' }}>Brandior Is The Bridge.</p>
+            <p className="font-jakarta text-sm mt-1 leading-relaxed text-white">
               A platform where businesses of all sizes and creators connect, collaborate, and conquer together.
             </p>
           </div>
