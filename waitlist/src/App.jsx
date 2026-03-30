@@ -211,8 +211,6 @@ export default function App() {
       <SocialProofToast item={toastItem} visible={toastVisible} />
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Open+Sans:wght@400;500;600&display=swap');
-        @import url('https://api.fontshare.com/v2/css?f[]=satoshi@700,900&display=swap');
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-14px); }
