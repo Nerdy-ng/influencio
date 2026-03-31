@@ -278,7 +278,7 @@ export default function App() {
         <div className="text-center max-w-lg mb-10 space-y-3">
           <div className="pt-1">
             <p className="font-jakarta text-base sm:text-lg leading-relaxed text-white mb-3">
-              We bridge the gap between demanding businesses and creative talents.
+              We bridge the gap between entrepreneurs, brands, and creative talents.
             </p>
             <p className="text-xl sm:text-2xl font-bold tracking-tight" style={{ fontFamily: "'Roboto', sans-serif", background: 'linear-gradient(135deg, #7c3aed, #c084fc, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Brandior.</p>
             <p className="text-sm mt-1 leading-relaxed" style={{ fontFamily: "'Open Sans', sans-serif", color: '#FA8112' }}>
