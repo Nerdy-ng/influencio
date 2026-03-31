@@ -148,7 +148,7 @@ export default function App() {
   const [toastVisible, setToastVisible] = useState(false)
 
   useEffect(() => {
-    let index = Math.floor(Math.random() * SIGNUPS.length)
+    let index = -1
     let interval
 
     const show = () => {
