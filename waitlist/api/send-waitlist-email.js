@@ -54,7 +54,6 @@ export default async function handler(req, res) {
               : `We're building Africa's first platform where <strong style="color:#FA8112;">brands</strong> connect directly with the right talents — fast, transparent, and results-driven.`
             }
           </p>
-          <div style="border-top:1px solid rgba(255,255,255,0.08);margin:24px 0;"></div>
           <p style="color:#c084fc;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 16px;">What's coming for you</p>
           ${isCreator ? `
           <table cellpadding="0" cellspacing="0" style="width:100%;">
@@ -67,8 +66,7 @@ export default async function handler(req, res) {
             <tr><td style="padding:8px 0;color:rgba(255,255,255,0.7);font-size:14px;">📋 &nbsp;Post jobs &amp; receive proposals fast</td></tr>
             <tr><td style="padding:8px 0;color:rgba(255,255,255,0.7);font-size:14px;">🔒 &nbsp;Secure payments &amp; campaign tracking</td></tr>
           </table>`}
-          <div style="border-top:1px solid rgba(255,255,255,0.08);margin:28px 0;"></div>
-          <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:0 0 16px;">Move up the waitlist — share with your network:</p>
+          <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:28px 0 16px;">Move up the waitlist — share with your network:</p>
           <table cellpadding="0" cellspacing="0"><tr>
             <td style="padding-right:8px;">
               <a href="https://twitter.com/intent/tweet?text=I%20just%20joined%20the%20waitlist%20for%20Brandior%20%E2%80%94%20Africa%27s%20talent%20marketplace.%20Join%20me%3A%20https%3A%2F%2Fbrandior.africa"
@@ -103,7 +101,7 @@ export default async function handler(req, res) {
     ${industry ? `<tr><td style="color:rgba(255,255,255,0.45);font-size:13px;padding:4px 0;">Industry</td><td style="color:#fff;font-size:13px;padding:4px 0;">${industry}</td></tr>` : ''}
     <tr><td style="color:rgba(255,255,255,0.45);font-size:13px;padding:4px 0;">Signed up</td><td style="color:#fff;font-size:13px;padding:4px 0;">${new Date().toUTCString()}</td></tr>
   </table>
-  <div style="margin-top:24px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08);">
+  <div style="margin-top:24px;">
     <a href="https://supabase.com/dashboard/project/ruepnwhgehcwfeekkpjb/editor"
       style="background:#4c1d95;color:#fff;font-size:12px;font-weight:700;padding:10px 20px;border-radius:100px;text-decoration:none;display:inline-block;">View in Supabase →</a>
   </div>
