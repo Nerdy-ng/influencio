@@ -188,6 +188,8 @@ function CreatorCard({ creator, invited, onInvite }) {
 export default function PostJob() {
   const navigate = useNavigate()
   const [step, setStep] = useState('form') // 'form' | 'success'
+  const [section2Open, setSection2Open] = useState(false)
+  const section2Ref = useRef(null)
   const [loading, setLoading] = useState(false)
   const [invited, setInvited] = useState(new Set())
   const [req, setReq] = useState('')
@@ -228,20 +230,30 @@ export default function PostJob() {
     set('requirements', form.requirements.filter((_, idx) => idx !== i))
   }
 
-  function validate() {
+  function validateSection1() {
     const e = {}
     if (!form.title.trim()) e.title = 'Job title is required'
     if (!form.niche) e.niche = 'Select a niche'
     if (!form.platforms.length) e.platforms = 'Select at least one platform'
-    if (!form.description.trim()) e.description = 'Add a job description'
     if (!form.budgetMin) e.budgetMin = 'Enter minimum budget'
     return e
   }
 
+  function handleNext() {
+    const errs = validateSection1()
+    if (Object.keys(errs).length) { setErrors(errs); return }
+    setErrors({})
+    setSection2Open(true)
+    setTimeout(() => {
+      section2Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 50)
+  }
+
   function handleSubmit(e) {
     e.preventDefault()
-    const errs = validate()
-    if (Object.keys(errs).length) { setErrors(errs); return }
+    const e2 = {}
+    if (!form.description.trim()) e2.description = 'Add a job description'
+    if (Object.keys(e2).length) { setErrors(e2); return }
     setLoading(true)
     setTimeout(() => { setLoading(false); setStep('success') }, 1200)
   }
@@ -291,7 +303,7 @@ export default function PostJob() {
           </div>
 
           <div className="flex gap-3">
-            <button onClick={() => { setStep('form'); setForm({ title: '', niche: '', platforms: [], contentType: '', budgetMin: '', budgetMax: '', deadline: '', location: '', followersRequired: '', description: '', requirements: [] }); setInvited(new Set()) }}
+            <button onClick={() => { setStep('form'); setSection2Open(false); setErrors({}); setForm({ title: '', niche: '', platforms: [], contentType: '', budgetMin: '', budgetMax: '', deadline: '', location: '', followersRequired: '', description: '', requirements: [] }); setInvited(new Set()) }}
               className="flex-1 py-3 rounded-xl text-sm font-bold border transition-all"
               style={{ borderColor: '#e9d5ff', color: darkPurple }}>
               Post another job
@@ -329,9 +341,13 @@ export default function PostJob() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
 
-          {/* Job title */}
+          {/* ── Section 1: Job Basics ── */}
           <div className="bg-white rounded-2xl p-6" style={{ border: '1.5px solid #e9d5ff' }}>
-            <h2 className="font-bold text-sm mb-4" style={{ color: darkPurple }}>Job basics</h2>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black text-white flex-shrink-0"
+                style={{ backgroundColor: darkPurple }}>1</div>
+              <h2 className="font-bold text-sm" style={{ color: darkPurple }}>Job basics</h2>
+            </div>
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1.5">Job title *</label>
@@ -384,9 +400,9 @@ export default function PostJob() {
             </div>
           </div>
 
-          {/* Budget & deadline */}
+          {/* Budget */}
           <div className="bg-white rounded-2xl p-6" style={{ border: '1.5px solid #e9d5ff' }}>
-            <h2 className="font-bold text-sm mb-4" style={{ color: darkPurple }}>Budget & timeline</h2>
+            <h2 className="font-bold text-sm mb-4" style={{ color: darkPurple }}>Budget</h2>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1.5">Min budget (₦) *</label>
@@ -411,7 +427,7 @@ export default function PostJob() {
                   style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf5ff', color: '#1e0040' }}
                 />
               </div>
-              <div>
+              <div className="sm:col-span-2">
                 <label className="block text-xs font-semibold text-gray-500 mb-1.5">Location</label>
                 <input
                   value={form.location}
@@ -424,37 +440,56 @@ export default function PostJob() {
             </div>
           </div>
 
-          {/* Description */}
-          <div className="bg-white rounded-2xl p-6" style={{ border: '1.5px solid #e9d5ff' }}>
-            <h2 className="font-bold text-sm mb-4" style={{ color: darkPurple }}>Job description</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Describe the campaign *</label>
-                <textarea
-                  value={form.description}
-                  onChange={e => set('description', e.target.value)}
-                  rows={5}
-                  placeholder="Tell creators what the campaign is about, what you expect, and what makes this exciting..."
-                  className="w-full px-4 py-3 rounded-xl text-sm resize-none focus:outline-none"
-                  style={{ border: `1.5px solid ${errors.description ? pink : '#e9d5ff'}`, backgroundColor: '#faf5ff', color: '#1e0040' }}
-                />
-                {errors.description && <p className="text-xs mt-1" style={{ color: pink }}>{errors.description}</p>}
-              </div>
+          {/* ── Next button (only shows before section 2 is open) ── */}
+          {!section2Open && (
+            <button type="button" onClick={handleNext}
+              className="w-full py-4 rounded-2xl text-base font-black text-white flex items-center justify-center gap-2 transition-all"
+              style={{ background: `linear-gradient(135deg, ${darkPurple}, ${purple})`, boxShadow: '0 8px 24px rgba(76,29,149,0.35)' }}>
+              Next <ChevronRight className="w-5 h-5" />
+            </button>
+          )}
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Min followers required</label>
-                <input
-                  value={form.followersRequired}
-                  onChange={e => set('followersRequired', e.target.value)}
-                  placeholder="e.g. 5K+"
-                  className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none"
-                  style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf5ff', color: '#1e0040' }}
-                />
+          {/* ── Section 2: Campaign Details (revealed on Next) ── */}
+          {section2Open && (
+            <>
+              <div ref={section2Ref} className="bg-white rounded-2xl p-6" style={{ border: '1.5px solid #e9d5ff' }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black text-white flex-shrink-0"
+                    style={{ backgroundColor: darkPurple }}>2</div>
+                  <h2 className="font-bold text-sm" style={{ color: darkPurple }}>Campaign details</h2>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">Describe the campaign *</label>
+                    <textarea
+                      value={form.description}
+                      onChange={e => set('description', e.target.value)}
+                      rows={5}
+                      placeholder="Tell creators what the campaign is about, what you expect, and what makes this exciting..."
+                      className="w-full px-4 py-3 rounded-xl text-sm resize-none focus:outline-none"
+                      style={{ border: `1.5px solid ${errors.description ? pink : '#e9d5ff'}`, backgroundColor: '#faf5ff', color: '#1e0040' }}
+                    />
+                    {errors.description && <p className="text-xs mt-1" style={{ color: pink }}>{errors.description}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">Min followers required</label>
+                    <input
+                      value={form.followersRequired}
+                      onChange={e => set('followersRequired', e.target.value)}
+                      placeholder="e.g. 5K+"
+                      className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none"
+                      style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf5ff', color: '#1e0040' }}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Requirements */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Requirements</label>
+              <div className="bg-white rounded-2xl p-6" style={{ border: '1.5px solid #e9d5ff' }}>
+                <h2 className="font-bold text-sm mb-4" style={{ color: darkPurple }}>
+                  Requirements <span className="text-gray-400 font-normal">(optional)</span>
+                </h2>
                 <div className="flex gap-2 mb-2">
                   <input
                     value={req}
@@ -470,6 +505,9 @@ export default function PostJob() {
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
+                {form.requirements.length === 0 && (
+                  <p className="text-xs text-gray-400">e.g. Must have worked with food brands before</p>
+                )}
                 {form.requirements.map((r, i) => (
                   <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg mb-1.5"
                     style={{ backgroundColor: '#faf5ff', border: '1px solid #e9d5ff' }}>
@@ -480,18 +518,18 @@ export default function PostJob() {
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
 
-          {/* Submit */}
-          <button type="submit" disabled={loading}
-            className="w-full py-4 rounded-2xl text-base font-black text-white flex items-center justify-center gap-2 transition-all disabled:opacity-70"
-            style={{ background: `linear-gradient(135deg, ${darkPurple}, ${purple})`, boxShadow: '0 8px 24px rgba(76,29,149,0.35)' }}>
-            {loading
-              ? <span className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-              : <><Send className="w-4 h-4" /> Post Job & Find Creators</>
-            }
-          </button>
+              {/* Submit */}
+              <button type="submit" disabled={loading}
+                className="w-full py-4 rounded-2xl text-base font-black text-white flex items-center justify-center gap-2 transition-all disabled:opacity-70"
+                style={{ background: `linear-gradient(135deg, ${darkPurple}, ${purple})`, boxShadow: '0 8px 24px rgba(76,29,149,0.35)' }}>
+                {loading
+                  ? <span className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  : <><Send className="w-4 h-4" /> Post Job & Find Creators</>
+                }
+              </button>
+            </>
+          )}
 
         </form>
       </div>
