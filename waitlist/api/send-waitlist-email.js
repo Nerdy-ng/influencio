@@ -71,7 +71,7 @@ export default async function handler(req, res) {
         <tr><td class="card" bgcolor="#ffffff" style="background:#ffffff;padding:40px 36px 36px;">
 
           <h1 class="headline" style="color:#1a0040;font-size:22px;font-weight:900;margin:0 0 16px;line-height:1.4;">
-            You're officially on the Brandior waitlist, we're excited to have you.
+            You're officially on the waitlist, we're excited to have you.
           </h1>
 
           <p style="color:#374151;font-size:15px;line-height:1.8;margin:0 0 26px;">
