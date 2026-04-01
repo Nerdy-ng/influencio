@@ -263,7 +263,7 @@ function daysLeft(dateStr) {
 function JobCard({ job, saved, onToggleSave, adminLabels = [] }) {
   const deadlineText = daysLeft(job.deadline)
   const isExpiring = deadlineText !== 'Expired' && parseInt(deadlineText) <= 3
-  const allLabels = [...new Set([...(job.isUrgent ? ['Urgent'] : []), ...adminLabels])]
+  const allLabels = [...new Set([...adminLabels.filter(l => l !== 'Urgent')])]
 
   return (
     <div className="p-6 rounded-2xl transition-all hover:shadow-md"

@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import {
   Briefcase, ChevronRight, CheckCircle, Send, X, Plus,
   Instagram, Youtube, MapPin, DollarSign, Calendar, Users,
-  Star, BadgeCheck, ArrowLeft,
+  Star, BadgeCheck, ArrowLeft, ChevronDown,
 } from 'lucide-react'
 import Navbar from '../components/Navbar'
 
@@ -67,6 +67,91 @@ const DEFAULT_RECOMMENDED = [
 const TIER_BADGE = {
   'top-rated': { label: 'Top Rated', color: '#D4AF37', bg: '#D4AF3715' },
   'rising':    { label: 'Rising',    color: '#7c3aed', bg: '#7c3aed15' },
+}
+
+// ── Multi-select dropdown ─────────────────────────────────────────────────────
+function MultiSelect({ options, value, onChange, placeholder, error }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  function toggle(id) {
+    onChange(value.includes(id) ? value.filter(v => v !== id) : [...value, id])
+  }
+
+  const display = value.length === 0
+    ? placeholder
+    : value.length === 1
+    ? (options.find(o => (o.id || o) === value[0])?.id || value[0])
+    : `${value.length} selected`
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm text-left transition-all"
+        style={{
+          border: `1.5px solid ${error ? pink : open ? purple : '#e9d5ff'}`,
+          backgroundColor: '#faf5ff',
+          color: value.length ? '#1e0040' : '#9ca3af',
+        }}>
+        <span className="truncate">{display}</span>
+        <ChevronDown className="w-4 h-4 flex-shrink-0 ml-2 text-gray-400 transition-transform" style={{ transform: open ? 'rotate(180deg)' : '' }} />
+      </button>
+
+      {/* Selected chips */}
+      {value.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          {value.map(v => {
+            const opt = options.find(o => (o.id || o) === v)
+            const label = opt?.id || opt || v
+            const icon = opt?.icon
+            return (
+              <span key={v} className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full text-white"
+                style={{ backgroundColor: darkPurple }}>
+                {icon && <span>{icon}</span>}
+                {label}
+                <button type="button" onClick={() => toggle(v)} className="ml-0.5 hover:opacity-70">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )
+          })}
+        </div>
+      )}
+
+      {open && (
+        <div className="absolute z-50 left-0 right-0 top-full mt-1 rounded-2xl shadow-lg overflow-hidden overflow-y-auto"
+          style={{ border: '1.5px solid #e9d5ff', backgroundColor: 'white', maxHeight: 240 }}>
+          {options.map(opt => {
+            const id = opt.id || opt
+            const label = opt.id || opt
+            const icon = opt.icon
+            const selected = value.includes(id)
+            return (
+              <button key={id} type="button" onClick={() => toggle(id)}
+                className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-left transition-colors hover:bg-purple-50"
+                style={{ color: selected ? darkPurple : '#374151', fontWeight: selected ? 600 : 400 }}>
+                <span className="flex items-center gap-2">
+                  {icon && <span>{icon}</span>}
+                  {label}
+                </span>
+                {selected && <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: purple }} />}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
 }
 
 function CreatorCard({ creator, invited, onInvite }) {
@@ -150,7 +235,6 @@ export default function PostJob() {
     if (!form.platforms.length) e.platforms = 'Select at least one platform'
     if (!form.description.trim()) e.description = 'Add a job description'
     if (!form.budgetMin) e.budgetMin = 'Enter minimum budget'
-    if (!form.deadline) e.deadline = 'Set a deadline'
     return e
   }
 
@@ -263,33 +347,26 @@ export default function PostJob() {
 
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1.5">Niche / Industry *</label>
-                <div className="flex flex-wrap gap-2">
-                  {NICHES.map(n => (
-                    <button key={n} type="button" onClick={() => set('niche', n)}
-                      className="text-xs font-medium px-3 py-1.5 rounded-full border transition-all"
-                      style={form.niche === n
-                        ? { backgroundColor: darkPurple, color: '#fff', borderColor: darkPurple }
-                        : { backgroundColor: '#fff', color: '#6b7280', borderColor: '#e9d5ff' }}>
-                      {n}
-                    </button>
-                  ))}
-                </div>
+                <select
+                  value={form.niche}
+                  onChange={e => set('niche', e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none"
+                  style={{ border: `1.5px solid ${errors.niche ? pink : '#e9d5ff'}`, backgroundColor: '#faf5ff', color: form.niche ? '#1e0040' : '#9ca3af' }}>
+                  <option value="">Select a niche</option>
+                  {NICHES.map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
                 {errors.niche && <p className="text-xs mt-1" style={{ color: pink }}>{errors.niche}</p>}
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1.5">Platform(s) *</label>
-                <div className="flex flex-wrap gap-2">
-                  {PLATFORMS.map(p => (
-                    <button key={p.id} type="button" onClick={() => togglePlatform(p.id)}
-                      className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-all"
-                      style={form.platforms.includes(p.id)
-                        ? { backgroundColor: darkPurple, color: '#fff', borderColor: darkPurple }
-                        : { backgroundColor: '#fff', color: '#6b7280', borderColor: '#e9d5ff' }}>
-                      <span>{p.icon}</span> {p.id}
-                    </button>
-                  ))}
-                </div>
+                <MultiSelect
+                  options={PLATFORMS}
+                  value={form.platforms}
+                  onChange={v => { set('platforms', v); if (errors.platforms) setErrors(e => ({ ...e, platforms: '' })) }}
+                  placeholder="Select platforms…"
+                  error={errors.platforms}
+                />
                 {errors.platforms && <p className="text-xs mt-1" style={{ color: pink }}>{errors.platforms}</p>}
               </div>
 
@@ -333,17 +410,6 @@ export default function PostJob() {
                   className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none"
                   style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf5ff', color: '#1e0040' }}
                 />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Application deadline *</label>
-                <input
-                  type="date"
-                  value={form.deadline}
-                  onChange={e => set('deadline', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none"
-                  style={{ border: `1.5px solid ${errors.deadline ? pink : '#e9d5ff'}`, backgroundColor: '#faf5ff', color: '#1e0040' }}
-                />
-                {errors.deadline && <p className="text-xs mt-1" style={{ color: pink }}>{errors.deadline}</p>}
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1.5">Location</label>
