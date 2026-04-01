@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Menu, X, Zap, LayoutDashboard, ImagePlus, TrendingUp, Wallet, Mail, Settings, UserPlus, HelpCircle, Eye, LogOut, Briefcase } from 'lucide-react'
+import { Menu, X, Zap, LayoutDashboard, ImagePlus, TrendingUp, Wallet, Mail, Settings, UserPlus, HelpCircle, Eye, LogOut, Briefcase, Bell } from 'lucide-react'
 import { getLogo } from '../lib/brandSettings'
 import { getSetting } from '../lib/siteSettings'
 import { logout } from '../lib/logout'
+import { supabase } from '../lib/supabase'
 
 const TALENT_DROPDOWN = [
   { label: 'My Profile',       icon: LayoutDashboard, href: '/dashboard?tab=profile' },
@@ -60,13 +61,17 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [joinOpen, setJoinOpen] = useState(false)
   const [userOpen, setUserOpen] = useState(false)
+  const [bellOpen, setBellOpen] = useState(false)
   const [profile, setProfile] = useState(null)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userRole, setUserRole] = useState('talent')
   const [notifs, setNotifs] = useState({})
+  const [inAppNotifs, setInAppNotifs] = useState([])
+  const [unreadCount, setUnreadCount] = useState(0)
 
   const joinRef = useRef(null)
   const userRef = useRef(null)
+  const bellRef = useRef(null)
   const [headerLogo, setHeaderLogo] = useState(() => getLogo('header'))
   const [platformName, setPlatformName] = useState(() => getSetting('platformName'))
 
@@ -77,8 +82,29 @@ export default function Navbar() {
     } catch { setNotifs({}) }
   }
 
+  async function fetchInAppNotifs(userId) {
+    const { data } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(20)
+    if (data) {
+      setInAppNotifs(data)
+      setUnreadCount(data.filter(n => !n.read).length)
+    }
+  }
+
+  async function markAllRead(userId) {
+    await supabase.from('notifications').update({ read: true }).eq('user_id', userId).eq('read', false)
+    setInAppNotifs(prev => prev.map(n => ({ ...n, read: true })))
+    setUnreadCount(0)
+  }
+
   useEffect(() => {
-    function load() {
+    let realtimeSub = null
+
+    async function load() {
       const loggedIn = !!localStorage.getItem('brandiór_user')
       setIsLoggedIn(loggedIn)
       if (loggedIn) {
@@ -88,6 +114,20 @@ export default function Navbar() {
           if (saved) setProfile(JSON.parse(saved))
         } catch { /* ignore */ }
         loadNotifs()
+
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await fetchInAppNotifs(user.id)
+          realtimeSub = supabase
+            .channel('notifications')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+              payload => {
+                setInAppNotifs(prev => [payload.new, ...prev])
+                setUnreadCount(c => c + 1)
+              }
+            )
+            .subscribe()
+        }
       }
     }
     load()
@@ -102,6 +142,7 @@ export default function Navbar() {
       window.removeEventListener('brandiór:notification', loadNotifs)
       window.removeEventListener('brandior:logo-updated', onLogoUpdate)
       window.removeEventListener('brandior:settings-updated', onSettingsUpdate)
+      if (realtimeSub) supabase.removeChannel(realtimeSub)
     }
   }, [])
 
@@ -109,6 +150,7 @@ export default function Navbar() {
     function handleClickOutside(e) {
       if (joinRef.current && !joinRef.current.contains(e.target)) setJoinOpen(false)
       if (userRef.current && !userRef.current.contains(e.target)) setUserOpen(false)
+      if (bellRef.current && !bellRef.current.contains(e.target)) setBellOpen(false)
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -200,7 +242,70 @@ export default function Navbar() {
         {/* Desktop CTAs */}
         <div className="hidden md:flex items-center gap-3 flex-shrink-0">
           {isLoggedIn ? (
-            /* ── Logged-in: avatar dropdown ── */
+            <>
+            {/* ── Bell icon ── */}
+            <div className="relative" ref={bellRef}>
+              <button
+                onClick={async () => {
+                  setBellOpen(o => !o)
+                  if (!bellOpen && unreadCount > 0) {
+                    const { data: { user } } = await supabase.auth.getUser()
+                    if (user) markAllRead(user.id)
+                  }
+                }}
+                className="relative p-2 rounded-xl transition-colors focus:outline-none"
+                style={{ color: 'rgba(255,255,255,0.7)' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.07)'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
+                )}
+              </button>
+
+              {bellOpen && (
+                <div className="absolute right-0 top-12 w-80 rounded-2xl shadow-2xl overflow-hidden z-50"
+                  style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff' }}>
+                  <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: '#f3eeff' }}>
+                    <p className="font-bold text-sm text-brand-dark">Notifications</p>
+                    {inAppNotifs.length > 0 && (
+                      <button className="text-xs font-medium" style={{ color: '#7c3aed' }}
+                        onClick={async () => {
+                          const { data: { user } } = await supabase.auth.getUser()
+                          if (user) markAllRead(user.id)
+                        }}>
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {inAppNotifs.length === 0 ? (
+                      <div className="py-10 text-center">
+                        <Bell className="w-8 h-8 mx-auto mb-2 text-gray-200" />
+                        <p className="text-sm text-gray-400">No notifications yet</p>
+                      </div>
+                    ) : inAppNotifs.map(n => (
+                      <div key={n.id} className="flex items-start gap-3 px-4 py-3 border-b last:border-0 transition-colors"
+                        style={{ borderColor: '#f9f5ff', backgroundColor: n.read ? '#fff' : '#faf5ff' }}>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                          style={{ backgroundColor: n.type === 'application_accepted' ? '#d1fae5' : n.type === 'application_rejected' ? '#fee2e2' : '#ede9fe' }}>
+                          <span className="text-sm">
+                            {n.type === 'application_accepted' ? '✓' : n.type === 'application_rejected' ? '✕' : '📩'}
+                          </span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-brand-dark leading-snug">{n.title}</p>
+                          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{n.body}</p>
+                          <p className="text-[11px] text-gray-400 mt-1">{new Date(n.created_at).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ── Avatar dropdown ── */}
             <div className="relative" ref={userRef}>
               <button onClick={() => setUserOpen(o => !o)} className="relative focus:outline-none">
                 <UserAvatar profile={profile} />
@@ -255,6 +360,7 @@ export default function Navbar() {
                 </div>
               )}
             </div>
+            </>
           ) : (
             /* ── Logged-out: login + join dropdown ── */
             <>

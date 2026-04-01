@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { supabase } from '../lib/supabase'
+import { createNotification, sendNotificationEmail } from '../lib/notifications'
 import { slugify } from '../utils/slugify'
 import {
   ArrowLeft, MapPin, Clock, DollarSign, Users,
@@ -362,6 +363,28 @@ export default function JobDetail() {
       })
       // Increment applicants count
       await supabase.rpc('increment_applicants', { job_id: job.id }).maybeSingle()
+
+      // Notify brand in-app + email
+      const talentName = meta.full_name || meta.nickname || 'A creator'
+      if (job.brandId) {
+        await createNotification(
+          job.brandId,
+          'new_application',
+          'New application received',
+          `${talentName} applied to your job: "${job.title}"`,
+          { job_id: job.id, job_title: job.title, talent_id: user?.id }
+        )
+      }
+      if (job.brandEmail) {
+        await sendNotificationEmail(
+          job.brandEmail,
+          `New application for "${job.title}"`,
+          'You have a new application!',
+          `${talentName} just applied to your campaign "<strong>${job.title}</strong>". Review their proposal and decide whether to accept or decline.`,
+          'View Application',
+          'https://brandior.africa/brand-dashboard?tab=applications'
+        )
+      }
     } catch { /* still show success */ }
     setSubmitting(false)
     setSubmitted(true)

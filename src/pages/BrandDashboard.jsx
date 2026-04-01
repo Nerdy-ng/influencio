@@ -11,6 +11,7 @@ import MessagingPanel from '../components/MessagingPanel'
 import InviteTab from '../components/InviteTab'
 import { useFavorites } from '../hooks/useFavorites'
 import { supabase } from '../lib/supabase'
+import { createNotification, sendNotificationEmail } from '../lib/notifications'
 import OnboardingTour from '../components/OnboardingTour'
 
 const API = 'http://localhost:3001/api'
@@ -734,6 +735,34 @@ function ApplicationsTab({ setActiveTab, showToast }) {
         .single()
       if (error) throw error
       setApps(prev => prev.map(a => a.id === appId ? data : a))
+
+      // Notify talent in-app + email
+      const app = apps.find(a => a.id === appId)
+      if (app?.talent_id) {
+        const accepted = status === 'accepted'
+        await createNotification(
+          app.talent_id,
+          accepted ? 'application_accepted' : 'application_rejected',
+          accepted ? 'Application accepted!' : 'Application update',
+          accepted
+            ? `Great news! Your application for "${app.job_title}" has been accepted.`
+            : `Your application for "${app.job_title}" was not selected this time.`,
+          { job_id: app.job_id, job_title: app.job_title }
+        )
+        if (app.talent_email) {
+          await sendNotificationEmail(
+            app.talent_email,
+            accepted ? `Your application was accepted! 🎉` : `Application update for "${app.job_title}"`,
+            accepted ? 'Your application was accepted!' : 'Application update',
+            accepted
+              ? `Great news! The brand has accepted your application for <strong>"${app.job_title}"</strong>. Head to your dashboard to start the conversation.`
+              : `Thank you for applying to <strong>"${app.job_title}"</strong>. Unfortunately the brand has decided to go in a different direction this time. Keep applying — the right brand is out there!`,
+            accepted ? 'Go to Dashboard' : 'Browse More Jobs',
+            accepted ? 'https://brandior.africa/dashboard?tab=messages' : 'https://brandior.africa/jobs'
+          )
+        }
+      }
+
       if (status === 'accepted') {
         showToast('Proposal accepted! A message thread has been opened.')
         setTimeout(() => setActiveTab('messages'), 800)
