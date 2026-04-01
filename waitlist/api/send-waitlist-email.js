@@ -50,8 +50,9 @@ export default async function handler(req, res) {
     }
   </style>
 </head>
-<body>
-  <table width="100%" cellpadding="0" cellspacing="0" class="outer" bgcolor="#1a0040" style="background:#1a0040;padding:40px 20px;">
+<body bgcolor="#1a0040" style="background:#1a0040;margin:0;padding:0;">
+  <div style="background:#1a0040;min-height:100vh;width:100%;padding:0;margin:0;">
+  <table width="100%" cellpadding="0" cellspacing="0" class="outer" bgcolor="#1a0040" style="background:#1a0040;padding:40px 20px;min-height:100vh;">
     <tr><td align="center" bgcolor="#1a0040" style="background:#1a0040;">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
 
@@ -123,6 +124,7 @@ export default async function handler(req, res) {
       </table>
     </td></tr>
   </table>
+  </div>
 </body>
 </html>`
 
