@@ -706,9 +706,14 @@ function ApplicationsTab({ setActiveTab, showToast }) {
 
   async function fetchApps() {
     try {
-      const res = await fetch(`${API}/applications`)
-      const data = await res.json()
-      setApps(data.applications || [])
+      const { data: { user } } = await supabase.auth.getUser()
+      const { data, error } = await supabase
+        .from('applications')
+        .select('*')
+        .eq('brand_id', user?.id)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      setApps(data || [])
     } catch {
       setApps([])
     } finally {
@@ -721,22 +726,19 @@ function ApplicationsTab({ setActiveTab, showToast }) {
   async function handleDecision(appId, status) {
     setActing(appId)
     try {
-      const res = await fetch(`${API}/applications/${appId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, brandId, brandName: 'Brand' }),
-      })
-      const data = await res.json()
-      if (data.application) {
-        setApps(prev => prev.map(a => a.id === appId ? data.application : a))
-        if (status === 'accepted') {
-          showToast('Proposal accepted! A message thread has been opened.')
-          if (data.application.conversationId) {
-            setTimeout(() => setActiveTab('messages'), 800)
-          }
-        } else {
-          showToast('Proposal declined.')
-        }
+      const { data, error } = await supabase
+        .from('applications')
+        .update({ status })
+        .eq('id', appId)
+        .select()
+        .single()
+      if (error) throw error
+      setApps(prev => prev.map(a => a.id === appId ? data : a))
+      if (status === 'accepted') {
+        showToast('Proposal accepted! A message thread has been opened.')
+        setTimeout(() => setActiveTab('messages'), 800)
+      } else {
+        showToast('Proposal declined.')
       }
     } catch {
       showToast('Something went wrong. Try again.', 'error')

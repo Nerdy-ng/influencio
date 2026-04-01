@@ -7,6 +7,7 @@ import {
   Star, BadgeCheck, ArrowLeft, ChevronDown,
 } from 'lucide-react'
 import Navbar from '../components/Navbar'
+import { supabase } from '../lib/supabase'
 
 const purple = '#7c3aed'
 const pink = '#FF6B9D'
@@ -250,13 +251,35 @@ export default function PostJob() {
     }, 50)
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     const e2 = {}
     if (!form.description.trim()) e2.description = 'Add a job description'
     if (Object.keys(e2).length) { setErrors(e2); return }
     setLoading(true)
-    setTimeout(() => { setLoading(false); setStep('success') }, 1200)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      const brandId = user?.id || 'guest'
+      const meta = user?.user_metadata || {}
+      await supabase.from('jobs').insert({
+        brand_id: brandId,
+        brand_name: meta.company_name || meta.full_name || 'Brand',
+        brand_initials: (meta.company_name || meta.full_name || 'BR').slice(0, 2).toUpperCase(),
+        brand_color: '#7c3aed',
+        title: form.title,
+        niche: form.niche,
+        platforms: form.platforms,
+        content_type: form.contentType,
+        budget_min: Number(form.budgetMin) || 0,
+        budget_max: Number(form.budgetMax) || 0,
+        location: form.location,
+        followers_required: form.followersRequired,
+        description: form.description,
+        requirements: form.requirements,
+      })
+    } catch { /* still show success */ }
+    setLoading(false)
+    setStep('success')
   }
 
   function handleInvite(id) {

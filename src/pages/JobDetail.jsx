@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-
-const API = 'http://localhost:3001/api'
 import { Helmet } from 'react-helmet-async'
+import { supabase } from '../lib/supabase'
 import { slugify } from '../utils/slugify'
 import {
   ArrowLeft, MapPin, Clock, DollarSign, Users,
@@ -347,22 +346,23 @@ export default function JobDetail() {
     e.preventDefault()
     if (!message.trim() || submitting) return
     setSubmitting(true)
-    const talentId = localStorage.getItem('brandiór_user')
     try {
-      await fetch(`${API}/applications`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jobId: job.id,
-          jobTitle: job.title,
-          brandId: job.brandId,
-          talentId: talentId || 'talent_demo',
-          message,
-          rate: rateCardMode ? null : (rate || null),
-          rateCard: rateCardMode ? rateCard : null,
-        }),
+      const { data: { user } } = await supabase.auth.getUser()
+      const meta = user?.user_metadata || {}
+      await supabase.from('applications').insert({
+        job_id: job.id,
+        job_title: job.title,
+        brand_id: job.brandId || null,
+        talent_id: user?.id || 'guest',
+        talent_name: meta.full_name || meta.nickname || 'Creator',
+        talent_handle: meta.handle || null,
+        message,
+        rate: rateCardMode ? null : (rate || null),
+        rate_card: rateCardMode ? rateCard : null,
       })
-    } catch { /* server may be offline — still show success to user */ }
+      // Increment applicants count
+      await supabase.rpc('increment_applicants', { job_id: job.id }).maybeSingle()
+    } catch { /* still show success */ }
     setSubmitting(false)
     setSubmitted(true)
   }

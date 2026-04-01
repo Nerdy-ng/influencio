@@ -8,6 +8,7 @@ import {
   Star, ExternalLink,
 } from 'lucide-react'
 import Navbar from '../components/Navbar'
+import { supabase } from '../lib/supabase'
 
 // Admin label badge component
 function AdminLabelBadge({ label }) {
@@ -350,13 +351,13 @@ function JobCard({ job, saved, onToggleSave, adminLabels = [] }) {
   )
 }
 
-function buildSuggestions(query) {
+function buildSuggestions(query, jobs) {
   if (!query.trim()) return []
   const q = query.toLowerCase().trim()
   const seen = new Set()
   const results = []
 
-  MOCK_JOBS.forEach(j => {
+  jobs.forEach(j => {
     const texts = [
       j.title, j.description, j.niche, j.platform,
       j.contentType, j.location, ...(j.requirements || []),
@@ -431,7 +432,35 @@ export default function JobListings() {
     return () => window.removeEventListener('brandior:labels-updated', onLabelsUpdated)
   }, [])
 
-  const suggestions = buildSuggestions(search)
+  const [allJobs, setAllJobs] = useState(MOCK_JOBS)
+
+  useEffect(() => {
+    supabase.from('jobs').select('*').eq('status', 'active').order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setAllJobs(data.map(j => ({
+            id: j.id,
+            brand: j.brand_name || 'Brand',
+            brandInitials: j.brand_initials || (j.brand_name || 'BR').slice(0, 2).toUpperCase(),
+            brandColor: j.brand_color || '#7c3aed',
+            title: j.title,
+            niche: j.niche,
+            platform: (j.platforms || [])[0] || '',
+            contentType: j.content_type,
+            budget: { min: j.budget_min || 0, max: j.budget_max || 0 },
+            location: j.location,
+            followersRequired: j.followers_required,
+            description: j.description,
+            requirements: j.requirements || [],
+            applicants: j.applicants || 0,
+            postedAt: (j.created_at || '').slice(0, 10),
+            isUrgent: false,
+          })))
+        }
+      })
+  }, [])
+
+  const suggestions = buildSuggestions(search, allJobs)
 
   useEffect(() => {
     function handleClick(e) {
@@ -453,7 +482,7 @@ export default function JobListings() {
 
   const budget = BUDGETS[budgetIdx]
 
-  const filtered = MOCK_JOBS.filter(j => {
+  const filtered = allJobs.filter(j => {
     if (appliedSearch) {
       const q = appliedSearch.toLowerCase()
       const searchable = [
