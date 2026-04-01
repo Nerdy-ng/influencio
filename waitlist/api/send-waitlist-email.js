@@ -50,8 +50,8 @@ export default async function handler(req, res) {
   </style>
 </head>
 <body>
-  <table width="100%" cellpadding="0" cellspacing="0" class="outer" style="background:#1a0040;padding:40px 20px;">
-    <tr><td align="center">
+  <table width="100%" cellpadding="0" cellspacing="0" class="outer" bgcolor="#1a0040" style="background:#1a0040;padding:40px 20px;">
+    <tr><td align="center" bgcolor="#1a0040" style="background:#1a0040;">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
 
         <!-- Logo -->
@@ -67,7 +67,7 @@ export default async function handler(req, res) {
         </td></tr>
 
         <!-- Card -->
-        <tr><td class="card" style="background:#2d0060;border-radius:20px;padding:40px 36px 36px;">
+        <tr><td class="card" bgcolor="#2d0060" style="background:#2d0060;border-radius:20px;padding:40px 36px 36px;">
 
           <h1 class="headline" style="color:#ffffff;font-size:22px;font-weight:900;margin:0 0 16px;line-height:1.4;">
             You're officially on the Brandior waitlist, we're excited to have you.
@@ -112,7 +112,7 @@ export default async function handler(req, res) {
         </td></tr>
 
         <!-- Footer -->
-        <tr><td align="center" class="footer" style="padding-top:24px;">
+        <tr><td align="center" bgcolor="#1a0040" class="footer" style="background:#1a0040;padding-top:24px;">
           <p style="color:#6d28d9;font-size:12px;line-height:1.7;margin:0;">
             © 2026 Brandior · Made in Africa 🌍<br/>
             <a href="mailto:support@brandior.africa" style="color:#6d28d9;text-decoration:none;">support@brandior.africa</a>
