@@ -34,54 +34,87 @@ export default async function handler(req, res) {
 
     const subscriberHtml = `
 <!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/></head>
-<body style="margin:0;padding:0;background:#f4f4f5;font-family:'Helvetica Neue',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 20px;">
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="x-apple-disable-message-reformatting"/>
+  <style>
+    body { margin:0; padding:0; background:#f4f4f5; font-family:'Helvetica Neue',Arial,sans-serif; -webkit-text-size-adjust:100%; }
+    @media only screen and (max-width:600px) {
+      .outer { padding: 20px 12px !important; }
+      .card { padding: 28px 20px 24px !important; border-radius: 16px !important; }
+      .logo-wrap { padding-bottom: 20px !important; }
+      h1.headline { font-size: 20px !important; }
+      .footer { padding-top: 20px !important; }
+    }
+  </style>
+</head>
+<body>
+  <table width="100%" cellpadding="0" cellspacing="0" class="outer" style="background:#f4f4f5;padding:40px 20px;">
     <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
 
         <!-- Logo -->
-        <tr><td align="center" style="padding-bottom:28px;">
+        <tr><td align="center" class="logo-wrap" style="padding-bottom:24px;">
           <table cellpadding="0" cellspacing="0"><tr>
-            <td style="background:#4c1d95;border-radius:10px;padding:8px 12px;"><span style="color:#FA8112;font-size:18px;">⚡</span></td>
-            <td style="padding-left:9px;"><span style="color:#1a0040;font-size:20px;font-weight:900;letter-spacing:-0.5px;">Brandior</span></td>
+            <td style="background:#4c1d95;border-radius:10px;padding:8px 13px;">
+              <span style="color:#FA8112;font-size:18px;line-height:1;">⚡</span>
+            </td>
+            <td style="padding-left:9px;">
+              <span style="color:#1a0040;font-size:21px;font-weight:900;letter-spacing:-0.5px;">Brandior</span>
+            </td>
           </tr></table>
         </td></tr>
 
         <!-- Card -->
-        <tr><td style="background:#ffffff;border-radius:20px;padding:40px 40px 36px;">
+        <tr><td class="card" style="background:#ffffff;border-radius:20px;padding:40px 36px 36px;">
 
-          <h1 style="color:#1a0040;font-size:22px;font-weight:900;margin:0 0 16px;line-height:1.4;">You're officially on the Brandior waitlist, and we're excited to have you.</h1>
+          <h1 class="headline" style="color:#1a0040;font-size:22px;font-weight:900;margin:0 0 16px;line-height:1.4;">
+            You're officially on the Brandior waitlist, and we're excited to have you.
+          </h1>
 
-          <p style="color:#4b5563;font-size:15px;line-height:1.8;margin:0 0 28px;">
+          <p style="color:#4b5563;font-size:15px;line-height:1.8;margin:0 0 26px;">
             We're building Brandior, a platform that connects brands and creators to produce authentic, high-performing content without the usual friction.
           </p>
 
-          <p style="color:#7c3aed;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 14px;">Here's what you can expect next</p>
+          <p style="color:#7c3aed;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 14px;">
+            Here's what you can expect next
+          </p>
 
-          <table cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:28px;">
-            <tr><td style="padding:7px 0;color:#374151;font-size:14px;line-height:1.6;">✦ &nbsp;Access to brand partnerships and top-tier talent</td></tr>
-            <tr><td style="padding:7px 0;color:#374151;font-size:14px;line-height:1.6;">✦ &nbsp;Early access to our core features before public launch</td></tr>
-            <tr><td style="padding:7px 0;color:#374151;font-size:14px;line-height:1.6;">✦ &nbsp;Tips on how to get the most out of Brandior</td></tr>
-            <tr><td style="padding:7px 0;color:#374151;font-size:14px;line-height:1.6;">✦ &nbsp;24/7 support</td></tr>
+          <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:26px;">
+            <tr><td style="padding:8px 0;color:#374151;font-size:15px;line-height:1.6;vertical-align:top;">
+              <span style="color:#7c3aed;font-weight:700;">✦</span>&nbsp; Access to brand partnerships and top-tier talent
+            </td></tr>
+            <tr><td style="padding:8px 0;color:#374151;font-size:15px;line-height:1.6;vertical-align:top;">
+              <span style="color:#7c3aed;font-weight:700;">✦</span>&nbsp; Early access to our core features before public launch
+            </td></tr>
+            <tr><td style="padding:8px 0;color:#374151;font-size:15px;line-height:1.6;vertical-align:top;">
+              <span style="color:#7c3aed;font-weight:700;">✦</span>&nbsp; Tips on how to get the most out of Brandior
+            </td></tr>
+            <tr><td style="padding:8px 0;color:#374151;font-size:15px;line-height:1.6;vertical-align:top;">
+              <span style="color:#7c3aed;font-weight:700;">✦</span>&nbsp; 24/7 support
+            </td></tr>
           </table>
 
-          <p style="color:#4b5563;font-size:14px;line-height:1.8;margin:0 0 16px;">
+          <p style="color:#4b5563;font-size:15px;line-height:1.8;margin:0 0 14px;">
             In the meantime, we're working hard to ensure everything is smooth, powerful, and truly valuable from day one.
           </p>
 
-          <p style="color:#4b5563;font-size:14px;line-height:1.8;margin:0 0 28px;">
+          <p style="color:#4b5563;font-size:15px;line-height:1.8;margin:0 0 26px;">
             Stay in the loop. We'll keep you updated every step of the way.
           </p>
 
-          <p style="color:#374151;font-size:14px;line-height:1.8;margin:0;">Talk soon,<br/><strong style="color:#1a0040;">The Brandior Team</strong></p>
+          <p style="color:#374151;font-size:15px;line-height:1.8;margin:0;">
+            Talk soon,<br/>
+            <strong style="color:#1a0040;">The Brandior Team</strong>
+          </p>
 
         </td></tr>
 
         <!-- Footer -->
-        <tr><td align="center" style="padding-top:24px;">
-          <p style="color:#9ca3af;font-size:12px;margin:0;">
+        <tr><td align="center" class="footer" style="padding-top:24px;">
+          <p style="color:#9ca3af;font-size:12px;line-height:1.7;margin:0;">
             © 2026 Brandior · Made in Africa 🌍<br/>
             <a href="mailto:support@brandior.africa" style="color:#9ca3af;text-decoration:none;">support@brandior.africa</a>
           </p>
