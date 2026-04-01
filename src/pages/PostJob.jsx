@@ -376,7 +376,7 @@ export default function PostJob() {
                   value={form.contentType}
                   onChange={e => set('contentType', e.target.value)}
                   className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none"
-                  style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf5ff', color: '#1e0040', color: form.contentType ? '#1e0040' : '#9ca3af' }}>
+                  style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf5ff', color: form.contentType ? '#1e0040' : '#9ca3af' }}>
                   <option value="">Select content type</option>
                   {CONTENT_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>

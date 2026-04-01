@@ -836,6 +836,7 @@ export default function TalentProfilePage() {
             </div>
           </div>
         </div>
+      </div>
     </div>
   )
 }

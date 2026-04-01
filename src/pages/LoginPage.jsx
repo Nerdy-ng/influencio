@@ -57,7 +57,7 @@ function TalentIllustration() {
       {/* collar detail */}
       <path d="M185 310 Q210 330 235 310" stroke="#e05590" strokeWidth="2" fill="none" />
       {/* arms */}
-      <ellipse cx="148" cy="340" rx="18" ry="38" rx="18" fill="#6B3A1F" transform="rotate(-10 148 340)" />
+      <ellipse cx="148" cy="340" rx="18" ry="38" fill="#6B3A1F" transform="rotate(-10 148 340)" />
       <ellipse cx="272" cy="335" rx="18" ry="38" fill="#6B3A1F" transform="rotate(10 272 335)" />
       {/* hands */}
       <circle cx="138" cy="375" r="13" fill="#7B4422" />
