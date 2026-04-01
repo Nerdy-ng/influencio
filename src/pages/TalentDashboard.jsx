@@ -9,6 +9,7 @@ import {
   HelpCircle, Send, Ticket, ChevronDown, AlertCircle, CheckSquare,
   Wallet, ArrowDownLeft, ArrowUpRight, CreditCard, Hash, Globe, Building2,
   PieChart, BarChart2, Tag, ImagePlus, FileText, Mail, UserPlus, Inbox, Clock,
+  Shield, Lock, KeyRound, AlertTriangle, ShieldCheck,
 } from 'lucide-react'
 
 const TALENT_API = 'http://localhost:3001/api'
@@ -843,6 +844,247 @@ function AccountSettingsCard({ settingsEditMode, realEmail }) {
   )
 }
 
+const SECURITY_QUESTIONS = [
+  'What was the name of your first pet?',
+  'What is your mother\'s maiden name?',
+  'What city were you born in?',
+  'What was the name of your first school?',
+  'What is the name of the street you grew up on?',
+  'What was your childhood nickname?',
+  'What is your oldest sibling\'s middle name?',
+  'What was the make and model of your first car?',
+  'What is the name of your favourite childhood friend?',
+  'What was the first concert you attended?',
+]
+
+function SecurityCard() {
+  const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [pinVisible, setPinVisible] = useState(false)
+  const [pin, setPin] = useState('')
+  const [pinConfirm, setPinConfirm] = useState('')
+  const [pinError, setPinError] = useState('')
+  const [pinSaved, setPinSaved] = useState(false)
+  const [questions, setQuestions] = useState([
+    { q: '', a: '' },
+    { q: '', a: '' },
+    { q: '', a: '' },
+  ])
+  const [error, setError] = useState('')
+
+  // Load from supabase metadata on mount
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      const m = user.user_metadata || {}
+      if (m.securityQuestions) setQuestions(m.securityQuestions)
+      if (m.withdrawalPin) setPin(m.withdrawalPin)
+    })
+  }, [])
+
+  function updateQ(i, field, val) {
+    setQuestions(qs => qs.map((q, idx) => idx === i ? { ...q, [field]: val } : q))
+  }
+
+  async function handleSave() {
+    setError('')
+    const incomplete = questions.some(q => (q.q && !q.a) || (!q.q && q.a))
+    if (incomplete) { setError('Please provide both a question and answer for each row.'); return }
+    setSaving(true)
+    await supabase.auth.updateUser({ data: { securityQuestions: questions } })
+    setSaving(false)
+    setSaved(true)
+    setEditing(false)
+    setTimeout(() => setSaved(false), 2500)
+  }
+
+  async function handleSavePin() {
+    setPinError('')
+    if (!/^\d{4}$/.test(pin)) { setPinError('PIN must be exactly 4 digits.'); return }
+    if (pin !== pinConfirm) { setPinError('PINs do not match.'); return }
+    await supabase.auth.updateUser({ data: { withdrawalPin: pin } })
+    setPinSaved(true)
+    setPinConfirm('')
+    setTimeout(() => setPinSaved(false), 2500)
+  }
+
+  const usedQs = questions.map(q => q.q).filter(Boolean)
+
+  return (
+    <div className="rounded-3xl overflow-hidden shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+      {/* Header */}
+      <div className="flex items-center gap-3 px-6 py-5" style={{ background: 'linear-gradient(135deg, #0d0020 0%, #2d0060 100%)' }}>
+        <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(250,129,18,0.15)' }}>
+          <Shield className="w-5 h-5" style={{ color: '#FA8112' }} />
+        </div>
+        <div>
+          <p className="font-bold text-white">Account & Withdrawal Security</p>
+          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>Protect your earnings and account from unauthorised access</p>
+        </div>
+      </div>
+
+      <div className="p-6 space-y-7">
+        {/* ── Security Questions ── */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <KeyRound className="w-4 h-4" style={{ color: purple }} />
+              <p className="font-semibold text-brand-dark text-sm">Security Questions</p>
+            </div>
+            {!editing ? (
+              <button onClick={() => setEditing(true)}
+                className="text-xs font-semibold px-3.5 py-1.5 rounded-full text-white"
+                style={{ backgroundColor: darkPurple }}>
+                {questions.some(q => q.q) ? 'Edit' : 'Set Up'}
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <button onClick={() => setEditing(false)}
+                  className="text-xs font-semibold px-3.5 py-1.5 rounded-full border text-brand-dark/50"
+                  style={{ borderColor: '#e9d5ff' }}>
+                  Cancel
+                </button>
+                <button onClick={handleSave} disabled={saving}
+                  className="text-xs font-semibold px-3.5 py-1.5 rounded-full text-white flex items-center gap-1.5 disabled:opacity-60"
+                  style={{ backgroundColor: saved ? '#16a34a' : darkPurple }}>
+                  {saving
+                    ? <span className="w-3 h-3 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                    : saved ? <><ShieldCheck className="w-3 h-3" /> Saved!</> : 'Save Questions'}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <p className="text-xs text-brand-dark/40 mb-4">
+            These questions are used to verify your identity when you forget your password or request a withdrawal.
+          </p>
+
+          {!editing && !questions.some(q => q.q) ? (
+            <div className="flex items-center gap-3 p-4 rounded-2xl" style={{ backgroundColor: '#fff7ed', border: '1px solid #fed7aa' }}>
+              <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: '#ea580c' }} />
+              <p className="text-xs text-orange-700 font-medium">Security questions not set. Your account has limited recovery options.</p>
+            </div>
+          ) : !editing ? (
+            <div className="space-y-2">
+              {questions.filter(q => q.q).map((q, i) => (
+                <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ backgroundColor: '#f9f5ff' }}>
+                  <ShieldCheck className="w-4 h-4 flex-shrink-0" style={{ color: '#22c55e' }} />
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-brand-dark truncate">{q.q}</p>
+                    <p className="text-xs text-brand-dark/30">Answer set ••••••</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {questions.map((q, i) => (
+                <div key={i} className="p-4 rounded-2xl space-y-2" style={{ backgroundColor: '#f9f5ff', border: '1px solid #e9d5ff' }}>
+                  <p className="text-[10px] font-bold text-brand-dark/40 uppercase tracking-widest">Question {i + 1}</p>
+                  <select
+                    value={q.q}
+                    onChange={e => updateQ(i, 'q', e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                    style={{ border: '1px solid #e9d5ff', color: '#1a0030', backgroundColor: 'white' }}>
+                    <option value="">— Select a question —</option>
+                    {SECURITY_QUESTIONS.filter(sq => !usedQs.includes(sq) || sq === q.q).map(sq => (
+                      <option key={sq} value={sq}>{sq}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    value={q.a}
+                    onChange={e => updateQ(i, 'a', e.target.value)}
+                    placeholder="Your answer"
+                    className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                    style={{ border: '1px solid #e9d5ff', color: '#1a0030', backgroundColor: 'white' }} />
+                </div>
+              ))}
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+          )}
+        </div>
+
+        <div style={{ borderTop: '1px solid #f3e8ff' }} />
+
+        {/* ── Withdrawal PIN ── */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <Lock className="w-4 h-4" style={{ color: purple }} />
+            <p className="font-semibold text-brand-dark text-sm">Withdrawal PIN</p>
+          </div>
+          <p className="text-xs text-brand-dark/40 mb-4">
+            A 4-digit PIN is required every time you request a payout. Keep it private — never share it with anyone, including Brandiór staff.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-bold text-brand-dark/40 uppercase tracking-widest block mb-1.5">
+                {pin ? 'New PIN' : 'Set PIN'}
+              </label>
+              <div className="relative">
+                <input
+                  type={pinVisible ? 'text' : 'password'}
+                  value={pin}
+                  onChange={e => { if (/^\d{0,4}$/.test(e.target.value)) setPin(e.target.value) }}
+                  maxLength={4}
+                  placeholder="••••"
+                  className="w-full px-4 py-3 rounded-xl text-sm outline-none tracking-[0.5em] font-bold"
+                  style={{ border: '1px solid #e9d5ff', color: '#1a0030', backgroundColor: '#f9f5ff' }} />
+                <button type="button" onClick={() => setPinVisible(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-dark/30 hover:text-brand-dark/60 transition-colors">
+                  {pinVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-brand-dark/40 uppercase tracking-widest block mb-1.5">Confirm PIN</label>
+              <input
+                type="password"
+                value={pinConfirm}
+                onChange={e => { if (/^\d{0,4}$/.test(e.target.value)) setPinConfirm(e.target.value) }}
+                maxLength={4}
+                placeholder="••••"
+                className="w-full px-4 py-3 rounded-xl text-sm outline-none tracking-[0.5em] font-bold"
+                style={{ border: '1px solid #e9d5ff', color: '#1a0030', backgroundColor: '#f9f5ff' }} />
+            </div>
+          </div>
+          {pinError && <p className="text-xs text-red-500 mt-2">{pinError}</p>}
+          <button onClick={handleSavePin}
+            className="mt-3 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold text-white transition-colors"
+            style={{ backgroundColor: pinSaved ? '#16a34a' : darkPurple }}>
+            {pinSaved ? <><ShieldCheck className="w-4 h-4" /> PIN Saved!</> : <><Lock className="w-4 h-4" /> Save PIN</>}
+          </button>
+        </div>
+
+        <div style={{ borderTop: '1px solid #f3e8ff' }} />
+
+        {/* ── Safety tips ── */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <ShieldCheck className="w-4 h-4" style={{ color: '#22c55e' }} />
+            <p className="font-semibold text-brand-dark text-sm">Stay Safe on Brandiór</p>
+          </div>
+          <ul className="space-y-2.5">
+            {[
+              { icon: '🔐', text: 'Never share your password or PIN with anyone — Brandiór staff will never ask for them.' },
+              { icon: '💸', text: 'Always receive payment through the platform. Off-platform payments are not protected.' },
+              { icon: '🚨', text: 'Report any brand asking to pay you directly outside Brandiór. Your account may be at risk.' },
+              { icon: '📧', text: 'Beware of phishing emails. Brandiór only emails from @brandior.africa.' },
+              { icon: '🔑', text: 'Use a strong, unique password and update your security questions regularly.' },
+            ].map(({ icon, text }) => (
+              <li key={text} className="flex items-start gap-3 text-xs text-brand-dark/60 leading-relaxed">
+                <span className="flex-shrink-0 text-base">{icon}</span>
+                {text}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function TalentDashboard() {
   const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'jobs')
@@ -858,6 +1100,7 @@ export default function TalentDashboard() {
   const [unreadMessages, setUnreadMessages] = useState(0)
   const userId = localStorage.getItem('brandiór_user') || 'guest'
   const [showTour, setShowTour] = useState(() => !localStorage.getItem(`brandior_tour_done_${userId}`))
+  const [showOffPlatformWarning, setShowOffPlatformWarning] = useState(() => !localStorage.getItem(`brandior_offplatform_seen_${userId}`))
 
   // Load profile from Supabase user metadata
   useEffect(() => {
@@ -1053,6 +1296,64 @@ export default function TalentDashboard() {
           setActiveTab={setActiveTab}
         />
       )}
+
+      {/* ── Off-platform transaction warning ── */}
+      {showOffPlatformWarning && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}>
+          <div className="relative w-full max-w-md rounded-3xl overflow-hidden shadow-2xl"
+            style={{ backgroundColor: '#0d0020', border: '1px solid rgba(250,129,18,0.3)' }}>
+            {/* Orange glow top */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-1 rounded-full" style={{ backgroundColor: '#FA8112', boxShadow: '0 0 40px 8px rgba(250,129,18,0.5)' }} />
+
+            <div className="p-8 text-center">
+              {/* Icon */}
+              <div className="w-16 h-16 rounded-full mx-auto mb-5 flex items-center justify-center" style={{ backgroundColor: 'rgba(250,129,18,0.12)', border: '2px solid rgba(250,129,18,0.3)' }}>
+                <Shield className="w-8 h-8" style={{ color: '#FA8112' }} />
+              </div>
+
+              <h2 className="text-white font-black text-xl mb-2 leading-tight">
+                Your Money Is Only Safe<br/>
+                <span style={{ color: '#FA8112' }}>Inside Brandiór</span>
+              </h2>
+
+              <p className="text-sm mb-6 leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                Every year, thousands of creators lose their hard-earned income to brands who disappear after receiving content — because the deal was done outside the platform.
+              </p>
+
+              <div className="space-y-3 mb-7 text-left">
+                {[
+                  { icon: '🚫', title: 'No escrow = no protection', desc: 'If a brand pays you directly and disputes it, you have no recourse.' },
+                  { icon: '⚠️', title: 'Off-platform deals violate our terms', desc: 'Your account can be suspended if you accept payment outside Brandiór.' },
+                  { icon: '💰', title: 'Brandiór holds payment until you deliver', desc: 'Funds are locked in escrow and released to you automatically on approval.' },
+                ].map(({ icon, title, desc }) => (
+                  <div key={title} className="flex items-start gap-3 px-4 py-3 rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    <span className="text-xl flex-shrink-0">{icon}</span>
+                    <div>
+                      <p className="text-white text-sm font-bold">{title}</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={() => {
+                  localStorage.setItem(`brandior_offplatform_seen_${userId}`, '1')
+                  setShowOffPlatformWarning(false)
+                }}
+                className="w-full py-3.5 rounded-2xl font-black text-sm text-white transition-all"
+                style={{ background: 'linear-gradient(135deg, #FA8112, #e07010)', boxShadow: '0 4px 24px rgba(250,129,18,0.4)' }}>
+                I understand — keep my earnings safe
+              </button>
+
+              <p className="text-[10px] mt-3" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                This message will not appear again on this device
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Sidebar active={activeTab} setActive={tab => {
         if (settingsEditMode) { cancelEditSettings() }
         setActiveTab(tab)
@@ -2131,6 +2432,8 @@ export default function TalentDashboard() {
               </div>
 
               <AccountSettingsCard settingsEditMode={settingsEditMode} realEmail={profile.email} />
+
+              <SecurityCard />
 
               <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
                 <div className="flex items-center justify-between mb-4">
