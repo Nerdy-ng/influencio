@@ -195,11 +195,17 @@ export default function App() {
     }
 
     // Send welcome email via Vercel serverless function
-    fetch('/api/send-waitlist-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email.trim().toLowerCase(), name: name.trim(), role, industry }),
-    }).catch(() => {}) // fail silently — don't block the success screen
+    try {
+      const emailRes = await fetch('/api/send-waitlist-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), name: name.trim(), role, industry }),
+      })
+      const emailData = await emailRes.json()
+      if (!emailRes.ok) console.error('Email send failed:', emailData)
+    } catch (err) {
+      console.error('Email function error:', err)
+    }
 
     setState('success')
   }
