@@ -9,7 +9,7 @@ import {
   HelpCircle, Send, Ticket, ChevronDown, AlertCircle, CheckSquare,
   Wallet, ArrowDownLeft, ArrowUpRight, CreditCard, Hash, Globe, Building2,
   PieChart, BarChart2, Tag, ImagePlus, FileText, Mail, UserPlus, Inbox, Clock,
-  Shield, Lock, KeyRound, AlertTriangle, ShieldCheck,
+  Shield, Lock, KeyRound, AlertTriangle, ShieldCheck, Loader2,
 } from 'lucide-react'
 
 const TALENT_API = 'http://localhost:3001/api'
@@ -669,14 +669,24 @@ function MyApplicationsTab({ setActiveTab }) {
   const [apps, setApps] = useState([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(null)
-  const talentId = localStorage.getItem('brandiór_user') || 'talent_demo'
+  const [deliverablesApp, setDeliverablesApp] = useState(null)
+  const [deliverableFile, setDeliverableFile] = useState(null)
+  const [deliverableNote, setDeliverableNote] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [uploadDone, setUploadDone] = useState(false)
+  const deliverableFileRef = useRef(null)
 
   useEffect(() => {
     async function fetchApps() {
       try {
-        const res = await fetch(`${TALENT_API}/applications?talentId=${talentId}`)
-        const data = await res.json()
-        setApps(data.applications || [])
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+        const { data } = await supabase
+          .from('applications')
+          .select('*')
+          .eq('talent_id', user.id)
+          .order('created_at', { ascending: false })
+        setApps(data || [])
       } catch {
         setApps([])
       } finally {
@@ -684,9 +694,38 @@ function MyApplicationsTab({ setActiveTab }) {
       }
     }
     fetchApps()
-    const interval = setInterval(fetchApps, 15000)
-    return () => clearInterval(interval)
-  }, [talentId])
+  }, [])
+
+  async function uploadDeliverable() {
+    if (!deliverableFile || !deliverablesApp) return
+    setUploading(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      const path = `${user.id}/${deliverablesApp.job_id || deliverablesApp.id}/${Date.now()}-${deliverableFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+      const { error } = await supabase.storage.from('deliverables').upload(path, deliverableFile)
+      if (error) throw error
+      const { data: { publicUrl } } = supabase.storage.from('deliverables').getPublicUrl(path)
+      await supabase.from('deliverables').insert({
+        job_id: deliverablesApp.job_id || null,
+        job_title: deliverablesApp.job_title,
+        talent_id: user.id,
+        brand_id: deliverablesApp.brand_id || null,
+        file_name: deliverableFile.name,
+        file_url: publicUrl,
+        file_size: deliverableFile.size,
+        mime_type: deliverableFile.type,
+        note: deliverableNote.trim() || null,
+      })
+      setUploadDone(true)
+      setDeliverableFile(null)
+      setDeliverableNote('')
+      setTimeout(() => { setDeliverablesApp(null); setUploadDone(false) }, 2000)
+    } catch {
+      /* show nothing — fail silently for now */
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const STATUS = {
     pending:  { label: 'Under Review', bg: '#fef9c3', color: '#854d0e', icon: Clock },
@@ -715,6 +754,68 @@ function MyApplicationsTab({ setActiveTab }) {
 
   return (
     <div className="max-w-2xl mx-auto">
+
+      {/* Deliverables upload modal */}
+      {deliverablesApp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-black text-gray-900 text-lg">Upload Deliverable</h3>
+              <button onClick={() => setDeliverablesApp(null)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mb-5">
+              For: <span className="font-semibold text-gray-800">{deliverablesApp.job_title || deliverablesApp.jobTitle}</span>
+            </p>
+
+            {uploadDone ? (
+              <div className="text-center py-8">
+                <CheckCircle className="w-12 h-12 mx-auto mb-3" style={{ color: '#16a34a' }} />
+                <p className="font-bold text-gray-800">Deliverable uploaded!</p>
+              </div>
+            ) : (
+              <>
+                <input ref={deliverableFileRef} type="file" className="hidden"
+                  onChange={e => setDeliverableFile(e.target.files?.[0])} />
+
+                {deliverableFile ? (
+                  <div className="flex items-center justify-between p-3 rounded-xl mb-4"
+                    style={{ backgroundColor: '#f3e8ff', border: '1px solid #e9d5ff' }}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="w-4 h-4 flex-shrink-0" style={{ color: purple }} />
+                      <p className="text-sm font-medium text-gray-800 truncate">{deliverableFile.name}</p>
+                      <p className="text-xs text-gray-400 flex-shrink-0">{(deliverableFile.size / (1024*1024)).toFixed(1)} MB</p>
+                    </div>
+                    <button onClick={() => setDeliverableFile(null)} className="ml-2 text-gray-400 hover:text-red-400">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div onClick={() => deliverableFileRef.current?.click()}
+                    className="cursor-pointer rounded-2xl flex flex-col items-center justify-center gap-2 py-8 mb-4 transition-colors"
+                    style={{ border: '2px dashed #e9d5ff', backgroundColor: '#f9f5ff' }}>
+                    <Upload className="w-7 h-7" style={{ color: purple }} />
+                    <p className="text-sm font-semibold text-gray-700">Click to select file</p>
+                    <p className="text-xs text-gray-400">Images, videos, PDFs, ZIP — any format</p>
+                  </div>
+                )}
+
+                <textarea value={deliverableNote} onChange={e => setDeliverableNote(e.target.value)}
+                  placeholder="Add a note for the brand (optional)..."
+                  rows={2} className="w-full rounded-xl border border-gray-200 p-3 text-sm resize-none focus:outline-none mb-4" />
+
+                <button onClick={uploadDeliverable} disabled={!deliverableFile || uploading}
+                  className="w-full py-3 rounded-2xl font-bold text-white text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                  style={{ backgroundColor: darkPurple }}>
+                  {uploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</> : 'Upload Deliverable'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="mb-6">
         <h2 className="text-xl font-black" style={{ color: darkPurple }}>My Proposals</h2>
         <p className="text-sm text-gray-400 mt-0.5">{apps.length} proposal{apps.length !== 1 ? 's' : ''} submitted</p>
@@ -730,8 +831,8 @@ function MyApplicationsTab({ setActiveTab }) {
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div>
-                    <p className="font-bold text-gray-900">{app.jobTitle}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Submitted {new Date(app.createdAt).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                    <p className="font-bold text-gray-900">{app.job_title || app.jobTitle}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Submitted {new Date(app.created_at || app.createdAt).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                   </div>
                   <span className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0"
                     style={{ backgroundColor: sc.bg, color: sc.color }}>
@@ -758,11 +859,16 @@ function MyApplicationsTab({ setActiveTab }) {
                 )}
               </div>
               {app.status === 'accepted' && (
-                <div className="px-4 pb-3">
+                <div className="px-4 pb-3 flex gap-2">
                   <button onClick={() => setActiveTab('messages')}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold"
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold"
                     style={{ backgroundColor: darkPurple, color: 'white' }}>
-                    <Mail className="w-4 h-4" /> Go to Messages
+                    <Mail className="w-4 h-4" /> Messages
+                  </button>
+                  <button onClick={() => { setDeliverablesApp(app); setDeliverableFile(null); setDeliverableNote(''); setUploadDone(false) }}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold"
+                    style={{ backgroundColor: '#f3e8ff', color: purple }}>
+                    <Upload className="w-4 h-4" /> Deliverables
                   </button>
                 </div>
               )}
@@ -1104,7 +1210,7 @@ export default function TalentDashboard() {
 
   // Load profile from Supabase user metadata
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
       const m = user.user_metadata || {}
       setProfile(p => ({
@@ -1123,6 +1229,15 @@ export default function TalentDashboard() {
         pricing: m.pricing || p.pricing,
         socials: m.socials || p.socials,
       }))
+      // Load portfolio + avatar from profiles table
+      const { data: profileRow } = await supabase.from('profiles').select('portfolio, avatar_url').eq('id', user.id).single()
+      if (profileRow) {
+        setProfile(p => ({
+          ...p,
+          portfolio: profileRow.portfolio?.length ? profileRow.portfolio : p.portfolio,
+          avatar: profileRow.avatar_url || m.avatar || p.avatar,
+        }))
+      }
     })
   }, [])
 
@@ -1217,19 +1332,47 @@ export default function TalentDashboard() {
     setProfile(p => ({ ...p, hashtags: p.hashtags.filter(x => x !== t) }))
   }
 
-  function addPortfolioItem(e) {
+  async function addPortfolioItem(e) {
     e.preventDefault()
     if (!newWork.title.trim()) return
-    setProfile(p => ({ ...p, portfolio: [...p.portfolio, { ...newWork, id: Date.now() }] }))
-    resetAddWork()
+    setUploadingPortfolio(true)
+    let finalUrl = newWork.url
+    try {
+      if (portfolioFile) {
+        const { data: { user } } = await supabase.auth.getUser()
+        const ext = portfolioFile.name.split('.').pop()
+        const path = `${user.id}/${Date.now()}-${portfolioFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+        const { error } = await supabase.storage.from('portfolio').upload(path, portfolioFile)
+        if (!error) {
+          const { data: { publicUrl } } = supabase.storage.from('portfolio').getPublicUrl(path)
+          finalUrl = publicUrl
+        }
+      }
+      const item = { ...newWork, url: finalUrl, id: Date.now() }
+      setProfile(p => {
+        const updated = [...p.portfolio, item]
+        // persist to profiles table
+        supabase.auth.getUser().then(({ data: { user } }) => {
+          if (user) supabase.from('profiles').upsert({ id: user.id, portfolio: updated, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+        })
+        return { ...p, portfolio: updated }
+      })
+      resetAddWork()
+    } finally {
+      setUploadingPortfolio(false)
+    }
   }
 
   function removePortfolioItem(id) {
     setProfile(p => {
       const removed = p.portfolio.find(x => x.id === id)
+      const updated = p.portfolio.filter(x => x.id !== id)
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) supabase.from('profiles').upsert({ id: user.id, portfolio: updated, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+      })
       return {
         ...p,
-        portfolio: p.portfolio.filter(x => x.id !== id),
+        portfolio: updated,
         featuredVideo: removed?.url === p.featuredVideo ? '' : p.featuredVideo,
       }
     })
@@ -1245,6 +1388,9 @@ export default function TalentDashboard() {
   const [uploadPreview, setUploadPreview] = useState(null) // { url, name, size, mime }
   const [dragOver, setDragOver] = useState(false)
 
+  const [portfolioFile, setPortfolioFile] = useState(null)
+  const [uploadingPortfolio, setUploadingPortfolio] = useState(false)
+
   function handlePortfolioFile(file) {
     if (!file) return
     const isVideo = file.type.startsWith('video/')
@@ -1253,18 +1399,32 @@ export default function TalentDashboard() {
     const url = URL.createObjectURL(file)
     const preview = { url, name: file.name, size: (file.size / (1024 * 1024)).toFixed(1), mime: file.type }
     setUploadPreview(preview)
+    setPortfolioFile(file)
     setNewWork(w => ({ ...w, url, type: isVideo ? 'video' : 'photo' }))
   }
 
-  function handleAvatarFile(file) {
+  async function handleAvatarFile(file) {
     if (!file || !file.type.startsWith('image/')) return
-    const url = URL.createObjectURL(file)
-    setProfile(p => ({ ...p, avatar: url }))
+    const previewUrl = URL.createObjectURL(file)
+    setProfile(p => ({ ...p, avatar: previewUrl }))
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const ext = file.name.split('.').pop()
+      const path = `${user.id}/${Date.now()}.${ext}`
+      const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
+      if (error) return
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+      setProfile(p => ({ ...p, avatar: publicUrl }))
+      await supabase.auth.updateUser({ data: { avatar: publicUrl } })
+      await supabase.from('profiles').upsert({ id: user.id, avatar_url: publicUrl, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+    } catch { /* keep preview */ }
   }
 
   function resetAddWork() {
     setNewWork({ title: '', brand: '', type: 'video', url: '', desc: '' })
     setUploadPreview(null)
+    setPortfolioFile(null)
     setShowAddWork(false)
   }
 
@@ -1926,10 +2086,10 @@ export default function TalentDashboard() {
                           className="flex-1 py-3 rounded-xl text-sm font-semibold text-brand-dark/50 border border-gray-200 hover:bg-gray-50 transition-colors">
                           Cancel
                         </button>
-                        <button type="submit"
-                          className="flex-1 py-3 rounded-xl text-sm font-bold text-white"
+                        <button type="submit" disabled={uploadingPortfolio}
+                          className="flex-1 py-3 rounded-xl text-sm font-bold text-white disabled:opacity-60 flex items-center justify-center gap-2"
                           style={{ backgroundColor: darkPurple }}>
-                          Add to Portfolio
+                          {uploadingPortfolio ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</> : 'Add to Portfolio'}
                         </button>
                       </div>
                     </form>
