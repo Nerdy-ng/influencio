@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import confetti from 'canvas-confetti'
 
 const supabase = createClient(
   'https://ruepnwhgehcwfeekkpjb.supabase.co',
@@ -208,6 +209,9 @@ export default function App() {
     }
 
     setState('success')
+    setTimeout(() => {
+      confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 }, colors: ['#FA8112', '#7c3aed', '#FF6B9D', '#ffffff', '#c084fc'] })
+    }, 100)
   }
 
   const position = Math.floor(Math.random() * 400) + 800
