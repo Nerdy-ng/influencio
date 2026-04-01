@@ -41,6 +41,7 @@ export default async function handler(req, res) {
   <meta name="x-apple-disable-message-reformatting"/>
   <style>
     body { margin:0; padding:0; background:#1a0040; font-family:'Helvetica Neue',Arial,sans-serif; -webkit-text-size-adjust:100%; }
+    * { box-shadow: none !important; border: none !important; }
     @media only screen and (max-width:600px) {
       .outer { padding: 20px 12px !important; }
       .card { padding: 28px 20px 24px !important; border-radius: 16px !important; }
@@ -67,7 +68,7 @@ export default async function handler(req, res) {
         </td></tr>
 
         <!-- Card -->
-        <tr><td class="card" bgcolor="#2d0060" style="background:#2d0060;border-radius:20px;padding:40px 36px 36px;">
+        <tr><td class="card" bgcolor="#1a0040" style="background:#1a0040;border-radius:0;padding:40px 36px 36px;">
 
           <h1 class="headline" style="color:#ffffff;font-size:22px;font-weight:900;margin:0 0 16px;line-height:1.4;">
             You're officially on the Brandior waitlist, we're excited to have you.
