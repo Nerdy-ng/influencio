@@ -15,7 +15,7 @@ const darkPurple = '#4c1d95'
 const NICHES = [
   'Beauty & Skincare', 'Fashion & Style', 'Tech & Gadgets', 'Food & Cooking',
   'Fitness & Wellness', 'Comedy & Entertainment', 'Finance & Business',
-  'Travel & Lifestyle', 'Music', 'Education', 'Gaming', 'Parenting & Family',
+  'Travel & Lifestyle', 'Music', 'Education', 'Gaming', 'Parenting & Family', 'Other',
 ]
 
 const PLATFORMS = [
@@ -26,11 +26,12 @@ const PLATFORMS = [
   { id: 'Facebook', icon: '👤' },
   { id: 'Snapchat', icon: '👻' },
   { id: 'Podcast', icon: '🎙️' },
+  { id: 'Other', icon: '➕' },
 ]
 
 const CONTENT_TYPES = [
   'UGC Videos', 'Video Editing', 'Creative Strategy',
-  'Social Content', 'Design', 'Copywriting',
+  'Social Content', 'Design', 'Copywriting', 'Other',
 ]
 
 // Recommended creators mapped by niche
