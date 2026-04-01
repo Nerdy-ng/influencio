@@ -67,15 +67,8 @@ export default async function handler(req, res) {
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
 
         <!-- Logo header — dark purple -->
-        <tr><td align="center" bgcolor="#1a0040" style="background:#1a0040;padding:28px 20px;">
-          <table cellpadding="0" cellspacing="0"><tr>
-            <td style="background:#4c1d95;border-radius:10px;padding:8px 13px;">
-              <span style="color:#FA8112;font-size:18px;line-height:1;">⚡</span>
-            </td>
-            <td style="padding-left:9px;">
-              <span style="color:#ffffff;font-size:21px;font-weight:900;letter-spacing:-0.5px;">Brandior</span>
-            </td>
-          </tr></table>
+        <tr><td align="center" bgcolor="#1a0040" style="background:#1a0040;padding:24px 20px;">
+          <img src="https://www.brandior.africa/logo.png" alt="Brandior" width="140" style="display:block;height:auto;max-width:140px;"/>
         </td></tr>
 
         <!-- Card — white -->
