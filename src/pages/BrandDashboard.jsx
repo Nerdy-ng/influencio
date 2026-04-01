@@ -703,6 +703,11 @@ function ApplicationsTab({ setActiveTab, showToast }) {
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(null)
   const [acting, setActing] = useState(null)
+  const [reviewApp, setReviewApp] = useState(null)
+  const [reviewRating, setReviewRating] = useState(0)
+  const [reviewHover, setReviewHover] = useState(0)
+  const [reviewComment, setReviewComment] = useState('')
+  const [reviewSubmitting, setReviewSubmitting] = useState(false)
   const brandId = localStorage.getItem('brandiór_user') || ''
 
   async function fetchApps() {
@@ -773,6 +778,35 @@ function ApplicationsTab({ setActiveTab, showToast }) {
       showToast('Something went wrong. Try again.', 'error')
     } finally {
       setActing(null)
+    }
+  }
+
+  async function submitReview() {
+    if (!reviewRating || !reviewApp) return
+    setReviewSubmitting(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      const meta = user?.user_metadata || {}
+      const brandName = meta.brand_name || meta.full_name || 'A Brand'
+      const initials = brandName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+      await supabase.from('reviews').insert({
+        talent_id: reviewApp.talent_id,
+        reviewer_id: user.id,
+        job_id: reviewApp.job_id,
+        rating: reviewRating,
+        comment: reviewComment.trim() || null,
+        brand_name: brandName,
+        brand_initials: initials,
+        campaign_type: reviewApp.job_title,
+      })
+      showToast('Review submitted!')
+      setReviewApp(null)
+      setReviewRating(0)
+      setReviewComment('')
+    } catch {
+      showToast('Could not submit review. Try again.', 'error')
+    } finally {
+      setReviewSubmitting(false)
     }
   }
 
@@ -885,12 +919,21 @@ function ApplicationsTab({ setActiveTab, showToast }) {
             </div>
           )}
 
-          {app.status === 'accepted' && app.conversationId && (
-            <button onClick={() => setActiveTab('messages')}
-              className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition-all"
-              style={{ backgroundColor: '#f3e8ff', color: purple }}>
-              <Mail className="w-3.5 h-3.5" /> Open Message Thread
-            </button>
+          {app.status === 'accepted' && (
+            <div className="flex gap-2">
+              {app.conversationId && (
+                <button onClick={() => setActiveTab('messages')}
+                  className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition-all"
+                  style={{ backgroundColor: '#f3e8ff', color: purple }}>
+                  <Mail className="w-3.5 h-3.5" /> Open Thread
+                </button>
+              )}
+              <button onClick={() => { setReviewApp(app); setReviewRating(0); setReviewComment('') }}
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition-all"
+                style={{ backgroundColor: '#fef9c3', color: '#854d0e' }}>
+                <Star className="w-3.5 h-3.5" /> Leave Review
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -899,6 +942,64 @@ function ApplicationsTab({ setActiveTab, showToast }) {
 
   return (
     <div className="max-w-2xl mx-auto">
+
+      {/* Review Modal */}
+      {reviewApp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-black text-gray-900 text-lg">Leave a Review</h3>
+              <button onClick={() => setReviewApp(null)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mb-5">
+              Rate your experience with <span className="font-semibold text-gray-800">{reviewApp.talent_name}</span> for <span className="font-semibold text-gray-800">"{reviewApp.job_title}"</span>
+            </p>
+
+            {/* Star picker */}
+            <div className="flex items-center gap-2 mb-5 justify-center">
+              {[1,2,3,4,5].map(i => (
+                <button key={i}
+                  onMouseEnter={() => setReviewHover(i)}
+                  onMouseLeave={() => setReviewHover(0)}
+                  onClick={() => setReviewRating(i)}
+                  className="focus:outline-none transition-transform hover:scale-110">
+                  <Star className="w-9 h-9"
+                    style={{
+                      fill: i <= (reviewHover || reviewRating) ? '#D4AF37' : 'none',
+                      color: i <= (reviewHover || reviewRating) ? '#D4AF37' : '#d1d5db',
+                    }} />
+                </button>
+              ))}
+            </div>
+            {reviewRating > 0 && (
+              <p className="text-center text-sm font-semibold mb-4" style={{ color: '#D4AF37' }}>
+                {['','Poor','Fair','Good','Great','Excellent!'][reviewRating]}
+              </p>
+            )}
+
+            <textarea
+              value={reviewComment}
+              onChange={e => setReviewComment(e.target.value)}
+              placeholder="Share your experience (optional)..."
+              rows={3}
+              className="w-full rounded-2xl border border-gray-200 p-3 text-sm resize-none focus:outline-none focus:ring-2 mb-4"
+              style={{ '--tw-ring-color': '#c084fc' }}
+            />
+
+            <button
+              onClick={submitReview}
+              disabled={!reviewRating || reviewSubmitting}
+              className="w-full py-3 rounded-2xl font-bold text-white text-sm transition-all disabled:opacity-50"
+              style={{ backgroundColor: purple }}>
+              {reviewSubmitting ? 'Submitting...' : 'Submit Review'}
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-black text-gray-900">Proposals</h2>

@@ -9,7 +9,16 @@ import {
 } from 'lucide-react'
 import { useFavorites } from '../hooks/useFavorites'
 
-const API = 'http://localhost:3001/api'
+async function fetchReviews(talentId) {
+  const { data } = await supabase
+    .from('reviews')
+    .select('*')
+    .eq('talent_id', talentId)
+    .order('created_at', { ascending: false })
+  const reviews = data || []
+  const avgRating = reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0
+  return { reviews, avgRating: Math.round(avgRating * 10) / 10, reviewCount: reviews.length }
+}
 
 const pink = '#FF6B9D'
 const darkPurple = '#4c1d95'
@@ -144,13 +153,10 @@ function QuickStats({ talent: c }) {
   useEffect(() => {
     const tid = c._id || c.id
     if (!tid) return
-    fetch(`${API}/reviews?talentId=${tid}`)
-      .then(r => r.json())
-      .then(d => {
-        setReviewCount(d.reviewCount || 0)
-        if (d.avgRating) setLiveRating(d.avgRating)
-      })
-      .catch(() => {})
+    fetchReviews(tid).then(d => {
+      setReviewCount(d.reviewCount)
+      if (d.avgRating) setLiveRating(d.avgRating)
+    })
   }, [c._id, c.id])
 
   // Derive response rate: top-rated = 98%, next-rated = 95%, fast-rising = 90%
@@ -245,15 +251,11 @@ function ReviewsSection({ talentId }) {
 
   useEffect(() => {
     if (!talentId) return
-    fetch(`${API}/reviews?talentId=${talentId}`)
-      .then(r => r.json())
-      .then(d => {
-        setReviews(d.reviews || [])
-        setAvgRating(d.avgRating || 0)
-        setReviewCount(d.reviewCount || 0)
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false))
+    fetchReviews(talentId).then(d => {
+      setReviews(d.reviews)
+      setAvgRating(d.avgRating)
+      setReviewCount(d.reviewCount)
+    }).finally(() => setLoading(false))
   }, [talentId])
 
   function timeAgo(dateStr) {
@@ -379,9 +381,7 @@ function LiveRating({ talentId, fallbackRating }) {
 
   useEffect(() => {
     if (!talentId) return
-    fetch(`${API}/reviews?talentId=${talentId}`)
-      .then(r => r.json())
-      .then(d => {
+    fetchReviews(talentId).then(d => {
         if (d.avgRating) setRating(d.avgRating)
         if (typeof d.reviewCount === 'number') setCount(d.reviewCount)
       })
