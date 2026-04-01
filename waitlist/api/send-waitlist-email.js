@@ -110,7 +110,7 @@ export default async function handler(req, res) {
           </p>
 
           <p style="color:#374151;font-size:15px;line-height:1.8;margin:0;">
-            Talk soon,<br/>
+            Best regards,<br/>
             <strong style="color:#a78bfa;">The Brandior Team 💜</strong>
           </p>
 
