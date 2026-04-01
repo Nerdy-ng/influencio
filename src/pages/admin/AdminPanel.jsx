@@ -638,7 +638,7 @@ export default function AdminPanel() {
     const statusMap = { approve: "active", reject: "flagged" };
     if (statusMap[action]) {
       setJobs((prev) => prev.map((j) => j.id === jobId ? { ...j, status: statusMap[action] } : j));
-      await supabase.from('jobs').update({ status: statusMap[action] }).eq('id', jobId)
+      supabase.from('jobs').update({ status: statusMap[action] }).eq('id', jobId)
       showToast(`Job ${action}d.`);
     }
   };
