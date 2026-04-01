@@ -1,19 +1,28 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Menu, X, Zap, LayoutDashboard, ImagePlus, TrendingUp, Wallet, Mail, Settings, UserPlus, HelpCircle, Eye, LogOut } from 'lucide-react'
+import { Menu, X, Zap, LayoutDashboard, ImagePlus, TrendingUp, Wallet, Mail, Settings, UserPlus, HelpCircle, Eye, LogOut, Briefcase } from 'lucide-react'
 import { getLogo } from '../lib/brandSettings'
 import { getSetting } from '../lib/siteSettings'
 import { logout } from '../lib/logout'
 
-const NAV_ITEMS = [
-  { id: 'profile',      label: 'My Profile',      icon: LayoutDashboard, href: '/dashboard' },
-  { id: 'portfolio',    label: 'Portfolio',        icon: ImagePlus,       href: '/dashboard' },
-  { id: 'overview',     label: 'Analytics',        icon: TrendingUp,      href: '/dashboard' },
-  { id: 'transactions', label: 'Transactions',     icon: Wallet,          href: '/dashboard' },
-  { id: 'messages',     label: 'Messages',         icon: Mail,            href: '/dashboard' },
-  { id: 'settings',     label: 'Profile Settings', icon: Settings,        href: '/dashboard' },
-  { id: 'invite',       label: 'Invite Brands',    icon: UserPlus,        href: '/dashboard' },
-  { id: 'support',      label: 'Support',          icon: HelpCircle,      href: '/dashboard' },
+const TALENT_DROPDOWN = [
+  { label: 'My Profile',       icon: LayoutDashboard, href: '/dashboard?tab=profile' },
+  { label: 'Portfolio',        icon: ImagePlus,       href: '/dashboard?tab=portfolio' },
+  { label: 'Transactions',     icon: Wallet,          href: '/dashboard?tab=transactions' },
+  { label: 'Messages',         icon: Mail,            href: '/dashboard?tab=messages' },
+  { label: 'Profile Settings', icon: Settings,        href: '/dashboard?tab=settings' },
+  { label: 'Invite Brands',    icon: UserPlus,        href: '/dashboard?tab=invite' },
+  { label: 'Support',          icon: HelpCircle,      href: '/dashboard?tab=support' },
+]
+
+const BRAND_DROPDOWN = [
+  { label: 'My Dashboard',     icon: LayoutDashboard, href: '/brand-dashboard' },
+  { label: 'Analytics',        icon: TrendingUp,      href: '/brand-dashboard?tab=overview' },
+  { label: 'Campaigns',        icon: Briefcase,       href: '/brand-dashboard?tab=orders' },
+  { label: 'Messages',         icon: Mail,            href: '/brand-dashboard?tab=messages' },
+  { label: 'Settings',         icon: Settings,        href: '/brand-dashboard?tab=settings' },
+  { label: 'Invite Creators',  icon: UserPlus,        href: '/brand-dashboard?tab=invite' },
+  { label: 'Support',          icon: HelpCircle,      href: '/brand-dashboard?tab=support' },
 ]
 
 const TALENT_NAV = [
@@ -24,7 +33,6 @@ const TALENT_NAV = [
 
 const BRAND_NAV = [
   { label: 'Find Talents',   href: '/marketplace' },
-  { label: 'My Dashboard',   href: '/brand-dashboard' },
   { label: 'Analytics',      href: '/brand-dashboard?tab=overview' },
   { label: 'Campaigns',      href: '/brand-dashboard?tab=orders',   notifKey: 'campaigns' },
   { label: 'Messages',       href: '/brand-dashboard?tab=messages', notifKey: 'messages' },
@@ -213,8 +221,8 @@ export default function Navbar() {
 
                   {/* Nav items */}
                   <div className="py-1">
-                    {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
-                      <Link key={id} to={`/dashboard?tab=${id}`} onClick={() => setUserOpen(false)}
+                    {(userRole === 'brand' ? BRAND_DROPDOWN : TALENT_DROPDOWN).map(({ label, icon: Icon, href }) => (
+                      <Link key={label} to={href} onClick={() => setUserOpen(false)}
                         className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-brand-dark/70 font-medium w-full transition-colors"
                         onMouseEnter={e => e.currentTarget.style.backgroundColor = '#faf5ff'}
                         onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
