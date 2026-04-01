@@ -12,6 +12,7 @@ import { getModerationStats } from "../../utils/moderationEngine";
 import CmsEditor from "../../components/admin/CmsEditor";
 import { LOGO_SLOTS, getLogo, setLogo, removeLogo } from "../../lib/brandSettings";
 import { getAllSettings, saveAllSettings } from "../../lib/siteSettings";
+import { supabase } from "../../lib/supabase";
 
 // ─── MOCK DATA ────────────────────────────────────────────────────────────────
 
@@ -488,6 +489,69 @@ export default function AdminPanel() {
     if (user) setAdminUser(JSON.parse(user));
   }, [navigate]);
 
+  // ── Fetch real data from Supabase ────────────────────────────────────────────
+  useEffect(() => {
+    async function fetchRealData() {
+      // Users from profiles table
+      const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
+      if (profiles && profiles.length > 0) {
+        setUsers(profiles.map(p => ({
+          id: p.id,
+          name: p.full_name || p.handle || 'Unknown',
+          email: p.handle || '',
+          role: p.role || 'Talent',
+          tier: p.tier || 'fast-rising',
+          location: p.location || '—',
+          joined: p.created_at ? new Date(p.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }) : '—',
+          status: p.status || 'active',
+          avatar: (p.full_name || p.handle || 'U').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase(),
+          verified: p.verified || false,
+          _raw: p,
+        })))
+      }
+
+      // Jobs from jobs table
+      const { data: dbJobs } = await supabase.from('jobs').select('*').order('created_at', { ascending: false })
+      if (dbJobs && dbJobs.length > 0) {
+        setJobs(dbJobs.map(j => ({
+          id: j.id,
+          title: j.title,
+          brand: j.brand_name || 'Unknown Brand',
+          niche: j.niche || '—',
+          budget: j.budget_max ? `₦${Number(j.budget_max).toLocaleString()}` : '—',
+          applicants: j.applicants || 0,
+          status: j.status || 'active',
+          posted: j.created_at ? new Date(j.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }) : '—',
+          _raw: j,
+        })))
+      }
+
+      // Approvals from applications table (pending)
+      const { data: apps } = await supabase.from('applications').select('*').order('created_at', { ascending: false })
+      if (apps && apps.length > 0) {
+        setApprovals(apps.map(a => ({
+          id: a.id,
+          type: 'Application',
+          name: a.talent_name || 'Creator',
+          detail: `Applied to: ${a.job_title || 'a job'}`,
+          status: a.status || 'pending',
+          date: a.created_at ? new Date(a.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }) : '—',
+          _raw: a,
+        })))
+      }
+
+      // Overview stats
+      const { count: userCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true })
+      const { count: jobCount } = await supabase.from('jobs').select('*', { count: 'exact', head: true }).eq('status', 'active')
+      const { count: reviewCount } = await supabase.from('reviews').select('*', { count: 'exact', head: true })
+      const { count: pendingApps } = await supabase.from('applications').select('*', { count: 'exact', head: true }).eq('status', 'pending')
+      setRealStats({ userCount, jobCount, reviewCount, pendingApps })
+    }
+    fetchRealData()
+  }, [])
+
+  const [realStats, setRealStats] = useState({ userCount: null, jobCount: null, reviewCount: null, pendingApps: null })
+
   // Persist users and jobs to localStorage whenever they change
   useEffect(() => { localStorage.setItem('brandior_admin_users', JSON.stringify(users)) }, [users])
   useEffect(() => { localStorage.setItem('brandior_admin_jobs', JSON.stringify(jobs)) }, [jobs])
@@ -537,18 +601,23 @@ export default function AdminPanel() {
     });
   };
 
-  const handleSuspendUser = (userId) => {
-    setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, status: u.status === "suspended" ? "active" : "suspended" } : u));
+  const handleSuspendUser = async (userId) => {
+    const user = users.find(u => u.id === userId)
+    const newStatus = user?.status === "suspended" ? "active" : "suspended"
+    setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, status: newStatus } : u));
+    await supabase.from('profiles').update({ status: newStatus }).eq('id', userId)
     showToast("User status updated.");
   };
 
-  const handleVerifyUser = (userId) => {
+  const handleVerifyUser = async (userId) => {
     setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, verified: true } : u));
+    await supabase.from('profiles').update({ verified: true }).eq('id', userId)
     showToast("User verified successfully.");
   };
 
-  const handleChangeTier = (userId, tier) => {
+  const handleChangeTier = async (userId, tier) => {
     setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, tier } : u));
+    await supabase.from('profiles').update({ tier }).eq('id', userId)
     showToast("Tier updated.");
   };
 
@@ -557,9 +626,10 @@ export default function AdminPanel() {
       setConfirmModal({
         title: "Delete Job",
         message: "Are you sure you want to delete this job posting? This is permanent.",
-        onConfirm: () => {
+        onConfirm: async () => {
           setJobs((prev) => prev.filter((j) => j.id !== jobId));
           setConfirmModal(null);
+          await supabase.from('jobs').delete().eq('id', jobId)
           showToast("Job deleted.");
         },
       });
@@ -568,6 +638,7 @@ export default function AdminPanel() {
     const statusMap = { approve: "active", reject: "flagged" };
     if (statusMap[action]) {
       setJobs((prev) => prev.map((j) => j.id === jobId ? { ...j, status: statusMap[action] } : j));
+      await supabase.from('jobs').update({ status: statusMap[action] }).eq('id', jobId)
       showToast(`Job ${action}d.`);
     }
   };
@@ -650,10 +721,10 @@ export default function AdminPanel() {
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Users", value: users.length, icon: Users, color: "#4f46e5" },
-          { label: "Active Jobs", value: jobs.filter(j => j.status === 'active').length, icon: Activity, color: "#0ea5e9" },
-          { label: "Total Revenue", value: "₦48.2M", icon: DollarSign, color: "#16a34a" },
-          { label: "Pending Approvals", value: pendingCount, icon: Bell, color: "#d97706" },
+          { label: "Total Users",       value: realStats.userCount ?? users.length,                                  icon: Users,    color: "#4f46e5" },
+          { label: "Active Jobs",        value: realStats.jobCount ?? jobs.filter(j => j.status === 'active').length, icon: Activity, color: "#0ea5e9" },
+          { label: "Total Reviews",      value: realStats.reviewCount ?? '—',                                         icon: Star,     color: "#16a34a" },
+          { label: "Pending Approvals",  value: realStats.pendingApps ?? pendingCount,                                icon: Bell,     color: "#d97706" },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-3">
