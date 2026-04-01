@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 import { Helmet } from 'react-helmet-async'
 import {
   ChevronLeft, MapPin, Star, CheckCircle, Users, Heart,
@@ -461,16 +462,31 @@ export default function TalentProfilePage() {
     setChatSending(true)
     const msg = { id: Date.now(), text, from: 'brand', sentAt: new Date().toISOString() }
     setChatMessages(prev => [...prev, msg])
-    // Try to persist via API (silent fail)
+    // Create or find conversation in Supabase
     try {
       const brandId = localStorage.getItem('brandiór_user') || 'brand_demo'
       const brandName = localStorage.getItem('brandiór_brand_name') || 'Brand'
       const talentId = talent?._id || talent?.id || profileId
-      await fetch(`${API}/messages/conversations`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ brandId, talentId, talentName: talent?.name, brandName, talentAvatar: talent?.avatar || null }),
-      })
+      // Check if conversation already exists
+      const { data: existing } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('brand_id', brandId)
+        .eq('talent_id', talentId)
+        .maybeSingle()
+      if (!existing) {
+        await supabase.from('conversations').insert({
+          brand_id: brandId,
+          talent_id: talentId,
+          brand_name: brandName,
+          talent_name: talent?.name || 'Creator',
+          talent_avatar: talent?.avatar || null,
+          last_message: null,
+          last_message_at: new Date().toISOString(),
+          unread_brand: 0,
+          unread_talent: 0,
+        })
+      }
     } catch { /* silent */ }
     setChatSending(false)
     setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)

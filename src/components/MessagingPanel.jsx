@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Send, MessageSquare, Search, ChevronLeft, Circle, Inbox, MailOpen, ShoppingBag, SlidersHorizontal, Star, EyeOff, MoreVertical, Eye, DollarSign, Check, X, ChevronDown } from 'lucide-react'
-
-const API = 'http://localhost:3001/api'
+import { supabase } from '../lib/supabase'
 const purple = '#7c3aed'
 const darkPurple = '#4c1d95'
 const pink = '#FF6B9D'
@@ -269,52 +268,103 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
     : ''
   const otherAvatar = activeConv && userType === 'brand' ? activeConv.talentAvatar : null
 
+  // ── Map Supabase snake_case → camelCase ──────────────────────────────────────
+  function mapConv(c) {
+    return {
+      id: c.id,
+      brandId: c.brand_id,
+      talentId: c.talent_id,
+      brandName: c.brand_name,
+      talentName: c.talent_name,
+      talentAvatar: c.talent_avatar,
+      lastMessage: c.last_message,
+      lastMessageAt: c.last_message_at,
+      unreadBrand: c.unread_brand ?? 0,
+      unreadTalent: c.unread_talent ?? 0,
+      orderId: c.order_id,
+      orderTitle: c.order_title,
+    }
+  }
+
+  function mapMsg(m) {
+    return {
+      id: m.id,
+      conversationId: m.conversation_id,
+      senderId: m.sender_id,
+      senderType: m.sender_type,
+      body: m.body,
+      type: m.type || 'text',
+      offerData: m.offer_data,
+      createdAt: m.created_at,
+      read: m.read ?? false,
+    }
+  }
+
   // ── Fetch conversations ──────────────────────────────────────────────────────
   const fetchConversations = useCallback(async () => {
-    try {
-      const res = await fetch(`${API}/messages/conversations?userId=${userId}&userType=${userType}`)
-      const data = await res.json()
-      setConversations(data.conversations || [])
-    } catch {
-      // fallback silent — keep existing state
-    }
+    if (!userId) return
+    const col = userType === 'brand' ? 'brand_id' : 'talent_id'
+    const { data, error } = await supabase
+      .from('conversations')
+      .select('*')
+      .eq(col, userId)
+      .order('last_message_at', { ascending: false })
+    if (!error && data) setConversations(data.map(mapConv))
   }, [userId, userType])
 
   useEffect(() => {
     fetchConversations()
-    const interval = setInterval(fetchConversations, 10000)
-    return () => clearInterval(interval)
+    // Real-time: re-fetch when conversations change
+    const channel = supabase
+      .channel('conversations_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, fetchConversations)
+      .subscribe()
+    return () => supabase.removeChannel(channel)
   }, [fetchConversations])
 
   // ── Fetch messages in active conv ────────────────────────────────────────────
   const fetchMessages = useCallback(async (convId) => {
     if (!convId) return
-    try {
-      const res = await fetch(`${API}/messages/conversations/${convId}/messages`)
-      const data = await res.json()
-      setMessages(data.messages || [])
-      // mark as read
-      await fetch(`${API}/messages/conversations/${convId}/read`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, userType }),
-      })
-      // update local unread count
-      setConversations(prev => prev.map(c =>
-        c.id === convId
-          ? { ...c, [userType === 'brand' ? 'unreadBrand' : 'unreadTalent']: 0 }
-          : c
-      ))
-    } catch { /* silent */ }
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('conversation_id', convId)
+      .order('created_at', { ascending: true })
+    if (!error && data) setMessages(data.map(mapMsg))
+
+    // Mark as read
+    const unreadCol = userType === 'brand' ? 'unread_brand' : 'unread_talent'
+    await supabase.from('conversations').update({ [unreadCol]: 0 }).eq('id', convId)
+    setConversations(prev => prev.map(c =>
+      c.id === convId ? { ...c, [userType === 'brand' ? 'unreadBrand' : 'unreadTalent']: 0 } : c
+    ))
   }, [userId, userType])
 
   useEffect(() => {
     if (!activeConvId) return
     fetchMessages(activeConvId)
-    clearInterval(pollRef.current)
-    pollRef.current = setInterval(() => fetchMessages(activeConvId), 5000)
-    return () => clearInterval(pollRef.current)
-  }, [activeConvId, fetchMessages])
+    // Real-time messages in active conv
+    const channel = supabase
+      .channel(`messages_${activeConvId}`)
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'messages',
+        filter: `conversation_id=eq.${activeConvId}`,
+      }, payload => {
+        const newMsg = mapMsg(payload.new)
+        setMessages(prev => {
+          if (prev.find(m => m.id === newMsg.id)) return prev
+          return [...prev, newMsg]
+        })
+        // reset unread if from other party
+        if (newMsg.senderType !== userType) {
+          supabase.from('conversations').update({
+            [userType === 'brand' ? 'unread_brand' : 'unread_talent']: 0,
+          }).eq('id', activeConvId)
+        }
+      })
+      .subscribe()
+    return () => supabase.removeChannel(channel)
+  }, [activeConvId, fetchMessages, userType])
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -335,6 +385,7 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
     setInput('')
     setSending(true)
 
+    const now = new Date().toISOString()
     const optimistic = {
       id: `opt_${Date.now()}`,
       conversationId: activeConvId,
@@ -342,21 +393,29 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
       senderType: userType,
       body,
       type: 'text',
-      createdAt: new Date().toISOString(),
+      createdAt: now,
       read: false,
     }
     setMessages(prev => [...prev, optimistic])
     setConversations(prev => prev.map(c =>
-      c.id === activeConvId ? { ...c, lastMessage: body, lastMessageAt: optimistic.createdAt } : c
+      c.id === activeConvId ? { ...c, lastMessage: body, lastMessageAt: now } : c
     ))
 
-    try {
-      await fetch(`${API}/messages/conversations/${activeConvId}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ senderId: userId, senderType: userType, body }),
-      })
-    } catch { /* optimistic already shown */ }
+    const otherUnread = userType === 'brand' ? 'unread_talent' : 'unread_brand'
+    await Promise.all([
+      supabase.from('messages').insert({
+        conversation_id: activeConvId,
+        sender_id: userId,
+        sender_type: userType,
+        body,
+        type: 'text',
+      }),
+      supabase.from('conversations').update({
+        last_message: body,
+        last_message_at: now,
+        [otherUnread]: supabase.rpc ? undefined : undefined, // bump handled by trigger or below
+      }).eq('id', activeConvId),
+    ])
     setSending(false)
   }
 
@@ -371,6 +430,7 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
     setShowOfferPanel(false)
     setSending(true)
 
+    const now = new Date().toISOString()
     const optimistic = {
       id: `opt_offer_${Date.now()}`,
       conversationId: activeConvId,
@@ -379,36 +439,41 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
       body,
       type: 'offer',
       offerData: { amount, status: 'pending' },
-      createdAt: new Date().toISOString(),
+      createdAt: now,
       read: false,
     }
     setMessages(prev => [...prev, optimistic])
     setConversations(prev => prev.map(c =>
-      c.id === activeConvId ? { ...c, lastMessage: '💰 Offer sent', lastMessageAt: optimistic.createdAt } : c
+      c.id === activeConvId ? { ...c, lastMessage: '💰 Offer sent', lastMessageAt: now } : c
     ))
 
-    try {
-      await fetch(`${API}/messages/conversations/${activeConvId}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ senderId: userId, senderType: userType, body, type: 'offer', offerData: { amount } }),
-      })
-    } catch { /* optimistic shown */ }
+    await Promise.all([
+      supabase.from('messages').insert({
+        conversation_id: activeConvId,
+        sender_id: userId,
+        sender_type: userType,
+        body,
+        type: 'offer',
+        offer_data: { amount, status: 'pending' },
+      }),
+      supabase.from('conversations').update({
+        last_message: '💰 Offer sent',
+        last_message_at: now,
+      }).eq('id', activeConvId),
+    ])
     setSending(false)
   }
 
   // ── Respond to offer (talent side) ───────────────────────────────────────────
   async function respondToOffer(msgId, status) {
+    // Skip optimistic rows
+    if (String(msgId).startsWith('opt_')) return
     setMessages(prev => prev.map(m =>
       m.id === msgId ? { ...m, offerData: { ...m.offerData, status } } : m
     ))
-    try {
-      await fetch(`${API}/messages/${msgId}/offer`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-      })
-    } catch { /* optimistic shown */ }
+    await supabase.from('messages')
+      .update({ offer_data: { ...(messages.find(m => m.id === msgId)?.offerData || {}), status } })
+      .eq('id', msgId)
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────────
