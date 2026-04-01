@@ -267,7 +267,7 @@ export default function App() {
 
         {/* Logo */}
         <div className="mb-3">
-          <img src="/logo.png" alt="Brandior" className="w-auto" style={{ height: '110px', mixBlendMode: 'screen' }} />
+          <img src="/logo.png" alt="Brandior" className="w-auto" style={{ height: '160px', mixBlendMode: 'screen' }} />
         </div>
 
         {/* Badge */}
