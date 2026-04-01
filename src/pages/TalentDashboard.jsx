@@ -1145,6 +1145,10 @@ export default function TalentDashboard() {
     setSettingsEditMode(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
     await supabase.auth.updateUser({
       data: {
         full_name: profile.nickname,
@@ -1162,6 +1166,32 @@ export default function TalentDashboard() {
         socials: profile.socials,
       }
     })
+
+    // Derive min_price from the lowest non-empty rate
+    const rates = profile.pricing?.rates || []
+    const minPrice = rates
+      .map(r => Number(r.amount))
+      .filter(n => n > 0)
+      .reduce((min, n) => (n < min ? n : min), Infinity)
+
+    await supabase.from('profiles').upsert({
+      id: user.id,
+      handle: profile.handle,
+      full_name: profile.nickname,
+      bio: profile.bio,
+      location: profile.location,
+      niches: profile.niches || [],
+      platforms: (profile.socials || []).map(s => s.platform).filter(Boolean),
+      content_types: profile.contentStyles || [],
+      talent_types: profile.talentTypes || [],
+      hashtags: profile.hashtags || [],
+      website: profile.website,
+      available_for_hire: profile.availableForHire,
+      pricing: profile.pricing || {},
+      socials: profile.socials || [],
+      min_price: isFinite(minPrice) ? minPrice : 0,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'id' })
   }
   const [newWork, setNewWork] = useState({ title: '', brand: '', type: 'video', url: '', desc: '' })
 

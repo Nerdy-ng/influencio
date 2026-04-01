@@ -8,8 +8,7 @@ import {
 } from 'lucide-react'
 import { useFavorites } from '../hooks/useFavorites'
 import Navbar from '../components/Navbar'
-
-const API = 'http://localhost:3001/api'
+import { supabase } from '../lib/supabase'
 
 const pink = '#FF6B9D'
 const darkPurple = '#4c1d95'
@@ -566,44 +565,91 @@ export default function Marketplace() {
     setLoading(true)
     setError(null)
     try {
-      const params = new URLSearchParams()
-      if (search) params.set('search', search)
-      if (selectedNiches.length) params.set('niches', selectedNiches.join(','))
-      if (selectedPlatforms.length) params.set('platforms', selectedPlatforms.join(','))
-      if (minPrice) params.set('minPrice', minPrice)
-      if (maxPrice) params.set('maxPrice', maxPrice)
-      if (selectedTiers.length) params.set('tiers', selectedTiers.join(','))
-      if (availableOnly) params.set('availableOnly', 'true')
-      params.set('sort', sort)
+      let query = supabase.from('profiles').select('*')
 
-      const res = await fetch(`${API}/talents?${params.toString()}`)
-      if (!res.ok) throw new Error('Failed to fetch talents')
-      const data = await res.json()
-      setTalents(data.talents || data)
-      setTotal(data.total || (data.talents || data).length)
+      if (availableOnly) query = query.eq('available_for_hire', true)
+      if (selectedTiers.length) query = query.in('tier', selectedTiers)
+      if (selectedLocations.length) query = query.in('location', selectedLocations)
+      if (selectedGenders.length) query = query.in('gender', selectedGenders)
+      if (minPrice) query = query.gte('min_price', Number(minPrice))
+      if (maxPrice) query = query.lte('min_price', Number(maxPrice))
+      if (selectedNiches.length) query = query.overlaps('niches', selectedNiches)
+      if (selectedPlatforms.length) query = query.overlaps('platforms', selectedPlatforms)
+      if (selectedContentTypes.length) query = query.overlaps('content_types', selectedContentTypes)
+      if (selectedLanguages.length) query = query.overlaps('languages', selectedLanguages)
+      if (search) query = query.or(`full_name.ilike.%${search}%,handle.ilike.%${search}%`)
+
+      const { data, error: err } = await query
+      if (err) throw err
+
+      let mapped = (data || []).map(p => ({
+        _id: p.id,
+        name: p.full_name,
+        handle: p.handle,
+        location: p.location,
+        bio: p.bio,
+        avatar_url: p.avatar_url,
+        niches: p.niches || [],
+        platforms: p.platforms || [],
+        contentTypes: p.content_types || [],
+        languages: p.languages || [],
+        tier: p.tier || 'fast-rising',
+        avgRating: p.avg_rating || 0,
+        totalFollowers: p.total_followers || 0,
+        avgEngagement: p.avg_engagement || 0,
+        completedCampaigns: p.completed_campaigns || 0,
+        minPrice: p.min_price || 0,
+        availableForHire: p.available_for_hire,
+        gender: p.gender,
+        age: p.age,
+        featuredVideo: p.featured_video,
+        pricing: p.pricing || {},
+        socials: p.socials || [],
+      }))
+
+      // Client-side filters not supported by Supabase array operators
+      if (selectedFollowerRanges.length)
+        mapped = mapped.filter(c => selectedFollowerRanges.some(r => c.totalFollowers >= r.min && c.totalFollowers <= r.max))
+      if (selectedAgeRanges.length)
+        mapped = mapped.filter(c => c.age && selectedAgeRanges.some(r => c.age >= r.min && c.age <= r.max))
+
+      // Sort
+      if (sort === 'relevant')            mapped = applyAdminRanking(mapped)
+      else if (sort === 'highest-rated')  mapped.sort((a, b) => b.avgRating - a.avgRating)
+      else if (sort === 'lowest-price')   mapped.sort((a, b) => a.minPrice - b.minPrice)
+      else if (sort === 'most-campaigns') mapped.sort((a, b) => b.completedCampaigns - a.completedCampaigns)
+
+      // Fall back to mock data if no real profiles yet
+      if (mapped.length === 0) {
+        let filtered = MOCK_CREATORS.filter(c => {
+          if (search && !c.name.toLowerCase().includes(search.toLowerCase()) && !c.handle.toLowerCase().includes(search.toLowerCase())) return false
+          if (selectedNiches.length && !selectedNiches.some(n => c.niches.includes(n))) return false
+          if (selectedPlatforms.length && !selectedPlatforms.some(p => (c.platforms || []).includes(p))) return false
+          if (minPrice && c.minPrice < Number(minPrice)) return false
+          if (maxPrice && c.minPrice > Number(maxPrice)) return false
+          if (selectedTiers.length && !selectedTiers.includes(c.tier)) return false
+          if (availableOnly && !c.availableForHire) return false
+          if (selectedLocations.length && !selectedLocations.includes(c.location)) return false
+          if (selectedGenders.length && !selectedGenders.includes(c.gender)) return false
+          if (selectedAgeRanges.length && !selectedAgeRanges.some(r => c.age >= r.min && c.age <= r.max)) return false
+          if (selectedFollowerRanges.length && !selectedFollowerRanges.some(r => c.totalFollowers >= r.min && c.totalFollowers <= r.max)) return false
+          if (selectedContentTypes.length && !selectedContentTypes.some(ct => (c.contentTypes || []).includes(ct))) return false
+          if (selectedLanguages.length && !selectedLanguages.some(l => (c.languages || []).includes(l))) return false
+          return true
+        })
+        if (sort === 'relevant')            filtered = applyAdminRanking(filtered)
+        else if (sort === 'highest-rated')  filtered.sort((a, b) => b.avgRating - a.avgRating)
+        else if (sort === 'lowest-price')   filtered.sort((a, b) => a.minPrice - b.minPrice)
+        else if (sort === 'most-campaigns') filtered.sort((a, b) => b.completedCampaigns - a.completedCampaigns)
+        setTotal(filtered.length)
+        setTalents(filtered)
+        return
+      }
+
+      setTotal(mapped.length)
+      setTalents(mapped)
     } catch {
-      let filtered = MOCK_CREATORS.filter(c => {
-        if (search && !c.name.toLowerCase().includes(search.toLowerCase()) && !c.handle.toLowerCase().includes(search.toLowerCase())) return false
-        if (selectedNiches.length && !selectedNiches.some(n => c.niches.includes(n))) return false
-        if (selectedPlatforms.length && !selectedPlatforms.some(p => (c.platforms || []).includes(p))) return false
-        if (minPrice && c.minPrice < Number(minPrice)) return false
-        if (maxPrice && c.minPrice > Number(maxPrice)) return false
-        if (selectedTiers.length && !selectedTiers.includes(c.tier)) return false
-        if (availableOnly && !c.availableForHire) return false
-        if (selectedLocations.length && !selectedLocations.includes(c.location)) return false
-        if (selectedGenders.length && !selectedGenders.includes(c.gender)) return false
-        if (selectedAgeRanges.length && !selectedAgeRanges.some(r => c.age >= r.min && c.age <= r.max)) return false
-        if (selectedFollowerRanges.length && !selectedFollowerRanges.some(r => c.totalFollowers >= r.min && c.totalFollowers <= r.max)) return false
-        if (selectedContentTypes.length && !selectedContentTypes.some(ct => (c.contentTypes || []).includes(ct))) return false
-        if (selectedLanguages.length && !selectedLanguages.some(l => (c.languages || []).includes(l))) return false
-        return true
-      })
-      if (sort === 'relevant')       filtered = applyAdminRanking(filtered)
-      else if (sort === 'highest-rated') filtered.sort((a, b) => b.avgRating - a.avgRating)
-      else if (sort === 'lowest-price') filtered.sort((a, b) => a.minPrice - b.minPrice)
-      else if (sort === 'most-campaigns') filtered.sort((a, b) => b.completedCampaigns - a.completedCampaigns)
-      setTotal(filtered.length)
-      setTalents(filtered)
+      setError(true)
     } finally {
       setLoading(false)
     }
