@@ -39,9 +39,20 @@ export default async function handler(req, res) {
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="x-apple-disable-message-reformatting"/>
+  <meta name="color-scheme" content="light"/>
+  <meta name="supported-color-schemes" content="light"/>
   <style>
-    body { margin:0; padding:0; background:#f4f4f5; font-family:'Helvetica Neue',Arial,sans-serif; -webkit-text-size-adjust:100%; }
+    :root { color-scheme: light only; }
+    body { margin:0; padding:0; background:#f4f4f5; font-family:'Helvetica Neue',Arial,sans-serif; -webkit-text-size-adjust:100%; color-scheme: light only; }
     * { box-shadow: none !important; border: none !important; }
+    @media (prefers-color-scheme: dark) {
+      body { background:#f4f4f5 !important; color:#374151 !important; }
+      .card-td { background:#ffffff !important; color:#374151 !important; }
+      .footer-td { background:#f4f4f5 !important; }
+      .outer-td { background:#f4f4f5 !important; }
+      h1.headline { color:#1a0040 !important; }
+      p, td { color:#374151 !important; }
+    }
     @media only screen and (max-width:600px) {
       .outer { padding: 20px 12px !important; }
       .card { padding: 28px 20px 24px !important; border-radius: 16px !important; }
@@ -52,7 +63,7 @@ export default async function handler(req, res) {
 </head>
 <body bgcolor="#f4f4f5" style="background:#f4f4f5;margin:0;padding:0;">
   <table width="100%" cellpadding="0" cellspacing="0" class="outer" bgcolor="#f4f4f5" style="background:#f4f4f5;padding:0 0 40px;">
-    <tr><td align="center" bgcolor="#f4f4f5" style="background:#f4f4f5;">
+    <tr><td align="center" class="outer-td" bgcolor="#f4f4f5" style="background:#f4f4f5;">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
 
         <!-- Logo header — dark purple -->
@@ -68,7 +79,7 @@ export default async function handler(req, res) {
         </td></tr>
 
         <!-- Card — white -->
-        <tr><td class="card" bgcolor="#ffffff" style="background:#ffffff;padding:40px 36px 36px;">
+        <tr><td class="card card-td" bgcolor="#ffffff" style="background:#ffffff;padding:40px 36px 36px;">
 
           <h1 class="headline" style="color:#1a0040;font-size:22px;font-weight:900;margin:0 0 16px;line-height:1.4;">
             You're officially on the waitlist, we're excited to have you.
@@ -107,13 +118,13 @@ export default async function handler(req, res) {
 
           <p style="color:#374151;font-size:15px;line-height:1.8;margin:0;">
             Talk soon,<br/>
-            <strong style="color:#a78bfa;">The Brandior 💜 Team</strong>
+            <strong style="color:#a78bfa;">The Brandior Team 💜</strong>
           </p>
 
         </td></tr>
 
         <!-- Footer -->
-        <tr><td align="center" bgcolor="#f4f4f5" class="footer" style="background:#f4f4f5;padding-top:24px;">
+        <tr><td align="center" bgcolor="#f4f4f5" class="footer footer-td" style="background:#f4f4f5;padding-top:24px;">
           <p style="color:#9ca3af;font-size:12px;line-height:1.7;margin:0;">
             © 2026 Brandior · Made in Africa 🌍<br/>
             <a href="mailto:support@brandior.africa" style="color:#9ca3af;text-decoration:none;">support@brandior.africa</a>
