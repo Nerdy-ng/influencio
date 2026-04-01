@@ -47,36 +47,24 @@ export default async function handler(req, res) {
           </tr></table>
         </td></tr>
         <tr><td style="background:rgba(76,29,149,0.3);border:1px solid #7c3aed;border-radius:24px;padding:40px 36px;">
-          <h1 style="color:#ffffff;font-size:26px;font-weight:900;margin:0 0 12px;">You're on the list, ${firstName}! 🎉</h1>
-          <p style="color:rgba(255,255,255,0.6);font-size:15px;line-height:1.7;margin:0 0 24px;">
-            ${isCreator
-              ? `We're building Africa's first platform where <strong style="color:#FA8112;">talents &amp; creators</strong> connect directly with brands — no middlemen, fair pay, real growth.`
-              : `We're building Africa's first platform where <strong style="color:#FA8112;">brands</strong> connect directly with the right talents — fast, transparent, and results-driven.`
-            }
+          <h1 style="color:#ffffff;font-size:26px;font-weight:900;margin:0 0 20px;">You're officially on the Brandior waitlist, and we're excited to have you.</h1>
+          <p style="color:rgba(255,255,255,0.65);font-size:15px;line-height:1.8;margin:0 0 28px;">
+            We're building Brandior, a platform that connects brands and creators to produce authentic, high-performing content without the usual friction.
           </p>
-          <p style="color:#c084fc;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 16px;">What's coming for you</p>
-          ${isCreator ? `
-          <table cellpadding="0" cellspacing="0" style="width:100%;">
-            <tr><td style="padding:8px 0;color:rgba(255,255,255,0.7);font-size:14px;">🎯 &nbsp;Direct brand deals — no agency cuts</td></tr>
-            <tr><td style="padding:8px 0;color:rgba(255,255,255,0.7);font-size:14px;">💰 &nbsp;Rate card builder &amp; payment protection</td></tr>
-            <tr><td style="padding:8px 0;color:rgba(255,255,255,0.7);font-size:14px;">📊 &nbsp;Campaign analytics &amp; growth tools</td></tr>
-          </table>` : `
-          <table cellpadding="0" cellspacing="0" style="width:100%;">
-            <tr><td style="padding:8px 0;color:rgba(255,255,255,0.7);font-size:14px;">🎯 &nbsp;Discover verified talents across Africa</td></tr>
-            <tr><td style="padding:8px 0;color:rgba(255,255,255,0.7);font-size:14px;">📋 &nbsp;Post jobs &amp; receive proposals fast</td></tr>
-            <tr><td style="padding:8px 0;color:rgba(255,255,255,0.7);font-size:14px;">🔒 &nbsp;Secure payments &amp; campaign tracking</td></tr>
-          </table>`}
-          <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:28px 0 16px;">Move up the waitlist — share with your network:</p>
-          <table cellpadding="0" cellspacing="0"><tr>
-            <td style="padding-right:8px;">
-              <a href="https://twitter.com/intent/tweet?text=I%20just%20joined%20the%20waitlist%20for%20Brandior%20%E2%80%94%20Africa%27s%20talent%20marketplace.%20Join%20me%3A%20https%3A%2F%2Fbrandior.africa"
-                style="background:rgba(255,255,255,0.1);color:#ffffff;font-size:12px;font-weight:700;padding:10px 20px;border-radius:100px;text-decoration:none;display:inline-block;">Share on X</a>
-            </td>
-            <td>
-              <a href="https://wa.me/?text=I%20just%20joined%20the%20waitlist%20for%20Brandior%20%E2%80%94%20Africa%27s%20talent%20marketplace.%20Join%20here%3A%20https%3A%2F%2Fbrandior.africa"
-                style="background:#25D366;color:#ffffff;font-size:12px;font-weight:700;padding:10px 20px;border-radius:100px;text-decoration:none;display:inline-block;">Share on WhatsApp</a>
-            </td>
-          </tr></table>
+          <p style="color:#c084fc;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 16px;">Here's what you can expect next</p>
+          <table cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:28px;">
+            <tr><td style="padding:8px 0;color:rgba(255,255,255,0.75);font-size:14px;line-height:1.6;">✦ &nbsp;Access to brand partnerships and top-tier talent</td></tr>
+            <tr><td style="padding:8px 0;color:rgba(255,255,255,0.75);font-size:14px;line-height:1.6;">✦ &nbsp;Early access to our core features before public launch</td></tr>
+            <tr><td style="padding:8px 0;color:rgba(255,255,255,0.75);font-size:14px;line-height:1.6;">✦ &nbsp;Tips on how to get the most out of Brandior</td></tr>
+            <tr><td style="padding:8px 0;color:rgba(255,255,255,0.75);font-size:14px;line-height:1.6;">✦ &nbsp;24/7 support</td></tr>
+          </table>
+          <p style="color:rgba(255,255,255,0.6);font-size:14px;line-height:1.8;margin:0 0 28px;">
+            In the meantime, we're working hard to ensure everything is smooth, powerful, and truly valuable from day one.
+          </p>
+          <p style="color:rgba(255,255,255,0.6);font-size:14px;line-height:1.8;margin:0 0 28px;">
+            Stay in the loop. We'll keep you updated every step of the way.
+          </p>
+          <p style="color:rgba(255,255,255,0.85);font-size:14px;line-height:1.8;margin:0;">Talk soon,<br/><strong style="color:#ffffff;">The Brandior Team</strong></p>
         </td></tr>
         <tr><td align="center" style="padding-top:28px;">
           <p style="color:rgba(255,255,255,0.2);font-size:12px;margin:0;">
@@ -108,7 +96,7 @@ export default async function handler(req, res) {
 </div>`
 
     const [subscriberResult] = await Promise.all([
-      sendEmail(email, `You're on the Brandior waitlist, ${firstName}! 🎉`, subscriberHtml),
+      sendEmail(email, `You're on the Brandior waitlist, ${firstName}!`, subscriberHtml),
       sendEmail(ADMIN_EMAIL, `🔔 New ${isCreator ? 'Talent' : 'Brand'} — ${name}`, adminHtml).catch(() => {}),
     ])
 
