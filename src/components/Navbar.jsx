@@ -17,15 +17,15 @@ const NAV_ITEMS = [
 ]
 
 const TALENT_NAV = [
-  { label: 'My Dashboard', href: '/dashboard' },
-  { label: 'Messages',     href: '/dashboard?tab=messages',  notifKey: 'messages' },
-  { label: 'Analytics',    href: '/dashboard?tab=overview' },
+  { label: 'My Dashboard',  href: '/dashboard' },
+  { label: 'Messages',      href: '/dashboard?tab=messages', notifKey: 'messages' },
   { label: 'Invite Brands', href: '/dashboard?tab=invite' },
 ]
 
 const BRAND_NAV = [
   { label: 'Find Talents',   href: '/marketplace' },
   { label: 'My Dashboard',   href: '/brand-dashboard' },
+  { label: 'Analytics',      href: '/brand-dashboard?tab=overview' },
   { label: 'Campaigns',      href: '/brand-dashboard?tab=orders',   notifKey: 'campaigns' },
   { label: 'Messages',       href: '/brand-dashboard?tab=messages', notifKey: 'messages' },
   { label: 'Invite Creator', href: '/brand-dashboard?tab=invite' },
@@ -65,7 +65,7 @@ export default function Navbar() {
   function loadNotifs() {
     try {
       const stored = localStorage.getItem('brandiór_notifs')
-      setNotifs(stored ? JSON.parse(stored) : { messages: 3, campaigns: 1 })
+      setNotifs(stored ? JSON.parse(stored) : {})
     } catch { setNotifs({}) }
   }
 

@@ -176,7 +176,6 @@ const AVATAR_NAV = [
   { id: 'applications', label: 'My Applications',   icon: Inbox },
   { id: 'profile',      label: 'My Profile',        icon: LayoutDashboard },
   { id: 'portfolio',    label: 'Portfolio',          icon: ImagePlus },
-  { id: 'overview',     label: 'Analytics',          icon: TrendingUp },
   { id: 'transactions', label: 'Transactions',       icon: Wallet },
   { id: 'messages',     label: 'Messages',           icon: Mail },
   { id: 'settings',     label: 'Profile Settings',   icon: Settings },
@@ -297,7 +296,6 @@ function Sidebar({ active, setActive }) {
     { id: 'jobs',         label: 'Browse Jobs',      icon: Briefcase,      href: '/jobs' },
     { id: 'profile',      label: 'My Profile',       icon: LayoutDashboard },
     { id: 'portfolio',    label: 'Portfolio',         icon: ImagePlus },
-    { id: 'overview',     label: 'Analytics',         icon: TrendingUp },
     { id: 'transactions', label: 'Transactions',      icon: Wallet },
     { id: 'messages',     label: 'Messages',          icon: Mail },
     { id: 'settings',     label: 'Profile Settings',  icon: Settings },
@@ -861,12 +859,27 @@ export default function TalentDashboard() {
   const userId = localStorage.getItem('brandiór_user') || 'guest'
   const [showTour, setShowTour] = useState(() => !localStorage.getItem(`brandior_tour_done_${userId}`))
 
-  // Load real email from Supabase session
+  // Load profile from Supabase user metadata
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user?.email) {
-        setProfile(p => ({ ...p, email: session.user.email }))
-      }
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      const m = user.user_metadata || {}
+      setProfile(p => ({
+        ...p,
+        email: user.email || p.email,
+        nickname: m.full_name || m.nickname || p.nickname,
+        handle: m.handle || p.handle,
+        bio: m.bio || p.bio,
+        location: m.location || p.location,
+        niches: m.niches || p.niches,
+        website: m.website || p.website,
+        hashtags: m.hashtags || p.hashtags,
+        contentStyles: m.contentStyles || p.contentStyles,
+        availableForHire: m.availableForHire ?? p.availableForHire,
+        talentTypes: m.talentTypes || p.talentTypes,
+        pricing: m.pricing || p.pricing,
+        socials: m.socials || p.socials,
+      }))
     })
   }, [])
 
@@ -884,11 +897,28 @@ export default function TalentDashboard() {
     setProfileSnapshot(null)
     setSettingsEditMode(false)
   }
-  function saveSettings() {
+  async function saveSettings() {
     setProfileSnapshot(null)
     setSettingsEditMode(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+    await supabase.auth.updateUser({
+      data: {
+        full_name: profile.nickname,
+        nickname: profile.nickname,
+        handle: profile.handle,
+        bio: profile.bio,
+        location: profile.location,
+        niches: profile.niches,
+        website: profile.website,
+        hashtags: profile.hashtags,
+        contentStyles: profile.contentStyles,
+        availableForHire: profile.availableForHire,
+        talentTypes: profile.talentTypes,
+        pricing: profile.pricing,
+        socials: profile.socials,
+      }
+    })
   }
   const [newWork, setNewWork] = useState({ title: '', brand: '', type: 'video', url: '', desc: '' })
 
@@ -1866,44 +1896,41 @@ export default function TalentDashboard() {
                 <div className="grid sm:grid-cols-2 gap-5 mb-5">
                   <EditableField label="Nickname / Talent Name" value={profile.nickname} onChange={v => updateField('nickname', v)} placeholder="e.g. BeautyByAmaka" isEditing={settingsEditMode} />
                   <EditableField label="Brandiór Username" value={profile.handle} onChange={v => updateField('handle', v)} placeholder="@yourhandle" isEditing={settingsEditMode} />
-                  {/* Location — country + city */}
+                  {/* Location — country + state */}
                   <div>
                     <label className="block text-xs font-medium text-brand-dark/40 uppercase tracking-widest mb-1.5">Location</label>
-                    {settingsEditMode ? (
-                      <div className="flex gap-2">
-                        <select
-                          value={profile.location?.split(', ')[1] || ''}
-                          onChange={e => {
-                            const country = e.target.value
-                            updateField('location', country ? `, ${country}` : '')
-                          }}
-                          className="flex-1 rounded-xl px-3 py-2 text-sm border focus:outline-none"
-                          style={{ borderColor: '#e9d5ff', color: '#1a0030', backgroundColor: '#faf5ff' }}>
-                          <option value="">Country</option>
-                          {['Nigeria', 'South Africa', 'Kenya'].map(c => (
-                            <option key={c} value={c}>{c}</option>
-                          ))}
-                        </select>
-                        <select
-                          value={profile.location?.split(', ')[0] || ''}
-                          onChange={e => {
-                            const country = profile.location?.split(', ')[1] || ''
-                            updateField('location', e.target.value ? `${e.target.value}, ${country}` : (country ? `, ${country}` : ''))
-                          }}
-                          disabled={!profile.location?.split(', ')[1]}
-                          className="flex-1 rounded-xl px-3 py-2 text-sm border focus:outline-none disabled:opacity-40"
-                          style={{ borderColor: '#e9d5ff', color: '#1a0030', backgroundColor: '#faf5ff' }}>
-                          <option value="">City</option>
-                          {({
-                            Nigeria: ['Lagos', 'Abuja', 'Port Harcourt', 'Kano', 'Ibadan'],
-                            'South Africa': ['Johannesburg', 'Cape Town', 'Durban', 'Pretoria', 'Sandton'],
-                            Kenya: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret'],
-                          }[profile.location?.split(', ')[1]] || []).map(city => (
-                            <option key={city} value={city}>{city}</option>
-                          ))}
-                        </select>
-                      </div>
-                    ) : (
+                    {settingsEditMode ? (() => {
+                      const STATES = {
+                        Nigeria: ['Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno','Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT Abuja','Gombe','Imo','Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara','Lagos','Nasarawa','Niger','Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto','Taraba','Yobe','Zamfara'],
+                        'South Africa': ['Eastern Cape','Free State','Gauteng','KwaZulu-Natal','Limpopo','Mpumalanga','Northern Cape','North West','Western Cape'],
+                        Kenya: ['Baringo','Bomet','Bungoma','Busia','Elgeyo-Marakwet','Embu','Garissa','Homa Bay','Isiolo','Kajiado','Kakamega','Kericho','Kiambu','Kilifi','Kirinyaga','Kisii','Kisumu','Kitui','Kwale','Laikipia','Lamu','Machakos','Makueni','Mandera','Marsabit','Meru','Migori','Mombasa',"Murang'a",'Nairobi','Nakuru','Nandi','Narok','Nyamira','Nyandarua','Nyeri','Samburu','Siaya','Taita-Taveta','Tana River','Tharaka-Nithi','Trans Nzoia','Turkana','Uasin Gishu','Vihiga','Wajir','West Pokot'],
+                        Ghana: ['Ahafo','Ashanti','Bono','Bono East','Central','Eastern','Greater Accra','North East','Northern','Oti','Savannah','Upper East','Upper West','Volta','Western','Western North'],
+                      }
+                      const parts = profile.location?.split(', ') || []
+                      const selectedCountry = parts.length >= 2 ? parts.slice(1).join(', ') : ''
+                      const selectedState = parts[0] || ''
+                      return (
+                        <div className="flex gap-2">
+                          <select
+                            value={selectedCountry}
+                            onChange={e => updateField('location', e.target.value ? `, ${e.target.value}` : '')}
+                            className="flex-1 rounded-xl px-3 py-2 text-sm border focus:outline-none"
+                            style={{ borderColor: '#e9d5ff', color: '#1a0030', backgroundColor: '#faf5ff' }}>
+                            <option value="">Country</option>
+                            {Object.keys(STATES).map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                          <select
+                            value={selectedState}
+                            onChange={e => updateField('location', e.target.value ? `${e.target.value}, ${selectedCountry}` : (selectedCountry ? `, ${selectedCountry}` : ''))}
+                            disabled={!selectedCountry}
+                            className="flex-1 rounded-xl px-3 py-2 text-sm border focus:outline-none disabled:opacity-40"
+                            style={{ borderColor: '#e9d5ff', color: '#1a0030', backgroundColor: '#faf5ff' }}>
+                            <option value="">State / Region</option>
+                            {(STATES[selectedCountry] || []).map(s => <option key={s} value={s}>{s}</option>)}
+                          </select>
+                        </div>
+                      )
+                    })() : (
                       <p className="text-sm font-medium text-brand-dark py-2">
                         {profile.location || <span className="text-brand-dark/30 italic">Not set</span>}
                       </p>
