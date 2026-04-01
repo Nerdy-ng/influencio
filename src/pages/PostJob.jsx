@@ -30,7 +30,7 @@ const PLATFORMS = [
 
 const CONTENT_TYPES = [
   'Reel / Short Video', 'Story / Snap', 'Feed Post / Photo', 'YouTube Video',
-  'Live Stream', 'Podcast Mention', 'Blog Post', 'Thread / Tweet',
+  'Live Stream', 'Podcast Mention', 'Thread / Tweet',
 ]
 
 // Recommended creators mapped by niche
