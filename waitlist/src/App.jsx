@@ -263,38 +263,36 @@ export default function App() {
       {AVATARS.map((a, i) => <FloatingAvatar key={i} {...a} />)}
 
       {/* Main content */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-16">
+      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-10">
 
         {/* Logo */}
-        <div className="mb-10">
-          <img src="/logo.png" alt="Brandior" className="w-auto" style={{ height: '140px', mixBlendMode: 'screen' }} />
+        <div className="mb-6">
+          <img src="/logo.png" alt="Brandior" className="w-auto" style={{ height: '110px', mixBlendMode: 'screen' }} />
         </div>
 
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-10 text-xs font-semibold tracking-wide uppercase"
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 text-xs font-semibold tracking-wide uppercase"
           style={{ backgroundColor: 'rgba(250,129,18,0.12)', border: '1px solid rgba(250,129,18,0.35)', color: '#FA8112' }}>
           <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
           Coming Soon
         </div>
 
         {/* Headline */}
-        <h1 className="text-4xl sm:text-6xl font-black text-center leading-[1.1] mb-5 max-w-2xl" style={{ fontFamily: "'Satoshi', sans-serif" }}>
+        <h1 className="text-4xl sm:text-6xl font-black text-center leading-[1.1] mb-4 max-w-2xl" style={{ fontFamily: "'Satoshi', sans-serif" }}>
           <span className="text-white">Don't Shine in the Dark.</span>
           <br />
           <span style={{ color: '#FA8112' }}>Get SEEN.</span>
         </h1>
 
         {/* Subheadline block */}
-        <div className="text-center max-w-lg mb-10 space-y-3">
-          <div className="pt-1">
-            <p className="font-jakarta text-base sm:text-lg leading-relaxed text-white mb-3">
-              We bridge the gap between entrepreneurs, brands, and creative talents.
-            </p>
-            <p className="text-xl sm:text-2xl font-bold tracking-tight" style={{ fontFamily: "'Roboto', sans-serif", background: 'linear-gradient(135deg, #7c3aed, #c084fc, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Brandior.</p>
-            <p className="text-sm mt-1 leading-relaxed" style={{ fontFamily: "'Open Sans', sans-serif", color: '#FA8112' }}>
-              Join the Waitlist
-            </p>
-          </div>
+        <div className="text-center max-w-lg mb-7">
+          <p className="font-jakarta text-base sm:text-lg leading-relaxed text-white mb-2">
+            We bridge the gap between entrepreneurs, brands, and creative talents.
+          </p>
+          <p className="text-xl sm:text-2xl font-bold tracking-tight" style={{ fontFamily: "'Roboto', sans-serif", background: 'linear-gradient(135deg, #7c3aed, #c084fc, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Brandior.</p>
+          <p className="text-sm mt-1 leading-relaxed" style={{ fontFamily: "'Open Sans', sans-serif", color: '#FA8112' }}>
+            Join the Waitlist
+          </p>
         </div>
 
         {/* Form card */}
