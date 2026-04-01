@@ -266,12 +266,12 @@ export default function App() {
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-10">
 
         {/* Logo */}
-        <div className="mb-2">
+        <div className="mb-0">
           <img src="/logo.png" alt="Brandior" className="w-auto" style={{ height: '160px', mixBlendMode: 'screen' }} />
         </div>
 
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-7 text-xs font-semibold tracking-wide uppercase"
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-9 text-xs font-semibold tracking-wide uppercase"
           style={{ backgroundColor: 'rgba(250,129,18,0.12)', border: '1px solid rgba(250,129,18,0.35)', color: '#FA8112' }}>
           <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
           Coming Soon
