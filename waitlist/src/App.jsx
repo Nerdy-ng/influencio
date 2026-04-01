@@ -266,7 +266,7 @@ export default function App() {
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-10">
 
         {/* Logo */}
-        <div className="mb-2">
+        <div className="mb-4">
           <img src="/logo.png" alt="Brandior" className="w-auto" style={{ height: '160px', mixBlendMode: 'screen' }} />
         </div>
 
