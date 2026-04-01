@@ -29,8 +29,8 @@ const PLATFORMS = [
 ]
 
 const CONTENT_TYPES = [
-  'Reel / Short Video', 'Story / Snap', 'Feed Post / Photo', 'YouTube Video',
-  'Live Stream', 'Podcast Mention', 'Thread / Tweet',
+  'UGC Videos', 'Video Editing', 'Creative Strategy',
+  'Social Content', 'Design', 'Copywriting',
 ]
 
 // Recommended creators mapped by niche
