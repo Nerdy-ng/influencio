@@ -55,7 +55,7 @@ export default function AdminLogin() {
             <Shield className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight">
-            Brandiór
+            Brandior
           </h1>
           <div
             className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold tracking-widest uppercase"

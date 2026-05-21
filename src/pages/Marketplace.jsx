@@ -172,6 +172,7 @@ function TierBadge({ tier }) {
 }
 
 function StarRating({ rating }) {
+  const display = rating || 5
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map(i => (
@@ -179,12 +180,12 @@ function StarRating({ rating }) {
           key={i}
           className="w-3.5 h-3.5"
           style={{
-            color: i <= Math.round(rating) ? '#D4AF37' : '#4a3070',
-            fill:  i <= Math.round(rating) ? '#D4AF37' : 'none',
+            color: i <= Math.round(display) ? '#D4AF37' : '#4a3070',
+            fill:  i <= Math.round(display) ? '#D4AF37' : 'none',
           }}
         />
       ))}
-      <span className="text-xs text-purple-300 ml-1">{Number(rating || 0).toFixed(1)}</span>
+      <span className="text-xs text-purple-300 ml-1">{Number(display).toFixed(1)}</span>
     </div>
   )
 }
@@ -594,7 +595,7 @@ export default function Marketplace() {
         contentTypes: p.content_types || [],
         languages: p.languages || [],
         tier: p.tier || 'fast-rising',
-        avgRating: p.avg_rating || 0,
+        avgRating: p.avg_rating || 5,
         totalFollowers: p.total_followers || 0,
         avgEngagement: p.avg_engagement || 0,
         completedCampaigns: p.completed_campaigns || 0,
@@ -943,7 +944,7 @@ export default function Marketplace() {
       </div>
 
       <button
-        onClick={() => { setPage(1); fetchTalents() }}
+        onClick={() => { setVisibleCount(PAGE_SIZE); fetchTalents() }}
         className="w-full py-2.5 rounded-full text-sm font-semibold text-white"
         style={{ backgroundColor: darkPurple }}
         onMouseEnter={e => e.currentTarget.style.backgroundColor = '#3b0764'}
@@ -991,11 +992,10 @@ export default function Marketplace() {
           </span>
           <h1 className="text-3xl sm:text-5xl font-extrabold mb-4 leading-tight">
             <span className="text-white">Find </span>
-            <span style={{ color: pink }}>Africa's Best</span>
-            <span className="text-white"> Creators</span>
+            <span style={{ color: pink }}>Talents</span>
           </h1>
           <p className="mb-6 text-base" style={{ color: '#c4b5fd' }}>
-            Browse 500+ verified African talents ready to amplify your brand
+            Browse 500+ verified talents ready to amplify your brand
           </p>
 
           {/* Post a Job CTA */}
@@ -1018,7 +1018,7 @@ export default function Marketplace() {
               type="text"
               placeholder="Search by name, handle, or niche..."
               value={search}
-              onChange={e => { setSearch(e.target.value); setPage(1) }}
+              onChange={e => { setSearch(e.target.value); setVisibleCount(PAGE_SIZE) }}
               className="w-full py-4 text-base bg-white focus:outline-none transition-shadow"
               style={{
                 borderRadius: '9999px',
@@ -1092,7 +1092,7 @@ export default function Marketplace() {
               </p>
               <select
                 value={sort}
-                onChange={e => { setSort(e.target.value); setPage(1) }}
+                onChange={e => { setSort(e.target.value); setVisibleCount(PAGE_SIZE) }}
                 className="text-sm rounded-xl px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-purple-300"
                 style={{ backgroundColor: '#fff', border: '1px solid rgba(124,58,237,0.2)', color: '#4c1d95' }}
               >

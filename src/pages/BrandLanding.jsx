@@ -96,7 +96,7 @@ const NICHES = [
 
 const FEATURES = [
   { icon: Shield,    title: 'Escrow Payment Protection', desc: 'Funds are locked until you approve the content. Zero risk of paying for work that doesn\'t meet your brief.' },
-  { icon: BadgeCheck,title: 'Verified Creator Network',  desc: 'Every creator on Brandiór is vetted. View real follower counts, engagement rates, and completed campaigns.' },
+  { icon: BadgeCheck,title: 'Verified Creator Network',  desc: 'Every creator on Brandior is vetted. View real follower counts, engagement rates, and completed campaigns.' },
   { icon: Filter,    title: 'Advanced Search & Filters', desc: 'Filter by niche, tier, platform, price range, location, and availability to find your perfect match.' },
   { icon: BarChart2, title: 'Campaign Dashboard',        desc: 'Manage all active, pending, and completed campaigns from one clean brand dashboard.' },
   { icon: Clock,     title: 'Fast Turnaround',           desc: 'Most campaigns go from brief to delivery in 3–7 days. Rush options available for urgent campaigns.' },
@@ -107,7 +107,7 @@ const TESTIMONIALS = [
   {
     brand: 'GlowUp Cosmetics', role: 'Head of Marketing', name: 'Chinyere Obi',
     avatar: 'https://i.pravatar.cc/150?u=chinyere_obi',
-    quote: "We ran 12 campaigns last quarter through Brandiór. The escrow system gave us confidence and every creator delivered on time. Our ROAS was 4.2x.",
+    quote: "We ran 12 campaigns last quarter through Brandior. The escrow system gave us confidence and every creator delivered on time. Our ROAS was 4.2x.",
     spent: '₦2.4M', campaigns: 12,
   },
   {
@@ -119,7 +119,7 @@ const TESTIMONIALS = [
   {
     brand: 'FitAfrica App', role: 'Founder & CEO', name: 'Aisha Bello',
     avatar: 'https://i.pravatar.cc/150?u=aisha_bello_brand',
-    quote: "As a startup, we needed affordable talent with real audiences. Brandiór's tier system helped us find rising creators at great rates who delivered amazing results.",
+    quote: "As a startup, we needed affordable talent with real audiences. Brandior's tier system helped us find rising creators at great rates who delivered amazing results.",
     spent: '₦540K', campaigns: 6,
   },
 ]
@@ -139,7 +139,7 @@ const PACKAGES = [
 ]
 
 const FAQS = [
-  { q: 'Do I need a subscription to run campaigns?',   a: 'No — Brandiór is pay-per-campaign. There are no monthly fees. You only pay when you hire a creator.' },
+  { q: 'Do I need a subscription to run campaigns?',   a: 'No — Brandior is pay-per-campaign. There are no monthly fees. You only pay when you hire a creator.' },
   { q: 'How does escrow work?',                        a: 'When you place a campaign order, funds are held securely. They\'re only released to the creator after you review and approve the deliverables.' },
   { q: 'Can I request revisions?',                     a: 'Yes. Most creators include 1–2 free revision rounds. You can request changes before approving and releasing escrow.' },
   { q: 'How do I find the right creator for my brand?',a: 'Use our advanced filters to search by niche, platform, follower count, tier, location, and price range. Every creator\'s profile shows real stats and past campaign work.' },
@@ -224,7 +224,7 @@ export default function BrandLanding() {
                   ))}
                 </div>
                 <p className="text-white/35 text-sm">
-                  Join <span className="font-semibold" style={{ color: '#c4b5fd' }}>200+ brands</span> already running campaigns on Brandiór
+                  Join <span className="font-semibold" style={{ color: '#c4b5fd' }}>200+ brands</span> already running campaigns on Brandior
                 </p>
               </div>
             </div>
@@ -368,7 +368,7 @@ export default function BrandLanding() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
             <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: purple }}>Brand Stories</p>
-            <h2 className="text-4xl lg:text-5xl font-black text-brand-dark">Brands That Trust Brandiór</h2>
+            <h2 className="text-4xl lg:text-5xl font-black text-brand-dark">Brands That Trust Brandior</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {TESTIMONIALS.map(t => (

@@ -259,7 +259,7 @@ export default function OrderForm() {
             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: darkPurple }}>
               <Zap className="w-4 h-4 text-orange-400" />
             </div>
-            <span className="text-xl font-bold tracking-tight" style={{ color: darkPurple }}>Brandiór</span>
+            <span className="text-xl font-bold tracking-tight" style={{ color: darkPurple }}>Brandior</span>
           </Link>
           <Link to="/marketplace" className="text-sm text-gray-600 hover:text-gray-900 font-medium">
             Browse Talents

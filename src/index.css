@@ -2,18 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Brand CSS variables (overridden at runtime by themeSettings.js) ── */
+:root {
+  --b-primary:   #7c3aed;
+  --b-secondary: #c084fc;
+  --b-navbarBg:  #e9d5ff;
+  --b-dark:      #4c1d95;
+  --b-cta:       #FA8112;
+  --b-pink:      #FF6B9D;
+  --b-bodyBg:    #222222;
+  --b-bodyText:  #FAF3E1;
+}
+
 * { scroll-behavior: smooth; }
 
 body {
   font-family: 'Inter', system-ui, sans-serif;
-  background: #222222;
-  color: #FAF3E1;
+  background: var(--b-bodyBg);
+  color: var(--b-bodyText);
   overflow-x: hidden;
 }
 
 /* Glass card — warm tint on dark sections */
 .glass {
   background: rgba(250, 243, 225, 0.05);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(250, 243, 225, 0.10);
 }
@@ -72,6 +85,10 @@ body {
 @keyframes slideInRight {
   from { transform: translateX(100%); }
   to   { transform: translateX(0); }
+}
+
+input, textarea, select {
+  color: #1a1a1a;
 }
 
 /* Scrollbar */

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { Zap, Star, TrendingUp, Eye, EyeOff, ArrowRight, CheckCircle, Mail, Lock, User, ChevronLeft, MapPin, Briefcase, FileText, Globe, Hash, Building2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getLogo } from '../lib/brandSettings'
@@ -78,16 +78,24 @@ const BRAND_INDUSTRIES = [
 export default function SignupPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const { pathname } = useLocation()
   const isOAuthRolePicker = searchParams.get('oauth') === '1'
   const isProfileComplete = searchParams.get('step') === 'complete'
 
-  const [step, setStep] = useState(() => {
-    if (isProfileComplete) return 'complete'
-    return 'role'
-  })
+  // Detect direct-role URLs
+  const pathRole = pathname === '/signup/brand' ? 'brand' : pathname === '/signup/creator' ? 'talent' : null
+
   const [role, setRole] = useState(() => {
+    if (pathRole) return pathRole
     const r = searchParams.get('role') || localStorage.getItem('brandiór_role')
     return r === 'brand' ? 'brand' : 'talent'
+  })
+
+  const [step, setStep] = useState(() => {
+    if (isProfileComplete) return 'complete'
+    if (pathRole === 'brand') return 'form'
+    if (pathRole === 'talent') return 'talent'
+    return 'role'
   })
   const [talentTypes, setTalentTypes] = useState([])
   const [showPass, setShowPass] = useState(false)
@@ -166,7 +174,7 @@ export default function SignupPage() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: 'https://app.brandior.africa',
+        redirectTo: `${window.location.origin}/`,
         queryParams: { prompt: 'select_account' },
       },
     })
@@ -199,6 +207,23 @@ export default function SignupPage() {
       }
     })
     localStorage.setItem('brandiór_role', role)
+
+    // Send role-specific welcome email
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.email) {
+        fetch('/api/send-welcome-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: user.email,
+            name: profile.displayName || user.email,
+            role,
+          }),
+        }).catch(() => {})
+      }
+    } catch (_) {}
+
     setLoading(false)
     navigate(role === 'brand' ? '/brand-dashboard' : '/dashboard', { replace: true })
   }
@@ -209,17 +234,11 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12" style={{ backgroundColor: '#f3eeff' }}>
+    <div className="min-h-screen flex flex-col items-center justify-start px-6 pt-6 pb-12" style={{ backgroundColor: '#f3eeff' }}>
 
       {/* Logo */}
-      <Link to="/" className="flex items-center gap-2 mb-8">
-        {authLogo
-          ? <img src={authLogo} alt="Brandior" className="w-8 h-8 rounded-lg object-contain" />
-          : <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: darkPurple }}>
-              <Zap className="w-4 h-4" style={{ color: '#FA8112' }} />
-            </div>
-        }
-        <span className="text-lg font-bold tracking-tight" style={{ color: darkPurple }}>Brandiór</span>
+      <Link to="/" className="flex items-center mb-2">
+        <img src={authLogo} alt="Brandior" className="object-contain rounded-xl" style={{ height: '180px', width: 'auto' }} />
       </Link>
 
       {/* Card */}
@@ -229,7 +248,7 @@ export default function SignupPage() {
         {step === 'role' && (
           <div>
             <h1 className="text-2xl font-black text-brand-dark mb-1">Create your account</h1>
-            <p className="text-brand-dark/40 text-sm mb-6">How will you be using Brandiór?</p>
+            <p className="text-brand-dark/40 text-sm mb-6">How will you be using Brandior?</p>
 
             <div className="flex gap-3 mb-6">
               <RoleCard role="talent" selected={role === 'talent'} onSelect={setRole} />
@@ -258,7 +277,7 @@ export default function SignupPage() {
         {/* STEP: TALENT TYPE (talents only) */}
         {step === 'talent' && (
           <div>
-            <button onClick={() => setStep('role')} className="flex items-center gap-1 text-brand-dark/35 hover:text-brand-dark text-xs mb-5 transition-colors">
+            <button onClick={() => pathRole ? navigate('/signup') : setStep('role')} className="flex items-center gap-1 text-brand-dark/35 hover:text-brand-dark text-xs mb-5 transition-colors">
               <ChevronLeft className="w-3.5 h-3.5" /> Back
             </button>
 
@@ -362,7 +381,7 @@ export default function SignupPage() {
                     className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-brand-dark placeholder-brand-dark/25 outline-none transition-all"
                     style={{ border: '1.5px solid #e9d5ff' }} />
                 </div>
-                <p className="text-[10px] text-brand-dark/30 mt-1">Your public @username on Brandiór</p>
+                <p className="text-[10px] text-brand-dark/30 mt-1">Your public @username on Brandior</p>
               </div>
 
               <div>
@@ -418,7 +437,7 @@ export default function SignupPage() {
         {/* STEP: REGISTRATION FORM — BRAND */}
         {step === 'form' && role === 'brand' && (
           <div>
-            <button onClick={() => setStep('role')} className="flex items-center gap-1 text-brand-dark/35 hover:text-brand-dark text-xs mb-5 transition-colors">
+            <button onClick={() => pathRole ? navigate('/signup') : setStep('role')} className="flex items-center gap-1 text-brand-dark/35 hover:text-brand-dark text-xs mb-5 transition-colors">
               <ChevronLeft className="w-3.5 h-3.5" /> Back
             </button>
 
@@ -485,16 +504,6 @@ export default function SignupPage() {
                 {errors.email && <p className="text-xs mt-1" style={{ color: pink }}>{errors.email}</p>}
               </div>
 
-              <div>
-                <label className="text-brand-dark/50 text-xs font-medium mb-1.5 block">Company Website <span className="text-brand-dark/30">(optional)</span></label>
-                <div className="relative">
-                  <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-dark/25" />
-                  <input type="url" value={form.website} onChange={e => handleChange('website', e.target.value)}
-                    placeholder="https://yourbrand.com"
-                    className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-brand-dark placeholder-brand-dark/25 outline-none transition-all"
-                    style={{ border: '1.5px solid #e9d5ff' }} />
-                </div>
-              </div>
 
               <div>
                 <label className="text-brand-dark/50 text-xs font-medium mb-1.5 block">Password</label>
@@ -679,23 +688,38 @@ export default function SignupPage() {
         {step === 'confirm' && (
           <div className="text-center">
             <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5"
-              style={{ backgroundColor: `${purple}18`, border: `2px solid ${purple}30` }}>
-              <Mail className="w-7 h-7" style={{ color: purple }} />
+              style={{
+                backgroundColor: role === 'talent' ? `${pink}18` : `${purple}18`,
+                border: `2px solid ${role === 'talent' ? pink : purple}30`,
+              }}>
+              <Mail className="w-7 h-7" style={{ color: role === 'talent' ? pink : purple }} />
             </div>
 
             <h1 className="text-2xl font-black text-brand-dark mb-2">Check your inbox</h1>
+            <p className="text-brand-dark/40 text-sm mb-1">
+              {role === 'brand'
+                ? 'Your brand account is almost ready.'
+                : "You're one step away from getting discovered."}
+            </p>
             <p className="text-brand-dark/40 text-sm mb-1">We sent a confirmation link to</p>
             <p className="font-semibold text-sm mb-6" style={{ color: gold }}>{form.email}</p>
 
             <div className="rounded-2xl p-4 mb-6 text-left space-y-3" style={{ backgroundColor: '#f9f5ff', border: '1px solid #e9d5ff' }}>
-              {[
-                'Click the link in the email to confirm your account',
-                "You'll be taken to your profile to complete setup",
-                'Start applying for gigs or posting opportunities',
-              ].map((s, i) => (
+              {(role === 'brand'
+                ? [
+                    'Click the link in the email to confirm your account',
+                    'Complete your brand profile to attract the right creators',
+                    'Post jobs, browse talent, and launch your first campaign',
+                  ]
+                : [
+                    'Click the link in the email to confirm your account',
+                    'Complete your creator profile so brands can discover you',
+                    'Start applying for gigs and brand collaboration opportunities',
+                  ]
+              ).map((s, i) => (
                 <div key={i} className="flex items-start gap-3">
                   <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0 mt-0.5"
-                    style={{ backgroundColor: purple }}>{i + 1}</span>
+                    style={{ backgroundColor: role === 'talent' ? pink : purple }}>{i + 1}</span>
                   <p className="text-brand-dark/60 text-sm">{s}</p>
                 </div>
               ))}
@@ -708,16 +732,16 @@ export default function SignupPage() {
                   localStorage.setItem('brandiór_user', u.id)
                   localStorage.setItem('brandiór_role', u.user_metadata?.role || role)
                 }
-                navigate(role === 'brand' ? '/marketplace' : '/jobs')
+                navigate(role === 'brand' ? '/brand-dashboard' : '/dashboard')
               }}
               className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 mb-3"
-              style={{ backgroundColor: darkPurple }}>
-              Go to My Dashboard <ArrowRight className="w-4 h-4" />
+              style={{ backgroundColor: role === 'talent' ? pink : darkPurple }}>
+              {role === 'brand' ? 'Go to Brand Dashboard' : 'Go to Creator Dashboard'} <ArrowRight className="w-4 h-4" />
             </button>
 
             <p className="text-brand-dark/30 text-xs">
               Didn't receive it?{' '}
-              <button className="font-semibold" style={{ color: purple }}>Resend email</button>
+              <button className="font-semibold" style={{ color: role === 'talent' ? pink : purple }}>Resend email</button>
             </p>
           </div>
         )}

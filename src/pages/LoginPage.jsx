@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Zap, Mail, Phone, Lock, Eye, EyeOff, ArrowRight, ChevronDown } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getLogo } from '../lib/brandSettings'
+import { getSetting } from '../lib/siteSettings'
 
 const purple = '#c084fc'
 const darkPurple = '#4c1d95'
@@ -352,10 +353,18 @@ export default function LoginPage() {
   const [errors, setErrors] = useState({})
   const [authError, setAuthError] = useState('')
   const [authLogo, setAuthLogo] = useState(() => getLogo('auth'))
+  const [loginIllustration, setLoginIllustration] = useState(() => getSetting('loginIllustration'))
   useEffect(() => {
     function onLogoUpdate() { setAuthLogo(getLogo('auth')) }
+    function onSettingsUpdate(e) {
+      if (e.detail?.key === 'loginIllustration') setLoginIllustration(e.detail.value || '')
+    }
     window.addEventListener('brandior:logo-updated', onLogoUpdate)
-    return () => window.removeEventListener('brandior:logo-updated', onLogoUpdate)
+    window.addEventListener('brandior:settings-updated', onSettingsUpdate)
+    return () => {
+      window.removeEventListener('brandior:logo-updated', onLogoUpdate)
+      window.removeEventListener('brandior:settings-updated', onSettingsUpdate)
+    }
   }, [])
 
   function validate() {
@@ -402,8 +411,10 @@ export default function LoginPage() {
         <div className="absolute inset-0 opacity-30"
           style={{ backgroundImage: 'radial-gradient(circle, #c084fc 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
 
-        <div className="relative z-10 w-full max-w-sm">
-          <TalentIllustration />
+        <div className="relative z-10 w-full max-w-sm flex items-center justify-center">
+          {loginIllustration
+            ? <img src={loginIllustration} alt="Login illustration" className="w-full object-contain" style={{ maxHeight: '380px' }} />
+            : <TalentIllustration />}
         </div>
 
         {/* Caption */}
@@ -416,23 +427,17 @@ export default function LoginPage() {
       </div>
 
       {/* ── Right: Form panel ── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+      <div className="flex-1 flex flex-col items-center justify-start px-6 pt-6 pb-8 overflow-y-auto">
 
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 mb-8">
-          {authLogo
-            ? <img src={authLogo} alt="Brandior" className="w-8 h-8 rounded-lg object-contain" />
-            : <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: darkPurple }}>
-                <Zap className="w-4 h-4" style={{ color: '#FA8112' }} />
-              </div>
-          }
-          <span className="text-lg font-bold tracking-tight" style={{ color: darkPurple }}>Brandiór</span>
+        <Link to="/" className="flex items-center mb-1">
+          <img src={authLogo} alt="Brandior" className="object-contain rounded-xl" style={{ height: '160px', width: 'auto' }} />
         </Link>
 
         {/* Card */}
         <div className="w-full max-w-sm bg-white rounded-3xl p-8 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
           <h1 className="text-2xl font-black text-brand-dark mb-1">Welcome back</h1>
-          <p className="text-brand-dark/40 text-sm mb-5">Log in to your Brandiór account.</p>
+          <p className="text-brand-dark/40 text-sm mb-5">Log in to your Brandior account.</p>
 
           {/* Role toggle */}
           <div className="flex gap-2 mb-6 p-1 rounded-xl" style={{ backgroundColor: '#f3eeff' }}>
@@ -453,7 +458,7 @@ export default function LoginPage() {
               onClick={async () => {
                 setLoading(true)
                 sessionStorage.setItem('brandiór_pending_role', role)
-                await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: 'https://app.brandior.africa' } })
+                await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/` } })
                 setLoading(false)
               }}
               disabled={loading}

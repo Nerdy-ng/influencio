@@ -16,7 +16,7 @@ async function fetchReviews(talentId) {
     .eq('talent_id', talentId)
     .order('created_at', { ascending: false })
   const reviews = data || []
-  const avgRating = reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0
+  const avgRating = reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 5
   return { reviews, avgRating: Math.round(avgRating * 10) / 10, reviewCount: reviews.length }
 }
 
@@ -54,6 +54,7 @@ function TierBadge({ tier, size = 'sm' }) {
 }
 
 function StarRating({ rating, size = 'sm' }) {
+  const display = rating || 5
   const w = size === 'lg' ? 'w-5 h-5' : 'w-4 h-4'
   return (
     <div className="flex items-center gap-0.5">
@@ -61,11 +62,11 @@ function StarRating({ rating, size = 'sm' }) {
         <Star
           key={i}
           className={w}
-          style={{ color: i <= Math.round(rating) ? '#D4AF37' : '#d1d5db', fill: i <= Math.round(rating) ? '#D4AF37' : 'none' }}
+          style={{ color: i <= Math.round(display) ? '#D4AF37' : '#d1d5db', fill: i <= Math.round(display) ? '#D4AF37' : 'none' }}
         />
       ))}
       <span className={`ml-1 font-semibold ${size === 'lg' ? 'text-base' : 'text-sm'} text-gray-600`}>
-        {Number(rating || 0).toFixed(1)}
+        {Number(display).toFixed(1)}
       </span>
     </div>
   )
@@ -236,7 +237,7 @@ function VerifiedBadge({ tier, campaigns }) {
       <BadgeCheck className="w-5 h-5" style={{ color: '#3b82f6' }} />
       <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex whitespace-nowrap text-[11px] font-medium px-2.5 py-1.5 rounded-lg shadow-lg z-10 pointer-events-none"
         style={{ backgroundColor: '#1e0040', color: 'white' }}>
-        Verified creator · {campaigns || 0}+ campaigns on Brandiór
+        Verified creator · {campaigns || 0}+ campaigns on Brandior
       </span>
     </span>
   )
@@ -245,7 +246,7 @@ function VerifiedBadge({ tier, campaigns }) {
 // ── Reviews section ──────────────────────────────────────────────────────────
 function ReviewsSection({ talentId }) {
   const [reviews, setReviews] = useState([])
-  const [avgRating, setAvgRating] = useState(0)
+  const [avgRating, setAvgRating] = useState(5)
   const [reviewCount, setReviewCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
@@ -376,13 +377,13 @@ function ReviewsSection({ talentId }) {
 
 // ── Live Rating (fetches real review stats) ──────────────────────────────────
 function LiveRating({ talentId, fallbackRating }) {
-  const [rating, setRating] = useState(fallbackRating || 0)
+  const [rating, setRating] = useState(fallbackRating || 5)
   const [count, setCount] = useState(null)
 
   useEffect(() => {
     if (!talentId) return
     fetchReviews(talentId).then(d => {
-        if (d.avgRating) setRating(d.avgRating)
+        setRating(d.avgRating || 5)
         if (typeof d.reviewCount === 'number') setCount(d.reviewCount)
       })
       .catch(() => {})
@@ -921,7 +922,7 @@ function Navbar() {
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: darkPurple }}>
             <Zap className="w-4 h-4 text-orange-400" />
           </div>
-          <span className="text-xl font-bold tracking-tight" style={{ color: darkPurple }}>Brandiór</span>
+          <span className="text-xl font-bold tracking-tight" style={{ color: darkPurple }}>Brandior</span>
         </Link>
         <div className="flex items-center gap-4">
           <Link to="/marketplace" className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors">

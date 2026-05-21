@@ -3,6 +3,7 @@ import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 
 import talentsRouter      from './routes/talents.js'
+import phylloRouter       from './routes/phyllo.js'
 import packagesRouter      from './routes/packages.js'
 import ordersRouter        from './routes/orders.js'
 import paymentsRouter      from './routes/payments.js'
@@ -55,6 +56,7 @@ app.get('/api/health', (_req, res) => {
 //  API Routes
 // ─────────────────────────────────────────────────────────────────────────────
 app.use('/api/talents',      talentsRouter)
+app.use('/api/phyllo',       phylloRouter)
 app.use('/api/packages',      packagesRouter)
 app.use('/api/orders',        ordersRouter)
 app.use('/api/payments',      paymentsRouter)

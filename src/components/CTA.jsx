@@ -19,7 +19,7 @@ export default function CTA() {
         </h2>
 
         <p className="text-white/40 text-lg mb-14 max-w-xl mx-auto leading-relaxed">
-          Whether you're a talent ready to monetise your audience or a brand ready to grow — Brandiór is your launchpad.
+          Whether you're a talent ready to monetise your audience or a brand ready to grow — Brandior is your launchpad.
         </p>
 
         {/* Two-path cards */}

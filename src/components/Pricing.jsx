@@ -241,7 +241,7 @@ export default function FeaturedJobs() {
           <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#FF6B9D' }}>Opportunities</p>
           <h2 className="text-4xl lg:text-5xl font-black text-brand-dark mb-5">Featured Jobs</h2>
           <p className="text-brand-dark/50 max-w-lg mx-auto text-lg">
-            Discover top brand campaigns and talent opportunities on Brandiór.
+            Discover top brand campaigns and talent opportunities on Brandior.
           </p>
         </div>
 

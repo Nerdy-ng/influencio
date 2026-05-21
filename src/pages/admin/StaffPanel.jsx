@@ -705,7 +705,7 @@ export default function StaffPanel() {
               <Shield className="w-4 h-4 text-white" />
             </div>
             <div>
-              <p className="text-white font-bold text-sm leading-none">Brandiór</p>
+              <p className="text-white font-bold text-sm leading-none">Brandior</p>
               <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Staff Portal</p>
             </div>
           </div>
@@ -761,7 +761,7 @@ export default function StaffPanel() {
         <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
           <div>
             <h1 className="font-bold text-gray-900 text-lg">{NAV_ITEMS.find((n) => n.id === activeTab)?.label}</h1>
-            <p className="text-xs text-gray-400">Brandiór Admin Portal · Staff</p>
+            <p className="text-xs text-gray-400">Brandior Admin Portal · Staff</p>
           </div>
           <div className="flex items-center gap-3">
             <Avatar initials="SM" size="sm" color="#0ea5e9" />

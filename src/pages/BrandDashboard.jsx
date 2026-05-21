@@ -1,17 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { logout } from '../lib/logout'
+import { getLogo } from '../lib/brandSettings'
 import {
   LayoutDashboard, ShoppingBag, CheckCircle, Wallet, Settings,
   Bell, ChevronDown, ChevronRight, X, AlertCircle, Shield, Loader2,
   ExternalLink, Download, RotateCcw, Zap, Menu, Mail, Heart, MapPin, Star, Users, Search, UserPlus, LogOut,
-  Inbox, Clock, ThumbsUp, ThumbsDown, MessageSquare, FileText,
+  Inbox, Clock, ThumbsUp, ThumbsDown, MessageSquare, FileText, TrendingUp,
 } from 'lucide-react'
 import MessagingPanel from '../components/MessagingPanel'
 import InviteTab from '../components/InviteTab'
 import { useFavorites } from '../hooks/useFavorites'
 import { supabase } from '../lib/supabase'
 import { createNotification, sendNotificationEmail } from '../lib/notifications'
+import { getBrandAnalytics } from '../lib/analytics'
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import OnboardingTour from '../components/OnboardingTour'
 
 const API = 'http://localhost:3001/api'
@@ -577,9 +580,9 @@ function StatCard({ label, value, icon: Icon, color }) {
 
 const NAV_ITEMS = [
   { id: 'overview',      label: 'Overview',        icon: LayoutDashboard },
-  { id: 'applications',  label: 'Applications',    icon: Inbox },
-  { id: 'active',        label: 'Active Campaigns',icon: ShoppingBag },
-  { id: 'completed',     label: 'Completed',       icon: CheckCircle },
+  { id: 'analytics',     label: 'Analytics',       icon: TrendingUp },
+  { id: 'applications',  label: 'Proposals',       icon: Inbox },
+  { id: 'campaigns',     label: 'Campaigns',       icon: ShoppingBag },
   { id: 'favorites',     label: 'Saved Talents',   icon: Heart },
   { id: 'messages',      label: 'Messages',        icon: Mail },
   { id: 'payments',      label: 'Payments',        icon: Wallet },
@@ -1043,6 +1046,7 @@ export default function BrandDashboard() {
   const initialConvId = searchParams.get('conv')
 
   const [activeTab, setActiveTab] = useState(initialTab || 'overview')
+  const [dashLogo, setDashLogo] = useState(() => getLogo('dashboard'))
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -1073,6 +1077,12 @@ export default function BrandDashboard() {
   }, [])
 
   useEffect(() => {
+    function onLogoUpdate() { setDashLogo(getLogo('dashboard')) }
+    window.addEventListener('brandior:logo-updated', onLogoUpdate)
+    return () => window.removeEventListener('brandior:logo-updated', onLogoUpdate)
+  }, [])
+
+  useEffect(() => {
     fetchOrders()
     const interval = setInterval(fetchOrders, 30000)
     return () => clearInterval(interval)
@@ -1081,7 +1091,7 @@ export default function BrandDashboard() {
   useEffect(() => {
     if (newOrderId && !loading) {
       showToast('Order placed successfully! Complete payment to get started.', 'success')
-      setActiveTab('active')
+      setActiveTab('campaigns')
     }
   }, [newOrderId, loading])
 
@@ -1133,17 +1143,17 @@ export default function BrandDashboard() {
         {/* Desktop sidebar */}
         <aside
           className="hidden md:flex flex-col w-60 flex-shrink-0 min-h-screen sticky top-0"
-          style={{ backgroundColor: darkPurple }}
+          style={{ backgroundColor: 'var(--b-brandDashBg)' }}
         >
-          <SidebarContent activeTab={activeTab} setActiveTab={setActiveTab} />
+          <SidebarContent activeTab={activeTab} setActiveTab={setActiveTab} dashLogo={dashLogo} />
         </aside>
 
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
           <div className="fixed inset-0 z-50 flex md:hidden">
             <div className="bg-black/40 flex-1" onClick={() => setSidebarOpen(false)} />
-            <aside className="w-60 flex flex-col" style={{ backgroundColor: darkPurple }}>
-              <SidebarContent activeTab={activeTab} setActiveTab={(t) => { setActiveTab(t); setSidebarOpen(false) }} />
+            <aside className="w-60 flex flex-col" style={{ backgroundColor: 'var(--b-brandDashBg)' }}>
+              <SidebarContent activeTab={activeTab} setActiveTab={(t) => { setActiveTab(t); setSidebarOpen(false) }} dashLogo={dashLogo} />
             </aside>
           </div>
         )}
@@ -1203,21 +1213,11 @@ export default function BrandDashboard() {
                   setActiveTab={setActiveTab}
                 />
               )}
-              {activeTab === 'active' && (
-                <OrdersTab
-                  title="Active Campaigns"
-                  orders={activeOrders}
-                  emptyMsg="No active orders. Browse talents to get started!"
-                  onPayNow={setPaymentModal}
-                  onApprove={handleApprove}
-                  onRevision={setRevisionModal}
-                />
-              )}
-              {activeTab === 'completed' && (
-                <OrdersTab
-                  title="Completed Orders"
-                  orders={completedOrders}
-                  emptyMsg="No completed orders yet."
+              {activeTab === 'analytics' && <BrandAnalyticsTab />}
+              {activeTab === 'campaigns' && (
+                <CampaignsTab
+                  activeOrders={activeOrders}
+                  completedOrders={completedOrders}
                   onPayNow={setPaymentModal}
                   onApprove={handleApprove}
                   onRevision={setRevisionModal}
@@ -1321,17 +1321,14 @@ function BrandAvatarMenu() {
   )
 }
 
-function SidebarContent({ activeTab, setActiveTab }) {
+function SidebarContent({ activeTab, setActiveTab, dashLogo }) {
   return (
     <>
       <div className="p-5 border-b border-white/10">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-            <Zap className="w-4 h-4 text-orange-400" />
-          </div>
-          <span className="text-white font-bold text-lg tracking-tight">Brandiór</span>
+        <Link to="/" className="block -mx-5">
+          <img src={dashLogo} alt="Brandior" className="w-full object-contain object-left px-5" style={{ height: '160px' }} />
         </Link>
-        <div className="mt-2 ml-10">
+        <div className="mt-2">
           <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full"
             style={{ backgroundColor: 'rgba(124,58,237,0.2)', color: '#c4b5fd', border: '1px solid rgba(124,58,237,0.35)' }}>
             <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-violet-400" />
@@ -1347,10 +1344,10 @@ function SidebarContent({ activeTab, setActiveTab }) {
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left"
             style={
               activeTab === id
-                ? { backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }
+                ? { backgroundColor: 'color-mix(in srgb, var(--b-brandMenuBg) 20%, transparent)', color: 'white' }
                 : { color: 'rgba(255,255,255,0.6)' }
             }
-            onMouseEnter={e => { if (activeTab !== id) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.07)' }}
+            onMouseEnter={e => { if (activeTab !== id) e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--b-brandMenuBg) 10%, transparent)' }}
             onMouseLeave={e => { if (activeTab !== id) e.currentTarget.style.backgroundColor = '' }}
           >
             <Icon className="w-4 h-4 flex-shrink-0" />
@@ -1441,6 +1438,112 @@ function TalentMiniCard({ talent }) {
   )
 }
 
+function BrandAnalyticsTab() {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      const stats = await getBrandAnalytics(user.id)
+      setData(stats)
+      setLoading(false)
+    })
+  }, [])
+
+  if (loading) return <div className="flex items-center justify-center py-20"><div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" /></div>
+
+  const pieData = [
+    { name: 'Accepted', value: data.accepted, color: '#16a34a' },
+    { name: 'Pending',  value: data.pending,  color: '#f59e0b' },
+    { name: 'Rejected', value: data.rejected, color: '#ef4444' },
+  ].filter(d => d.value > 0)
+
+  return (
+    <div className="space-y-5">
+      <h2 className="text-xl font-bold text-gray-900">Analytics</h2>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Jobs',    value: data.totalJobs,    color: purple },
+          { label: 'Proposals',     value: data.totalApps,    color: '#0ea5e9' },
+          { label: 'Accepted',      value: data.accepted,     color: '#16a34a' },
+          { label: 'Avg Rating',    value: data.avgRating ? `${data.avgRating}★` : '—', color: '#D4AF37' },
+        ].map(s => (
+          <div key={s.label} className="bg-white rounded-2xl p-4 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
+            <p className="text-xs text-gray-400 mb-1">{s.label}</p>
+            <p className="text-2xl font-black" style={{ color: s.color }}>{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Applications over time */}
+      <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
+        <p className="font-bold text-gray-900 mb-4">Applications — Last 30 Days</p>
+        {data.dailyApps.some(d => d.count > 0) ? (
+          <ResponsiveContainer width="100%" height={180}>
+            <LineChart data={data.dailyApps}>
+              <XAxis dataKey="date" tick={{ fontSize: 10 }} interval={4} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 10 }} width={24} />
+              <Tooltip />
+              <Line type="monotone" dataKey="count" stroke={purple} strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex items-center justify-center h-28 text-sm text-gray-400">No applications yet</div>
+        )}
+      </div>
+
+      <div className="grid sm:grid-cols-2 gap-5">
+        {/* Application status breakdown */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
+          <p className="font-bold text-gray-900 mb-4">Application Status</p>
+          {pieData.length > 0 ? (
+            <div className="flex items-center gap-4">
+              <ResponsiveContainer width={120} height={120}>
+                <PieChart>
+                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={30} outerRadius={55} dataKey="value">
+                    {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="space-y-2">
+                {pieData.map(d => (
+                  <div key={d.name} className="flex items-center gap-2 text-sm">
+                    <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
+                    <span className="text-gray-600">{d.name}</span>
+                    <span className="font-bold text-gray-900 ml-auto">{d.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-28 text-sm text-gray-400">No applications yet</div>
+          )}
+        </div>
+
+        {/* Top jobs by applications */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
+          <p className="font-bold text-gray-900 mb-4">Top Jobs by Applications</p>
+          {data.appsPerJob.length > 0 ? (
+            <ResponsiveContainer width="100%" height={140}>
+              <BarChart data={data.appsPerJob} layout="vertical">
+                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10 }} />
+                <YAxis type="category" dataKey="title" width={90} tick={{ fontSize: 10 }} />
+                <Tooltip />
+                <Bar dataKey="count" fill={purple} radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-28 text-sm text-gray-400">No jobs yet</div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function OverviewTab({ activeOrders, pendingReview, completedOrders, setActiveTab }) {
   const isNewAccount = activeOrders.length === 0 && completedOrders.length === 0
 
@@ -1505,6 +1608,59 @@ const ORDER_STATUS_FILTERS = [
   { value: 'delivered', label: 'Delivered' },
   { value: 'revision_requested', label: 'Revision' },
 ]
+
+function CampaignsTab({ activeOrders, completedOrders, onPayNow, onApprove, onRevision, onReview }) {
+  const [sub, setSub] = useState('active')
+  const tabs = [
+    { id: 'active',    label: 'Active',    count: activeOrders.length },
+    { id: 'completed', label: 'Completed', count: completedOrders.length },
+  ]
+  return (
+    <div className="space-y-5">
+      {/* Sub-tab bar */}
+      <div className="flex gap-2 p-1 rounded-xl w-fit" style={{ backgroundColor: '#f3eeff' }}>
+        {tabs.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setSub(t.id)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+            style={sub === t.id
+              ? { backgroundColor: '#7c3aed', color: '#fff', boxShadow: '0 2px 8px rgba(124,58,237,0.25)' }
+              : { color: '#7c3aed' }}
+          >
+            {t.label}
+            <span className="text-xs px-1.5 py-0.5 rounded-full font-bold"
+              style={sub === t.id ? { backgroundColor: 'rgba(255,255,255,0.25)', color: '#fff' } : { backgroundColor: '#ede9fe', color: '#7c3aed' }}>
+              {t.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {sub === 'active' && (
+        <OrdersTab
+          title="Active Campaigns"
+          orders={activeOrders}
+          emptyMsg="No active campaigns. Browse talents to get started!"
+          onPayNow={onPayNow}
+          onApprove={onApprove}
+          onRevision={onRevision}
+        />
+      )}
+      {sub === 'completed' && (
+        <OrdersTab
+          title="Completed Campaigns"
+          orders={completedOrders}
+          emptyMsg="No completed campaigns yet."
+          onPayNow={onPayNow}
+          onApprove={onApprove}
+          onRevision={onRevision}
+          onReview={onReview}
+        />
+      )}
+    </div>
+  )
+}
 
 function OrdersTab({ title, orders, emptyMsg, onPayNow, onApprove, onRevision, onReview }) {
   const [search, setSearch] = useState('')

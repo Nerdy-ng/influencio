@@ -9,9 +9,9 @@ export const CMS_DEFAULTS = {
   landing: {
     hero: {
       badge: "Africa's #1 Creator Economy Platform",
-      headline1: 'Built for Brands.',
-      headline2: 'Fueled by',
-      headline3: 'Creativity.',
+      headline1: 'Where Creators & Brands',
+      headline2: 'Close Deals.',
+      headline3: '',
       subheadline: 'We connect brands and entrepreneurs with talents who bring visions to life.',
       cta_primary: 'Grow Your Business',
       cta_secondary: 'Earn as a Talent',
@@ -28,7 +28,7 @@ export const CMS_DEFAULTS = {
     },
     how_it_works: {
       section_label: 'Simple Process',
-      section_title: 'How Brandiór Works',
+      section_title: 'How Brandior Works',
       step1_icon: '🔍',
       step1_title: 'Discover Talents',
       step1_desc: 'Browse our verified creator marketplace filtered by niche, platform, location and engagement.',
@@ -48,7 +48,7 @@ export const CMS_DEFAULTS = {
     },
     footer_cta: {
       headline: 'Ready to grow with the Hive?',
-      subtext: 'Join thousands of brands and creators already collaborating on Brandiór.',
+      subtext: 'Join thousands of brands and creators already collaborating on Brandior.',
       cta_brands: 'Start as a Brand',
       cta_talents: 'Join as a Talent',
     },
@@ -62,7 +62,7 @@ export const CMS_DEFAULTS = {
       cta_secondary: 'See How It Works',
     },
     benefits: {
-      title: 'Why Talents Love Brandiór',
+      title: 'Why Talents Love Brandior',
       benefit1_title: 'Get Discovered',
       benefit1_desc: 'Your profile is visible to hundreds of brands actively looking for creators.',
       benefit2_title: 'Secure Payments',
@@ -80,7 +80,7 @@ export const CMS_DEFAULTS = {
       cta_secondary: 'See Pricing',
     },
     benefits: {
-      title: 'Why Brands Choose Brandiór',
+      title: 'Why Brands Choose Brandior',
       benefit1_title: 'Verified Creators',
       benefit1_desc: 'Every talent is vetted for authenticity, engagement quality and content standards.',
       benefit2_title: 'Campaign Management',
@@ -105,16 +105,16 @@ export const CMS_DEFAULTS = {
   },
   global: {
     navbar: {
-      logo_text: 'Brandiór',
+      logo_text: 'Brandior',
       tagline: 'Creator Economy Platform',
     },
     footer: {
       tagline: 'Connecting African brands with creators who matter.',
-      copyright: '© 2026 Brandiór. All rights reserved.',
+      copyright: '© 2026 Brandior. All rights reserved.',
       email: 'hello@brandior.co',
     },
     seo: {
-      site_title: "Brandiór — Africa's Creator Economy Platform",
+      site_title: "Brandior — Africa's Creator Economy Platform",
       meta_description: 'Connect brands with African content creators. Launch campaigns, manage deliverables, and grow together.',
     },
   },

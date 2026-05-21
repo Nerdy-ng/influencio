@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { logout } from '../lib/logout'
+import { getLogo } from '../lib/brandSettings'
 import {
   Zap, BadgeCheck, MapPin, Camera, Star,
   TrendingUp, Users, Heart, MessageCircle, Eye, EyeOff, ChevronRight,
@@ -16,7 +17,10 @@ const TALENT_API = 'http://localhost:3001/api'
 import MessagingPanel from '../components/MessagingPanel'
 import { supabase } from '../lib/supabase'
 import InviteTab from '../components/InviteTab'
+import { getTalentAnalytics } from '../lib/analytics'
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell } from 'recharts'
 import OnboardingTour from '../components/OnboardingTour'
+import { getOrCreatePhylloUser, getPhylloSDKToken, openPhylloConnect, PHYLLO_PLATFORMS } from '../lib/phyllo'
 
 const pink = '#FF6B9D'
 const gold = '#D4AF37'
@@ -27,7 +31,7 @@ const TIERS = {
   'fast-rising': {
     label: 'Fast Rising', color: '#22c55e', bg: '#22c55e18', border: '#22c55e40', emoji: null, StarIcon: true, diamond: false,
     desc: 'You\'re new and climbing. Keep creating!',
-    perks: ['Profile listed on Brandiór', 'Apply for entry-level gigs', 'Access talent community'],
+    perks: ['Profile listed on Brandior', 'Apply for entry-level gigs', 'Access talent community'],
     criteria: ['Complete your profile', 'Connect 1 social account', '3+ completed campaigns'],
   },
   'next-rated': {
@@ -154,11 +158,18 @@ const emptyProfile = {
   pricing: {
     type: 'negotiable', // 'fixed' | 'negotiable'
     rates: [
-      { label: 'Instagram Post',  amount: '' },
-      { label: 'Instagram Reel',  amount: '' },
-      { label: 'TikTok Video',    amount: '' },
-      { label: 'YouTube Video',   amount: '' },
-      { label: 'Story / Snap',    amount: '' },
+      { label: 'Instagram Post',                     amount: '', group: 'Platform' },
+      { label: 'Instagram Reel',                     amount: '', group: 'Platform' },
+      { label: 'TikTok Video',                       amount: '', group: 'Platform' },
+      { label: 'YouTube Video',                      amount: '', group: 'Platform' },
+      { label: 'Story / Snap',                       amount: '', group: 'Platform' },
+      { label: 'Up to 1 min video',                  amount: '', group: 'Video Length' },
+      { label: '1–3 min video',                      amount: '', group: 'Video Length' },
+      { label: '3–5 min video',                      amount: '', group: 'Video Length' },
+      { label: '5–10 min video',                     amount: '', group: 'Video Length' },
+      { label: '10+ min video',                      amount: '', group: 'Video Length' },
+      { label: 'Script writing (no editing)',        amount: '', group: 'Script & Editing' },
+      { label: 'Script writing (with editing)',      amount: '', group: 'Script & Editing' },
     ],
   },
   portfolio: [],
@@ -175,6 +186,7 @@ const emptyProfile = {
 const AVATAR_NAV = [
   { id: 'jobs',         label: 'Browse Jobs',       icon: Briefcase,      href: '/jobs' },
   { id: 'applications', label: 'My Applications',   icon: Inbox },
+  { id: 'analytics',    label: 'Analytics',         icon: TrendingUp },
   { id: 'profile',      label: 'My Profile',        icon: LayoutDashboard },
   { id: 'portfolio',    label: 'Portfolio',          icon: ImagePlus },
   { id: 'transactions', label: 'Transactions',       icon: Wallet },
@@ -292,7 +304,7 @@ function AvatarMenu({ profile, activeTab, setActiveTab }) {
   )
 }
 
-function Sidebar({ active, setActive }) {
+function Sidebar({ active, setActive, dashLogo }) {
   const nav = [
     { id: 'jobs',         label: 'Browse Jobs',      icon: Briefcase,      href: '/jobs' },
     { id: 'profile',      label: 'My Profile',       icon: LayoutDashboard },
@@ -304,14 +316,11 @@ function Sidebar({ active, setActive }) {
     { id: 'support',      label: 'Support',           icon: HelpCircle },
   ]
   return (
-    <aside className="hidden lg:flex flex-col w-60 flex-shrink-0 min-h-screen py-8 px-4"
-      style={{ backgroundColor: '#0d0020', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+    <aside className="hidden lg:flex flex-col w-60 flex-shrink-0 h-screen sticky top-0 overflow-y-auto py-8 px-4"
+      style={{ backgroundColor: 'var(--b-creatorDashBg)', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
       {/* Logo */}
-      <Link to="/" className="flex items-center gap-2 px-3 mb-3">
-        <div className="w-8 h-8 rounded-lg border border-white/20 flex items-center justify-center" style={{ backgroundColor: darkPurple }}>
-          <Zap className="w-4 h-4" style={{ color: '#FA8112' }} />
-        </div>
-        <span className="text-lg font-bold text-white tracking-tight">Brandiór</span>
+      <Link to="/" className="block -mx-4 px-4 mb-4">
+        <img src={dashLogo} alt="Brandior" className="w-full object-contain object-left" style={{ height: '160px' }} />
       </Link>
       {/* Account type label */}
       <div className="px-3 mb-8">
@@ -328,16 +337,18 @@ function Sidebar({ active, setActive }) {
             ? <Link key={id} to={href}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left"
                 style={{ backgroundColor: 'transparent', color: 'rgba(255,255,255,0.4)', border: '1px solid transparent' }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${purple}18`; e.currentTarget.style.color = purple }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--b-creatorMenuBg) 10%, transparent)'; e.currentTarget.style.color = 'var(--b-creatorMenuBg)' }}
                 onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.4)' }}>
-                <Icon className="w-4 h-4 flex-shrink-0" />{label}
+                <Icon className="w-4 h-4 flex-shrink-0" />
+                <span className="flex-1">{label}</span>
+                <ArrowUpRight className="w-3.5 h-3.5 opacity-50 flex-shrink-0" />
               </Link>
             : <button key={id} onClick={() => setActive(id)}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left"
                 style={{
-                  backgroundColor: active === id ? `${purple}18` : 'transparent',
-                  color: active === id ? purple : 'rgba(255,255,255,0.4)',
-                  border: active === id ? `1px solid ${purple}25` : '1px solid transparent',
+                  backgroundColor: active === id ? 'color-mix(in srgb, var(--b-creatorMenuBg) 10%, transparent)' : 'transparent',
+                  color: active === id ? 'var(--b-creatorMenuBg)' : 'rgba(255,255,255,0.4)',
+                  border: `1px solid ${active === id ? 'color-mix(in srgb, var(--b-creatorMenuBg) 25%, transparent)' : 'transparent'}`,
                 }}>
             <Icon className="w-4 h-4 flex-shrink-0" />
             {label}
@@ -538,128 +549,35 @@ function NewUserWelcomeBanner({ completion, setActiveTab }) {
 }
 
 function JobsTab({ completion = 100, setActiveTab }) {
-  const [filter, setFilter] = useState('All')
-  const [applyWarning, setApplyWarning] = useState(false)
-  const platforms = ['All', 'Instagram', 'TikTok', 'YouTube', 'LinkedIn']
-  const filtered = filter === 'All' ? MOCK_JOBS : MOCK_JOBS.filter(j => j.platform === filter)
-
-  function handleApply() {
-    if (completion < 40) {
-      setApplyWarning(true)
-      setTimeout(() => setApplyWarning(false), 4000)
-    } else {
-      window.location.href = '/jobs'
-    }
-  }
-
   return (
     <div className="space-y-5">
       <NewUserWelcomeBanner completion={completion} setActiveTab={setActiveTab} />
 
-      {applyWarning && (
-        <div className="flex items-start gap-3 rounded-2xl px-4 py-3" style={{ backgroundColor: '#fef9c3', border: '1px solid #fde047' }}>
-          <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#854d0e' }} />
-          <div>
-            <p className="text-sm font-semibold" style={{ color: '#854d0e' }}>Complete your profile first</p>
-            <p className="text-xs mt-0.5" style={{ color: '#92400e' }}>Brands need to see your name, bio, and at least one social account before you can apply.</p>
-          </div>
-          <button onClick={() => setActiveTab('settings')} className="ml-auto text-xs font-bold px-3 py-1 rounded-full flex-shrink-0"
-            style={{ backgroundColor: '#854d0e', color: 'white' }}>
-            Set Up →
-          </button>
+      <div className="rounded-3xl p-8 flex flex-col items-center text-center gap-5"
+        style={{ background: 'linear-gradient(135deg, #1a0035 0%, #3d0080 100%)' }}>
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: 'rgba(192,132,252,0.2)' }}>
+          <Briefcase className="w-7 h-7" style={{ color: '#c084fc' }} />
         </div>
-      )}
-
-      {/* Header */}
-      <div className="rounded-2xl p-5" style={{ background: 'linear-gradient(135deg, #1a0035 0%, #3d0080 100%)' }}>
-        <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: '#c084fc' }}>Brand Campaigns</p>
-        <h2 className="text-xl font-black text-white mb-1">Jobs Posted by Brands</h2>
-        <p className="text-white/50 text-sm">Browse open campaigns and apply directly to brands looking for talent like you.</p>
+        <div>
+          <h2 className="text-2xl font-black text-white mb-2">Brand Campaigns</h2>
+          <p className="text-white/50 text-sm max-w-sm">Browse open campaigns posted by brands and apply directly to ones that match your niche and audience.</p>
+        </div>
+        <button
+          onClick={() => {
+            if (completion < 40) {
+              setActiveTab('settings')
+            } else {
+              window.location.href = '/jobs'
+            }
+          }}
+          className="flex items-center gap-2 px-6 py-3 rounded-full font-bold text-white transition-all hover:opacity-90"
+          style={{ backgroundColor: '#c084fc' }}>
+          <Briefcase className="w-4 h-4" /> Browse Jobs
+        </button>
+        {completion < 40 && (
+          <p className="text-white/40 text-xs">Complete your profile first to apply for jobs</p>
+        )}
       </div>
-
-      {/* Platform filter pills */}
-      <div className="flex gap-2 flex-wrap">
-        {platforms.map(p => (
-          <button key={p} onClick={() => setFilter(p)}
-            className="text-xs font-semibold px-4 py-1.5 rounded-full transition-all"
-            style={filter === p
-              ? { backgroundColor: darkPurple, color: 'white' }
-              : { backgroundColor: '#f3eeff', color: '#7c3aed', border: '1px solid #e9d5ff' }}>
-            {p}
-          </button>
-        ))}
-      </div>
-
-      {/* Job cards grid */}
-      <div className="grid sm:grid-cols-2 gap-4">
-        {filtered.map(job => (
-          <div key={job.id}
-            className="rounded-2xl p-5 flex flex-col gap-3 relative cursor-pointer transition-all hover:-translate-y-0.5"
-            style={{
-              backgroundColor: job.featured ? `${job.accent}08` : '#fff',
-              border: `1px solid ${job.featured ? job.accent + '40' : '#e9d5ff'}`,
-              boxShadow: job.featured ? `0 4px 20px ${job.accent}15` : '0 2px 8px rgba(192,132,252,0.07)',
-            }}>
-            {job.featured && (
-              <span className="absolute -top-2.5 left-4 text-[10px] font-bold uppercase tracking-wider text-white px-2.5 py-0.5 rounded-full flex items-center gap-1"
-                style={{ backgroundColor: job.accent }}>
-                <Zap className="w-2.5 h-2.5" /> Featured
-              </span>
-            )}
-
-            {/* Brand row */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
-                  style={{ backgroundColor: job.accent }}>{job.initials}</div>
-                <div>
-                  <div className="flex items-center gap-1">
-                    <p className="text-brand-dark font-semibold text-xs">{job.brand}</p>
-                    {job.verified && <BadgeCheck className="w-3 h-3" style={{ color: job.accent }} />}
-                  </div>
-                  <p className="text-brand-dark/40 text-[10px]">{job.platform} · {job.niche}</p>
-                </div>
-              </div>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                style={{ color: job.accent, backgroundColor: `${job.accent}15`, border: `1px solid ${job.accent}30` }}>
-                {job.platform}
-              </span>
-            </div>
-
-            {/* Title & budget */}
-            <div>
-              <h3 className="text-brand-dark font-bold text-sm leading-snug mb-1">{job.title}</h3>
-              <p className="font-black text-base" style={{ color: job.accent }}>{job.budget}
-                <span className="text-brand-dark/30 text-[10px] font-normal ml-1">{job.budgetRange}</span>
-              </p>
-            </div>
-
-            {/* Tags */}
-            <div className="flex flex-wrap gap-1">
-              {job.tags.map(t => (
-                <span key={t} className="text-[10px] text-brand-dark/40 bg-brand-dark/5 rounded-full px-2 py-0.5">{t}</span>
-              ))}
-            </div>
-
-            {/* Stats + Apply */}
-            <div className="flex items-center justify-between pt-2" style={{ borderTop: `1px solid ${job.accent}18` }}>
-              <div className="flex items-center gap-3 text-[10px] text-brand-dark/40">
-                <span className="flex items-center gap-0.5"><Users className="w-3 h-3" />{job.minFollowers}</span>
-                <span className="flex items-center gap-0.5"><TrendingUp className="w-3 h-3" />{job.engagement}</span>
-                <span className="flex items-center gap-0.5"><Briefcase className="w-3 h-3" />{job.deadline}</span>
-              </div>
-              <button onClick={handleApply} className="text-[11px] font-bold px-3 py-1.5 rounded-full text-white transition-all hover:opacity-80"
-                style={{ backgroundColor: job.accent }}>
-                Apply Now
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <p className="text-center text-brand-dark/30 text-xs pt-2">
-        Showing {filtered.length} of {MOCK_JOBS.length} open campaigns
-      </p>
     </div>
   )
 }
@@ -1121,7 +1039,7 @@ function SecurityCard() {
             <p className="font-semibold text-brand-dark text-sm">Withdrawal PIN</p>
           </div>
           <p className="text-xs text-brand-dark/40 mb-4">
-            A 4-digit PIN is required every time you request a payout. Keep it private — never share it with anyone, including Brandiór staff.
+            A 4-digit PIN is required every time you request a payout. Keep it private — never share it with anyone, including Brandior staff.
           </p>
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
@@ -1169,14 +1087,14 @@ function SecurityCard() {
         <div>
           <div className="flex items-center gap-2 mb-3">
             <ShieldCheck className="w-4 h-4" style={{ color: '#22c55e' }} />
-            <p className="font-semibold text-brand-dark text-sm">Stay Safe on Brandiór</p>
+            <p className="font-semibold text-brand-dark text-sm">Stay Safe on Brandior</p>
           </div>
           <ul className="space-y-2.5">
             {[
-              { icon: '🔐', text: 'Never share your password or PIN with anyone — Brandiór staff will never ask for them.' },
+              { icon: '🔐', text: 'Never share your password or PIN with anyone — Brandior staff will never ask for them.' },
               { icon: '💸', text: 'Always receive payment through the platform. Off-platform payments are not protected.' },
-              { icon: '🚨', text: 'Report any brand asking to pay you directly outside Brandiór. Your account may be at risk.' },
-              { icon: '📧', text: 'Beware of phishing emails. Brandiór only emails from @brandior.africa.' },
+              { icon: '🚨', text: 'Report any brand asking to pay you directly outside Brandior. Your account may be at risk.' },
+              { icon: '📧', text: 'Beware of phishing emails. Brandior only emails from @brandior.africa.' },
               { icon: '🔑', text: 'Use a strong, unique password and update your security questions regularly.' },
             ].map(({ icon, text }) => (
               <li key={text} className="flex items-start gap-3 text-xs text-brand-dark/60 leading-relaxed">
@@ -1196,6 +1114,7 @@ export default function TalentDashboard() {
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'jobs')
   const initialConvId = searchParams.get('conv')
   const [profile, setProfile] = useState(emptyProfile)
+  const [dashLogo, setDashLogo] = useState(() => getLogo('dashboard'))
   const [hashInput, setHashInput] = useState('')
   const [saved, setSaved] = useState(false)
   const [showWithdraw, setShowWithdraw] = useState(false)
@@ -1209,6 +1128,12 @@ export default function TalentDashboard() {
   const [showOffPlatformWarning, setShowOffPlatformWarning] = useState(() => !localStorage.getItem(`brandior_offplatform_seen_${userId}`))
 
   // Load profile from Supabase user metadata
+  useEffect(() => {
+    function onLogoUpdate() { setDashLogo(getLogo('dashboard')) }
+    window.addEventListener('brandior:logo-updated', onLogoUpdate)
+    return () => window.removeEventListener('brandior:logo-updated', onLogoUpdate)
+  }, [])
+
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
@@ -1226,7 +1151,10 @@ export default function TalentDashboard() {
         contentStyles: m.contentStyles || p.contentStyles,
         availableForHire: m.availableForHire ?? p.availableForHire,
         talentTypes: m.talentTypes || p.talentTypes,
-        pricing: m.pricing || p.pricing,
+        pricing: m.pricing ? {
+          ...m.pricing,
+          rates: (m.pricing.rates || []).map(r => ({ ...r, group: r.group || 'Platform' }))
+        } : p.pricing,
         socials: m.socials || p.socials,
       }))
       // Load portfolio + avatar from profiles table
@@ -1430,19 +1358,58 @@ export default function TalentDashboard() {
 
   const [connecting, setConnecting] = useState(null)
 
-  function connectSocial(i) {
+  async function connectSocial(i) {
     const platform = profile.socials[i].platform
+    const platformId = PHYLLO_PLATFORMS[platform]
+    if (!platformId) return
     setConnecting(i)
-    // Simulate OAuth handshake delay then auto-fill from mock API
-    setTimeout(() => {
-      const data = mockOAuthData[platform]
-      setProfile(p => {
-        const s = [...p.socials]
-        s[i] = { ...s[i], ...data, connected: true }
-        return { ...p, socials: s }
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not logged in')
+
+      // Get or create Phyllo user, then get SDK token
+      const phylloUserId = await getOrCreatePhylloUser(user.id, profile.nickname || user.email)
+      const token = await getPhylloSDKToken(phylloUserId)
+
+      openPhylloConnect({
+        token,
+        userId: phylloUserId,
+        platformId,
+        onConnected: async ({ accountId }) => {
+          // Fetch real data from Phyllo after connection
+          const res = await fetch(`/api/phyllo-account-data?user_id=${phylloUserId}&account_id=${accountId}`)
+          const data = await res.json()
+          const followers = data.followers
+            ? data.followers >= 1000000
+              ? (data.followers / 1000000).toFixed(1) + 'M'
+              : data.followers >= 1000
+                ? (data.followers / 1000).toFixed(1) + 'K'
+                : String(data.followers)
+            : ''
+          const engagement = data.engagement_rate
+            ? (data.engagement_rate * 100).toFixed(1) + '%'
+            : ''
+          setProfile(p => {
+            const s = [...p.socials]
+            s[i] = { ...s[i], handle: data.handle || '', followers, engagement, connected: true }
+            return { ...p, socials: s }
+          })
+          setConnecting(null)
+        },
+        onDisconnected: () => {
+          setProfile(p => {
+            const s = [...p.socials]
+            s[i] = { ...s[i], handle: '', followers: '', engagement: '', connected: false }
+            return { ...p, socials: s }
+          })
+          setConnecting(null)
+        },
+        onExit: () => setConnecting(null),
       })
+    } catch (err) {
+      console.error('[Phyllo] connectSocial error:', err)
       setConnecting(null)
-    }, 1400)
+    }
   }
 
   function disconnectSocial(i) {
@@ -1489,57 +1456,40 @@ export default function TalentDashboard() {
 
       {/* ── Off-platform transaction warning ── */}
       {showOffPlatformWarning && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}>
-          <div className="relative w-full max-w-md rounded-3xl overflow-hidden shadow-2xl"
-            style={{ backgroundColor: '#0d0020', border: '1px solid rgba(250,129,18,0.3)' }}>
-            {/* Orange glow top */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-1 rounded-full" style={{ backgroundColor: '#FA8112', boxShadow: '0 0 40px 8px rgba(250,129,18,0.5)' }} />
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}>
+          <div className="w-full max-w-sm rounded-2xl p-6 shadow-2xl"
+            style={{ backgroundColor: '#0a0a0a', border: '1px solid #FA8112', boxShadow: '0 0 32px rgba(250,129,18,0.15)' }}>
 
-            <div className="p-8 text-center">
-              {/* Icon */}
-              <div className="w-16 h-16 rounded-full mx-auto mb-5 flex items-center justify-center" style={{ backgroundColor: 'rgba(250,129,18,0.12)', border: '2px solid rgba(250,129,18,0.3)' }}>
-                <Shield className="w-8 h-8" style={{ color: '#FA8112' }} />
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(250,129,18,0.12)', border: '1px solid rgba(250,129,18,0.3)' }}>
+                <Shield className="w-5 h-5" style={{ color: '#FA8112' }} />
               </div>
-
-              <h2 className="text-white font-black text-xl mb-2 leading-tight">
-                Your Money Is Only Safe<br/>
-                <span style={{ color: '#FA8112' }}>Inside Brandiór</span>
-              </h2>
-
-              <p className="text-sm mb-6 leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                Every year, thousands of creators lose their hard-earned income to brands who disappear after receiving content — because the deal was done outside the platform.
-              </p>
-
-              <div className="space-y-3 mb-7 text-left">
-                {[
-                  { icon: '🚫', title: 'No escrow = no protection', desc: 'If a brand pays you directly and disputes it, you have no recourse.' },
-                  { icon: '⚠️', title: 'Off-platform deals violate our terms', desc: 'Your account can be suspended if you accept payment outside Brandiór.' },
-                  { icon: '💰', title: 'Brandiór holds payment until you deliver', desc: 'Funds are locked in escrow and released to you automatically on approval.' },
-                ].map(({ icon, title, desc }) => (
-                  <div key={title} className="flex items-start gap-3 px-4 py-3 rounded-2xl" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                    <span className="text-xl flex-shrink-0">{icon}</span>
-                    <div>
-                      <p className="text-white text-sm font-bold">{title}</p>
-                      <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>{desc}</p>
-                    </div>
-                  </div>
-                ))}
+              <div>
+                <p className="text-white font-bold text-base leading-tight">Your Money Is Only Safe</p>
+                <p className="text-xs font-bold mt-0.5" style={{ color: '#FA8112' }}>Inside Brandior</p>
               </div>
-
-              <button
-                onClick={() => {
-                  localStorage.setItem(`brandior_offplatform_seen_${userId}`, '1')
-                  setShowOffPlatformWarning(false)
-                }}
-                className="w-full py-3.5 rounded-2xl font-black text-sm text-white transition-all"
-                style={{ background: 'linear-gradient(135deg, #FA8112, #e07010)', boxShadow: '0 4px 24px rgba(250,129,18,0.4)' }}>
-                I understand — keep my earnings safe
-              </button>
-
-              <p className="text-[10px] mt-3" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                This message will not appear again on this device
-              </p>
             </div>
+
+            <p className="text-sm mb-4 leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              Every year, thousands of creators lose their hard-earned income to brands who disappear after receiving content because the deal was done outside the platform.
+            </p>
+
+            <div className="mb-5">
+              <div className="flex items-start gap-2.5 text-sm" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                <span className="flex-shrink-0">🚫</span>
+                <span>No escrow = no protection. If a brand pays you directly and disputes it, you have no recourse.</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                localStorage.setItem(`brandior_offplatform_seen_${userId}`, '1')
+                setShowOffPlatformWarning(false)
+              }}
+              className="w-full py-3 rounded-xl font-bold text-sm transition-all"
+              style={{ backgroundColor: '#FA8112', color: '#fff' }}>
+              I Understand
+            </button>
           </div>
         </div>
       )}
@@ -1547,7 +1497,7 @@ export default function TalentDashboard() {
       <Sidebar active={activeTab} setActive={tab => {
         if (settingsEditMode) { cancelEditSettings() }
         setActiveTab(tab)
-      }} />
+      }} dashLogo={dashLogo} />
 
       <main className="flex-1 overflow-auto">
         {/* Top bar */}
@@ -1557,7 +1507,7 @@ export default function TalentDashboard() {
             <h1 className="font-black text-brand-dark text-lg capitalize">
               {activeTab === 'jobs' ? 'Browse Jobs' : activeTab === 'profile' ? 'My Profile' : activeTab === 'settings' ? 'Profile Settings' : activeTab === 'portfolio' ? 'Portfolio' : activeTab === 'applications' ? 'My Proposals' : activeTab}
             </h1>
-            <p className="text-brand-dark/40 text-xs">Manage your talent presence on Brandiór</p>
+            <p className="text-brand-dark/40 text-xs">Manage your talent presence on Brandior</p>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={() => setActiveTab('messages')} className="relative p-2 rounded-xl hover:bg-white transition-colors">
@@ -1788,60 +1738,6 @@ export default function TalentDashboard() {
                       </div>
                     )
                   })}
-                </div>
-              </div>
-
-              {/* ── Pricing ── */}
-              <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4" style={{ color: purple }} />
-                    <p className="font-bold text-brand-dark">Pricing</p>
-                  </div>
-                  {/* Fixed / Negotiable toggle */}
-                  <div className="flex rounded-full overflow-hidden" style={{ border: '1px solid #e9d5ff' }}>
-                    {['fixed', 'negotiable'].map(type => (
-                      <button key={type} onClick={() => setProfile(p => ({ ...p, pricing: { ...p.pricing, type } }))}
-                        className="px-4 py-1.5 text-xs font-semibold capitalize transition-all"
-                        style={{
-                          backgroundColor: profile.pricing.type === type ? darkPurple : 'white',
-                          color: profile.pricing.type === type ? 'white' : '#9ca3af',
-                        }}>
-                        {type}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {profile.pricing.type === 'negotiable' && (
-                  <div className="rounded-2xl px-4 py-3 mb-4 flex items-start gap-2"
-                    style={{ backgroundColor: `${purple}08`, border: `1px solid ${purple}20` }}>
-                    <MessageCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: purple }} />
-                    <p className="text-xs text-brand-dark/60">Your rates are negotiable. Brands will reach out to discuss pricing. You can still set base rates below as a guide.</p>
-                  </div>
-                )}
-
-                <div className="space-y-3">
-                  {profile.pricing.rates.map((rate, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <span className="text-sm text-brand-dark/60 flex-1">{rate.label}</span>
-                      <div className="flex items-center rounded-xl overflow-hidden w-36"
-                        style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
-                        <span className="pl-3 text-sm text-brand-dark/40">₦</span>
-                        <input
-                          type="number"
-                          value={rate.amount}
-                          onChange={e => setProfile(p => {
-                            const rates = [...p.pricing.rates]
-                            rates[i] = { ...rates[i], amount: e.target.value }
-                            return { ...p, pricing: { ...p.pricing, rates } }
-                          })}
-                          placeholder="0"
-                          className="flex-1 px-2 py-2.5 text-sm text-brand-dark outline-none bg-transparent w-full"
-                        />
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
 
@@ -2336,6 +2232,72 @@ export default function TalentDashboard() {
                 )}
               </div>
 
+              {/* ── Pricing ── */}
+              <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="w-4 h-4" style={{ color: purple }} />
+                    <p className="font-bold text-brand-dark">Pricing</p>
+                  </div>
+                  <div className="flex rounded-full overflow-hidden" style={{ border: '1px solid #e9d5ff' }}>
+                    {['fixed', 'negotiable'].map(type => (
+                      <button key={type} onClick={() => setProfile(p => ({ ...p, pricing: { ...p.pricing, type } }))}
+                        className="px-4 py-1.5 text-xs font-semibold capitalize transition-all"
+                        style={{
+                          backgroundColor: profile.pricing.type === type ? darkPurple : 'white',
+                          color: profile.pricing.type === type ? 'white' : '#9ca3af',
+                        }}>
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {profile.pricing.type === 'negotiable' && (
+                  <div className="rounded-2xl px-4 py-3 mb-4 flex items-start gap-2"
+                    style={{ backgroundColor: `${purple}08`, border: `1px solid ${purple}20` }}>
+                    <MessageCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: purple }} />
+                    <p className="text-xs text-brand-dark/60">Your rates are negotiable. Brands will reach out to discuss pricing. You can still set base rates below as a guide.</p>
+                  </div>
+                )}
+
+                <div className="space-y-5">
+                  {['Platform', 'Video Length', 'Script & Editing'].map(group => {
+                    const groupRates = profile.pricing.rates
+                      .map((rate, i) => ({ ...rate, i }))
+                      .filter(r => (r.group || 'Platform') === group)
+                    if (!groupRates.length) return null
+                    return (
+                      <div key={group}>
+                        <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: purple }}>{group}</p>
+                        <div className="space-y-2">
+                          {groupRates.map(({ label, amount, i }) => (
+                            <div key={i} className="flex items-center gap-3">
+                              <span className="text-sm text-brand-dark/60 flex-1">{label}</span>
+                              <div className="flex items-center rounded-xl overflow-hidden w-36"
+                                style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
+                                <span className="pl-3 text-sm text-brand-dark/40">₦</span>
+                                <input
+                                  type="number"
+                                  value={amount}
+                                  onChange={e => setProfile(p => {
+                                    const rates = [...p.pricing.rates]
+                                    rates[i] = { ...rates[i], amount: e.target.value }
+                                    return { ...p, pricing: { ...p.pricing, rates } }
+                                  })}
+                                  placeholder="0"
+                                  className="flex-1 px-2 py-2.5 text-sm text-brand-dark outline-none bg-transparent w-full"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
             </div>
           )}
 
@@ -2386,7 +2348,7 @@ export default function TalentDashboard() {
                 </div>
                 <div className="grid sm:grid-cols-2 gap-5 mb-5">
                   <EditableField label="Nickname / Talent Name" value={profile.nickname} onChange={v => updateField('nickname', v)} placeholder="e.g. BeautyByAmaka" isEditing={settingsEditMode} />
-                  <EditableField label="Brandiór Username" value={profile.handle} onChange={v => updateField('handle', v)} placeholder="@yourhandle" isEditing={settingsEditMode} />
+                  <EditableField label="Brandior Username" value={profile.handle} onChange={v => updateField('handle', v)} placeholder="@yourhandle" isEditing={settingsEditMode} />
                   {/* Location — country + state */}
                   <div>
                     <label className="block text-xs font-medium text-brand-dark/40 uppercase tracking-widest mb-1.5">Location</label>
@@ -2481,21 +2443,27 @@ export default function TalentDashboard() {
 
                 {/* Available for hire toggle */}
                 <div className="flex items-center justify-between py-4 px-5 rounded-2xl"
-                  style={{ backgroundColor: '#0d0020', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  style={{ backgroundColor: '#0d0020', border: `1px solid ${profile.availableForHire ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.08)'}` }}>
                   <div>
                     <p className="text-sm font-semibold text-white">Available for hire</p>
                     <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Brands can see you're open to new campaigns</p>
                   </div>
                   <button
-                    onClick={() => settingsEditMode && setProfile(p => ({ ...p, availableForHire: !p.availableForHire }))}
-                    className="relative w-11 h-6 rounded-full transition-colors flex-shrink-0"
+                    onClick={async () => {
+                      const next = !profile.availableForHire
+                      setProfile(p => ({ ...p, availableForHire: next }))
+                      const { data: { user } } = await supabase.auth.getUser()
+                      if (user) await supabase.from('profiles').update({ available_for_hire: next }).eq('id', user.id)
+                    }}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer flex-shrink-0"
                     style={{
-                      backgroundColor: profile.availableForHire ? '#22c55e' : 'rgba(255,255,255,0.15)',
-                      opacity: settingsEditMode ? 1 : 0.7,
-                      cursor: settingsEditMode ? 'pointer' : 'default',
+                      backgroundColor: profile.availableForHire ? '#22c55e' : 'rgba(255,255,255,0.1)',
+                      color: profile.availableForHire ? '#fff' : 'rgba(255,255,255,0.4)',
+                      boxShadow: profile.availableForHire ? '0 0 12px rgba(34,197,94,0.35)' : 'none',
                     }}>
-                    <span className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
-                      style={{ transform: profile.availableForHire ? 'translateX(22px)' : 'translateX(2px)' }} />
+                    <span className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: profile.availableForHire ? '#fff' : 'rgba(255,255,255,0.3)' }} />
+                    {profile.availableForHire ? 'Open' : 'Closed'}
                   </button>
                 </div>
               </div>
@@ -2585,7 +2553,7 @@ export default function TalentDashboard() {
                 <div className="px-6 py-5" style={{ background: 'linear-gradient(135deg, #0d0020 0%, #1e0a3c 100%)' }}>
                   <div className="flex items-center justify-between mb-1">
                     <p className="font-bold text-white">Talent Tier</p>
-                    <span className="text-[10px] text-white/30">Assigned by Brandiór</span>
+                    <span className="text-[10px] text-white/30">Assigned by Brandior</span>
                   </div>
                   <p className="text-xs text-white/40">Grow your profile, complete campaigns, and earn your way to the top.</p>
                   {/* Current tier highlight */}
@@ -2668,7 +2636,7 @@ export default function TalentDashboard() {
 
               <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #ffe4e6', backgroundColor: 'white' }}>
                 <p className="font-bold text-red-500 mb-1">Danger Zone</p>
-                <p className="text-brand-dark/40 text-sm mb-4">Permanently delete your Brandiór account and all associated data.</p>
+                <p className="text-brand-dark/40 text-sm mb-4">Permanently delete your Brandior account and all associated data.</p>
                 <button className="px-5 py-2.5 rounded-full text-sm font-semibold text-red-500 border border-red-200 hover:bg-red-50 transition-colors">
                   Delete Account
                 </button>
@@ -2683,11 +2651,101 @@ export default function TalentDashboard() {
           {/* ── INVITE TAB ── */}
           {activeTab === 'invite' && <InviteTab userType="talent" />}
 
+          {/* ── ANALYTICS TAB ── */}
+          {activeTab === 'analytics' && <TalentAnalyticsTab />}
+
           {/* ── SUPPORT TAB ── */}
           {activeTab === 'support' && <SupportTab />}
 
         </div>
       </main>
+    </div>
+  )
+}
+
+function TalentAnalyticsTab() {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      const stats = await getTalentAnalytics(user.id)
+      setData(stats)
+      setLoading(false)
+    })
+  }, [])
+
+  if (loading) return <div className="flex items-center justify-center py-20"><div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" /></div>
+
+  const pieData = [
+    { name: 'Accepted', value: data.accepted, color: '#16a34a' },
+    { name: 'Pending',  value: data.pending,  color: '#f59e0b' },
+    { name: 'Rejected', value: data.rejected, color: '#ef4444' },
+  ].filter(d => d.value > 0)
+
+  return (
+    <div className="space-y-5">
+      <h2 className="text-xl font-bold text-gray-900">My Analytics</h2>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Applied',  value: data.totalApps,                              color: purple },
+          { label: 'Success Rate',   value: `${data.successRate}%`,                      color: '#16a34a' },
+          { label: 'Avg Rating',     value: data.avgRating ? `${data.avgRating}★` : '—', color: '#D4AF37' },
+          { label: 'Reviews',        value: data.totalReviews,                            color: '#0ea5e9' },
+        ].map(s => (
+          <div key={s.label} className="bg-white rounded-2xl p-4 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
+            <p className="text-xs text-gray-400 mb-1">{s.label}</p>
+            <p className="text-2xl font-black" style={{ color: s.color }}>{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Applications over time */}
+      <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
+        <p className="font-bold text-gray-900 mb-4">Applications — Last 30 Days</p>
+        {data.dailyApps.some(d => d.count > 0) ? (
+          <ResponsiveContainer width="100%" height={180}>
+            <LineChart data={data.dailyApps}>
+              <XAxis dataKey="date" tick={{ fontSize: 10 }} interval={4} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 10 }} width={24} />
+              <Tooltip />
+              <Line type="monotone" dataKey="count" stroke={purple} strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex items-center justify-center h-28 text-sm text-gray-400">No applications yet</div>
+        )}
+      </div>
+
+      {/* Status breakdown */}
+      <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
+        <p className="font-bold text-gray-900 mb-4">Application Status</p>
+        {pieData.length > 0 ? (
+          <div className="flex items-center gap-6">
+            <ResponsiveContainer width={120} height={120}>
+              <RechartsPieChart>
+                <Pie data={pieData} cx="50%" cy="50%" innerRadius={30} outerRadius={55} dataKey="value">
+                  {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                </Pie>
+              </RechartsPieChart>
+            </ResponsiveContainer>
+            <div className="space-y-2">
+              {pieData.map(d => (
+                <div key={d.name} className="flex items-center gap-2 text-sm">
+                  <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
+                  <span className="text-gray-600">{d.name}</span>
+                  <span className="font-bold text-gray-900 ml-auto pl-4">{d.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-28 text-sm text-gray-400">No applications yet</div>
+        )}
+      </div>
     </div>
   )
 }
@@ -3087,14 +3145,29 @@ function SupportTab() {
     }, 1200)
   }
 
-  function submitTicket(e) {
+  async function submitTicket(e) {
     e.preventDefault()
     setSubmitting(true)
-    setTimeout(() => { setSubmitting(false); setSubmitted(true) }, 1500)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      const saved = localStorage.getItem('brandiór_preview_profile')
+      const profile = saved ? JSON.parse(saved) : {}
+      await supabase.from('support_tickets').insert({
+        user_id: user?.id || null,
+        user_email: profile?.email || user?.email || null,
+        user_name: profile?.nickname || null,
+        role: localStorage.getItem('brandiór_role') || 'talent',
+        category: ticket.category,
+        subject: ticket.subject,
+        message: ticket.message,
+      })
+    } catch (_) { /* silent — still show success */ }
+    setSubmitting(false)
+    setSubmitted(true)
   }
 
   const faqs = [
-    { q: 'When do I get paid for a completed campaign?', a: 'Payments are released within 24–48 hours after the brand approves your content. Funds go directly to your Brandiór wallet.' },
+    { q: 'When do I get paid for a completed campaign?', a: 'Payments are released within 24–48 hours after the brand approves your content. Funds go directly to your Brandior wallet.' },
     { q: 'How do I dispute a rejected submission?', a: 'Go to the campaign in your dashboard, click "View Feedback", and use the dispute button. Our team reviews all disputes within 2 business days.' },
     { q: 'Can I change my rate card after applying to a gig?', a: 'Your rate card applies to future gig applications. Rates already agreed upon in an active campaign cannot be changed.' },
     { q: 'How do I withdraw my earnings?', a: 'Go to Wallet → Withdraw. We support bank transfer across our supported countries, Paystack, and Flutterwave. Minimum withdrawal is ₦5,000.' },
@@ -3312,7 +3385,7 @@ function SupportTab() {
               <path d="M7 9h2v8H7zm1-3a1.2 1.2 0 110 2.4A1.2 1.2 0 018 6zm4 3h2v1.1c.3-.5 1-1.1 2-1.1 2.2 0 2.5 1.5 2.5 3.4V17h-2v-4.1c0-.9-.3-1.4-1-1.4s-1.5.5-1.5 1.5V17h-2V9z" fill="white"/>
             </svg>
             <span className="text-xs font-semibold text-brand-dark">LinkedIn</span>
-            <span className="text-[10px] text-brand-dark/40">Brandiór</span>
+            <span className="text-[10px] text-brand-dark/40">Brandior</span>
           </a>
         </div>
       </div>

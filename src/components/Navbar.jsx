@@ -33,7 +33,6 @@ const TALENT_NAV = [
 ]
 
 const BRAND_NAV = [
-  { label: 'Find Talents',   href: '/marketplace' },
   { label: 'Analytics',      href: '/brand-dashboard?tab=overview' },
   { label: 'Campaigns',      href: '/brand-dashboard?tab=orders',   notifKey: 'campaigns' },
   { label: 'Messages',       href: '/brand-dashboard?tab=messages', notifKey: 'messages' },
@@ -167,19 +166,19 @@ export default function Navbar() {
   return (
     <nav className={isLoggedIn ? 'fixed top-0 left-0 right-0 z-50' : 'fixed top-4 left-0 right-0 z-50 px-6'}>
       <div
-        className={`flex items-center justify-between gap-8 ${isLoggedIn ? 'w-full px-8 py-3' : 'max-w-6xl mx-auto px-6 py-3 rounded-2xl'}`}
+        className={`flex items-center justify-between gap-8 overflow-visible ${isLoggedIn ? 'w-full px-8 py-3' : 'max-w-6xl mx-auto px-6 py-3 rounded-2xl'}`}
         style={isLoggedIn
-          ? { backgroundColor: '#0d0020', borderBottom: '1px solid rgba(255,255,255,0.07)' }
-          : { backgroundColor: '#c084fc', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 8px 32px rgba(192,132,252,0.35)' }
+          ? { backgroundColor: 'var(--b-navbarBg)', borderBottom: '1px solid rgba(139,92,246,0.2)' }
+          : { backgroundColor: 'var(--b-secondary)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 8px 32px rgba(192,132,252,0.35)' }
         }>
 
         {/* Logo */}
         <Link
-          to={isLoggedIn ? (userRole === 'brand' ? '/marketplace' : '/jobs') : '/'}
+          to={isLoggedIn ? (userRole === 'brand' ? '/marketplace' : '/dashboard') : '/'}
           onClick={e => {
             if (!isLoggedIn) return
             e.preventDefault()
-            const home = userRole === 'brand' ? '/marketplace' : '/jobs'
+            const home = userRole === 'brand' ? '/marketplace' : '/dashboard'
             if (window.location.pathname === home) {
               window.location.reload()
             } else {
@@ -188,12 +187,11 @@ export default function Navbar() {
           }}
           className="flex items-center gap-2 flex-shrink-0">
           {headerLogo
-            ? <img src={headerLogo} alt="Brandior" className="w-8 h-8 rounded-lg object-contain" />
+            ? <img src={headerLogo} alt="Brandior" className="rounded-lg object-contain" style={{ height: '160px', width: '160px', objectFit: 'contain', margin: '-60px 0' }} />
             : <div className="w-8 h-8 rounded-lg border border-white/20 flex items-center justify-center" style={{ backgroundColor: '#4c1d95' }}>
                 <Zap className="w-4 h-4 text-brand-orange" />
               </div>
           }
-          <span className="text-xl font-bold text-white tracking-tight">{platformName}</span>
         </Link>
 
         {/* Desktop nav */}
@@ -202,29 +200,28 @@ export default function Navbar() {
             { label: 'Work with Brands', href: '#pricing', isAnchor: true },
             { label: 'Hire Talents', href: '#talents',      isAnchor: true },
             { label: 'How it Works', href: '#how-it-works', isAnchor: true },
-            { label: 'Marketplace',  href: '/marketplace' },
           ]).map(({ label, href, isAnchor, notifKey, isPostJob }) => (
             <li key={label}>
               {isAnchor
                 ? <a href={href}
                     className="text-sm font-medium px-4 py-2 rounded-xl transition-all duration-200 block"
                     style={{ color: 'rgba(255,255,255,0.8)' }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'white' }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#7c3aed'; e.currentTarget.style.color = 'white' }}
                     onMouseLeave={e => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.8)' }}>
                     {label}
                   </a>
                 : isPostJob
                   ? <Link to={href}
                       className="inline-flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-full transition-all duration-200"
-                      style={{ backgroundColor: '#FA8112', color: '#fff', boxShadow: '0 2px 12px rgba(250,129,18,0.4)' }}
+                      style={{ backgroundColor: 'var(--b-cta)', color: '#fff', boxShadow: '0 2px 12px rgba(250,129,18,0.4)' }}
                       onMouseEnter={e => e.currentTarget.style.backgroundColor = '#e07010'}
-                      onMouseLeave={e => e.currentTarget.style.backgroundColor = '#FA8112'}>
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--b-cta)'}>
                       + Post a Job
                     </Link>
                   : <Link to={href}
                       className="relative inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-xl transition-all duration-200"
                       style={{ color: 'rgba(255,255,255,0.8)' }}
-                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'white' }}
+                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#7c3aed'; e.currentTarget.style.color = 'white' }}
                       onMouseLeave={e => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.8)' }}>
                       {label}
                       {notifKey && notifs[notifKey] > 0 && (
@@ -265,7 +262,7 @@ export default function Navbar() {
 
               {bellOpen && (
                 <div className="absolute right-0 top-12 w-80 rounded-2xl shadow-2xl overflow-hidden z-50"
-                  style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff' }}>
+                  style={{ backgroundColor: '#fff', border: '1px solid var(--b-navbarBg)' }}>
                   <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: '#f3eeff' }}>
                     <p className="font-bold text-sm text-brand-dark">Notifications</p>
                     {inAppNotifs.length > 0 && (
@@ -309,12 +306,12 @@ export default function Navbar() {
             <div className="relative" ref={userRef}>
               <button onClick={() => setUserOpen(o => !o)} className="relative focus:outline-none">
                 <UserAvatar profile={profile} />
-                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 ring-2 ring-[#c084fc]" />
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400" style={{ boxShadow: '0 0 0 2px var(--b-secondary)' }} />
               </button>
 
               {userOpen && (
                 <div className="absolute right-0 top-12 w-56 rounded-2xl shadow-2xl overflow-hidden z-50"
-                  style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff' }}>
+                  style={{ backgroundColor: '#fff', border: '1px solid var(--b-navbarBg)' }}>
                   {/* Profile header */}
                   <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: '#f3eeff' }}>
                     <UserAvatar profile={profile} size="sm" />
@@ -375,9 +372,9 @@ export default function Navbar() {
                 <button
                   onClick={() => setJoinOpen(o => !o)}
                   className="flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-full text-white transition-colors"
-                  style={{ backgroundColor: '#4c1d95' }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#3b0764'}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = joinOpen ? '#3b0764' : '#4c1d95'}>
+                  style={{ backgroundColor: 'var(--b-dark)' }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#7c3aed'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--b-dark)'}>
                   <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
                     <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
                   </svg>
@@ -389,11 +386,11 @@ export default function Navbar() {
 
                 {joinOpen && (
                   <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl overflow-hidden shadow-2xl z-50"
-                    style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff' }}>
+                    style={{ backgroundColor: '#fff', border: '1px solid var(--b-navbarBg)' }}>
                     <div className="p-2 space-y-1">
                       <Link to="/signup?role=talent" onClick={() => setJoinOpen(false)}
                         className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
-                        onMouseEnter={e => e.currentTarget.style.backgroundColor = '#fdf4ff'}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = '#7c3aed'}
                         onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FF6B9D18' }}>
                           <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="#FF6B9D" strokeWidth="2">
@@ -408,7 +405,7 @@ export default function Navbar() {
 
                       <Link to="/signup?role=brand" onClick={() => setJoinOpen(false)}
                         className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
-                        onMouseEnter={e => e.currentTarget.style.backgroundColor = '#fdf4ff'}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = '#7c3aed'}
                         onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#c084fc18' }}>
                           <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="#c084fc" strokeWidth="2">
@@ -433,14 +430,9 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Mobile toggle / avatar */}
-        <div className="md:hidden flex items-center gap-2 flex-shrink-0">
-          {isLoggedIn && (
-            <Link to="/dashboard">
-              <UserAvatar profile={profile} size="sm" />
-            </Link>
-          )}
-          <button className="text-white/80 hover:text-white" onClick={() => setMobileOpen(!mobileOpen)}>
+        {/* Mobile toggle */}
+        <div className="md:hidden flex items-center flex-shrink-0">
+          <button className="text-white/80 hover:text-white p-1" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
@@ -448,11 +440,20 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden px-6 py-6 space-y-1 mt-2 mx-6 rounded-2xl"
-          style={{ backgroundColor: '#c084fc', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 8px 32px rgba(192,132,252,0.35)' }}>
-          <div className="h-px bg-white/5 my-1" />
+        <div className="md:hidden px-4 py-4 space-y-1 mt-2 mx-4 rounded-2xl"
+          style={{ backgroundColor: 'var(--b-navbarBg)', border: '1px solid var(--b-secondary)', boxShadow: '0 8px 32px rgba(139,92,246,0.15)' }}>
           {isLoggedIn ? (
             <>
+              {/* Profile info */}
+              <div className="flex items-center gap-3 px-3 py-3 mb-2 rounded-xl" style={{ backgroundColor: '#ede9fe' }}>
+                <UserAvatar profile={profile} size="sm" />
+                <div className="min-w-0">
+                  <p className="font-bold text-sm text-purple-900 truncate">{profile?.nickname || 'Your Profile'}</p>
+                  <p className="text-xs text-purple-500 truncate">{profile?.email || ''}</p>
+                </div>
+              </div>
+
+              {/* Main nav links */}
               {(userRole === 'brand' ? BRAND_NAV : TALENT_NAV).map(({ label, href, notifKey, isPostJob }) => (
                 isPostJob
                   ? <Link key={label} to={href} onClick={() => setMobileOpen(false)}
@@ -461,7 +462,7 @@ export default function Navbar() {
                       + Post a Job
                     </Link>
                   : <Link key={label} to={href} onClick={() => setMobileOpen(false)}
-                      className="flex items-center justify-between text-white/70 hover:text-[#D4AF37] font-medium px-3 py-2.5 border-l-2 border-transparent hover:border-[#D4AF37] rounded-r-xl transition-all">
+                      className="flex items-center justify-between font-medium px-3 py-2.5 rounded-xl transition-all text-purple-800 hover:bg-purple-100">
                       {label}
                       {notifKey && notifs[notifKey] > 0 && (
                         <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold text-white"
@@ -471,8 +472,23 @@ export default function Navbar() {
                       )}
                     </Link>
               ))}
+
+              <div className="h-px my-2" style={{ backgroundColor: '#d8b4fe' }} />
+
+              {/* Profile dropdown links */}
+              {(userRole === 'brand' ? BRAND_DROPDOWN : TALENT_DROPDOWN).map(({ label, icon: Icon, href }) => (
+                <Link key={label} to={href} onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-700 hover:bg-purple-100 transition-all">
+                  <Icon className="w-4 h-4 flex-shrink-0" style={{ color: '#a78bfa' }} />
+                  {label}
+                </Link>
+              ))}
+
+              <div className="h-px my-2" style={{ backgroundColor: '#d8b4fe' }} />
+
               <button onClick={() => { setMobileOpen(false); handleLogout() }}
-                className="flex items-center gap-3 text-[#FF6B9D] font-medium px-3 py-2.5 rounded-xl w-full">
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium w-full hover:bg-pink-50 transition-all"
+                style={{ color: '#FF6B9D' }}>
                 <LogOut className="w-4 h-4" /> Log Out
               </button>
             </>
@@ -488,14 +504,14 @@ export default function Navbar() {
               </Link>
               <Link to="/signup?role=brand" onClick={() => setMobileOpen(false)}
                 className="flex items-center gap-3 font-bold text-white py-3 px-4 rounded-xl mb-2"
-                style={{ backgroundColor: '#4c1d95' }}>
+                style={{ backgroundColor: '#7c3aed' }}>
                 <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M3 3h18v4H3z"/><path d="M3 7v14h18V7"/><path d="M12 7v14"/>
                 </svg>
                 Join as Brand
               </Link>
               <Link to="/login" onClick={() => setMobileOpen(false)}
-                className="block text-center text-white/70 font-medium py-2 hover:text-[#D4AF37] transition-colors">
+                className="block text-center text-purple-600 font-medium py-2 hover:text-purple-900 transition-colors">
                 Log in
               </Link>
             </>

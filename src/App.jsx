@@ -2,7 +2,9 @@ import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-
 import { useEffect, useState, lazy, Suspense } from 'react'
 import { supabase } from './lib/supabase'
 import ErrorBoundary from './components/ErrorBoundary'
-import { getSetting } from './lib/siteSettings'
+import { getSetting, loadSettingsFromDB } from './lib/siteSettings'
+import { loadLogosFromDB } from './lib/brandSettings'
+import { loadThemeFromDB } from './lib/themeSettings'
 
 const Landing         = lazy(() => import('./pages/Landing'))
 const TalentLanding   = lazy(() => import('./pages/TalentLanding'))
@@ -69,7 +71,15 @@ function PublicOnly({ children }) {
     const params = new URLSearchParams(window.location.search)
     if (params.get('step') === 'complete') return children  // profile completion allowed while logged in
     const role = localStorage.getItem('brandiór_role')
-    return <Navigate to={role === 'talent' ? '/jobs' : '/marketplace'} replace />
+    return <Navigate to={role === 'talent' ? '/dashboard' : '/brand-dashboard'} replace />
+  }
+  return children
+}
+
+// Logged-in → show the page. Logged-out → redirect to /login.
+function PrivateRoute({ children }) {
+  if (!localStorage.getItem('brandiór_user')) {
+    return <Navigate to="/login" replace />
   }
   return children
 }
@@ -79,10 +89,15 @@ const ADMIN_PATHS = ['/admin', '/admin/login', '/admin/manager', '/admin/staff']
 
 export default function App() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [authReady, setAuthReady] = useState(!!localStorage.getItem('brandiór_user'))
 
+  // Load logos, theme colours, and platform settings from DB on startup
+  useEffect(() => { loadLogosFromDB(); loadThemeFromDB(); loadSettingsFromDB() }, [])
+
+
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
         const metaRole = session.user.user_metadata?.role
 
@@ -100,6 +115,7 @@ export default function App() {
               navigate(`/signup?step=complete&oauth=1&role=${pendingRole}`, { replace: true })
             } else {
               navigate(pendingRole === 'brand' ? '/brand-dashboard' : '/dashboard', { replace: true })
+
             }
           } else if (!localStorage.getItem('brandiór_role')) {
             if (metaRole) {
@@ -116,18 +132,29 @@ export default function App() {
           }
         } else if (event === 'INITIAL_SESSION') {
           localStorage.setItem('brandiór_user', session.user.id)
-          // Trust localStorage role set at login time — never override with Supabase metadata
           if (!localStorage.getItem('brandiór_role')) {
             if (metaRole) {
               localStorage.setItem('brandiór_role', metaRole)
             } else {
-              navigate('/signup?step=role&oauth=1', { replace: true })
+              // Check profiles table before falling back to role picker
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', session.user.id)
+                .maybeSingle()
+              if (profile?.role) {
+                localStorage.setItem('brandiór_role', profile.role)
+              } else {
+                navigate('/signup?step=role&oauth=1', { replace: true })
+              }
             }
           }
         }
       } else {
+        const wasLoggedIn = !!localStorage.getItem('brandiór_user')
         localStorage.removeItem('brandiór_user')
         localStorage.removeItem('brandiór_role')
+        if (wasLoggedIn) navigate('/login', { replace: true })
       }
       setAuthReady(true)
     })
@@ -138,22 +165,24 @@ export default function App() {
   if (!authReady) return <PageLoader />
 
   return (
-    <ErrorBoundary>
+    <ErrorBoundary key={location.key}>
     <MaintenanceGate>
     <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route path="/"             element={<PublicOnly><Landing /></PublicOnly>} />
         <Route path="/for-talents"  element={<PublicOnly><TalentLanding /></PublicOnly>} />
         <Route path="/for-brands"   element={<PublicOnly><BrandLanding /></PublicOnly>} />
-        <Route path="/signup"       element={<PublicOnly><SignupPage /></PublicOnly>} />
-        <Route path="/login"        element={<PublicOnly><LoginPage /></PublicOnly>} />
-        <Route path="/dashboard"              element={<TalentDashboard />} />
+        <Route path="/signup"         element={<PublicOnly><SignupPage /></PublicOnly>} />
+        <Route path="/signup/brand"   element={<PublicOnly><SignupPage /></PublicOnly>} />
+        <Route path="/signup/creator" element={<PublicOnly><SignupPage /></PublicOnly>} />
+        <Route path="/login"          element={<PublicOnly><LoginPage /></PublicOnly>} />
+        <Route path="/dashboard"              element={<PrivateRoute><TalentDashboard /></PrivateRoute>} />
         <Route path="/marketplace"            element={<Marketplace />} />
         <Route path="/creators/:handle"       element={<TalentProfilePage />} />
-        <Route path="/marketplace/:handle"  element={<TalentProfilePage />} />
-        <Route path="/order/:packageId"       element={<OrderForm />} />
-        <Route path="/brand-dashboard"        element={<BrandDashboard />} />
-        <Route path="/post-job"               element={<PostJob />} />
+        <Route path="/marketplace/:handle"    element={<TalentProfilePage />} />
+        <Route path="/order/:packageId"       element={<PrivateRoute><OrderForm /></PrivateRoute>} />
+        <Route path="/brand-dashboard"        element={<PrivateRoute><BrandDashboard /></PrivateRoute>} />
+        <Route path="/post-job"               element={<PrivateRoute><PostJob /></PrivateRoute>} />
         <Route path="/jobs"                   element={<JobListings />} />
         <Route path="/jobs/:slug"             element={<JobDetail />} />
         <Route path="/admin/login"            element={<AdminLogin />} />

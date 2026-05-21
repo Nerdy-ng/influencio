@@ -78,13 +78,13 @@ export default function InviteTab({ userType }) {
   const pending  = invites.filter(i => i.status === 'pending').length
 
   const whatsappText = isTalent
-    ? `Hi! I'm a content creator on Brandiór, Africa's top talent marketplace. I'd love to work with your brand 🚀 Join here: ${inviteLink}`
-    : `Hey! I'm a brand on Brandiór looking for talented African creators to collaborate with. Join us here 🎯 ${inviteLink}`
+    ? `Hi! I'm a content creator on Brandior, Africa's top talent marketplace. I'd love to work with your brand 🚀 Join here: ${inviteLink}`
+    : `Hey! I'm a brand on Brandior looking for talented African creators to collaborate with. Join us here 🎯 ${inviteLink}`
 
-  const emailSubject = isTalent ? 'Work with me on Brandiór' : 'Join Brandiór as a Creator'
+  const emailSubject = isTalent ? 'Work with me on Brandior' : 'Join Brandior as a Creator'
   const emailBody    = isTalent
-    ? `Hi,\n\nI'm a content creator on Brandiór and I'd love to collaborate with your brand.\n\nSign up here and let's work together: ${inviteLink}\n\nBest,`
-    : `Hi,\n\nI'm looking for talented creators on Brandiór to partner with my brand.\n\nJoin here and let's collaborate: ${inviteLink}\n\nBest,`
+    ? `Hi,\n\nI'm a content creator on Brandior and I'd love to collaborate with your brand.\n\nSign up here and let's work together: ${inviteLink}\n\nBest,`
+    : `Hi,\n\nI'm looking for talented creators on Brandior to partner with my brand.\n\nJoin here and let's collaborate: ${inviteLink}\n\nBest,`
 
   return (
     <div className="space-y-6 max-w-2xl">

@@ -27,7 +27,7 @@ export default function Features() {
           {features.map((f, i) => (
             <div key={i} className="card-hover group rounded-2xl p-7 shadow-sm transition-all" style={{ backgroundColor: '#c084fc22', border: '1px solid #a855f740' }}>
               <div className="flex items-start justify-between mb-5">
-                <div className="w-12 h-12 rounded-xl bg-black flex items-center justify-center">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#4c1d95' }}>
                   <f.icon className="w-6 h-6" style={{ color: '#D4AF37' }} />
                 </div>
                 {/* orange tag — secondary accent */}

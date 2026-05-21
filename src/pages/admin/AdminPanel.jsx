@@ -4,14 +4,17 @@ import {
   LayoutDashboard, Users, Briefcase, Shield, Bell, Tag,
   DollarSign, Settings, LogOut, ChevronDown, Search, X,
   CheckCircle, XCircle, AlertTriangle, MoreVertical, Plus,
-  TrendingUp, Activity, Check, ArrowUpRight, Eye, ShieldAlert, Pencil, Save, Globe,
+  TrendingUp, Activity, Check, ArrowUpRight, Eye, EyeOff, ShieldAlert, Pencil, Save, Globe,
   SlidersHorizontal, Star, Zap, BadgeCheck, RotateCcw, Info, ChevronUp, ChevronRight,
+  BarChart2, HelpCircle, MessageSquare, Clock, Send, CreditCard, ToggleLeft, ToggleRight, Layers,
 } from "lucide-react";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import AdminModerationDashboard from "../../components/AdminModerationDashboard";
 import { getModerationStats } from "../../utils/moderationEngine";
 import CmsEditor from "../../components/admin/CmsEditor";
-import { LOGO_SLOTS, getLogo, setLogo, removeLogo } from "../../lib/brandSettings";
-import { getAllSettings, saveAllSettings } from "../../lib/siteSettings";
+import { LOGO_SLOTS, getLogo, uploadLogoFile, removeLogoFromDB } from "../../lib/brandSettings";
+import { getAllSettings, saveAllSettings, loadSettingsFromDB, getSetting, setSetting } from "../../lib/siteSettings";
+import { THEME_VARS, loadThemeFromDB, saveThemeToDB, resetThemeToDB, getThemeDefaults } from "../../lib/themeSettings";
 import { supabase } from "../../lib/supabase";
 
 // ─── MOCK DATA ────────────────────────────────────────────────────────────────
@@ -271,6 +274,7 @@ function Modal({ title, onClose, children }) {
 
 const NAV_ITEMS = [
   { id: "overview",  label: "Overview",   Icon: LayoutDashboard },
+  { id: "analytics", label: "Analytics",  Icon: BarChart2 },
   { id: "users",     label: "Users",      Icon: Users },
   { id: "rankings",  label: "Rankings",   Icon: SlidersHorizontal },
   { id: "jobs",      label: "Job Board",  Icon: Briefcase },
@@ -279,8 +283,11 @@ const NAV_ITEMS = [
   { id: "labels",    label: "Labels",     Icon: Tag },
   { id: "content",   label: "Content",    Icon: Globe },
   { id: "ai-police", label: "AI Police",  Icon: ShieldAlert, badge: true, badgeColor: "#ef4444" },
+  { id: "features",  label: "Features",   Icon: Layers },
+  { id: "payments",  label: "Payments",   Icon: CreditCard },
   { id: "financials",label: "Financials", Icon: DollarSign },
   { id: "legal",     label: "Legal",      Icon: Pencil },
+  { id: "support",   label: "Support",    Icon: HelpCircle },
   { id: "settings",  label: "Settings",   Icon: Settings },
 ];
 
@@ -395,7 +402,8 @@ export default function AdminPanel() {
   const [approvals, setApprovals] = useState(MOCK_APPROVALS);
   const [approvalHistory, setApprovalHistory] = useState([]);
   const [transactions] = useState(MOCK_TRANSACTIONS);
-  const [platformFee, setPlatformFee] = useState(() => getAllSettings().platformFee || "10");
+  const [brandFee, setBrandFee] = useState(() => getAllSettings().brandFee || "10");
+  const [creatorFee, setCreatorFee] = useState(() => getAllSettings().creatorFee || "5");
   const [legalDocs, setLegalDocs] = useState({
     terms: localStorage.getItem('brandior_legal_terms') || DEFAULT_TERMS,
     privacy: localStorage.getItem('brandior_legal_privacy') || DEFAULT_PRIVACY,
@@ -431,34 +439,119 @@ export default function AdminPanel() {
       maintenanceMode:    saved.maintenanceMode,
       emailNotifications: saved.emailNotifications,
       countries:          saved.countries,
+      heroVideo:          saved.heroVideo || '',
+      loginIllustration:  saved.loginIllustration || '',
+      tiktokPixelId:      saved.tiktokPixelId || '',
     }
   });
-  const [logos, setLogos] = useState({
-    header: getLogo('header'),
-    footer: getLogo('footer'),
-    auth:   getLogo('auth'),
-  })
+  const [logos, setLogos] = useState(() =>
+    Object.fromEntries(Object.keys(LOGO_SLOTS).map(slot => [slot, getLogo(slot)]))
+  )
+  const [logoUploading, setLogoUploading] = useState({})
 
-  function handleLogoUpload(slot, e) {
+  async function handleLogoUpload(slot, e) {
     const file = e.target.files[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      const url = ev.target.result
-      setLogo(slot, url)
+    setLogoUploading(prev => ({ ...prev, [slot]: true }))
+    try {
+      const url = await uploadLogoFile(slot, file)
       setLogos(prev => ({ ...prev, [slot]: url }))
+      setToast({ type: 'success', msg: 'Logo updated successfully.' })
+    } catch (err) {
+      setToast({ type: 'error', msg: 'Upload failed: ' + (err.message || 'Unknown error') })
+    } finally {
+      setLogoUploading(prev => ({ ...prev, [slot]: false }))
+      e.target.value = ''
     }
-    reader.readAsDataURL(file)
   }
 
-  function handleLogoRemove(slot) {
-    removeLogo(slot)
-    setLogos(prev => ({ ...prev, [slot]: '' }))
+  const [themeColors, setThemeColors] = useState(getThemeDefaults)
+  const [themeSaving, setThemeSaving] = useState(false)
+
+  useEffect(() => {
+    loadThemeFromDB().then(colors => { if (colors) setThemeColors(c => ({ ...c, ...colors })) })
+  }, [])
+
+  async function handleSaveTheme() {
+    setThemeSaving(true)
+    try {
+      await saveThemeToDB(themeColors)
+      setToast({ type: 'success', msg: 'Brand colours saved and applied.' })
+    } catch (err) {
+      setToast({ type: 'error', msg: 'Failed to save colours: ' + (err.message || 'Unknown error') })
+    } finally {
+      setThemeSaving(false)
+    }
   }
+
+  async function handleResetTheme() {
+    const defaults = getThemeDefaults()
+    setThemeColors(defaults)
+    setThemeSaving(true)
+    try {
+      await resetThemeToDB()
+      setToast({ type: 'success', msg: 'Colours reset to defaults.' })
+    } catch (err) {
+      setToast({ type: 'error', msg: 'Reset failed: ' + (err.message || 'Unknown error') })
+    } finally {
+      setThemeSaving(false)
+    }
+  }
+
+  async function handleLogoRemove(slot) {
+    setLogoUploading(prev => ({ ...prev, [slot]: true }))
+    try {
+      await removeLogoFromDB(slot)
+      setLogos(prev => ({ ...prev, [slot]: '' }))
+      setToast({ type: 'success', msg: 'Logo removed.' })
+    } catch (err) {
+      setToast({ type: 'error', msg: 'Remove failed: ' + (err.message || 'Unknown error') })
+    } finally {
+      setLogoUploading(prev => ({ ...prev, [slot]: false }))
+    }
+  }
+
+  // Payment processor state
+  const PAYMENT_KEY = 'brandior_payment_config'
+  const defaultPaymentConfig = {
+    activeProcessor: '',
+    mode: 'test',
+    processors: {
+      paystack:    { enabled: false, publicKey: '', secretKey: '', showSecret: false },
+      flutterwave: { enabled: false, publicKey: '', secretKey: '', showSecret: false },
+      stripe:      { enabled: false, publicKey: '', secretKey: '', showSecret: false },
+    }
+  }
+  const [paymentConfig, setPaymentConfig] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(PAYMENT_KEY)) || defaultPaymentConfig } catch { return defaultPaymentConfig }
+  })
+  const [paymentSaving, setPaymentSaving] = useState(false)
+  const [paymentSaved, setPaymentSaved] = useState(false)
+
+  async function savePaymentConfig() {
+    setPaymentSaving(true)
+    const clean = { ...paymentConfig, processors: Object.fromEntries(
+      Object.entries(paymentConfig.processors).map(([k, v]) => [k, { ...v, showSecret: false }])
+    )}
+    localStorage.setItem(PAYMENT_KEY, JSON.stringify(clean))
+    await supabase.from('site_settings').upsert({ key: 'payment_config', value: JSON.stringify(clean), updated_at: new Date().toISOString() })
+    setPaymentSaving(false)
+    setPaymentSaved(true)
+    setTimeout(() => setPaymentSaved(false), 2000)
+  }
+
+  useEffect(() => {
+    supabase.from('site_settings').select('value').eq('key', 'payment_config').single()
+      .then(({ data }) => {
+        if (data?.value) {
+          try { setPaymentConfig(JSON.parse(data.value)) } catch {}
+        }
+      })
+  }, [])
 
   // Search/filter state
   const [userSearch, setUserSearch] = useState("");
-  const [userFilter, setUserFilter] = useState("All");
+  const [userFilter, setUserFilter] = useState("Talents");
   const [jobSearch, setJobSearch] = useState("");
   const [jobFilter, setJobFilter] = useState("All");
 
@@ -488,6 +581,11 @@ export default function AdminPanel() {
     }
     if (user) setAdminUser(JSON.parse(user));
   }, [navigate]);
+
+  // ── Sync settings from DB so admin sees persisted values ───────────────────
+  useEffect(() => {
+    loadSettingsFromDB().then(() => setSettings(getAllSettings()))
+  }, [])
 
   // ── Fetch real data from Supabase ────────────────────────────────────────────
   useEffect(() => {
@@ -546,11 +644,37 @@ export default function AdminPanel() {
       const { count: reviewCount } = await supabase.from('reviews').select('*', { count: 'exact', head: true })
       const { count: pendingApps } = await supabase.from('applications').select('*', { count: 'exact', head: true }).eq('status', 'pending')
       setRealStats({ userCount, jobCount, reviewCount, pendingApps })
+
+      // Build 30-day daily charts
+      const buildDailyMap = (rows, dateField) => {
+        const map = {}
+        for (let i = 29; i >= 0; i--) {
+          const d = new Date(); d.setDate(d.getDate() - i)
+          map[d.toISOString().slice(0, 10)] = 0
+        }
+        ;(rows || []).forEach(r => {
+          const day = new Date(r[dateField]).toISOString().slice(0, 10)
+          if (map[day] !== undefined) map[day]++
+        })
+        return Object.entries(map).map(([date, count]) => ({ date: date.slice(5), count }))
+      }
+      const since = new Date(); since.setDate(since.getDate() - 30)
+      const [{ data: recentProfiles }, { data: recentJobs }, { data: recentApps }] = await Promise.all([
+        supabase.from('profiles').select('created_at').gte('created_at', since.toISOString()),
+        supabase.from('jobs').select('created_at').gte('created_at', since.toISOString()),
+        supabase.from('applications').select('created_at').gte('created_at', since.toISOString()),
+      ])
+      setAdminCharts({
+        dailySignups: buildDailyMap(recentProfiles, 'created_at'),
+        dailyJobs: buildDailyMap(recentJobs, 'created_at'),
+        dailyApps: buildDailyMap(recentApps, 'created_at'),
+      })
     }
     fetchRealData()
   }, [])
 
   const [realStats, setRealStats] = useState({ userCount: null, jobCount: null, reviewCount: null, pendingApps: null })
+  const [adminCharts, setAdminCharts] = useState(null)
 
   // Persist users and jobs to localStorage whenever they change
   useEffect(() => { localStorage.setItem('brandior_admin_users', JSON.stringify(users)) }, [users])
@@ -697,12 +821,9 @@ export default function AdminPanel() {
 
   const filteredUsers = users.filter((u) => {
     const matchSearch = u.name.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase());
-    const matchFilter =
-      userFilter === "All" ? true :
-      userFilter === "Talents" ? u.role === "Talent" :
-      userFilter === "Brands" ? u.role === "Brand" :
-      userFilter === "Suspended" ? u.status === "suspended" : true;
-    return matchSearch && matchFilter;
+    const matchRole = userFilter === "Talents" ? u.role === "Talent" : u.role === "Brand";
+    const matchSuspended = userFilter === "Suspended" ? u.status === "suspended" : true;
+    return matchSearch && matchRole && matchSuspended;
   });
 
   const filteredJobs = jobs.filter((j) => {
@@ -775,102 +896,172 @@ export default function AdminPanel() {
     </div>
   );
 
-  const renderUsers = () => (
-    <div className="space-y-4">
-      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-        <div className="flex flex-wrap gap-3 items-center">
-          <div className="relative flex-1 min-w-48">
+  const renderAnalytics = () => {
+    if (!adminCharts) return <div className="flex items-center justify-center py-20"><div className="w-6 h-6 rounded-full border-2 border-indigo-300 border-t-indigo-600 animate-spin" /></div>
+    const chartStyle = { border: '1px solid #e2e8f0' }
+    const INDIGO = '#4f46e5'
+    const GREEN  = '#16a34a'
+    const AMBER  = '#d97706'
+    const charts = [
+      { title: 'User Signups — Last 30 Days',    data: adminCharts.dailySignups, color: INDIGO },
+      { title: 'Jobs Posted — Last 30 Days',      data: adminCharts.dailyJobs,    color: GREEN  },
+      { title: 'Applications — Last 30 Days',     data: adminCharts.dailyApps,    color: AMBER  },
+    ]
+    return (
+      <div className="space-y-6">
+        <h2 className="text-xl font-bold text-gray-900">Platform Analytics</h2>
+        {/* Summary cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: 'Total Users',    value: realStats.userCount ?? '—',    color: INDIGO },
+            { label: 'Active Jobs',    value: realStats.jobCount  ?? '—',    color: GREEN  },
+            { label: 'Total Reviews',  value: realStats.reviewCount ?? '—',  color: '#0ea5e9' },
+            { label: 'Pending Apps',   value: realStats.pendingApps ?? '—',  color: AMBER  },
+          ].map(s => (
+            <div key={s.label} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">{s.label}</p>
+              <p className="text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
+            </div>
+          ))}
+        </div>
+        {/* Charts */}
+        {charts.map(({ title, data, color }) => (
+          <div key={title} className="bg-white rounded-xl p-5 shadow-sm" style={chartStyle}>
+            <p className="font-semibold text-gray-900 mb-4">{title}</p>
+            {data.some(d => d.count > 0) ? (
+              <ResponsiveContainer width="100%" height={180}>
+                <LineChart data={data}>
+                  <XAxis dataKey="date" tick={{ fontSize: 10 }} interval={4} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 10 }} width={28} />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="count" stroke={color} strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-28 text-sm text-gray-400">No data yet</div>
+            )}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  const renderUsers = () => {
+    const talentCount = users.filter(u => u.role === "Talent").length;
+    const brandCount  = users.filter(u => u.role === "Brand").length;
+    const isTalent    = userFilter === "Talents";
+    const accentColor = isTalent ? "#7c3aed" : "#0ea5e9";
+    const accentBg    = isTalent ? "#ede9fe"  : "#dbeafe";
+
+    return (
+      <div className="space-y-4">
+        {/* Tabs */}
+        <div className="flex gap-1 bg-white rounded-xl p-1 shadow-sm border border-gray-100 w-fit">
+          {[
+            { key: "Talents", label: "Talents", count: talentCount, color: "#7c3aed", bg: "#ede9fe" },
+            { key: "Brands",  label: "Brands",  count: brandCount,  color: "#0ea5e9", bg: "#dbeafe" },
+          ].map(({ key, label, count, color, bg }) => (
+            <button
+              key={key}
+              onClick={() => { setUserFilter(key); setUserSearch("") }}
+              className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all"
+              style={userFilter === key
+                ? { backgroundColor: bg, color }
+                : { color: "#94a3b8" }}
+            >
+              {label}
+              <span className="text-xs font-bold px-1.5 py-0.5 rounded-full"
+                style={userFilter === key
+                  ? { backgroundColor: color, color: "#fff" }
+                  : { backgroundColor: "#f1f5f9", color: "#94a3b8" }}>
+                {count}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Search */}
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search users..."
+              placeholder={`Search ${userFilter.toLowerCase()}...`}
               value={userSearch}
               onChange={(e) => setUserSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-lg text-sm border border-gray-200 outline-none focus:border-indigo-400"
+              className="w-full pl-9 pr-4 py-2 rounded-lg text-sm border border-gray-200 outline-none"
+              style={{ '--tw-ring-color': accentColor }}
             />
           </div>
-          <div className="flex gap-2">
-            {["All", "Talents", "Brands", "Suspended"].map((f) => (
-              <button
-                key={f}
-                onClick={() => setUserFilter(f)}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                style={{
-                  backgroundColor: userFilter === f ? "#4f46e5" : "#f1f5f9",
-                  color: userFilter === f ? "#fff" : "#64748b",
-                }}
-              >
-                {f}
-              </button>
-            ))}
+        </div>
+
+        {/* Table */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ backgroundColor: "#f8fafc" }}>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{isTalent ? "Talent" : "Brand"}</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{isTalent ? "Tier" : "Plan"}</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Location</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Joined</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {filteredUsers.length === 0 ? (
+                  <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-400">No {userFilter.toLowerCase()} found.</td></tr>
+                ) : filteredUsers.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar initials={user.avatar} size="sm" color={accentColor} />
+                        <div>
+                          <p className="font-medium text-gray-900 flex items-center gap-1">
+                            {user.name}
+                            {user.verified && <CheckCircle className="w-3.5 h-3.5 text-blue-500" />}
+                          </p>
+                          <p className="text-xs text-gray-400">{user.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: accentBg, color: accentColor }}>
+                        {user.tier}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={user.status} />
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">{user.location}</td>
+                    <td className="px-4 py-3 text-gray-500 text-xs">{user.joined}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <button
+                          onClick={() => setEditUser({ ...user })}
+                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg text-white"
+                          style={{ backgroundColor: accentColor }}>
+                          <Pencil className="w-3 h-3" /> Edit
+                        </button>
+                        {!user.verified && (
+                          <button onClick={() => handleVerifyUser(user.id)} className="px-2 py-1 text-xs rounded-lg text-white" style={{ backgroundColor: "#16a34a" }}>Verify</button>
+                        )}
+                        <button onClick={() => handleSuspendUser(user.id)} className="px-2 py-1 text-xs rounded-lg font-medium" style={{ backgroundColor: user.status === "suspended" ? "#dcfce7" : "#fef3c7", color: user.status === "suspended" ? "#16a34a" : "#d97706" }}>
+                          {user.status === "suspended" ? "Unsuspend" : "Suspend"}
+                        </button>
+                        <button onClick={() => handleBanUser(user.id)} className="px-2 py-1 text-xs rounded-lg text-white" style={{ backgroundColor: "#dc2626" }}>Ban</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr style={{ backgroundColor: "#f8fafc" }}>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">User</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Role</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Tier/Status</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Location</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Joined</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <Avatar initials={user.avatar} size="sm" color={user.role === "Brand" ? "#0ea5e9" : "#4f46e5"} />
-                      <div>
-                        <p className="font-medium text-gray-900 flex items-center gap-1">
-                          {user.name}
-                          {user.verified && <CheckCircle className="w-3.5 h-3.5 text-blue-500" />}
-                        </p>
-                        <p className="text-xs text-gray-400">{user.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: user.role === "Brand" ? "#dbeafe" : "#ede9fe", color: user.role === "Brand" ? "#1d4ed8" : "#7c3aed" }}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusBadge status={user.status} />
-                    <p className="text-xs text-gray-400 mt-0.5">{user.tier}</p>
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">{user.location}</td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">{user.joined}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <button
-                        onClick={() => setEditUser({ ...user })}
-                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg text-white"
-                        style={{ backgroundColor: "#4f46e5" }}>
-                        <Pencil className="w-3 h-3" /> Edit
-                      </button>
-                      {!user.verified && (
-                        <button onClick={() => handleVerifyUser(user.id)} className="px-2 py-1 text-xs rounded-lg text-white" style={{ backgroundColor: "#16a34a" }}>Verify</button>
-                      )}
-                      <button onClick={() => handleSuspendUser(user.id)} className="px-2 py-1 text-xs rounded-lg font-medium" style={{ backgroundColor: user.status === "suspended" ? "#dcfce7" : "#fef3c7", color: user.status === "suspended" ? "#16a34a" : "#d97706" }}>
-                        {user.status === "suspended" ? "Unsuspend" : "Suspend"}
-                      </button>
-                      <button onClick={() => handleBanUser(user.id)} className="px-2 py-1 text-xs rounded-lg text-white" style={{ backgroundColor: "#dc2626" }}>Ban</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderJobs = () => (
     <div className="space-y-4">
@@ -1132,7 +1323,8 @@ export default function AdminPanel() {
           { label: "Total Platform Revenue", value: "₦48,200,000", color: "#16a34a" },
           { label: "Pending Payouts", value: "₦6,800,000", color: "#d97706" },
           { label: "Completed Payouts", value: "₦41,400,000", color: "#4f46e5" },
-          { label: "Platform Fee", value: `${platformFee}%`, color: "#0ea5e9" },
+          { label: "Brand Fee",    value: `${brandFee}%`,   color: "#0ea5e9" },
+          { label: "Creator Fee",  value: `${creatorFee}%`, color: "#8b5cf6" },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">{s.label}</p>
@@ -1142,24 +1334,47 @@ export default function AdminPanel() {
       </div>
 
       <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-        <h3 className="font-semibold text-gray-900 mb-4">Platform Fee Setting</h3>
-        <div className="flex items-center gap-3">
-          <label className="text-sm text-gray-600">Commission Fee (%):</label>
-          <input
-            type="number"
-            value={platformFee}
-            onChange={(e) => setPlatformFee(e.target.value)}
-            className="w-20 px-3 py-1.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400"
-            min="1" max="50"
-          />
-          <button
-            onClick={() => { saveAllSettings({ platformFee }); showToast("Platform fee updated successfully.") }}
-            className="px-4 py-1.5 rounded-lg text-sm font-medium text-white"
-            style={{ backgroundColor: "#4f46e5" }}
-          >
-            Save
-          </button>
+        <h3 className="font-semibold text-gray-900 mb-1">Fee Settings</h3>
+        <p className="text-xs text-gray-400 mb-5">Brand fee is added on top of the campaign budget. Creator fee is deducted from the creator's payout.</p>
+        <div className="grid sm:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Brand Fee (%)</label>
+            <p className="text-xs text-gray-400">Charged to brands on top of campaign budget</p>
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                value={brandFee}
+                onChange={(e) => setBrandFee(e.target.value)}
+                className="w-20 px-3 py-1.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400"
+                min="0" max="50"
+              />
+              <span className="text-sm text-gray-500">% of campaign value</span>
+            </div>
+            <p className="text-xs text-gray-500">e.g. ₦100,000 campaign → brand pays <strong>₦{(100000 * (1 + Number(brandFee) / 100)).toLocaleString()}</strong></p>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Creator Fee (%)</label>
+            <p className="text-xs text-gray-400">Deducted from creator's payout</p>
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                value={creatorFee}
+                onChange={(e) => setCreatorFee(e.target.value)}
+                className="w-20 px-3 py-1.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400"
+                min="0" max="50"
+              />
+              <span className="text-sm text-gray-500">% of payout</span>
+            </div>
+            <p className="text-xs text-gray-500">e.g. ₦100,000 campaign → creator receives <strong>₦{(100000 * (1 - Number(creatorFee) / 100)).toLocaleString()}</strong></p>
+          </div>
         </div>
+        <button
+          onClick={() => { saveAllSettings({ brandFee, creatorFee }); showToast("Fee settings saved.") }}
+          className="mt-5 px-5 py-2 rounded-lg text-sm font-medium text-white"
+          style={{ backgroundColor: "#4f46e5" }}
+        >
+          Save Fees
+        </button>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -1214,11 +1429,11 @@ export default function AdminPanel() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-800 mb-1">{label}</p>
-                <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-700 hover:border-indigo-400 hover:text-indigo-600 transition-colors">
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleLogoUpload(slot, e)} />
-                  {logos[slot] ? 'Replace' : 'Upload'}
+                <label className={`cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${logoUploading[slot] ? 'opacity-50 cursor-not-allowed border-gray-200 text-gray-400' : 'border-gray-200 text-gray-700 hover:border-indigo-400 hover:text-indigo-600'}`}>
+                  <input type="file" accept="image/*" className="hidden" disabled={logoUploading[slot]} onChange={(e) => handleLogoUpload(slot, e)} />
+                  {logoUploading[slot] ? 'Uploading…' : logos[slot] ? 'Replace' : 'Upload'}
                 </label>
-                {logos[slot] && (
+                {logos[slot] && !logoUploading[slot] && (
                   <button type="button" onClick={() => handleLogoRemove(slot)}
                     className="ml-2 text-xs text-red-400 hover:text-red-600 transition-colors">
                     Remove
@@ -1247,6 +1462,59 @@ export default function AdminPanel() {
             onChange={(e) => setSettings((s) => ({ ...s, tagline: e.target.value }))}
             className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400"
           />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Hero Video URL</label>
+          <input
+            type="url"
+            value={settings.heroVideo}
+            onChange={(e) => setSettings((s) => ({ ...s, heroVideo: e.target.value }))}
+            placeholder="https://example.com/video.mp4"
+            className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400"
+          />
+          <p className="text-xs text-gray-400 mt-1">Direct link to an MP4 video. Leave empty to use the gradient background.</p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Login Page Illustration URL</label>
+          <input
+            type="url"
+            value={settings.loginIllustration}
+            onChange={(e) => setSettings((s) => ({ ...s, loginIllustration: e.target.value }))}
+            placeholder="https://example.com/image.jpg"
+            className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400"
+          />
+          <p className="text-xs text-gray-400 mt-1">Image shown on the left panel of the login page. Leave empty to use the default illustration.</p>
+        </div>
+      </div>
+
+      {/* Integrations */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 space-y-5">
+        <div>
+          <h3 className="font-semibold text-gray-900">Integrations</h3>
+          <p className="text-xs text-gray-400 mt-0.5">Third-party tracking and analytics tools.</p>
+        </div>
+
+        {/* TikTok Pixel */}
+        <div className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-white font-black text-sm" style={{ backgroundColor: '#010101' }}>TT</div>
+          <div className="flex-1 space-y-2">
+            <div>
+              <p className="text-sm font-semibold text-gray-800">TikTok Pixel</p>
+              <p className="text-xs text-gray-400">Tracks ad conversions and page views. Find your Pixel ID in TikTok Ads Manager → Assets → Events.</p>
+            </div>
+            <input
+              type="text"
+              value={settings.tiktokPixelId}
+              onChange={(e) => setSettings((s) => ({ ...s, tiktokPixelId: e.target.value.trim() }))}
+              placeholder="e.g. CXXXXXXXXXXXXXXX"
+              className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm font-mono outline-none focus:border-indigo-400 bg-white"
+            />
+            {settings.tiktokPixelId && (
+              <p className="text-xs font-medium text-green-600 flex items-center gap-1">
+                <CheckCircle className="w-3 h-3" /> Pixel will fire on every page view
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1310,9 +1578,101 @@ export default function AdminPanel() {
         </div>
       </div>
 
+      {/* ── Brand Colours ── */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 space-y-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="font-semibold text-gray-900">Brand Colours</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Changes apply instantly across the entire platform for all visitors.</p>
+          </div>
+          <button
+            onClick={handleResetTheme}
+            disabled={themeSaving}
+            className="text-xs text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 mt-0.5"
+          >
+            Reset defaults
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3">
+          {Object.entries(THEME_VARS).map(([name, { label, default: def, desc }]) => (
+            <div key={name} className="flex items-center gap-4 p-3 rounded-xl border border-gray-100 bg-gray-50">
+              <div className="relative flex-shrink-0">
+                <div
+                  className="w-10 h-10 rounded-lg border-2 border-gray-200 cursor-pointer overflow-hidden"
+                  style={{ backgroundColor: themeColors[name] || def }}
+                />
+                <input
+                  type="color"
+                  value={themeColors[name] || def}
+                  onChange={e => {
+                    const val = e.target.value
+                    setThemeColors(prev => ({ ...prev, [name]: val }))
+                    document.documentElement.style.setProperty(`--b-${name}`, val)
+                  }}
+                  className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                  title={label}
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-800">{label}</p>
+                <p className="text-xs text-gray-400">{desc}</p>
+              </div>
+              <input
+                type="text"
+                value={themeColors[name] || def}
+                onChange={e => {
+                  const val = e.target.value.trim()
+                  setThemeColors(prev => ({ ...prev, [name]: val }))
+                  if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(val)) {
+                    document.documentElement.style.setProperty(`--b-${name}`, val)
+                  }
+                }}
+                onBlur={e => {
+                  const val = e.target.value.trim()
+                  if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(val)) {
+                    setThemeColors(prev => ({ ...prev, [name]: def }))
+                  }
+                }}
+                className="w-24 text-xs font-mono text-gray-700 border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 flex-shrink-0 text-center"
+                placeholder={def}
+                maxLength={7}
+                spellCheck={false}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Live preview strip */}
+        <div className="rounded-xl overflow-hidden border border-gray-100">
+          <div className="px-4 py-3 flex items-center gap-3" style={{ backgroundColor: themeColors.navbarBg || '#e9d5ff' }}>
+            <div className="w-6 h-6 rounded" style={{ backgroundColor: themeColors.dark || '#4c1d95' }} />
+            <span className="text-sm font-bold" style={{ color: themeColors.dark || '#4c1d95' }}>Navbar Preview</span>
+            <div className="ml-auto flex gap-2">
+              <div className="px-3 py-1 rounded-full text-xs font-bold text-white" style={{ backgroundColor: themeColors.cta || '#FA8112' }}>Post a Job</div>
+              <div className="px-3 py-1 rounded-full text-xs font-bold text-white" style={{ backgroundColor: themeColors.dark || '#4c1d95' }}>Get Started</div>
+            </div>
+          </div>
+          <div className="px-4 py-3 flex items-center gap-2" style={{ backgroundColor: themeColors.secondary || '#c084fc' }}>
+            <div className="px-3 py-1 rounded-full text-xs font-semibold text-white/70">Menu link</div>
+            <div className="px-3 py-1 rounded-full text-xs font-semibold text-white">Hovered</div>
+            <div className="px-3 py-1 rounded-full text-xs font-semibold text-white" style={{ backgroundColor: themeColors.primary || '#7c3aed' }}>Active</div>
+          </div>
+        </div>
+
+        <button
+          onClick={handleSaveTheme}
+          disabled={themeSaving}
+          className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity"
+          style={{ backgroundColor: '#4f46e5', opacity: themeSaving ? 0.6 : 1 }}
+        >
+          {themeSaving ? 'Saving…' : 'Save Brand Colours'}
+        </button>
+      </div>
+
       <button
         onClick={() => {
-          saveAllSettings({ ...settings, platformFee })
+          saveAllSettings({ ...settings, brandFee, creatorFee })
           showToast("Settings saved successfully.")
         }}
         className="w-full py-3 rounded-xl text-sm font-semibold text-white"
@@ -1680,8 +2040,226 @@ export default function AdminPanel() {
     </div>
   )
 
+  const renderSupport = () => <SupportInbox showToast={showToast} />
+
+  // ─── FEATURE FLAGS ────────────────────────────────────────────────────────────
+  const FEATURE_DEFS = [
+    { id: 'featureMarketplace',   label: 'Talent Marketplace',      desc: 'Browse and hire creator profiles',               category: 'Discovery', color: '#6366f1' },
+    { id: 'featureJobBoard',      label: 'Job Board',                desc: 'Brands post jobs, talents apply',                category: 'Discovery', color: '#6366f1' },
+    { id: 'featureCreatorSignup', label: 'Creator Signup',           desc: 'New talent accounts can be created',             category: 'Access',    color: '#ec4899' },
+    { id: 'featureBrandSignup',   label: 'Brand Signup',             desc: 'New brand accounts can be created',              category: 'Access',    color: '#ec4899' },
+    { id: 'featureMessaging',     label: 'Messaging',                desc: 'In-app chat between brands and talents',         category: 'Engagement',color: '#0ea5e9' },
+    { id: 'featureProposals',     label: 'Campaign Proposals',       desc: 'Talents submit proposals to brand campaigns',    category: 'Engagement',color: '#0ea5e9' },
+    { id: 'featureWallet',        label: 'Wallet & Payments',        desc: 'Deposits, withdrawals and transactions',         category: 'Finance',   color: '#16a34a' },
+    { id: 'featureReferrals',     label: 'Referral / Invite System', desc: 'Users invite others for rewards',                category: 'Growth',    color: '#f59e0b' },
+    { id: 'featureReviews',       label: 'Reviews & Ratings',        desc: 'Brands rate and review talent work',             category: 'Trust',     color: '#f59e0b' },
+    { id: 'featureAI',            label: 'AI Features',              desc: 'AI-powered matching and recommendations',        category: 'Core',      color: '#8b5cf6' },
+  ]
+  const FEATURE_CATEGORIES = [...new Set(FEATURE_DEFS.map(f => f.category))]
+
+  const [features, setFeatures] = useState(() =>
+    Object.fromEntries(FEATURE_DEFS.map(f => [f.id, getSetting(f.id) !== false]))
+  )
+  const [featureSaving, setFeatureSaving] = useState(false)
+  const [featureSaved, setFeatureSaved]   = useState(false)
+  const [featureChanged, setFeatureChanged] = useState({}) // id → prev value for undo
+
+  function toggleFeature(id) {
+    const prev = features[id]
+    setFeatureChanged(c => ({ ...c, [id]: prev }))
+    setFeatures(f => ({ ...f, [id]: !prev }))
+  }
+
+  async function saveFeatures() {
+    setFeatureSaving(true)
+    await Promise.all(FEATURE_DEFS.map(({ id }) => setSetting(id, features[id])))
+    setFeatureSaving(false)
+    setFeatureSaved(true)
+    setFeatureChanged({})
+    setTimeout(() => setFeatureSaved(false), 2500)
+  }
+
+  const renderFeatures = () => {
+    const offCount = FEATURE_DEFS.filter(f => !features[f.id]).length
+    return (
+      <div className="max-w-2xl space-y-6">
+        {/* Header bar */}
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex items-center justify-between gap-4">
+          <div>
+            <h3 className="font-bold text-gray-900">Platform Feature Switches</h3>
+            <p className="text-sm text-gray-400 mt-0.5">Disable features temporarily without deleting any data. Changes go live immediately after saving.</p>
+          </div>
+          {offCount > 0 && (
+            <span className="flex-shrink-0 text-xs font-bold px-3 py-1.5 rounded-full text-white" style={{ backgroundColor: '#ef4444' }}>
+              {offCount} off
+            </span>
+          )}
+        </div>
+
+        {/* Grouped feature cards */}
+        {FEATURE_CATEGORIES.map(category => (
+          <div key={category} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-5 py-3 border-b border-gray-100" style={{ backgroundColor: '#f8fafc' }}>
+              <p className="text-xs font-bold uppercase tracking-widest text-gray-400">{category}</p>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {FEATURE_DEFS.filter(f => f.category === category).map(({ id, label, desc, color }) => {
+                const on = features[id]
+                const changed = id in featureChanged
+                return (
+                  <div key={id} className="flex items-center gap-4 px-5 py-4 transition-colors"
+                    style={{ backgroundColor: !on ? '#fef2f2' : changed ? '#f0fdf4' : 'white' }}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-sm text-gray-900">{label}</p>
+                        {!on && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-600">Disabled</span>}
+                        {changed && on && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-600">Re-enabled</span>}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+                    </div>
+                    {/* Toggle switch */}
+                    <button
+                      onClick={() => toggleFeature(id)}
+                      className="relative flex-shrink-0 w-12 h-6 rounded-full transition-all duration-200"
+                      style={{ backgroundColor: on ? color : '#d1d5db' }}>
+                      <span className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
+                        style={{ transform: on ? 'translateX(24px)' : 'translateX(0)' }} />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+
+        {/* Save */}
+        <button onClick={saveFeatures} disabled={featureSaving}
+          className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-60"
+          style={{ backgroundColor: featureSaved ? '#16a34a' : '#4f46e5' }}>
+          {featureSaved
+            ? <><CheckCircle className="w-4 h-4" /> Changes saved</>
+            : featureSaving ? 'Saving…'
+            : <><Save className="w-4 h-4" /> Save Changes</>}
+        </button>
+      </div>
+    )
+  }
+
+  const PROCESSORS = [
+    { id: 'paystack',    name: 'Paystack',    color: '#0ba4db', bg: '#e0f7fd', desc: 'Recommended for Nigeria & Africa', logo: 'PS' },
+    { id: 'flutterwave', name: 'Flutterwave', color: '#f5a623', bg: '#fff8ed', desc: 'Pan-African payment gateway',       logo: 'FW' },
+    { id: 'stripe',      name: 'Stripe',      color: '#635bff', bg: '#f0efff', desc: 'Global card & bank payments',       logo: 'ST' },
+  ]
+
+  const renderPayments = () => (
+    <div className="space-y-6 max-w-3xl">
+      <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+        <h3 className="font-bold text-gray-800 mb-1">Payment Processors</h3>
+        <p className="text-sm text-gray-400 mb-5">Configure API keys for each processor. Only enabled processors will be available at checkout.</p>
+
+        {/* Mode toggle */}
+        <div className="flex items-center gap-3 mb-6 p-3 rounded-lg" style={{ backgroundColor: '#f8fafc' }}>
+          <span className="text-sm font-medium text-gray-600">Environment:</span>
+          <div className="flex gap-1 p-0.5 rounded-lg bg-gray-200">
+            {['test', 'live'].map(m => (
+              <button key={m} onClick={() => setPaymentConfig(c => ({ ...c, mode: m }))}
+                className="px-4 py-1.5 rounded-md text-xs font-bold capitalize transition-all"
+                style={paymentConfig.mode === m
+                  ? { backgroundColor: m === 'live' ? '#16a34a' : '#4f46e5', color: '#fff' }
+                  : { color: '#64748b' }}>
+                {m === 'live' ? '🟢 Live' : '🔵 Test'}
+              </button>
+            ))}
+          </div>
+          {paymentConfig.mode === 'live' && (
+            <span className="text-xs font-semibold text-red-500 flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3" /> Real transactions active
+            </span>
+          )}
+        </div>
+
+        {/* Processor cards */}
+        <div className="space-y-4">
+          {PROCESSORS.map(({ id, name, color, bg, desc, logo }) => {
+            const cfg = paymentConfig.processors[id]
+            const isDefault = paymentConfig.activeProcessor === id
+            return (
+              <div key={id} className="rounded-xl border-2 transition-all overflow-hidden"
+                style={{ borderColor: cfg.enabled ? color : '#e2e8f0' }}>
+                {/* Header */}
+                <div className="flex items-center gap-4 px-5 py-4" style={{ backgroundColor: cfg.enabled ? bg : '#fafafa' }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm text-white flex-shrink-0"
+                    style={{ backgroundColor: color }}>{logo}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-gray-900">{name}</p>
+                      {isDefault && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: color }}>Default</span>}
+                    </div>
+                    <p className="text-xs text-gray-400">{desc}</p>
+                  </div>
+                  <button onClick={() => setPaymentConfig(c => ({ ...c, processors: { ...c.processors, [id]: { ...cfg, enabled: !cfg.enabled } } }))}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all"
+                    style={cfg.enabled
+                      ? { backgroundColor: color, color: '#fff' }
+                      : { backgroundColor: '#e2e8f0', color: '#64748b' }}>
+                    {cfg.enabled ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                    {cfg.enabled ? 'Enabled' : 'Disabled'}
+                  </button>
+                </div>
+
+                {/* Keys — only shown when enabled */}
+                {cfg.enabled && (
+                  <div className="px-5 py-4 border-t border-gray-100 space-y-3 bg-white">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1.5 block">
+                        {paymentConfig.mode === 'test' ? 'Test' : 'Live'} Public Key
+                      </label>
+                      <input type="text" value={cfg.publicKey}
+                        onChange={e => setPaymentConfig(c => ({ ...c, processors: { ...c.processors, [id]: { ...cfg, publicKey: e.target.value } } }))}
+                        placeholder={`${id === 'stripe' ? 'pk_' : id === 'paystack' ? 'pk_' : 'FLWPUBK_'}${paymentConfig.mode}_...`}
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm font-mono outline-none focus:border-indigo-400" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1.5 block">
+                        {paymentConfig.mode === 'test' ? 'Test' : 'Live'} Secret Key
+                      </label>
+                      <div className="relative">
+                        <input type={cfg.showSecret ? 'text' : 'password'} value={cfg.secretKey}
+                          onChange={e => setPaymentConfig(c => ({ ...c, processors: { ...c.processors, [id]: { ...cfg, secretKey: e.target.value } } }))}
+                          placeholder={`${id === 'stripe' ? 'sk_' : id === 'paystack' ? 'sk_' : 'FLWSECK_'}${paymentConfig.mode}_...`}
+                          className="w-full pl-3 pr-10 py-2.5 rounded-lg border border-gray-200 text-sm font-mono outline-none focus:border-indigo-400" />
+                        <button onClick={() => setPaymentConfig(c => ({ ...c, processors: { ...c.processors, [id]: { ...cfg, showSecret: !cfg.showSecret } } }))}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                          {cfg.showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    {!isDefault && (
+                      <button onClick={() => setPaymentConfig(c => ({ ...c, activeProcessor: id }))}
+                        className="text-xs font-semibold transition-colors"
+                        style={{ color }}>
+                        Set as default processor →
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      <button onClick={savePaymentConfig} disabled={paymentSaving}
+        className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-60"
+        style={{ backgroundColor: paymentSaved ? '#16a34a' : '#4f46e5' }}>
+        {paymentSaved ? <><CheckCircle className="w-4 h-4" /> Saved!</> : paymentSaving ? 'Saving…' : <><Save className="w-4 h-4" /> Save Payment Settings</>}
+      </button>
+    </div>
+  )
+
   const TAB_CONTENT = {
     overview: renderOverview,
+    analytics: renderAnalytics,
     users: renderUsers,
     jobs: renderJobs,
     team: renderTeam,
@@ -1689,10 +2267,13 @@ export default function AdminPanel() {
     labels: renderLabels,
     content: () => <CmsEditor />,
     "ai-police": renderAiPolice,
+    features: renderFeatures,
+    payments: renderPayments,
     financials: renderFinancials,
     legal: renderLegal,
     settings: renderSettings,
     rankings: renderRankings,
+    support: renderSupport,
   };
 
   if (!adminUser) return null;
@@ -1708,7 +2289,7 @@ export default function AdminPanel() {
               <Shield className="w-4 h-4 text-white" />
             </div>
             <div>
-              <p className="text-white font-bold text-sm leading-none">Brandiór</p>
+              <p className="text-white font-bold text-sm leading-none">Brandior</p>
               <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Admin Portal</p>
             </div>
           </div>
@@ -1769,7 +2350,7 @@ export default function AdminPanel() {
         <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
           <div>
             <h1 className="font-bold text-gray-900 text-lg capitalize">{NAV_ITEMS.find((n) => n.id === activeTab)?.label}</h1>
-            <p className="text-xs text-gray-400">Brandiór Admin Portal · Super Admin</p>
+            <p className="text-xs text-gray-400">Brandior Admin Portal · Super Admin</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2.5">
@@ -1983,4 +2564,181 @@ export default function AdminPanel() {
       {toast && <Toast message={toast.message} type={toast.type} />}
     </div>
   );
+}
+
+// ─── SUPPORT INBOX ────────────────────────────────────────────────────────────
+
+function SupportInbox({ showToast }) {
+  const [tickets, setTickets] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [selected, setSelected] = useState(null)
+  const [reply, setReply] = useState('')
+  const [sending, setSending] = useState(false)
+  const [filter, setFilter] = useState('all')
+
+  async function loadTickets() {
+    setLoading(true)
+    const { data } = await supabase
+      .from('support_tickets')
+      .select('*')
+      .order('created_at', { ascending: false })
+    setTickets(data || [])
+    setLoading(false)
+  }
+
+  useEffect(() => { loadTickets() }, [])
+
+  async function updateStatus(id, status) {
+    await supabase.from('support_tickets').update({ status }).eq('id', id)
+    setTickets(prev => prev.map(t => t.id === id ? { ...t, status } : t))
+    if (selected?.id === id) setSelected(s => ({ ...s, status }))
+    showToast({ message: `Ticket marked as ${status}`, type: 'success' })
+  }
+
+  async function sendReply() {
+    if (!reply.trim() || !selected) return
+    setSending(true)
+    await supabase.from('support_tickets').update({
+      admin_reply: reply,
+      replied_at: new Date().toISOString(),
+      status: 'in_progress',
+    }).eq('id', selected.id)
+    setTickets(prev => prev.map(t => t.id === selected.id ? { ...t, admin_reply: reply, status: 'in_progress' } : t))
+    setSelected(s => ({ ...s, admin_reply: reply, status: 'in_progress' }))
+    setSending(false)
+    setReply('')
+    showToast({ message: 'Reply saved', type: 'success' })
+  }
+
+  const STATUS_COLOR = {
+    open: '#ef4444',
+    in_progress: '#f59e0b',
+    resolved: '#22c55e',
+    closed: '#94a3b8',
+  }
+
+  const filtered = filter === 'all' ? tickets : tickets.filter(t => t.status === filter)
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <HelpCircle className="w-5 h-5 text-indigo-500" />
+            Support Inbox
+          </h2>
+          <p className="text-sm text-gray-500 mt-0.5">{tickets.length} total tickets</p>
+        </div>
+        <div className="flex gap-2">
+          {['all', 'open', 'in_progress', 'resolved'].map(f => (
+            <button key={f} onClick={() => setFilter(f)}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-colors"
+              style={{
+                backgroundColor: filter === f ? '#4f46e5' : '#f1f5f9',
+                color: filter === f ? '#fff' : '#64748b',
+              }}>
+              {f.replace('_', ' ')}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex gap-4" style={{ minHeight: 500 }}>
+        {/* Ticket list */}
+        <div className="w-80 flex-shrink-0 space-y-2 overflow-y-auto" style={{ maxHeight: 600 }}>
+          {loading ? (
+            <p className="text-sm text-gray-400 text-center py-10">Loading…</p>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-16">
+              <MessageSquare className="w-10 h-10 mx-auto mb-2 text-gray-200" />
+              <p className="text-sm text-gray-400">No tickets</p>
+            </div>
+          ) : filtered.map(t => (
+            <button key={t.id} onClick={() => { setSelected(t); setReply(t.admin_reply || '') }}
+              className="w-full text-left p-4 rounded-xl transition-all"
+              style={{
+                backgroundColor: selected?.id === t.id ? '#eef2ff' : '#fff',
+                border: `1px solid ${selected?.id === t.id ? '#c7d2fe' : '#e2e8f0'}`,
+              }}>
+              <div className="flex items-start justify-between gap-2 mb-1">
+                <p className="text-sm font-semibold text-gray-900 truncate">{t.subject}</p>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 text-white"
+                  style={{ backgroundColor: STATUS_COLOR[t.status] || '#94a3b8' }}>
+                  {t.status?.replace('_', ' ')}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 truncate">{t.user_name || t.user_email || 'Anonymous'}</p>
+              <div className="flex items-center gap-1 mt-1.5">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 font-medium">{t.category}</span>
+                <span className="text-[10px] text-gray-400 ml-auto flex items-center gap-0.5">
+                  <Clock className="w-3 h-3" />{new Date(t.created_at).toLocaleDateString()}
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* Detail pane */}
+        {selected ? (
+          <div className="flex-1 rounded-2xl bg-white p-6 flex flex-col gap-4" style={{ border: '1px solid #e2e8f0' }}>
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="font-bold text-gray-900 text-base">{selected.subject}</h3>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  From: <span className="text-gray-600 font-medium">{selected.user_name || 'Unknown'}</span>
+                  {selected.user_email && <> · {selected.user_email}</>}
+                  <> · {selected.role}</> · {new Date(selected.created_at).toLocaleString()}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                {['open','in_progress','resolved','closed'].map(s => (
+                  <button key={s} onClick={() => updateStatus(selected.id, s)}
+                    className="text-[10px] font-bold px-2.5 py-1 rounded-full text-white capitalize transition-opacity"
+                    style={{ backgroundColor: STATUS_COLOR[s], opacity: selected.status === s ? 1 : 0.4 }}>
+                    {s.replace('_',' ')}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-xl p-4 text-sm text-gray-700 leading-relaxed" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              {selected.message}
+            </div>
+
+            {selected.admin_reply && (
+              <div className="rounded-xl p-4 text-sm leading-relaxed" style={{ backgroundColor: '#eef2ff', border: '1px solid #c7d2fe' }}>
+                <p className="text-xs font-semibold text-indigo-500 mb-1">Your previous reply</p>
+                <p className="text-gray-700">{selected.admin_reply}</p>
+                {selected.replied_at && <p className="text-[11px] text-gray-400 mt-1">{new Date(selected.replied_at).toLocaleString()}</p>}
+              </div>
+            )}
+
+            <div className="mt-auto space-y-2">
+              <textarea
+                value={reply}
+                onChange={e => setReply(e.target.value)}
+                rows={4}
+                placeholder="Type your reply to the user…"
+                className="w-full px-4 py-3 rounded-xl text-sm text-gray-800 outline-none resize-none"
+                style={{ border: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}
+              />
+              <button onClick={sendReply} disabled={sending || !reply.trim()}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity"
+                style={{ backgroundColor: '#4f46e5', opacity: sending || !reply.trim() ? 0.5 : 1 }}>
+                <Send className="w-4 h-4" />
+                {sending ? 'Saving…' : 'Save Reply'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 rounded-2xl bg-white flex items-center justify-center" style={{ border: '1px solid #e2e8f0' }}>
+            <div className="text-center">
+              <MessageSquare className="w-10 h-10 mx-auto mb-2 text-gray-200" />
+              <p className="text-sm text-gray-400">Select a ticket to view details</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }

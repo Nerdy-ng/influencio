@@ -321,7 +321,7 @@ function SupportPanel() {
             <Headphones className="w-4 h-4 text-white" />
           </div>
           <div>
-            <p className="text-white font-semibold text-sm">Brandiór Support</p>
+            <p className="text-white font-semibold text-sm">Brandior Support</p>
             <p className="text-white/50 text-xs flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" /> Online · Avg reply 3 min
             </p>

@@ -72,7 +72,7 @@ const STEPS = [
 ]
 
 const TIERS = [
-  { name: 'Fast Rising', emoji: '⭐', color: '#22c55e', bg: '#22c55e18', border: '#22c55e40', desc: 'New creators building their presence', perks: ['Profile listed on Brandiór', 'Entry-level gig access', 'Talent community'] },
+  { name: 'Fast Rising', emoji: '⭐', color: '#22c55e', bg: '#22c55e18', border: '#22c55e40', desc: 'New creators building their presence', perks: ['Profile listed on Brandior', 'Entry-level gig access', 'Talent community'] },
   { name: 'Next Rated',  emoji: '⚡', color: '#3b82f6', bg: '#3b82f618', border: '#3b82f640', desc: 'Growing creators with real traction',  perks: ['Priority in brand searches', 'Mid-tier gig access', 'Verified badge eligibility'], hot: false },
   { name: 'Top Rated',   emoji: '👑', color: gold,      bg: `${gold}18`, border: `${gold}40`, desc: 'Elite creators brands seek directly',  perks: ['Featured in discovery', 'Premium gig access', 'Dedicated talent manager'], hot: true },
 ]
@@ -87,7 +87,7 @@ const FEATURES = [
 ]
 
 const TESTIMONIALS = [
-  { name: 'Adaeze Okafor', handle: '@adaeze.creates', niche: 'Beauty & Skincare', avatar: 'https://i.pravatar.cc/150?u=adaeze_okafor', quote: 'Brandiór changed everything. I went from 2 brand deals a year to 3 a month. Escrow means I never chase payments.', earnings: '₦1.2M', period: '6 months' },
+  { name: 'Adaeze Okafor', handle: '@adaeze.creates', niche: 'Beauty & Skincare', avatar: 'https://i.pravatar.cc/150?u=adaeze_okafor', quote: 'Brandior changed everything. I went from 2 brand deals a year to 3 a month. Escrow means I never chase payments.', earnings: '₦1.2M', period: '6 months' },
   { name: 'Tunde Bakare',  handle: '@tundebakare',    niche: 'Tech & Gadgets',    avatar: 'https://i.pravatar.cc/150?u=tunde_bakare',   quote: "I'm Top Rated now and brands reach out to me — not the other way around. The tier system actually works.",   earnings: '₦3.4M', period: '1 year' },
   { name: 'Chiamaka Eze',  handle: '@chiamaka.tv',    niche: 'Food & Cooking',    avatar: 'https://i.pravatar.cc/150?u=chiamaka_eze',   quote: 'The profile builder made me look so professional. My rates doubled since I joined and brands take me seriously.', earnings: '₦890K', period: '4 months' },
 ]
@@ -101,7 +101,7 @@ const STATS = [
 
 /* ── FAQ ── */
 const FAQS = [
-  { q: 'Is it free to join?',                   a: 'Yes — creating a profile is completely free. Brandiór takes a 10% platform fee only when you complete a paid campaign.' },
+  { q: 'Is it free to join?',                   a: 'Yes — creating a profile is completely free. Brandior takes a 10% platform fee only when you complete a paid campaign.' },
   { q: 'How do I get paid?',                     a: 'Payment is held in escrow when a brand places an order. Once you deliver and the brand approves, funds are released within 24 hours.' },
   { q: 'How do I move up tiers?',                a: 'Complete campaigns, maintain a high rating, and grow your followers. The platform automatically upgrades your tier when you hit the criteria.' },
   { q: 'What platforms are supported?',          a: 'Instagram, TikTok, YouTube, Twitter/X, Facebook, and Snapchat. You can connect all your accounts to your profile.' },
@@ -193,7 +193,7 @@ export default function TalentLanding() {
                   ))}
                 </div>
                 <p className="text-white/35 text-sm">
-                  Join <span className="font-semibold" style={{ color: pink }}>500+ creators</span> already earning on Brandiór
+                  Join <span className="font-semibold" style={{ color: pink }}>500+ creators</span> already earning on Brandior
                 </p>
               </div>
             </div>
