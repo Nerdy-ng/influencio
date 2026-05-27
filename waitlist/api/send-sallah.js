@@ -2,7 +2,7 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY
 const SUPABASE_URL = 'https://ruepnwhgehcwfeekkpjb.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXBud2hnZWhjd2ZlZWtrcGpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNjU2MzMsImV4cCI6MjA4OTk0MTYzM30.JQCiafSVHOX1DMgPDNSTTXJmXu34Spzj8j58PsU1fY0'
 const FROM = 'Brandior <support@brandior.africa>'
-const SUBJECT = '🌙 Eid Mubarak from Brandior!'
+const SUBJECT = '🌙 Eid Mubarak from Brandior'
 
 function sallahEmail(firstName) {
   return `<!DOCTYPE html>
@@ -103,7 +103,7 @@ function sallahEmail(firstName) {
 
             <!-- Sub message -->
             <p style="margin:0 0 28px;font-size:13px;color:rgba(255,255,255,0.5);line-height:1.7;text-align:center;">
-              From the entire Brandior team — we're grateful<br/>
+              From the entire Brandior team, we're grateful<br/>
               you're part of this journey. Big things are coming. 🚀
             </p>
 
