@@ -103,8 +103,8 @@ function sallahEmail(firstName) {
 
             <!-- Sub message -->
             <p style="margin:0 0 28px;font-size:13px;color:rgba(255,255,255,0.5);line-height:1.7;text-align:center;">
-              From the entire Brandior team, we're grateful<br/>
-              you're part of this journey. Big things are coming. 🚀
+              From the entire Brandior team, we are grateful<br/>
+              you are part of this journey. Big things are coming. 🚀
             </p>
 
             <!-- CTA button -->
