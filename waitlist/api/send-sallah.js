@@ -163,13 +163,13 @@ function sallahEmail(firstName) {
 </html>`
 }
 
-async function fetchWaitlist() {
+async function fetchWaitlist(key = SUPABASE_ANON_KEY) {
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/waitlist?select=email,name&order=created_at.asc`,
     {
       headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        apikey: key,
+        Authorization: `Bearer ${key}`,
         'Content-Type': 'application/json',
       },
     }
@@ -214,11 +214,35 @@ export default async function handler(req, res) {
   }
 
   try {
-    const list = await fetchWaitlist()
+    const body = req.body || {}
+
+    // Test mode — send to a single email without querying Supabase
+    if (body.test_email) {
+      const firstName = body.first_name || 'there'
+      const result = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: FROM,
+          to: [body.test_email],
+          subject: SUBJECT,
+          html: sallahEmail(firstName),
+        }),
+      })
+      const data = await result.json()
+      return res.status(200).json({ test: true, sent: 1, result: data })
+    }
+
+    // Bulk send — fetch from Supabase using service role key
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY
+    const list = await fetchWaitlist(supabaseKey)
     if (!list.length) return res.status(200).json({ sent: 0, message: 'No subscribers found' })
 
     const results = []
-    const BATCH = 50 // Resend batch limit
+    const BATCH = 50
 
     for (let i = 0; i < list.length; i += BATCH) {
       const chunk = list.slice(i, i + BATCH)
@@ -226,11 +250,7 @@ export default async function handler(req, res) {
       results.push(result)
     }
 
-    return res.status(200).json({
-      sent: list.length,
-      batches: results.length,
-      results,
-    })
+    return res.status(200).json({ sent: list.length, batches: results.length, results })
   } catch (err) {
     return res.status(500).json({ error: err.message })
   }
