@@ -276,9 +276,7 @@ export default async function handler(req, res) {
       ? creatorWaitlistEmail(firstName)
       : brandWaitlistEmail(firstName)
 
-    const subject = isCreator
-      ? `You didn't join a waitlist, ${firstName}`
-      : `You didn't just join a waitlist, ${firstName}`
+    const subject = `Welcome to Brandior, ${firstName}!`
 
     const adminHtml = `
 <div style="font-family:Arial,sans-serif;background:#0d0020;padding:32px;color:#fff;border-radius:12px;max-width:480px;">
