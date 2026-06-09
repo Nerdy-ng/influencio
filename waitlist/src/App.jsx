@@ -229,6 +229,7 @@ export default function App() {
 
     setState('success')
     if (window.fbq) window.fbq('track', 'Lead', { content_name: role })
+    if (window.gtag) window.gtag('event', 'generate_lead', { role })
     if (window.ttq) {
       window.ttq.track('Purchase', { content_name: 'Brandior Waitlist', content_type: 'product', value: 0, currency: 'USD' })
       window.ttq.track('CompleteRegistration', { content_name: role })
