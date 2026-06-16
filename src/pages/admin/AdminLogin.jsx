@@ -47,12 +47,21 @@ export default function AdminLogin() {
       return;
     }
 
-    localStorage.setItem("brandiór_admin_user", JSON.stringify({ email: data.user.email, name: adminRow.name }));
-    localStorage.setItem("brandiór_admin_role", adminRow.role);
+    const role = adminRow.role?.toLowerCase().trim();
+    const route = ROLE_ROUTES[role];
 
-    // Hard redirect clears Supabase session state and React listeners
+    if (!route) {
+      await supabase.auth.signOut();
+      setError("Admin role not recognised. Contact support.");
+      setLoading(false);
+      return;
+    }
+
+    localStorage.setItem("brandiór_admin_user", JSON.stringify({ email: data.user.email, name: adminRow.name }));
+    localStorage.setItem("brandiór_admin_role", role);
+
     await supabase.auth.signOut();
-    window.location.href = ROLE_ROUTES[adminRow.role];
+    window.location.href = route;
   };
 
   return (
