@@ -98,6 +98,7 @@ export default function App() {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (location.pathname.startsWith('/admin')) return
       if (session) {
         const metaRole = session.user.user_metadata?.role
 
