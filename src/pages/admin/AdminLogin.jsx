@@ -1,18 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, Mail, Eye, EyeOff, Shield, AlertCircle } from "lucide-react";
-
-const CREDENTIALS = [
-  { email: "admin@brandior.co", password: "admin123", role: "admin", name: "Super Admin" },
-  { email: "manager@brandior.co", password: "manager123", role: "manager", name: "Platform Manager" },
-  { email: "staff@brandior.co", password: "staff123", role: "staff", name: "Staff Member" },
-];
+import { supabase } from "../../lib/supabase";
 
 const ROLE_ROUTES = {
   admin: "/admin",
   manager: "/admin/manager",
   staff: "/admin/staff",
 };
+
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -22,25 +18,39 @@ export default function AdminLogin() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    setTimeout(() => {
-      const match = CREDENTIALS.find(
-        (c) => c.email === email.trim().toLowerCase() && c.password === password
-      );
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
 
-      if (match) {
-        localStorage.setItem("brandiór_admin_user", JSON.stringify({ email: match.email, name: match.name }));
-        localStorage.setItem("brandiór_admin_role", match.role);
-        navigate(ROLE_ROUTES[match.role]);
-      } else {
-        setError("Invalid email or password. Please check your credentials.");
-      }
+    if (authError || !data.user) {
+      setError("Invalid email or password. Please check your credentials.");
       setLoading(false);
-    }, 700);
+      return;
+    }
+
+    const { data: adminRow, error: tableError } = await supabase
+      .from("admin_users")
+      .select("role, name")
+      .eq("email", data.user.email)
+      .single();
+
+    if (tableError || !adminRow) {
+      await supabase.auth.signOut();
+      setError("Access denied. This account does not have admin privileges.");
+      setLoading(false);
+      return;
+    }
+
+    localStorage.setItem("brandiór_admin_user", JSON.stringify({ email: data.user.email, name: adminRow.name }));
+    localStorage.setItem("brandiór_admin_role", adminRow.role);
+    navigate(ROLE_ROUTES[adminRow.role]);
+    setLoading(false);
   };
 
   return (

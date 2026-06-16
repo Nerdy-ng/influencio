@@ -1,6 +1,6 @@
 const RESEND_API_KEY = process.env.RESEND_API_KEY
-const SUPABASE_URL = 'https://ruepnwhgehcwfeekkpjb.supabase.co'
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXBud2hnZWhjd2ZlZWtrcGpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNjU2MzMsImV4cCI6MjA4OTk0MTYzM30.JQCiafSVHOX1DMgPDNSTTXJmXu34Spzj8j58PsU1fY0'
+const SUPABASE_URL = process.env.SUPABASE_URL
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY
 const FROM = 'Brandior <support@brandior.africa>' // v2
 const SUBJECT = '🌙 Eid Mubarak from Brandior'
 

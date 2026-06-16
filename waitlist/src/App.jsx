@@ -3,8 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 import confetti from 'canvas-confetti'
 
 const supabase = createClient(
-  'https://ruepnwhgehcwfeekkpjb.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZXBud2hnZWhjd2ZlZWtrcGpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNjU2MzMsImV4cCI6MjA4OTk0MTYzM30.JQCiafSVHOX1DMgPDNSTTXJmXu34Spzj8j58PsU1fY0'
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
 )
 
 const ROLES = [
@@ -194,7 +194,9 @@ export default function App() {
 
   async function handleSubmit(e) {
     e.preventDefault()
+    if (!name.trim()) { setErrorMsg('Please enter your name'); return }
     if (!email.includes('@')) { setErrorMsg('Enter a valid email'); return }
+    if (!industry) { setErrorMsg('Please select your niche or industry'); return }
     if (window.ttq) window.ttq.track('InitiateCheckout', { content_name: 'Brandior Waitlist', content_type: 'product' })
     setLoading(true)
     setErrorMsg('')
@@ -421,8 +423,9 @@ export default function App() {
                 <input
                   type="text"
                   value={name}
-                  onChange={e => setName(e.target.value)}
-                  placeholder="Your name"
+                  onChange={e => { setName(e.target.value); setErrorMsg('') }}
+                  placeholder="Your name *"
+                  required
                   className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-white/30 focus:outline-none transition-all"
                   style={{ backgroundColor: 'rgba(255,255,255,0.07)', border: '1px solid rgba(124,58,237,0.2)' }}
                   onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.6)'}
@@ -446,7 +449,8 @@ export default function App() {
                 <div className="relative">
                   <select
                     value={industry}
-                    onChange={e => setIndustry(e.target.value)}
+                    onChange={e => { setIndustry(e.target.value); setErrorMsg('') }}
+                    required
                     className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all appearance-none"
                     style={{
                       backgroundColor: 'rgba(255,255,255,0.07)',
