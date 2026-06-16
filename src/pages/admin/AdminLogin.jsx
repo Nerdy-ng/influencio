@@ -47,13 +47,12 @@ export default function AdminLogin() {
       return;
     }
 
-    // Sign out of Supabase so the main app session doesn't interfere
-    await supabase.auth.signOut();
-
     localStorage.setItem("brandiór_admin_user", JSON.stringify({ email: data.user.email, name: adminRow.name }));
     localStorage.setItem("brandiór_admin_role", adminRow.role);
-    navigate(ROLE_ROUTES[adminRow.role]);
-    setLoading(false);
+
+    // Hard redirect clears Supabase session state and React listeners
+    await supabase.auth.signOut();
+    window.location.href = ROLE_ROUTES[adminRow.role];
   };
 
   return (
