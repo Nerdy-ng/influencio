@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Send, MessageSquare, Search, ChevronLeft, Circle, Inbox, MailOpen, ShoppingBag, SlidersHorizontal, Star, EyeOff, MoreVertical, Eye, DollarSign, Check, X, ChevronDown } from 'lucide-react'
+import { Send, MessageSquare, Search, ChevronLeft, Circle, Inbox, MailOpen, ShoppingBag, SlidersHorizontal, Star, EyeOff, MoreVertical, Eye, DollarSign, Check, X, ChevronDown, AlertTriangle, Scale } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 const purple = '#7c3aed'
 const darkPurple = '#4c1d95'
@@ -246,6 +246,11 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
   const [mobileView, setMobileView] = useState(initialConvId ? 'thread' : 'list') // 'list' | 'thread'
   const [showOfferPanel, setShowOfferPanel] = useState(false)
   const [offerAmount, setOfferAmount] = useState('')
+  const [showDisputeModal, setShowDisputeModal] = useState(false)
+  const [disputeReason, setDisputeReason] = useState('')
+  const [disputeStatement, setDisputeStatement] = useState('')
+  const [submittingDispute, setSubmittingDispute] = useState(false)
+  const [disputeFeedback, setDisputeFeedback] = useState(null) // { type: 'success' | 'error', message }
 
   const bottomRef = useRef(null)
   const pollRef = useRef(null)
@@ -283,6 +288,7 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
       unreadTalent: c.unread_talent ?? 0,
       orderId: c.order_id,
       orderTitle: c.order_title,
+      collabId: c.collab_id,
     }
   }
 
@@ -476,6 +482,36 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
       .eq('id', msgId)
   }
 
+  // ── Raise a dispute ───────────────────────────────────────────────────────────
+  async function submitDispute(e) {
+    e.preventDefault()
+    if (!activeConv || !disputeReason.trim() || submittingDispute) return
+    setSubmittingDispute(true)
+    setDisputeFeedback(null)
+
+    const statementField = userType === 'brand' ? 'brand_statement' : 'talent_statement'
+
+    const { error } = await supabase.from('disputes').insert({
+      collab_id: activeConv.collabId || null,
+      brand_id: activeConv.brandId,
+      talent_id: activeConv.talentId,
+      raised_by: userId,
+      raised_by_role: userType,
+      reason: disputeReason.trim(),
+      [statementField]: disputeStatement.trim() || null,
+      status: 'awaiting_response',
+    })
+
+    setSubmittingDispute(false)
+    if (error) {
+      setDisputeFeedback({ type: 'error', message: error.message })
+      return
+    }
+    setDisputeFeedback({ type: 'success', message: 'Dispute submitted. Our team will review it and reach out.' })
+    setDisputeReason('')
+    setDisputeStatement('')
+  }
+
   // ── Helpers ───────────────────────────────────────────────────────────────────
   function toggleFav(convId) {
     setFavConvs(prev => ({ ...prev, [convId]: !prev[convId] }))
@@ -634,9 +670,15 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
                   </p>
                 )}
               </div>
-              <span className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
+              <span className="hidden sm:flex items-center gap-1.5 text-xs text-green-600 font-medium">
                 <Circle className="w-2 h-2 fill-green-500 text-green-500" /> Online
               </span>
+              <button
+                onClick={() => { setShowDisputeModal(true); setDisputeFeedback(null) }}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors flex-shrink-0">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Raise a dispute</span>
+              </button>
             </div>
 
             {/* Messages */}
@@ -746,6 +788,63 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
           </>
         )}
       </div>
+
+      {/* ── Raise a dispute modal ── */}
+      {showDisputeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(15,23,42,0.5)' }}>
+          <div className="w-full max-w-md rounded-2xl bg-white p-6" style={{ border: '1px solid #e9d5ff' }}>
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="font-bold text-gray-900 text-base flex items-center gap-2">
+                <Scale className="w-4 h-4 text-red-500" /> Raise a Dispute
+              </h3>
+              <button onClick={() => setShowDisputeModal(false)}>
+                <X className="w-4 h-4 text-gray-400" />
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">
+              About your collaboration with {otherName}. Our team will review your evidence and the conversation history before deciding.
+            </p>
+
+            {disputeFeedback?.type === 'success' ? (
+              <div className="rounded-xl p-4 text-sm text-green-700" style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+                {disputeFeedback.message}
+              </div>
+            ) : (
+              <form onSubmit={submitDispute} className="space-y-3">
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">What's the issue? <span className="text-red-500">*</span></label>
+                  <input
+                    value={disputeReason}
+                    onChange={e => setDisputeReason(e.target.value)}
+                    placeholder="e.g. Delivered content doesn't match the brief"
+                    className="w-full px-3.5 py-2.5 rounded-xl text-sm text-gray-800 outline-none"
+                    style={{ border: '1px solid #e5e7eb' }}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">Tell us more</label>
+                  <textarea
+                    value={disputeStatement}
+                    onChange={e => setDisputeStatement(e.target.value)}
+                    rows={4}
+                    placeholder="Explain what happened, with as much detail as possible…"
+                    className="w-full px-3.5 py-2.5 rounded-xl text-sm text-gray-800 outline-none resize-none"
+                    style={{ border: '1px solid #e5e7eb' }}
+                  />
+                </div>
+                {disputeFeedback?.type === 'error' && (
+                  <p className="text-xs text-red-500">{disputeFeedback.message}</p>
+                )}
+                <button type="submit" disabled={!disputeReason.trim() || submittingDispute}
+                  className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity disabled:opacity-40"
+                  style={{ backgroundColor: '#ef4444' }}>
+                  {submittingDispute ? 'Submitting…' : 'Submit Dispute'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

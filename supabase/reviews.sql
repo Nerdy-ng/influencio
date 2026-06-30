@@ -48,3 +48,9 @@ drop trigger if exists on_review_insert on reviews;
 create trigger on_review_insert
   after insert on reviews
   for each row execute procedure update_talent_rating();
+
+-- Collab-based reviews replace job-based ones (direct-hire model, see collabs.sql).
+-- job_id stays for old test data; new reviews are written against collab_id instead.
+alter table reviews add column if not exists collab_id uuid references collabs(id) on delete set null;
+create unique index if not exists reviews_talent_reviewer_collab_idx
+  on reviews(talent_id, reviewer_id, collab_id) where collab_id is not null;

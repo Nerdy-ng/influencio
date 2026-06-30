@@ -572,8 +572,6 @@ export default function Marketplace() {
       if (selectedTiers.length) query = query.in('tier', selectedTiers)
       if (selectedLocations.length) query = query.in('location', selectedLocations)
       if (selectedGenders.length) query = query.in('gender', selectedGenders)
-      if (minPrice) query = query.gte('min_price', Number(minPrice))
-      if (maxPrice) query = query.lte('min_price', Number(maxPrice))
       if (selectedNiches.length) query = query.overlaps('niches', selectedNiches)
       if (selectedPlatforms.length) query = query.overlaps('platforms', selectedPlatforms)
       if (selectedContentTypes.length) query = query.overlaps('content_types', selectedContentTypes)
@@ -582,6 +580,19 @@ export default function Marketplace() {
 
       const { data, error: err } = await query
       if (err) throw err
+
+      const creatorIds = (data || []).map(p => p.id)
+      let cheapestByCreator = {}
+      if (creatorIds.length > 0) {
+        const { data: rateCards } = await supabase
+          .from('rate_cards')
+          .select('creator_id, durations')
+          .in('creator_id', creatorIds)
+        ;(rateCards || []).forEach(rc => {
+          const prices = (rc.durations || []).map(d => d.price).filter(p => typeof p === 'number')
+          if (prices.length) cheapestByCreator[rc.creator_id] = Math.min(...prices)
+        })
+      }
 
       let mapped = (data || []).map(p => ({
         _id: p.id,
@@ -599,16 +610,17 @@ export default function Marketplace() {
         totalFollowers: p.total_followers || 0,
         avgEngagement: p.avg_engagement || 0,
         completedCampaigns: p.completed_campaigns || 0,
-        minPrice: p.min_price || 0,
+        minPrice: cheapestByCreator[p.id] ?? (p.min_price || 0),
         availableForHire: p.available_for_hire,
         gender: p.gender,
         age: p.age,
         featuredVideo: p.featured_video,
-        pricing: p.pricing || {},
         socials: p.socials || [],
       }))
 
       // Client-side filters not supported by Supabase array operators
+      if (minPrice) mapped = mapped.filter(c => c.minPrice >= Number(minPrice))
+      if (maxPrice) mapped = mapped.filter(c => c.minPrice <= Number(maxPrice))
       if (selectedFollowerRanges.length)
         mapped = mapped.filter(c => selectedFollowerRanges.some(r => c.totalFollowers >= r.min && c.totalFollowers <= r.max))
       if (selectedAgeRanges.length)
@@ -997,19 +1009,6 @@ export default function Marketplace() {
           <p className="mb-6 text-base" style={{ color: '#c4b5fd' }}>
             Browse 500+ verified talents ready to amplify your brand
           </p>
-
-          {/* Post a Job CTA */}
-          <div className="inline-flex items-center gap-3 mb-8 px-5 py-3 rounded-2xl"
-            style={{ backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)' }}>
-            <span className="text-sm text-white/70">Have a campaign in mind?</span>
-            <Link to="/post-job"
-              className="inline-flex items-center gap-1.5 text-sm font-black px-4 py-2 rounded-full transition-all"
-              style={{ backgroundColor: '#FA8112', color: '#fff', boxShadow: '0 4px 16px rgba(250,129,18,0.45)' }}
-              onMouseEnter={e => e.currentTarget.style.backgroundColor = '#e07010'}
-              onMouseLeave={e => e.currentTarget.style.backgroundColor = '#FA8112'}>
-              + Post a Job
-            </Link>
-          </div>
 
           {/* Search bar */}
           <div className="relative max-w-xl mx-auto">

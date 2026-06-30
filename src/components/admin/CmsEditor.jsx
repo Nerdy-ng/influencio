@@ -17,7 +17,6 @@ const PAGES = [
   { id: 'for_talents', label: 'For Talents',    icon: '⭐', url: '/for-talents' },
   { id: 'for_brands',  label: 'For Brands',     icon: '🏢', url: '/for-brands' },
   { id: 'marketplace', label: 'Marketplace',    icon: '🛒', url: '/marketplace' },
-  { id: 'jobs',        label: 'Job Board',      icon: '💼', url: '/jobs' },
   { id: 'global',      label: 'Global (Navbar / Footer / SEO)', icon: '🌐', url: null },
 ];
 

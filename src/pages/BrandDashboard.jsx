@@ -17,8 +17,6 @@ import { getBrandAnalytics } from '../lib/analytics'
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import OnboardingTour from '../components/OnboardingTour'
 
-const API = 'http://localhost:3001/api'
-
 const pink = '#FF6B9D'
 const darkPurple = '#4c1d95'
 const purple = '#7c3aed'
@@ -61,36 +59,6 @@ function StatusBadge({ status }) {
   )
 }
 
-// Mock orders for offline mode
-function generateMockOrders() {
-  const statuses = ['pending', 'in_progress', 'delivered', 'revision_requested', 'completed', 'completed']
-  return Array.from({ length: 8 }, (_, i) => ({
-    _id: `order_${i + 1}`,
-    status: statuses[i % statuses.length],
-    createdAt: new Date(Date.now() - i * 2.5 * 86400000).toISOString(),
-    packagePrice: [75000, 150000, 120000, 350000, 75000, 150000, 75000, 120000][i],
-    platformFee: [7500, 15000, 12000, 35000, 7500, 15000, 7500, 12000][i],
-    total: [82500, 165000, 132000, 385000, 82500, 165000, 82500, 132000][i],
-    talent: {
-      name: ['Adaeze Okafor', 'Chidi Nwosu', 'Fatimah Abdullahi', 'Emeka Eze', 'Ngozi Obi', 'Tunde Bakare', 'Amaka Igwe', 'Femi Adeyemi'][i],
-      handle: ['adaeze_glam', 'chidi_tech', 'fatimah_style', 'emeka_eats', 'ngozi_fit', 'tunde_comedy', 'amaka_luxe', 'femi_finance'][i],
-      avatar: null,
-    },
-    package: {
-      name: ['Story Feature', 'Reel Campaign', 'TikTok Viral Push', 'Full Brand Deal', 'Story Feature', 'Reel Campaign', 'Story Feature', 'TikTok Viral Push'][i],
-      platform: ['Instagram', 'Instagram', 'TikTok', 'Instagram', 'Instagram', 'Instagram', 'Instagram', 'TikTok'][i],
-    },
-    brief: {
-      productName: ['GlowUp Serum', 'Tecno Phone X3', 'Ada Collections', 'Naija Bites', 'FitNaija App', 'Punchline Comedy Show', 'Luxe Bags', 'WealthUp Finance'][i],
-      brandName: ['GlowUp Cosmetics', 'Tecno Mobile', 'Ada Collections', 'Naija Bites', 'FitNaija', 'Punchline Comedy', 'Luxe Brand', 'WealthUp'][i],
-    },
-    deliveredFiles: i === 2 || i === 4 || i === 5 ? [
-      { name: 'content_v1.mp4', url: '#' },
-      { name: 'caption.txt', url: '#' },
-    ] : [],
-  }))
-}
-
 // Payment modal
 function PaymentModal({ order, onClose, onSuccess }) {
   const [step, setStep] = useState('confirm') // confirm → processing → success
@@ -99,13 +67,6 @@ function PaymentModal({ order, onClose, onSuccess }) {
     setStep('processing')
     // Simulate Paystack redirect + return
     await new Promise(r => setTimeout(r, 2000))
-    try {
-      await fetch(`${API}/payments/initiate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: order._id, brandId: BRAND_ID }),
-      })
-    } catch { /* ignore */ }
     setStep('success')
     setTimeout(() => {
       onSuccess(order._id)
@@ -447,19 +408,20 @@ function ReviewModal({ order, onClose, onSubmitted }) {
     e.preventDefault()
     if (!rating || !comment.trim()) return
     setSubmitting(true)
-    const brandId = localStorage.getItem('brandiór_user') || ''
     try {
-      await fetch(`${API}/reviews`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          talentId: order.creatorId || order.creator_id || order.talent?._id,
-          brandId,
-          brandName: order.brief?.brandName || 'Brand',
-          rating,
-          comment,
-          campaignType: order.package?.name || null,
-        }),
+      const { data: { user } } = await supabase.auth.getUser()
+      const meta = user?.user_metadata || {}
+      const brandName = meta.brand_name || meta.full_name || 'A Brand'
+      const initials = brandName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+      await supabase.from('reviews').insert({
+        talent_id: order.creatorId || order.creator_id || order.talent?._id,
+        reviewer_id: user.id,
+        collab_id: order._id,
+        rating,
+        comment,
+        brand_name: brandName,
+        brand_initials: initials,
+        campaign_type: order.package?.name || null,
       })
     } catch { /* offline — store locally */ }
     setDone(true)
@@ -581,8 +543,7 @@ function StatCard({ label, value, icon: Icon, color }) {
 const NAV_ITEMS = [
   { id: 'overview',      label: 'Overview',        icon: LayoutDashboard },
   { id: 'analytics',     label: 'Analytics',       icon: TrendingUp },
-  { id: 'applications',  label: 'Proposals',       icon: Inbox },
-  { id: 'campaigns',     label: 'Campaigns',       icon: ShoppingBag },
+  { id: 'collabs',       label: 'Collabs',         icon: ShoppingBag },
   { id: 'favorites',     label: 'Saved Talents',   icon: Heart },
   { id: 'messages',      label: 'Messages',        icon: Mail },
   { id: 'payments',      label: 'Payments',        icon: Wallet },
@@ -700,345 +661,6 @@ function FindTalentsTab() {
   )
 }
 
-// ── ApplicationsTab ───────────────────────────────────────────────────────────
-function ApplicationsTab({ setActiveTab, showToast }) {
-  const [apps, setApps] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [expanded, setExpanded] = useState(null)
-  const [acting, setActing] = useState(null)
-  const [reviewApp, setReviewApp] = useState(null)
-  const [reviewRating, setReviewRating] = useState(0)
-  const [reviewHover, setReviewHover] = useState(0)
-  const [reviewComment, setReviewComment] = useState('')
-  const [reviewSubmitting, setReviewSubmitting] = useState(false)
-  const brandId = localStorage.getItem('brandiór_user') || ''
-
-  async function fetchApps() {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      const { data, error } = await supabase
-        .from('applications')
-        .select('*')
-        .eq('brand_id', user?.id)
-        .order('created_at', { ascending: false })
-      if (error) throw error
-      setApps(data || [])
-    } catch {
-      setApps([])
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => { fetchApps() }, [])
-
-  async function handleDecision(appId, status) {
-    setActing(appId)
-    try {
-      const { data, error } = await supabase
-        .from('applications')
-        .update({ status })
-        .eq('id', appId)
-        .select()
-        .single()
-      if (error) throw error
-      setApps(prev => prev.map(a => a.id === appId ? data : a))
-
-      // Notify talent in-app + email
-      const app = apps.find(a => a.id === appId)
-      if (app?.talent_id) {
-        const accepted = status === 'accepted'
-        await createNotification(
-          app.talent_id,
-          accepted ? 'application_accepted' : 'application_rejected',
-          accepted ? 'Application accepted!' : 'Application update',
-          accepted
-            ? `Great news! Your application for "${app.job_title}" has been accepted.`
-            : `Your application for "${app.job_title}" was not selected this time.`,
-          { job_id: app.job_id, job_title: app.job_title }
-        )
-        if (app.talent_email) {
-          await sendNotificationEmail(
-            app.talent_email,
-            accepted ? `Your application was accepted! 🎉` : `Application update for "${app.job_title}"`,
-            accepted ? 'Your application was accepted!' : 'Application update',
-            accepted
-              ? `Great news! The brand has accepted your application for <strong>"${app.job_title}"</strong>. Head to your dashboard to start the conversation.`
-              : `Thank you for applying to <strong>"${app.job_title}"</strong>. Unfortunately the brand has decided to go in a different direction this time. Keep applying — the right brand is out there!`,
-            accepted ? 'Go to Dashboard' : 'Browse More Jobs',
-            accepted ? 'https://brandior.africa/dashboard?tab=messages' : 'https://brandior.africa/jobs'
-          )
-        }
-      }
-
-      if (status === 'accepted') {
-        showToast('Proposal accepted! A message thread has been opened.')
-        setTimeout(() => setActiveTab('messages'), 800)
-      } else {
-        showToast('Proposal declined.')
-      }
-    } catch {
-      showToast('Something went wrong. Try again.', 'error')
-    } finally {
-      setActing(null)
-    }
-  }
-
-  async function submitReview() {
-    if (!reviewRating || !reviewApp) return
-    setReviewSubmitting(true)
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      const meta = user?.user_metadata || {}
-      const brandName = meta.brand_name || meta.full_name || 'A Brand'
-      const initials = brandName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-      await supabase.from('reviews').insert({
-        talent_id: reviewApp.talent_id,
-        reviewer_id: user.id,
-        job_id: reviewApp.job_id,
-        rating: reviewRating,
-        comment: reviewComment.trim() || null,
-        brand_name: brandName,
-        brand_initials: initials,
-        campaign_type: reviewApp.job_title,
-      })
-      showToast('Review submitted!')
-      setReviewApp(null)
-      setReviewRating(0)
-      setReviewComment('')
-    } catch {
-      showToast('Could not submit review. Try again.', 'error')
-    } finally {
-      setReviewSubmitting(false)
-    }
-  }
-
-  const pending = apps.filter(a => a.status === 'pending')
-  const decided = apps.filter(a => a.status !== 'pending')
-
-  if (loading) return (
-    <div className="flex items-center justify-center py-20">
-      <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
-    </div>
-  )
-
-  if (apps.length === 0) return (
-    <div className="text-center py-20">
-      <Inbox className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-      <p className="font-semibold text-gray-500 mb-1">No proposals yet</p>
-      <p className="text-sm text-gray-400 mb-6">When creators apply to your campaigns, they'll show up here.</p>
-      <Link to="/post-job" className="inline-flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-full text-white"
-        style={{ backgroundColor: purple }}>
-        <FileText className="w-4 h-4" /> Post a Campaign
-      </Link>
-    </div>
-  )
-
-  function AppCard({ app }) {
-    const isOpen = expanded === app.id
-    const statusColors = {
-      pending:  { bg: '#fef9c3', color: '#854d0e', label: 'Pending Review' },
-      accepted: { bg: '#dcfce7', color: '#166534', label: 'Accepted' },
-      rejected: { bg: '#fef2f2', color: '#991b1b', label: 'Declined' },
-    }
-    const sc = statusColors[app.status] || statusColors.pending
-
-    return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-4 flex items-start gap-3">
-          <img src={app.talentAvatar} alt={app.talentName}
-            className="w-11 h-11 rounded-full object-cover flex-shrink-0"
-            onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(app.talentName)}&background=4c1d95&color=fff&size=44` }} />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="font-bold text-gray-900 text-sm">{app.talentName}</p>
-                {app.talentHandle && <p className="text-xs text-gray-400">{app.talentHandle}</p>}
-              </div>
-              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
-                style={{ backgroundColor: sc.bg, color: sc.color }}>
-                {sc.label}
-              </span>
-            </div>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Applied to: <span className="font-medium text-gray-700">{app.jobTitle}</span>
-            </p>
-            {app.rate && (
-              <p className="text-xs font-semibold mt-1" style={{ color: '#16a34a' }}>
-                Proposed rate: ₦{Number(app.rate).toLocaleString('en')}
-              </p>
-            )}
-            <p className="text-xs text-gray-400 mt-1">{timeAgo(app.createdAt)}</p>
-          </div>
-        </div>
-
-        {/* Proposal message preview/expand */}
-        <div className="px-4 pb-3">
-          <button onClick={() => setExpanded(isOpen ? null : app.id)}
-            className="text-xs font-semibold flex items-center gap-1 mb-2"
-            style={{ color: purple }}>
-            <MessageSquare className="w-3.5 h-3.5" />
-            {isOpen ? 'Hide proposal' : 'View proposal'}
-            <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
-          </button>
-          {isOpen && (
-            <div className="rounded-xl p-3 text-sm text-gray-700 leading-relaxed mb-3"
-              style={{ backgroundColor: '#faf5ff', border: '1px solid #e9d5ff' }}>
-              {app.message}
-              {app.rateCard && app.rateCard.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-purple-100">
-                  <p className="text-xs font-bold text-gray-500 mb-2">RATE CARD</p>
-                  <div className="space-y-1">
-                    {app.rateCard.map((row, i) => (
-                      <div key={i} className="flex justify-between text-xs">
-                        <span className="text-gray-600">{row.platform} — {row.deliverable}</span>
-                        <span className="font-semibold text-gray-800">₦{Number(row.price || 0).toLocaleString('en')}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {app.status === 'pending' && (
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleDecision(app.id, 'accepted')}
-                disabled={acting === app.id}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all"
-                style={{ backgroundColor: '#dcfce7', color: '#166534' }}>
-                {acting === app.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ThumbsUp className="w-3.5 h-3.5" />}
-                Accept & Message
-              </button>
-              <button
-                onClick={() => handleDecision(app.id, 'rejected')}
-                disabled={acting === app.id}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all"
-                style={{ backgroundColor: '#fef2f2', color: '#991b1b' }}>
-                <ThumbsDown className="w-3.5 h-3.5" />
-                Decline
-              </button>
-            </div>
-          )}
-
-          {app.status === 'accepted' && (
-            <div className="flex gap-2">
-              {app.conversationId && (
-                <button onClick={() => setActiveTab('messages')}
-                  className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition-all"
-                  style={{ backgroundColor: '#f3e8ff', color: purple }}>
-                  <Mail className="w-3.5 h-3.5" /> Open Thread
-                </button>
-              )}
-              <button onClick={() => { setReviewApp(app); setReviewRating(0); setReviewComment('') }}
-                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition-all"
-                style={{ backgroundColor: '#fef9c3', color: '#854d0e' }}>
-                <Star className="w-3.5 h-3.5" /> Leave Review
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="max-w-2xl mx-auto">
-
-      {/* Review Modal */}
-      {reviewApp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-black text-gray-900 text-lg">Leave a Review</h3>
-              <button onClick={() => setReviewApp(null)} className="text-gray-400 hover:text-gray-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <p className="text-sm text-gray-500 mb-5">
-              Rate your experience with <span className="font-semibold text-gray-800">{reviewApp.talent_name}</span> for <span className="font-semibold text-gray-800">"{reviewApp.job_title}"</span>
-            </p>
-
-            {/* Star picker */}
-            <div className="flex items-center gap-2 mb-5 justify-center">
-              {[1,2,3,4,5].map(i => (
-                <button key={i}
-                  onMouseEnter={() => setReviewHover(i)}
-                  onMouseLeave={() => setReviewHover(0)}
-                  onClick={() => setReviewRating(i)}
-                  className="focus:outline-none transition-transform hover:scale-110">
-                  <Star className="w-9 h-9"
-                    style={{
-                      fill: i <= (reviewHover || reviewRating) ? '#D4AF37' : 'none',
-                      color: i <= (reviewHover || reviewRating) ? '#D4AF37' : '#d1d5db',
-                    }} />
-                </button>
-              ))}
-            </div>
-            {reviewRating > 0 && (
-              <p className="text-center text-sm font-semibold mb-4" style={{ color: '#D4AF37' }}>
-                {['','Poor','Fair','Good','Great','Excellent!'][reviewRating]}
-              </p>
-            )}
-
-            <textarea
-              value={reviewComment}
-              onChange={e => setReviewComment(e.target.value)}
-              placeholder="Share your experience (optional)..."
-              rows={3}
-              className="w-full rounded-2xl border border-gray-200 p-3 text-sm resize-none focus:outline-none focus:ring-2 mb-4"
-              style={{ '--tw-ring-color': '#c084fc' }}
-            />
-
-            <button
-              onClick={submitReview}
-              disabled={!reviewRating || reviewSubmitting}
-              className="w-full py-3 rounded-2xl font-bold text-white text-sm transition-all disabled:opacity-50"
-              style={{ backgroundColor: purple }}>
-              {reviewSubmitting ? 'Submitting...' : 'Submit Review'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-xl font-black text-gray-900">Proposals</h2>
-          <p className="text-sm text-gray-400 mt-0.5">{pending.length} pending review</p>
-        </div>
-        <Link to="/post-job" className="flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-full text-white"
-          style={{ backgroundColor: purple }}>
-          <FileText className="w-3.5 h-3.5" /> Post Campaign
-        </Link>
-      </div>
-
-      {pending.length > 0 && (
-        <div className="mb-6">
-          <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">
-            New Proposals ({pending.length})
-          </p>
-          <div className="space-y-3">
-            {pending.map(app => <AppCard key={app.id} app={app} />)}
-          </div>
-        </div>
-      )}
-
-      {decided.length > 0 && (
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">
-            Reviewed ({decided.length})
-          </p>
-          <div className="space-y-3">
-            {decided.map(app => <AppCard key={app.id} app={app} />)}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
 export default function BrandDashboard() {
   const [searchParams] = useSearchParams()
   const newOrderId = searchParams.get('newOrder')
@@ -1063,12 +685,50 @@ export default function BrandDashboard() {
   const showToast = (message, type = 'success') => setToast({ message, type })
 
   const fetchOrders = useCallback(async () => {
-    const brandId = localStorage.getItem('brandiór_user') || 'guest'
+    const brandId = localStorage.getItem('brandiór_user')
+    if (!brandId) { setOrders([]); setLoading(false); return }
     try {
-      const res = await fetch(`${API}/orders?brandId=${brandId}`)
-      if (!res.ok) throw new Error('Fetch failed')
-      const data = await res.json()
-      setOrders(Array.isArray(data) ? data : data.orders || [])
+      const { data: collabs, error: collabsError } = await supabase
+        .from('collabs')
+        .select('*')
+        .eq('brand_id', brandId)
+        .order('created_at', { ascending: false })
+      if (collabsError) throw collabsError
+
+      const creatorIds = [...new Set((collabs || []).map(c => c.creator_id))]
+      let creatorMap = {}
+      if (creatorIds.length > 0) {
+        const { data: creators } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url, username')
+          .in('id', creatorIds)
+        ;(creators || []).forEach(c => { creatorMap[c.id] = c })
+      }
+
+      setOrders((collabs || []).map(c => {
+        const creator = creatorMap[c.creator_id] || {}
+        return {
+          _id: c.id,
+          status: c.status,
+          createdAt: c.created_at,
+          packagePrice: c.production_cost,
+          platformFee: c.platform_fee,
+          total: c.total_amount,
+          creatorId: c.creator_id,
+          talent: {
+            _id: c.creator_id,
+            name: creator.full_name || 'Creator',
+            handle: creator.username || '',
+            avatar: creator.avatar_url || null,
+          },
+          package: {
+            name: `${c.content_type} · ${c.duration_label}`,
+            platform: (c.platforms || [])[0] || null,
+          },
+          brief: c.brief || {},
+          deliveredFiles: c.delivered_files || [],
+        }
+      }))
     } catch {
       setOrders([])
     } finally {
@@ -1091,33 +751,31 @@ export default function BrandDashboard() {
   useEffect(() => {
     if (newOrderId && !loading) {
       showToast('Order placed successfully! Complete payment to get started.', 'success')
-      setActiveTab('campaigns')
+      setActiveTab('collabs')
     }
   }, [newOrderId, loading])
 
   // Actions
-  const handlePaySuccess = (orderId) => {
+  const handlePaySuccess = async (orderId) => {
     setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: 'in_progress' } : o))
+    await supabase.from('collabs').update({ status: 'in_progress', payment_status: 'paid' }).eq('id', orderId)
     showToast('Payment successful! Funds held in escrow.')
   }
 
   const handleApprove = async (orderId) => {
-    try {
-      await fetch(`${API}/orders/${orderId}/approve`, { method: 'POST' })
-    } catch { /* ignore */ }
     setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: 'completed' } : o))
+    await supabase.from('collabs').update({ status: 'completed', payment_status: 'released' }).eq('id', orderId)
     showToast('Order approved! Payment released to talent.')
   }
 
   const handleRevision = async (orderId, reason) => {
-    try {
-      await fetch(`${API}/orders/${orderId}/revision`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason }),
-      })
-    } catch { /* ignore */ }
     setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: 'revision_requested' } : o))
+    const { data: current } = await supabase.from('collabs').select('revisions_requested').eq('id', orderId).single()
+    await supabase.from('collabs').update({
+      status: 'revision_requested',
+      revision_reason: reason,
+      revisions_requested: (current?.revisions_requested || 0) + 1,
+    }).eq('id', orderId)
     showToast('Revision request sent to talent.')
   }
 
@@ -1202,9 +860,6 @@ export default function BrandDashboard() {
           ) : (
             <>
               {activeTab === 'talents' && <FindTalentsTab />}
-              {activeTab === 'applications' && (
-                <ApplicationsTab setActiveTab={setActiveTab} showToast={showToast} />
-              )}
               {activeTab === 'overview' && (
                 <OverviewTab
                   activeOrders={activeOrders}
@@ -1214,7 +869,7 @@ export default function BrandDashboard() {
                 />
               )}
               {activeTab === 'analytics' && <BrandAnalyticsTab />}
-              {activeTab === 'campaigns' && (
+              {activeTab === 'collabs' && (
                 <CampaignsTab
                   activeOrders={activeOrders}
                   completedOrders={completedOrders}
@@ -1454,9 +1109,9 @@ function BrandAnalyticsTab() {
   if (loading) return <div className="flex items-center justify-center py-20"><div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" /></div>
 
   const pieData = [
-    { name: 'Accepted', value: data.accepted, color: '#16a34a' },
-    { name: 'Pending',  value: data.pending,  color: '#f59e0b' },
-    { name: 'Rejected', value: data.rejected, color: '#ef4444' },
+    { name: 'Completed', value: data.completed, color: '#16a34a' },
+    { name: 'Pending',   value: data.pending,   color: '#f59e0b' },
+    { name: 'Cancelled', value: data.cancelled, color: '#ef4444' },
   ].filter(d => d.value > 0)
 
   return (
@@ -1466,9 +1121,9 @@ function BrandAnalyticsTab() {
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Total Jobs',    value: data.totalJobs,    color: purple },
-          { label: 'Proposals',     value: data.totalApps,    color: '#0ea5e9' },
-          { label: 'Accepted',      value: data.accepted,     color: '#16a34a' },
+          { label: 'Total Collabs', value: data.totalCollabs, color: purple },
+          { label: 'Total Spent',   value: formatNGN(data.totalSpent), color: '#0ea5e9' },
+          { label: 'Completed',     value: data.completed,    color: '#16a34a' },
           { label: 'Avg Rating',    value: data.avgRating ? `${data.avgRating}★` : '—', color: '#D4AF37' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-2xl p-4 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
@@ -1478,12 +1133,12 @@ function BrandAnalyticsTab() {
         ))}
       </div>
 
-      {/* Applications over time */}
+      {/* Collabs over time */}
       <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
-        <p className="font-bold text-gray-900 mb-4">Applications — Last 30 Days</p>
-        {data.dailyApps.some(d => d.count > 0) ? (
+        <p className="font-bold text-gray-900 mb-4">Collabs — Last 30 Days</p>
+        {data.dailyCollabs.some(d => d.count > 0) ? (
           <ResponsiveContainer width="100%" height={180}>
-            <LineChart data={data.dailyApps}>
+            <LineChart data={data.dailyCollabs}>
               <XAxis dataKey="date" tick={{ fontSize: 10 }} interval={4} />
               <YAxis allowDecimals={false} tick={{ fontSize: 10 }} width={24} />
               <Tooltip />
@@ -1491,14 +1146,14 @@ function BrandAnalyticsTab() {
             </LineChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex items-center justify-center h-28 text-sm text-gray-400">No applications yet</div>
+          <div className="flex items-center justify-center h-28 text-sm text-gray-400">No collabs yet</div>
         )}
       </div>
 
       <div className="grid sm:grid-cols-2 gap-5">
-        {/* Application status breakdown */}
+        {/* Collab status breakdown */}
         <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
-          <p className="font-bold text-gray-900 mb-4">Application Status</p>
+          <p className="font-bold text-gray-900 mb-4">Collab Status</p>
           {pieData.length > 0 ? (
             <div className="flex items-center gap-4">
               <ResponsiveContainer width={120} height={120}>
@@ -1519,16 +1174,16 @@ function BrandAnalyticsTab() {
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-center h-28 text-sm text-gray-400">No applications yet</div>
+            <div className="flex items-center justify-center h-28 text-sm text-gray-400">No collabs yet</div>
           )}
         </div>
 
-        {/* Top jobs by applications */}
+        {/* Top creators by collabs */}
         <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
-          <p className="font-bold text-gray-900 mb-4">Top Jobs by Applications</p>
-          {data.appsPerJob.length > 0 ? (
+          <p className="font-bold text-gray-900 mb-4">Top Creators by Collabs</p>
+          {data.topCreators.length > 0 ? (
             <ResponsiveContainer width="100%" height={140}>
-              <BarChart data={data.appsPerJob} layout="vertical">
+              <BarChart data={data.topCreators} layout="vertical">
                 <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10 }} />
                 <YAxis type="category" dataKey="title" width={90} tick={{ fontSize: 10 }} />
                 <Tooltip />
@@ -1536,7 +1191,7 @@ function BrandAnalyticsTab() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex items-center justify-center h-28 text-sm text-gray-400">No jobs yet</div>
+            <div className="flex items-center justify-center h-28 text-sm text-gray-400">No creators yet</div>
           )}
         </div>
       </div>
@@ -1555,12 +1210,12 @@ function OverviewTab({ activeOrders, pendingReview, completedOrders, setActiveTa
       {isNewAccount && (
         <div className="rounded-2xl p-6" style={{ background: 'linear-gradient(135deg, #1a0035 0%, #3d0080 100%)', border: '1px solid rgba(124,58,237,0.3)' }}>
           <p className="text-[11px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: '#c4b5fd' }}>Getting Started</p>
-          <h3 className="text-white font-bold text-lg mb-1">Launch your first creator campaign</h3>
-          <p className="text-white/45 text-sm mb-5">Find the right creators, order campaign packages, and track results — all in one place.</p>
+          <h3 className="text-white font-bold text-lg mb-1">Book your first creator collab</h3>
+          <p className="text-white/45 text-sm mb-5">Find the right creators, set up a collab, and track results — all in one place.</p>
           <div className="flex flex-wrap gap-5 mb-5">
             {[
               { n: 1, label: 'Browse the marketplace' },
-              { n: 2, label: 'Order a campaign package' },
+              { n: 2, label: 'Set up a collab' },
               { n: 3, label: 'Track your results here' },
             ].map(({ n, label }) => (
               <div key={n} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
@@ -1580,7 +1235,7 @@ function OverviewTab({ activeOrders, pendingReview, completedOrders, setActiveTa
 
       {/* Stat cards */}
       <div className="grid grid-cols-3 gap-4">
-        <StatCard label="Active Campaigns" value={activeOrders.length} icon={ShoppingBag} color={purple} />
+        <StatCard label="Active Collabs" value={activeOrders.length} icon={ShoppingBag} color={purple} />
         <StatCard label="Pending Review" value={pendingReview.length} icon={RotateCcw} color="#f59e0b" />
         <StatCard label="Completed" value={completedOrders.length} icon={CheckCircle} color="#16a34a" />
       </div>
@@ -1639,9 +1294,9 @@ function CampaignsTab({ activeOrders, completedOrders, onPayNow, onApprove, onRe
 
       {sub === 'active' && (
         <OrdersTab
-          title="Active Campaigns"
+          title="Active Collabs"
           orders={activeOrders}
-          emptyMsg="No active campaigns. Browse talents to get started!"
+          emptyMsg="No active collabs. Browse talents to get started!"
           onPayNow={onPayNow}
           onApprove={onApprove}
           onRevision={onRevision}
@@ -1649,9 +1304,9 @@ function CampaignsTab({ activeOrders, completedOrders, onPayNow, onApprove, onRe
       )}
       {sub === 'completed' && (
         <OrdersTab
-          title="Completed Campaigns"
+          title="Completed Collabs"
           orders={completedOrders}
-          emptyMsg="No completed campaigns yet."
+          emptyMsg="No completed collabs yet."
           onPayNow={onPayNow}
           onApprove={onApprove}
           onRevision={onRevision}
@@ -1960,12 +1615,7 @@ function FavoritesTab() {
                 <Link to={`/creators/${talent.handle || talent._id || talent.id}`}
                   className="flex-1 text-center text-xs font-semibold py-2 rounded-xl text-white"
                   style={{ backgroundColor: darkPurple }}>
-                  View Profile
-                </Link>
-                <Link to={`/order/${talent._id || talent.id}`}
-                  className="flex-1 text-center text-xs font-semibold py-2 rounded-xl border"
-                  style={{ borderColor: darkPurple, color: darkPurple }}>
-                  Order
+                  View Profile & Collab
                 </Link>
               </div>
             </div>

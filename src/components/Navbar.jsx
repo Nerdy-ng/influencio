@@ -19,7 +19,7 @@ const TALENT_DROPDOWN = [
 const BRAND_DROPDOWN = [
   { label: 'My Dashboard',     icon: LayoutDashboard, href: '/brand-dashboard' },
   { label: 'Analytics',        icon: TrendingUp,      href: '/brand-dashboard?tab=overview' },
-  { label: 'Campaigns',        icon: Briefcase,       href: '/brand-dashboard?tab=orders' },
+  { label: 'Collabs',          icon: Briefcase,       href: '/brand-dashboard?tab=collabs' },
   { label: 'Messages',         icon: Mail,            href: '/brand-dashboard?tab=messages' },
   { label: 'Settings',         icon: Settings,        href: '/brand-dashboard?tab=settings' },
   { label: 'Invite Creators',  icon: UserPlus,        href: '/brand-dashboard?tab=invite' },
@@ -34,10 +34,10 @@ const TALENT_NAV = [
 
 const BRAND_NAV = [
   { label: 'Analytics',      href: '/brand-dashboard?tab=overview' },
-  { label: 'Campaigns',      href: '/brand-dashboard?tab=orders',   notifKey: 'campaigns' },
+  { label: 'Collabs',        href: '/brand-dashboard?tab=collabs',  notifKey: 'collabs' },
   { label: 'Messages',       href: '/brand-dashboard?tab=messages', notifKey: 'messages' },
   { label: 'Invite Creator', href: '/brand-dashboard?tab=invite' },
-  { label: 'Post a Job',     href: '/post-job', isPostJob: true },
+  { label: 'Find a Creator', href: '/marketplace', isCta: true },
 ]
 
 function UserAvatar({ profile, size = 'md' }) {
@@ -200,7 +200,7 @@ export default function Navbar() {
             { label: 'Work with Brands', href: '#pricing', isAnchor: true },
             { label: 'Hire Talents', href: '#talents',      isAnchor: true },
             { label: 'How it Works', href: '#how-it-works', isAnchor: true },
-          ]).map(({ label, href, isAnchor, notifKey, isPostJob }) => (
+          ]).map(({ label, href, isAnchor, notifKey, isCta }) => (
             <li key={label}>
               {isAnchor
                 ? <a href={href}
@@ -210,13 +210,13 @@ export default function Navbar() {
                     onMouseLeave={e => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.8)' }}>
                     {label}
                   </a>
-                : isPostJob
+                : isCta
                   ? <Link to={href}
                       className="inline-flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-full transition-all duration-200"
                       style={{ backgroundColor: 'var(--b-cta)', color: '#fff', boxShadow: '0 2px 12px rgba(250,129,18,0.4)' }}
                       onMouseEnter={e => e.currentTarget.style.backgroundColor = '#e07010'}
                       onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--b-cta)'}>
-                      + Post a Job
+                      + {label}
                     </Link>
                   : <Link to={href}
                       className="relative inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-xl transition-all duration-200"
@@ -454,12 +454,12 @@ export default function Navbar() {
               </div>
 
               {/* Main nav links */}
-              {(userRole === 'brand' ? BRAND_NAV : TALENT_NAV).map(({ label, href, notifKey, isPostJob }) => (
-                isPostJob
+              {(userRole === 'brand' ? BRAND_NAV : TALENT_NAV).map(({ label, href, notifKey, isCta }) => (
+                isCta
                   ? <Link key={label} to={href} onClick={() => setMobileOpen(false)}
                       className="flex items-center justify-center gap-2 font-bold px-4 py-2.5 rounded-xl text-sm mb-1"
                       style={{ backgroundColor: '#FA8112', color: '#fff' }}>
-                      + Post a Job
+                      + {label}
                     </Link>
                   : <Link key={label} to={href} onClick={() => setMobileOpen(false)}
                       className="flex items-center justify-between font-medium px-3 py-2.5 rounded-xl transition-all text-purple-800 hover:bg-purple-100">

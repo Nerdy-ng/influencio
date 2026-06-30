@@ -14,11 +14,9 @@ const LoginPage       = lazy(() => import('./pages/LoginPage'))
 const TalentDashboard = lazy(() => import('./pages/TalentDashboard'))
 const Marketplace     = lazy(() => import('./pages/Marketplace'))
 const TalentProfilePage = lazy(() => import('./pages/TalentProfilePage'))
-const OrderForm       = lazy(() => import('./pages/OrderForm'))
 const BrandDashboard  = lazy(() => import('./pages/BrandDashboard'))
-const PostJob         = lazy(() => import('./pages/PostJob'))
-const JobListings     = lazy(() => import('./pages/JobListings'))
-const JobDetail       = lazy(() => import('./pages/JobDetail'))
+const CollabBriefPage  = lazy(() => import('./pages/CollabBriefPage'))
+const CollabReviewPage = lazy(() => import('./pages/CollabReviewPage'))
 const AdminLogin      = lazy(() => import('./pages/admin/AdminLogin'))
 const AdminPanel      = lazy(() => import('./pages/admin/AdminPanel'))
 const ManagerPanel    = lazy(() => import('./pages/admin/ManagerPanel'))
@@ -181,11 +179,9 @@ export default function App() {
         <Route path="/marketplace"            element={<Marketplace />} />
         <Route path="/creators/:handle"       element={<TalentProfilePage />} />
         <Route path="/marketplace/:handle"    element={<TalentProfilePage />} />
-        <Route path="/order/:packageId"       element={<PrivateRoute><OrderForm /></PrivateRoute>} />
         <Route path="/brand-dashboard"        element={<PrivateRoute><BrandDashboard /></PrivateRoute>} />
-        <Route path="/post-job"               element={<PrivateRoute><PostJob /></PrivateRoute>} />
-        <Route path="/jobs"                   element={<JobListings />} />
-        <Route path="/jobs/:slug"             element={<JobDetail />} />
+        <Route path="/collab/brief"           element={<PrivateRoute><CollabBriefPage /></PrivateRoute>} />
+        <Route path="/collab/review"          element={<PrivateRoute><CollabReviewPage /></PrivateRoute>} />
         <Route path="/admin/login"            element={<AdminLogin />} />
         <Route path="/admin"                  element={<AdminPanel />} />
         <Route path="/admin/manager"          element={<ManagerPanel />} />

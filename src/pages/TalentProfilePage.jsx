@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { Helmet } from 'react-helmet-async'
 import {
   ChevronLeft, MapPin, Star, CheckCircle, Users, Heart,
-  Package, Clock, RefreshCw, Shield, ExternalLink, Zap, MessageCircle, Loader2,
+  RefreshCw, Shield, ExternalLink, Zap, MessageCircle, Loader2,
   BadgeCheck, ThumbsUp, MessageSquare, TrendingUp,
 } from 'lucide-react'
 import { useFavorites } from '../hooks/useFavorites'
@@ -102,48 +102,246 @@ const MOCK_CREATOR = {
     { name: 'TikTok', followers: 72000, engagement: 6.1 },
     { name: 'YouTube', followers: 23000, engagement: 3.2 },
   ],
-  packages: [
-    {
-      _id: 'pkg_1',
-      name: 'Story Feature',
-      platform: 'Instagram',
-      description: 'A dedicated Instagram Stories feature showcasing your product with swipe-up CTA and authentic reaction content.',
-      deliverables: ['3x Instagram Stories', 'Product showcase frame', 'Call-to-action slide', 'Link in bio mention (48hrs)'],
-      deliveryDays: 5,
-      revisions: 2,
-      price: 75000,
-    },
-    {
-      _id: 'pkg_2',
-      name: 'Reel Campaign',
-      platform: 'Instagram',
-      description: 'A high-quality Instagram Reel featuring your brand in a natural, engaging format. Includes trending audio and full post caption.',
-      deliverables: ['1x Instagram Reel (30-60s)', 'Full caption + hashtags', 'Pinned to profile for 7 days', 'Performance report after 7 days'],
-      deliveryDays: 7,
-      revisions: 2,
-      price: 150000,
-    },
-    {
-      _id: 'pkg_3',
-      name: 'TikTok Viral Push',
-      platform: 'TikTok',
-      description: 'A creative TikTok video designed to go viral with trending formats, sounds, and authentic African storytelling.',
-      deliverables: ['1x TikTok video (15-60s)', 'Trending audio/sound selection', 'Engaging caption + hashtags', '2x Story reposts'],
-      deliveryDays: 5,
-      revisions: 1,
-      price: 120000,
-    },
-    {
-      _id: 'pkg_4',
-      name: 'Full Brand Deal',
-      platform: 'Instagram',
-      description: 'Complete brand integration across all platforms. The ultimate package for maximum reach and authentic storytelling.',
-      deliverables: ['1x Instagram Reel', '3x Instagram Stories', '1x TikTok video', '1x YouTube mention (in existing video)', '30-day performance report'],
-      deliveryDays: 14,
-      revisions: 3,
-      price: 350000,
-    },
-  ],
+}
+
+// ── Default rate card (mirrors mobile's CreatorProfileScreen.tsx fallback) ───
+const DEFAULT_CONTENT_TYPES = [
+  { id: 'influencer', label: 'Influencer Post', icon: 'megaphone', color: '#F72585', desc: 'Creator posts on their social channels', enabled: true },
+  { id: 'ugc', label: 'UGC Content', icon: 'camera', color: '#7c3aed', desc: 'Creator delivers content for you to post', enabled: true },
+]
+
+const DEFAULT_DURATIONS = [
+  { id: 'd1', label: 'Up to 30s',   price: 20000  },
+  { id: 'd2', label: '31s – 60s',   price: 35000  },
+  { id: 'd3', label: '1 – 3 mins',  price: 55000  },
+  { id: 'd4', label: '3 – 10 mins', price: 90000  },
+  { id: 'd5', label: '10+ mins',    price: 150000 },
+]
+
+const DEFAULT_PLATFORMS = [
+  { id: 'instagram', label: 'Instagram', color: '#E4405F', enabled: true,  fee: 20000 },
+  { id: 'tiktok',    label: 'TikTok',    color: '#010101', enabled: true,  fee: 15000 },
+  { id: 'youtube',   label: 'YouTube',   color: '#FF0000', enabled: true,  fee: 40000 },
+  { id: 'x',         label: 'X',         color: '#1DA1F2', enabled: false, fee: 10000 },
+  { id: 'facebook',  label: 'Facebook',  color: '#1877F2', enabled: false, fee: 10000 },
+]
+
+const DEFAULT_ADDONS = [
+  { id: 'script', label: 'Script Writing', desc: 'Creator researches & writes the full script', color: '#3b82f6', enabled: true, price: 20000 },
+]
+
+// ── Rate Card ordering widget ─────────────────────────────────────────────────
+function RateCardOrder({ talent, isPreview, navigate }) {
+  const creatorId = talent._id || talent.id
+
+  const [contentTypes, setContentTypes] = useState(DEFAULT_CONTENT_TYPES)
+  const [durationOptions, setDurationOptions] = useState(DEFAULT_DURATIONS)
+  const [platformOptions, setPlatformOptions] = useState(DEFAULT_PLATFORMS.filter(p => p.enabled))
+  const [addonOptions, setAddonOptions] = useState(DEFAULT_ADDONS)
+
+  const [selectedType, setSelectedType] = useState(DEFAULT_CONTENT_TYPES[0].id)
+  const [selectedDuration, setSelectedDuration] = useState(DEFAULT_DURATIONS[0].id)
+  const [selectedPlatforms, setSelectedPlatforms] = useState(['instagram'])
+  const [activeAddons, setActiveAddons] = useState([])
+
+  useEffect(() => {
+    if (!creatorId) return
+    let cancelled = false
+    ;(async () => {
+      const { data } = await supabase
+        .from('rate_cards')
+        .select('*')
+        .eq('creator_id', creatorId)
+        .maybeSingle()
+      if (!data || cancelled) return
+      const types = (data.content_types || []).filter(t => t.enabled)
+      const platforms = (data.platforms || []).filter(p => p.enabled)
+      const addons = (data.addons || []).filter(a => a.enabled)
+      if (types.length) { setContentTypes(types); setSelectedType(types[0].id) }
+      if (data.durations?.length) { setDurationOptions(data.durations); setSelectedDuration(data.durations[0].id) }
+      if (platforms.length) { setPlatformOptions(platforms); setSelectedPlatforms([platforms[0].id]) }
+      setAddonOptions(addons)
+    })()
+    return () => { cancelled = true }
+  }, [creatorId])
+
+  const isInfluencer = selectedType === 'influencer'
+  const durationItem = durationOptions.find(d => d.id === selectedDuration) || durationOptions[0]
+  const addonItems = addonOptions.filter(a => activeAddons.includes(a.id))
+  const prodCost = durationItem.price
+  const postingCost = isInfluencer
+    ? platformOptions.filter(p => selectedPlatforms.includes(p.id)).reduce((s, p) => s + p.fee, 0)
+    : 0
+  const total = prodCost + postingCost + addonItems.reduce((s, a) => s + a.price, 0)
+
+  function togglePlatform(id) {
+    setSelectedPlatforms(prev =>
+      prev.includes(id) ? (prev.length > 1 ? prev.filter(x => x !== id) : prev) : [...prev, id]
+    )
+  }
+
+  function toggleAddon(id) {
+    setActiveAddons(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  }
+
+  function goToCollab() {
+    const typeLabel = contentTypes.find(t => t.id === selectedType)?.label
+    const breakdown = [
+      { label: `Production (${durationItem.label})`, amount: prodCost },
+      ...(isInfluencer
+        ? platformOptions.filter(p => selectedPlatforms.includes(p.id)).map(p => ({ label: `${p.label} posting`, amount: p.fee }))
+        : []),
+      ...addonItems.map(a => ({ label: a.label, amount: a.price })),
+    ]
+    navigate('/collab/brief', {
+      state: {
+        creator: talent,
+        creatorId,
+        contentType: selectedType,
+        total,
+        typeLabel,
+        durationLabel: durationItem.label,
+        platforms: isInfluencer ? platformOptions.filter(p => selectedPlatforms.includes(p.id)).map(p => p.label) : [],
+        breakdown,
+      },
+    })
+  }
+
+  return (
+    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="px-5 py-4 border-b border-gray-100">
+        <h2 className="font-bold text-gray-900">Rate Card</h2>
+      </div>
+
+      <div className="p-5 space-y-5">
+        {/* Content type */}
+        <div>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2.5">What do you need?</p>
+          <div className="grid grid-cols-2 gap-2.5">
+            {contentTypes.map(t => {
+              const active = selectedType === t.id
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setSelectedType(t.id)}
+                  className="text-left rounded-2xl p-3.5 border-2 transition-colors"
+                  style={{ borderColor: active ? t.color : '#f3f4f6', backgroundColor: active ? t.color + '0f' : '#fff' }}
+                >
+                  <p className="text-sm font-bold" style={{ color: active ? t.color : '#1f2937' }}>{t.label}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">{t.desc}</p>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Duration */}
+        <div>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2.5">Video Duration</p>
+          <div className="flex flex-wrap gap-2">
+            {durationOptions.map(d => {
+              const active = selectedDuration === d.id
+              return (
+                <button
+                  key={d.id}
+                  onClick={() => setSelectedDuration(d.id)}
+                  className="px-3.5 py-2 rounded-full text-xs font-semibold border transition-colors"
+                  style={active
+                    ? { backgroundColor: darkPurple, borderColor: darkPurple, color: '#fff' }
+                    : { backgroundColor: '#fff', borderColor: '#e5e7eb', color: '#6b7280' }}
+                >
+                  {d.label} · {formatNGN(d.price)}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Platforms (influencer only) */}
+        {isInfluencer && (
+          <div>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Where should they post?</p>
+            <p className="text-[11px] text-gray-400 mb-2.5">Each platform adds its posting fee on top of production</p>
+            <div className="flex flex-wrap gap-2">
+              {platformOptions.map(p => {
+                const active = selectedPlatforms.includes(p.id)
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => togglePlatform(p.id)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border-2 transition-colors"
+                    style={{ borderColor: active ? p.color : '#f3f4f6', backgroundColor: active ? p.color + '10' : '#fff', color: active ? p.color : '#6b7280' }}
+                  >
+                    {p.label} <span className="font-normal">+{formatNGN(p.fee)}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Add-ons */}
+        {addonOptions.length > 0 && (
+          <div>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2.5">Add-ons</p>
+            <div className="space-y-2">
+              {addonOptions.map(a => {
+                const on = activeAddons.includes(a.id)
+                return (
+                  <button
+                    key={a.id}
+                    onClick={() => toggleAddon(a.id)}
+                    className="w-full flex items-center justify-between gap-3 rounded-2xl border-2 px-3.5 py-3 text-left transition-colors"
+                    style={{ borderColor: on ? (a.color || purple) : '#f3f4f6' }}
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold truncate" style={{ color: on ? (a.color || purple) : '#1f2937' }}>{a.label}</p>
+                      {a.desc && <p className="text-[11px] text-gray-400 truncate">{a.desc}</p>}
+                    </div>
+                    <span className="text-xs font-bold flex-shrink-0" style={{ color: on ? (a.color || purple) : '#9ca3af' }}>+{formatNGN(a.price)}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Price summary */}
+        <div className="rounded-2xl border border-gray-100 p-4 space-y-2" style={{ backgroundColor: '#faf5ff' }}>
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>Production ({durationItem.label})</span>
+            <span className="font-semibold text-gray-700">{formatNGN(prodCost)}</span>
+          </div>
+          {isInfluencer && platformOptions.filter(p => selectedPlatforms.includes(p.id)).map(p => (
+            <div key={p.id} className="flex justify-between text-xs text-gray-500">
+              <span>{p.label} posting</span>
+              <span className="font-semibold text-gray-700">+{formatNGN(p.fee)}</span>
+            </div>
+          ))}
+          {addonItems.map(a => (
+            <div key={a.id} className="flex justify-between text-xs text-gray-500">
+              <span>{a.label}</span>
+              <span className="font-semibold text-gray-700">+{formatNGN(a.price)}</span>
+            </div>
+          ))}
+          <div className="border-t border-purple-100 pt-2 flex justify-between items-center">
+            <span className="text-sm font-extrabold text-gray-900">Total</span>
+            <span className="text-lg font-extrabold" style={{ color: darkPurple }}>{formatNGN(total)}</span>
+          </div>
+        </div>
+
+        {!isPreview && (
+          <button
+            onClick={goToCollab}
+            className="w-full py-3.5 rounded-2xl text-white text-sm font-bold transition-opacity hover:opacity-90"
+            style={{ backgroundColor: darkPurple }}
+          >
+            Collab
+          </button>
+        )}
+      </div>
+    </div>
+  )
 }
 
 // ── Quick Stats sidebar card ─────────────────────────────────────────────────
@@ -519,10 +717,29 @@ export default function TalentProfilePage() {
       }
 
       try {
-        const res = await fetch(`${API}/talents/${profileId}`)
-        if (!res.ok) throw new Error('Not found')
-        const data = await res.json()
-        if (!cancelled) setTalent(data)
+        const { data: p, error: err } = await supabase
+          .from('profiles')
+          .select('*')
+          .or(`handle.eq.${profileId},id.eq.${profileId}`)
+          .maybeSingle()
+        if (err || !p) throw new Error('Not found')
+        if (!cancelled) setTalent({
+          _id: p.id,
+          id: p.id,
+          name: p.full_name,
+          handle: p.handle,
+          location: p.location,
+          bio: p.bio,
+          avatar: p.avatar_url,
+          niches: p.niches || [],
+          tier: p.tier,
+          avgRating: p.avg_rating,
+          totalFollowers: p.total_followers,
+          avgEngagement: p.avg_engagement,
+          completedCampaigns: p.completed_campaigns,
+          availableForHire: p.available_for_hire,
+          platforms: p.platforms || [],
+        })
       } catch {
         if (!cancelled) setTalent(MOCK_CREATOR)
       } finally {
@@ -703,50 +920,8 @@ export default function TalentProfilePage() {
           {/* Left — rate card + chat + reviews */}
           <div className="lg:col-span-2 space-y-5">
 
-            {/* Rate Card — single compact box */}
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                <h2 className="font-bold text-gray-900">Rate Card</h2>
-                <span className="text-xs text-gray-400">Negotiate a custom deal via chat</span>
-              </div>
-              {(c.packages?.length > 0) ? (
-                <div className="divide-y divide-gray-50">
-                  {c.packages.map(pkg => {
-                    const pc = PLATFORM_COLORS[pkg.platform] || { bg: '#6b7280' }
-                    return (
-                      <div key={pkg._id} className="flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
-                        <div className="flex items-center gap-3 min-w-0">
-                          {pkg.platform && (
-                            <span className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0" style={{ backgroundColor: pc.bg }}>{pkg.platform[0]}</span>
-                          )}
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-gray-800 truncate">{pkg.name}</p>
-                            <p className="text-xs text-gray-400">{pkg.deliveryDays}d delivery · {pkg.revisions} revision{pkg.revisions !== 1 ? 's' : ''}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-                          <span className="font-extrabold text-base" style={{ color: pink }}>₦{Number(pkg.price).toLocaleString('en')}</span>
-                          {!isPreview && (
-                            <button
-                              onClick={() => { window.location.href = `/order/${pkg._id}?talentId=${c._id || c.id}` }}
-                              className="text-xs font-bold px-3.5 py-1.5 rounded-xl text-white flex-shrink-0"
-                              style={{ backgroundColor: darkPurple }}
-                            >
-                              Order
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-10 text-center px-6">
-                  <Package className="w-7 h-7 text-gray-200 mb-2" />
-                  <p className="text-sm text-gray-400">No packages listed — send a message to negotiate</p>
-                </div>
-              )}
-            </div>
+            {/* Rate Card */}
+            <RateCardOrder talent={c} isPreview={isPreview} navigate={navigate} />
 
             {/* Inline chat box */}
             {!isPreview && (
@@ -838,78 +1013,6 @@ export default function TalentProfilePage() {
           </div>
         </div>
       </div>
-    </div>
-  )
-}
-
-function PackageCard({ pkg, talent }) {
-  const navigate = useNavigate()
-
-  const handleOrder = () => {
-    navigate(`/order/${pkg._id}?talentId=${talent._id || talent.id}`)
-  }
-
-  const pc = PLATFORM_COLORS[pkg.platform] || { bg: '#6b7280' }
-
-  return (
-    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between mb-3">
-        <div>
-          <h3 className="font-bold text-gray-900">{pkg.name}</h3>
-          {pkg.platform && (
-            <span
-              className="inline-block mt-1 text-xs font-medium px-2.5 py-0.5 rounded-full text-white"
-              style={{ backgroundColor: pc.bg }}
-            >
-              {pkg.platform}
-            </span>
-          )}
-        </div>
-        <div className="text-right">
-          <p className="text-2xl font-extrabold" style={{ color: pink }}>{formatNGN(pkg.price)}</p>
-        </div>
-      </div>
-
-      {pkg.description && (
-        <p className="text-sm text-gray-500 mb-4 leading-relaxed">{pkg.description}</p>
-      )}
-
-      {/* Deliverables */}
-      {pkg.deliverables && pkg.deliverables.length > 0 && (
-        <div className="mb-4">
-          <p className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Deliverables</p>
-          <ul className="space-y-1.5">
-            {pkg.deliverables.map(d => (
-              <li key={d} className="flex items-start gap-2 text-sm text-gray-600">
-                <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />
-                {d}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Delivery + revisions */}
-      <div className="flex items-center gap-4 mb-4 text-sm text-gray-500">
-        <div className="flex items-center gap-1.5">
-          <Clock className="w-3.5 h-3.5" />
-          <span>{pkg.deliveryDays} day{pkg.deliveryDays !== 1 ? 's' : ''} delivery</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <RefreshCw className="w-3.5 h-3.5" />
-          <span>{pkg.revisions} revision{pkg.revisions !== 1 ? 's' : ''}</span>
-        </div>
-      </div>
-
-      <button
-        onClick={handleOrder}
-        className="w-full py-3 rounded-full text-sm font-semibold text-white transition-colors"
-        style={{ backgroundColor: darkPurple }}
-        onMouseEnter={e => e.currentTarget.style.backgroundColor = '#3b0764'}
-        onMouseLeave={e => e.currentTarget.style.backgroundColor = darkPurple}
-      >
-        Order This Package
-      </button>
     </div>
   )
 }

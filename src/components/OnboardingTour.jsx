@@ -89,9 +89,9 @@ const BRAND_STEPS = [
     gradFrom: '#1a1200',
     gradTo: '#0d0030',
     visual: <PostJobVisual />,
-    title: 'Post a Campaign Brief',
-    desc: 'Describe your campaign — niche, platform, budget, deliverables — and let matching creators apply directly to you.',
-    cta: { label: 'Post a Job →', href: '/post-job' },
+    title: 'Hire a Creator Directly',
+    desc: "Pick a creator's content type, duration, and platforms from their rate card, add your campaign brief, and send the offer straight to them.",
+    cta: { label: 'Find a Creator →', href: '/marketplace' },
   },
   {
     id: 'escrow',
@@ -290,11 +290,11 @@ function PostJobVisual() {
   return (
     <div className="flex items-center justify-center h-48">
       <div className="rounded-2xl p-4 w-64 space-y-3" style={{ backgroundColor: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}>
-        <p className="text-white/60 text-[10px] font-semibold uppercase tracking-wide">Campaign Brief</p>
+        <p className="text-white/60 text-[10px] font-semibold uppercase tracking-wide">Rate Card</p>
         {[
-          { label: 'Platform', val: 'Instagram Reels', color: '#FF6B9D' },
-          { label: 'Niche', val: 'Beauty & Skincare', color: '#c084fc' },
-          { label: 'Budget', val: '₦150,000 – ₦300,000', color: '#D4AF37' },
+          { label: 'Content', val: 'Instagram Reel', color: '#FF6B9D' },
+          { label: 'Duration', val: '30 seconds', color: '#c084fc' },
+          { label: 'Production', val: '₦150,000', color: '#D4AF37' },
         ].map(({ label, val, color }) => (
           <div key={label} className="flex items-center justify-between">
             <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{label}</span>
@@ -302,8 +302,8 @@ function PostJobVisual() {
           </div>
         ))}
         <div className="flex items-center justify-between pt-1" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Applications</span>
-          <span className="text-[10px] font-bold" style={{ color: '#22c55e' }}>12 received</span>
+          <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Status</span>
+          <span className="text-[10px] font-bold" style={{ color: '#22c55e' }}>Offer sent</span>
         </div>
       </div>
     </div>

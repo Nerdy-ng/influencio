@@ -13,7 +13,6 @@ import {
   Shield, Lock, KeyRound, AlertTriangle, ShieldCheck, Loader2,
 } from 'lucide-react'
 
-const TALENT_API = 'http://localhost:3001/api'
 import MessagingPanel from '../components/MessagingPanel'
 import { supabase } from '../lib/supabase'
 import InviteTab from '../components/InviteTab'
@@ -184,8 +183,7 @@ const emptyProfile = {
 }
 
 const AVATAR_NAV = [
-  { id: 'jobs',         label: 'Browse Jobs',       icon: Briefcase,      href: '/jobs' },
-  { id: 'applications', label: 'My Applications',   icon: Inbox },
+  { id: 'collabs',      label: 'My Collabs',        icon: Inbox },
   { id: 'analytics',    label: 'Analytics',         icon: TrendingUp },
   { id: 'profile',      label: 'My Profile',        icon: LayoutDashboard },
   { id: 'portfolio',    label: 'Portfolio',          icon: ImagePlus },
@@ -306,7 +304,7 @@ function AvatarMenu({ profile, activeTab, setActiveTab }) {
 
 function Sidebar({ active, setActive, dashLogo }) {
   const nav = [
-    { id: 'jobs',         label: 'Browse Jobs',      icon: Briefcase,      href: '/jobs' },
+    { id: 'collabs',      label: 'My Collabs',       icon: Inbox },
     { id: 'profile',      label: 'My Profile',       icon: LayoutDashboard },
     { id: 'portfolio',    label: 'Portfolio',         icon: ImagePlus },
     { id: 'transactions', label: 'Transactions',      icon: Wallet },
@@ -508,17 +506,6 @@ function EditableField({ label, value, onChange, placeholder, multiline, isEditi
   )
 }
 
-const MOCK_JOBS = [
-  { id: 1, brand: 'GlowLab Skincare',   initials: 'GL', verified: true,  title: 'Instagram Skincare Routine Reel',      budget: '₦350,000', budgetRange: '₦200K–₦500K', platform: 'Instagram', niche: 'Beauty & Skincare',    deadline: '5 days left',  minFollowers: '50K+',  engagement: '4%+', tags: ['Skincare','Reels','UGC'],          accent: '#FF6B9D', featured: true  },
-  { id: 2, brand: 'PeakFit Africa',      initials: 'PF', verified: true,  title: 'YouTube Fitness Transformation Video', budget: '₦980,000', budgetRange: '₦700K–₦1.2M', platform: 'YouTube',   niche: 'Fitness & Health',     deadline: '10 days left', minFollowers: '100K+', engagement: '3%+', tags: ['Fitness','YouTube','Long-form'],    accent: '#a78bfa', featured: false },
-  { id: 3, brand: 'UrbanThread Africa',  initials: 'UT', verified: false, title: 'Fashion Lookbook — Eid Collection',    budget: '₦220,000', budgetRange: '₦150K–₦300K', platform: 'Instagram', niche: 'Fashion & Style',      deadline: '3 days left',  minFollowers: '20K+',  engagement: '5%+', tags: ['Fashion','Eid','Lookbook'],         accent: '#D4AF37', featured: false },
-  { id: 4, brand: 'MindfulBrew Co.',     initials: 'MB', verified: true,  title: 'TikTok Morning Routine Integration',   budget: '₦180,000', budgetRange: '₦100K–₦250K', platform: 'TikTok',    niche: 'Lifestyle & Wellness', deadline: '7 days left',  minFollowers: '30K+',  engagement: '6%+', tags: ['TikTok','Lifestyle','Wellness'],    accent: '#FF6B9D', featured: false },
-  { id: 5, brand: 'SwiftTech Gadgets',   initials: 'ST', verified: true,  title: 'Unboxing & Review — SwiftPad Pro',     budget: '₦1,400,000', budgetRange: '₦1M–₦2M', platform: 'YouTube',   niche: 'Tech & Gaming',        deadline: '14 days left', minFollowers: '200K+', engagement: '3%+', tags: ['Tech','Unboxing','Review'],         accent: '#c084fc', featured: false },
-  { id: 6, brand: 'BiteBliss Foods',     initials: 'BB', verified: false, title: 'Recipe Creation — Afro-Fusion Series', budget: '₦290,000', budgetRange: '₦200K–₦400K', platform: 'Instagram', niche: 'Food & Cooking',       deadline: '8 days left',  minFollowers: '25K+',  engagement: '5%+', tags: ['Food','Recipe','Afro-Fusion'],      accent: '#D4AF37', featured: false },
-  { id: 7, brand: 'Chill Soda Africa',   initials: 'CS', verified: true,  title: 'TikTok Product Launch — Summer Can',   budget: '₦450,000', budgetRange: '₦300K–₦600K', platform: 'TikTok',    niche: 'Entertainment',        deadline: '6 days left',  minFollowers: '80K+',  engagement: '7%+', tags: ['TikTok','FMCG','Viral'],           accent: '#22c55e', featured: false },
-  { id: 8, brand: 'TechHub Africa',      initials: 'TH', verified: true,  title: 'LinkedIn Thought Leadership Post',     budget: '₦120,000', budgetRange: '₦80K–₦200K',  platform: 'LinkedIn',  niche: 'Finance & Business',   deadline: '12 days left', minFollowers: '10K+',  engagement: '3%+', tags: ['LinkedIn','B2B','Thought Leader'], accent: '#3b82f6', featured: false },
-]
-
 function NewUserWelcomeBanner({ completion, setActiveTab }) {
   if (completion >= 40) return null
   return (
@@ -548,107 +535,84 @@ function NewUserWelcomeBanner({ completion, setActiveTab }) {
   )
 }
 
-function JobsTab({ completion = 100, setActiveTab }) {
-  return (
-    <div className="space-y-5">
-      <NewUserWelcomeBanner completion={completion} setActiveTab={setActiveTab} />
-
-      <div className="rounded-3xl p-8 flex flex-col items-center text-center gap-5"
-        style={{ background: 'linear-gradient(135deg, #1a0035 0%, #3d0080 100%)' }}>
-        <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: 'rgba(192,132,252,0.2)' }}>
-          <Briefcase className="w-7 h-7" style={{ color: '#c084fc' }} />
-        </div>
-        <div>
-          <h2 className="text-2xl font-black text-white mb-2">Brand Campaigns</h2>
-          <p className="text-white/50 text-sm max-w-sm">Browse open campaigns posted by brands and apply directly to ones that match your niche and audience.</p>
-        </div>
-        <button
-          onClick={() => {
-            if (completion < 40) {
-              setActiveTab('settings')
-            } else {
-              window.location.href = '/jobs'
-            }
-          }}
-          className="flex items-center gap-2 px-6 py-3 rounded-full font-bold text-white transition-all hover:opacity-90"
-          style={{ backgroundColor: '#c084fc' }}>
-          <Briefcase className="w-4 h-4" /> Browse Jobs
-        </button>
-        {completion < 40 && (
-          <p className="text-white/40 text-xs">Complete your profile first to apply for jobs</p>
-        )}
-      </div>
-    </div>
-  )
+const COLLAB_STATUS = {
+  pending:             { label: 'New Request',  bg: '#fef9c3', color: '#854d0e', icon: Clock },
+  in_progress:         { label: 'In Progress',  bg: '#dbeafe', color: '#1d4ed8', icon: Loader2 },
+  delivered:           { label: 'Delivered',    bg: '#ede9fe', color: '#6d28d9', icon: Upload },
+  revision_requested:  { label: 'Revision Requested', bg: '#fee2e2', color: '#b91c1c', icon: AlertCircle },
+  completed:           { label: 'Completed',    bg: '#dcfce7', color: '#166534', icon: CheckCircle },
+  cancelled:           { label: 'Cancelled',    bg: '#f3f4f6', color: '#6b7280', icon: X },
 }
 
-// ── MyApplicationsTab ─────────────────────────────────────────────────────────
-function MyApplicationsTab({ setActiveTab }) {
-  const [apps, setApps] = useState([])
+function MyCollabsTab({ completion = 100, setActiveTab }) {
+  const [collabs, setCollabs] = useState([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(null)
-  const [deliverablesApp, setDeliverablesApp] = useState(null)
-  const [deliverableFile, setDeliverableFile] = useState(null)
-  const [deliverableNote, setDeliverableNote] = useState('')
+  const [deliverCollab, setDeliverCollab] = useState(null)
+  const [deliverFile, setDeliverFile] = useState(null)
+  const [deliverNote, setDeliverNote] = useState('')
   const [uploading, setUploading] = useState(false)
   const [uploadDone, setUploadDone] = useState(false)
-  const deliverableFileRef = useRef(null)
+  const deliverFileRef = useRef(null)
 
   useEffect(() => {
-    async function fetchApps() {
+    async function fetchCollabs() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
-        const { data } = await supabase
-          .from('applications')
+        const { data: rows } = await supabase
+          .from('collabs')
           .select('*')
-          .eq('talent_id', user.id)
+          .eq('creator_id', user.id)
           .order('created_at', { ascending: false })
-        setApps(data || [])
+
+        const brandIds = [...new Set((rows || []).map(c => c.brand_id))]
+        let brandMap = {}
+        if (brandIds.length > 0) {
+          const { data: brands } = await supabase
+            .from('profiles')
+            .select('id, full_name, company_name, avatar_url')
+            .in('id', brandIds)
+          ;(brands || []).forEach(b => { brandMap[b.id] = b })
+        }
+
+        setCollabs((rows || []).map(c => ({ ...c, brand: brandMap[c.brand_id] || null })))
       } catch {
-        setApps([])
+        setCollabs([])
       } finally {
         setLoading(false)
       }
     }
-    fetchApps()
+    fetchCollabs()
   }, [])
 
   async function uploadDeliverable() {
-    if (!deliverableFile || !deliverablesApp) return
+    if (!deliverFile || !deliverCollab) return
     setUploading(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      const path = `${user.id}/${deliverablesApp.job_id || deliverablesApp.id}/${Date.now()}-${deliverableFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
-      const { error } = await supabase.storage.from('deliverables').upload(path, deliverableFile)
+      const path = `${user.id}/${deliverCollab.id}/${Date.now()}-${deliverFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+      const { error } = await supabase.storage.from('deliverables').upload(path, deliverFile)
       if (error) throw error
       const { data: { publicUrl } } = supabase.storage.from('deliverables').getPublicUrl(path)
-      await supabase.from('deliverables').insert({
-        job_id: deliverablesApp.job_id || null,
-        job_title: deliverablesApp.job_title,
-        talent_id: user.id,
-        brand_id: deliverablesApp.brand_id || null,
-        file_name: deliverableFile.name,
-        file_url: publicUrl,
-        file_size: deliverableFile.size,
-        mime_type: deliverableFile.type,
-        note: deliverableNote.trim() || null,
-      })
+
+      const newFile = { name: deliverFile.name, url: publicUrl, size: deliverFile.size, note: deliverNote.trim() || null, uploaded_at: new Date().toISOString() }
+      const updatedFiles = [...(deliverCollab.delivered_files || []), newFile]
+
+      await supabase.from('collabs')
+        .update({ delivered_files: updatedFiles, status: 'delivered' })
+        .eq('id', deliverCollab.id)
+
+      setCollabs(prev => prev.map(c => c.id === deliverCollab.id ? { ...c, delivered_files: updatedFiles, status: 'delivered' } : c))
       setUploadDone(true)
-      setDeliverableFile(null)
-      setDeliverableNote('')
-      setTimeout(() => { setDeliverablesApp(null); setUploadDone(false) }, 2000)
+      setDeliverFile(null)
+      setDeliverNote('')
+      setTimeout(() => { setDeliverCollab(null); setUploadDone(false) }, 2000)
     } catch {
-      /* show nothing — fail silently for now */
+      /* fail silently for now */
     } finally {
       setUploading(false)
     }
-  }
-
-  const STATUS = {
-    pending:  { label: 'Under Review', bg: '#fef9c3', color: '#854d0e', icon: Clock },
-    accepted: { label: 'Accepted!',    bg: '#dcfce7', color: '#166534', icon: CheckCircle },
-    rejected: { label: 'Not Selected', bg: '#f3f4f6', color: '#6b7280', icon: X },
   }
 
   if (loading) return (
@@ -657,34 +621,33 @@ function MyApplicationsTab({ setActiveTab }) {
     </div>
   )
 
-  if (apps.length === 0) return (
-    <div className="text-center py-20">
-      <Inbox className="w-12 h-12 mx-auto mb-4 opacity-30" style={{ color: purple }} />
-      <p className="font-semibold mb-1" style={{ color: darkPurple }}>No proposals sent yet</p>
-      <p className="text-sm text-gray-400 mb-6">Browse open campaigns and submit your first proposal.</p>
-      <button onClick={() => setActiveTab('jobs')}
-        className="inline-flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-full text-white"
-        style={{ backgroundColor: darkPurple }}>
-        <Briefcase className="w-4 h-4" /> Browse Jobs
-      </button>
+  if (collabs.length === 0) return (
+    <div className="space-y-5">
+      <NewUserWelcomeBanner completion={completion} setActiveTab={setActiveTab} />
+      <div className="text-center py-16">
+        <Inbox className="w-12 h-12 mx-auto mb-4 opacity-30" style={{ color: purple }} />
+        <p className="font-semibold mb-1" style={{ color: darkPurple }}>No collabs yet</p>
+        <p className="text-sm text-gray-400">Brands will be able to hire you directly once your rate card is set up.</p>
+      </div>
     </div>
   )
 
   return (
     <div className="max-w-2xl mx-auto">
+      <NewUserWelcomeBanner completion={completion} setActiveTab={setActiveTab} />
 
-      {/* Deliverables upload modal */}
-      {deliverablesApp && (
+      {/* Deliverable upload modal */}
+      {deliverCollab && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-black text-gray-900 text-lg">Upload Deliverable</h3>
-              <button onClick={() => setDeliverablesApp(null)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setDeliverCollab(null)} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <p className="text-sm text-gray-500 mb-5">
-              For: <span className="font-semibold text-gray-800">{deliverablesApp.job_title || deliverablesApp.jobTitle}</span>
+              For: <span className="font-semibold text-gray-800">{deliverCollab.content_type} — {deliverCollab.brand?.company_name || deliverCollab.brand?.full_name || 'Brand'}</span>
             </p>
 
             {uploadDone ? (
@@ -694,23 +657,23 @@ function MyApplicationsTab({ setActiveTab }) {
               </div>
             ) : (
               <>
-                <input ref={deliverableFileRef} type="file" className="hidden"
-                  onChange={e => setDeliverableFile(e.target.files?.[0])} />
+                <input ref={deliverFileRef} type="file" className="hidden"
+                  onChange={e => setDeliverFile(e.target.files?.[0])} />
 
-                {deliverableFile ? (
+                {deliverFile ? (
                   <div className="flex items-center justify-between p-3 rounded-xl mb-4"
                     style={{ backgroundColor: '#f3e8ff', border: '1px solid #e9d5ff' }}>
                     <div className="flex items-center gap-2 min-w-0">
                       <FileText className="w-4 h-4 flex-shrink-0" style={{ color: purple }} />
-                      <p className="text-sm font-medium text-gray-800 truncate">{deliverableFile.name}</p>
-                      <p className="text-xs text-gray-400 flex-shrink-0">{(deliverableFile.size / (1024*1024)).toFixed(1)} MB</p>
+                      <p className="text-sm font-medium text-gray-800 truncate">{deliverFile.name}</p>
+                      <p className="text-xs text-gray-400 flex-shrink-0">{(deliverFile.size / (1024*1024)).toFixed(1)} MB</p>
                     </div>
-                    <button onClick={() => setDeliverableFile(null)} className="ml-2 text-gray-400 hover:text-red-400">
+                    <button onClick={() => setDeliverFile(null)} className="ml-2 text-gray-400 hover:text-red-400">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
                 ) : (
-                  <div onClick={() => deliverableFileRef.current?.click()}
+                  <div onClick={() => deliverFileRef.current?.click()}
                     className="cursor-pointer rounded-2xl flex flex-col items-center justify-center gap-2 py-8 mb-4 transition-colors"
                     style={{ border: '2px dashed #e9d5ff', backgroundColor: '#f9f5ff' }}>
                     <Upload className="w-7 h-7" style={{ color: purple }} />
@@ -719,11 +682,11 @@ function MyApplicationsTab({ setActiveTab }) {
                   </div>
                 )}
 
-                <textarea value={deliverableNote} onChange={e => setDeliverableNote(e.target.value)}
+                <textarea value={deliverNote} onChange={e => setDeliverNote(e.target.value)}
                   placeholder="Add a note for the brand (optional)..."
                   rows={2} className="w-full rounded-xl border border-gray-200 p-3 text-sm resize-none focus:outline-none mb-4" />
 
-                <button onClick={uploadDeliverable} disabled={!deliverableFile || uploading}
+                <button onClick={uploadDeliverable} disabled={!deliverFile || uploading}
                   className="w-full py-3 rounded-2xl font-bold text-white text-sm disabled:opacity-50 flex items-center justify-center gap-2"
                   style={{ backgroundColor: darkPurple }}>
                   {uploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</> : 'Upload Deliverable'}
@@ -735,22 +698,24 @@ function MyApplicationsTab({ setActiveTab }) {
       )}
 
       <div className="mb-6">
-        <h2 className="text-xl font-black" style={{ color: darkPurple }}>My Proposals</h2>
-        <p className="text-sm text-gray-400 mt-0.5">{apps.length} proposal{apps.length !== 1 ? 's' : ''} submitted</p>
+        <h2 className="text-xl font-black" style={{ color: darkPurple }}>My Collabs</h2>
+        <p className="text-sm text-gray-400 mt-0.5">{collabs.length} collab{collabs.length !== 1 ? 's' : ''}</p>
       </div>
       <div className="space-y-3">
-        {apps.map(app => {
-          const sc = STATUS[app.status] || STATUS.pending
+        {collabs.map(c => {
+          const sc = COLLAB_STATUS[c.status] || COLLAB_STATUS.pending
           const StatusIcon = sc.icon
-          const isOpen = expanded === app.id
+          const isOpen = expanded === c.id
+          const brandName = c.brand?.company_name || c.brand?.full_name || 'Brand'
+          const canDeliver = ['pending', 'in_progress', 'revision_requested'].includes(c.status)
           return (
-            <div key={app.id} className="bg-white rounded-2xl shadow-sm overflow-hidden"
+            <div key={c.id} className="bg-white rounded-2xl shadow-sm overflow-hidden"
               style={{ border: '1.5px solid #e9d5ff' }}>
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div>
-                    <p className="font-bold text-gray-900">{app.job_title || app.jobTitle}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Submitted {new Date(app.created_at || app.createdAt).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                    <p className="font-bold text-gray-900">{c.content_type}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{brandName} · {new Date(c.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                   </div>
                   <span className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0"
                     style={{ backgroundColor: sc.bg, color: sc.color }}>
@@ -758,38 +723,41 @@ function MyApplicationsTab({ setActiveTab }) {
                     {sc.label}
                   </span>
                 </div>
-                {app.rate && (
-                  <p className="text-xs font-semibold mb-2" style={{ color: '#16a34a' }}>
-                    Proposed rate: ₦{Number(app.rate).toLocaleString('en')}
-                  </p>
-                )}
-                <button onClick={() => setExpanded(isOpen ? null : app.id)}
+                <p className="text-xs font-semibold mb-2" style={{ color: '#16a34a' }}>
+                  Payout: ₦{Number(c.creator_payout || 0).toLocaleString('en')}
+                </p>
+                <button onClick={() => setExpanded(isOpen ? null : c.id)}
                   className="text-xs font-semibold flex items-center gap-1"
                   style={{ color: purple }}>
-                  {isOpen ? 'Hide message' : 'View message'}
+                  {isOpen ? 'Hide details' : 'View details'}
                   <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
                 </button>
                 {isOpen && (
-                  <div className="mt-3 p-3 rounded-xl text-sm text-gray-700 leading-relaxed"
+                  <div className="mt-3 p-3 rounded-xl text-sm text-gray-700 leading-relaxed space-y-1"
                     style={{ backgroundColor: '#faf5ff', border: '1px solid #e9d5ff' }}>
-                    {app.message}
+                    <p><span className="font-semibold">Duration:</span> {c.duration_label}</p>
+                    {c.brief?.productName && <p><span className="font-semibold">Product:</span> {c.brief.productName}</p>}
+                    {c.brief?.goal && <p><span className="font-semibold">Goal:</span> {c.brief.goal}</p>}
+                    {c.brief?.instructions && <p><span className="font-semibold">Instructions:</span> {c.brief.instructions}</p>}
+                    {c.brief?.deadline && <p><span className="font-semibold">Deadline:</span> {c.brief.deadline}</p>}
+                    {c.revision_reason && <p><span className="font-semibold">Revision note:</span> {c.revision_reason}</p>}
                   </div>
                 )}
               </div>
-              {app.status === 'accepted' && (
-                <div className="px-4 pb-3 flex gap-2">
-                  <button onClick={() => setActiveTab('messages')}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold"
-                    style={{ backgroundColor: darkPurple, color: 'white' }}>
-                    <Mail className="w-4 h-4" /> Messages
-                  </button>
-                  <button onClick={() => { setDeliverablesApp(app); setDeliverableFile(null); setDeliverableNote(''); setUploadDone(false) }}
+              <div className="px-4 pb-3 flex gap-2">
+                <button onClick={() => setActiveTab('messages')}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold"
+                  style={{ backgroundColor: darkPurple, color: 'white' }}>
+                  <Mail className="w-4 h-4" /> Messages
+                </button>
+                {canDeliver && (
+                  <button onClick={() => { setDeliverCollab(c); setDeliverFile(null); setDeliverNote(''); setUploadDone(false) }}
                     className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold"
                     style={{ backgroundColor: '#f3e8ff', color: purple }}>
                     <Upload className="w-4 h-4" /> Deliverables
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )
         })}
@@ -1111,7 +1079,7 @@ function SecurityCard() {
 
 export default function TalentDashboard() {
   const [searchParams] = useSearchParams()
-  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'jobs')
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'collabs')
   const initialConvId = searchParams.get('conv')
   const [profile, setProfile] = useState(emptyProfile)
   const [dashLogo, setDashLogo] = useState(() => getLogo('dashboard'))
@@ -1442,7 +1410,7 @@ export default function TalentDashboard() {
     setTimeout(() => setSaved(false), 2500)
   }
 
-  const tabs = ['profile', 'applications', 'overview', 'transactions', 'settings', 'support']
+  const tabs = ['profile', 'collabs', 'overview', 'transactions', 'settings', 'support']
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: '#f9f5ff' }}>
@@ -1505,7 +1473,7 @@ export default function TalentDashboard() {
           style={{ backgroundColor: 'rgba(249,245,255,0.95)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #e9d5ff' }}>
           <div>
             <h1 className="font-black text-brand-dark text-lg capitalize">
-              {activeTab === 'jobs' ? 'Browse Jobs' : activeTab === 'profile' ? 'My Profile' : activeTab === 'settings' ? 'Profile Settings' : activeTab === 'portfolio' ? 'Portfolio' : activeTab === 'applications' ? 'My Proposals' : activeTab}
+              {activeTab === 'collabs' ? 'My Collabs' : activeTab === 'profile' ? 'My Profile' : activeTab === 'settings' ? 'Profile Settings' : activeTab === 'portfolio' ? 'Portfolio' : activeTab}
             </h1>
             <p className="text-brand-dark/40 text-xs">Manage your talent presence on Brandior</p>
           </div>
@@ -1546,11 +1514,8 @@ export default function TalentDashboard() {
             ))}
           </div>
 
-          {/* ── JOBS TAB ── */}
-          {activeTab === 'jobs' && <JobsTab completion={completion} setActiveTab={setActiveTab} />}
-
-          {/* ── MY APPLICATIONS TAB ── */}
-          {activeTab === 'applications' && <MyApplicationsTab setActiveTab={setActiveTab} />}
+          {/* ── COLLABS TAB ── */}
+          {activeTab === 'collabs' && <MyCollabsTab completion={completion} setActiveTab={setActiveTab} />}
 
           {/* ── PROFILE TAB ── */}
           {activeTab === 'profile' && (
@@ -2679,9 +2644,9 @@ function TalentAnalyticsTab() {
   if (loading) return <div className="flex items-center justify-center py-20"><div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" /></div>
 
   const pieData = [
-    { name: 'Accepted', value: data.accepted, color: '#16a34a' },
-    { name: 'Pending',  value: data.pending,  color: '#f59e0b' },
-    { name: 'Rejected', value: data.rejected, color: '#ef4444' },
+    { name: 'Completed', value: data.completed, color: '#16a34a' },
+    { name: 'Pending',   value: data.pending,   color: '#f59e0b' },
+    { name: 'Cancelled', value: data.cancelled, color: '#ef4444' },
   ].filter(d => d.value > 0)
 
   return (
@@ -2691,7 +2656,7 @@ function TalentAnalyticsTab() {
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Total Applied',  value: data.totalApps,                              color: purple },
+          { label: 'Total Collabs',  value: data.totalCollabs,                           color: purple },
           { label: 'Success Rate',   value: `${data.successRate}%`,                      color: '#16a34a' },
           { label: 'Avg Rating',     value: data.avgRating ? `${data.avgRating}★` : '—', color: '#D4AF37' },
           { label: 'Reviews',        value: data.totalReviews,                            color: '#0ea5e9' },
@@ -2703,12 +2668,12 @@ function TalentAnalyticsTab() {
         ))}
       </div>
 
-      {/* Applications over time */}
+      {/* Collabs over time */}
       <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
-        <p className="font-bold text-gray-900 mb-4">Applications — Last 30 Days</p>
-        {data.dailyApps.some(d => d.count > 0) ? (
+        <p className="font-bold text-gray-900 mb-4">Collabs — Last 30 Days</p>
+        {data.dailyCollabs.some(d => d.count > 0) ? (
           <ResponsiveContainer width="100%" height={180}>
-            <LineChart data={data.dailyApps}>
+            <LineChart data={data.dailyCollabs}>
               <XAxis dataKey="date" tick={{ fontSize: 10 }} interval={4} />
               <YAxis allowDecimals={false} tick={{ fontSize: 10 }} width={24} />
               <Tooltip />
@@ -2716,13 +2681,13 @@ function TalentAnalyticsTab() {
             </LineChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex items-center justify-center h-28 text-sm text-gray-400">No applications yet</div>
+          <div className="flex items-center justify-center h-28 text-sm text-gray-400">No collabs yet</div>
         )}
       </div>
 
       {/* Status breakdown */}
       <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
-        <p className="font-bold text-gray-900 mb-4">Application Status</p>
+        <p className="font-bold text-gray-900 mb-4">Collab Status</p>
         {pieData.length > 0 ? (
           <div className="flex items-center gap-6">
             <ResponsiveContainer width={120} height={120}>
@@ -2743,7 +2708,7 @@ function TalentAnalyticsTab() {
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-28 text-sm text-gray-400">No applications yet</div>
+          <div className="flex items-center justify-center h-28 text-sm text-gray-400">No collabs yet</div>
         )}
       </div>
     </div>

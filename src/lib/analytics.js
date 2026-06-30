@@ -23,75 +23,83 @@ export async function getDailyCount(table, dateCol = 'created_at', days = 30, fi
   return Object.entries(map).map(([date, count]) => ({ date: date.slice(5), count })) // "MM-DD"
 }
 
-export async function getBrandAnalytics(brandId) {
-  const [appsRes, jobsRes, reviewsRes] = await Promise.all([
-    supabase.from('applications').select('*').eq('brand_id', brandId),
-    supabase.from('jobs').select('*').eq('brand_id', brandId),
-    supabase.from('reviews').select('rating').eq('reviewer_id', brandId),
-  ])
-  const apps = appsRes.data || []
-  const jobs = jobsRes.data || []
-  const reviews = reviewsRes.data || []
-
-  const accepted = apps.filter(a => a.status === 'accepted').length
-  const rejected = apps.filter(a => a.status === 'rejected').length
-  const pending = apps.filter(a => a.status === 'pending').length
-  const avgRating = reviews.length
-    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
-    : null
-
-  // Applications per job
-  const jobMap = {}
-  jobs.forEach(j => { jobMap[j.id] = { title: j.title, count: 0 } })
-  apps.forEach(a => { if (jobMap[a.job_id]) jobMap[a.job_id].count++ })
-  const appsPerJob = Object.values(jobMap).sort((a, b) => b.count - a.count).slice(0, 5)
-
-  // Daily applications last 30 days
-  const since = new Date(); since.setDate(since.getDate() - 30)
-  const recentApps = apps.filter(a => new Date(a.created_at) >= since)
+function dailyCountFromRows(rows, dateCol = 'created_at', days = 30) {
+  const since = new Date(); since.setDate(since.getDate() - days)
+  const recent = rows.filter(r => new Date(r[dateCol]) >= since)
   const dayMap = {}
-  for (let i = 29; i >= 0; i--) {
+  for (let i = days - 1; i >= 0; i--) {
     const d = new Date(); d.setDate(d.getDate() - i)
     dayMap[d.toISOString().slice(0, 10)] = 0
   }
-  recentApps.forEach(a => {
-    const day = new Date(a.created_at).toISOString().slice(0, 10)
+  recent.forEach(r => {
+    const day = new Date(r[dateCol]).toISOString().slice(0, 10)
     if (dayMap[day] !== undefined) dayMap[day]++
   })
-  const dailyApps = Object.entries(dayMap).map(([date, count]) => ({ date: date.slice(5), count }))
+  return Object.entries(dayMap).map(([date, count]) => ({ date: date.slice(5), count }))
+}
 
-  return { totalApps: apps.length, accepted, rejected, pending, totalJobs: jobs.length, avgRating, appsPerJob, dailyApps }
+export async function getBrandAnalytics(brandId) {
+  const [collabsRes, reviewsRes] = await Promise.all([
+    supabase.from('collabs').select('*').eq('brand_id', brandId),
+    supabase.from('reviews').select('rating').eq('reviewer_id', brandId),
+  ])
+  const collabs = collabsRes.data || []
+  const reviews = reviewsRes.data || []
+
+  const completed = collabs.filter(c => c.status === 'completed').length
+  const cancelled = collabs.filter(c => c.status === 'cancelled').length
+  const pending = collabs.filter(c => c.status === 'pending').length
+  const avgRating = reviews.length
+    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+    : null
+  const totalSpent = collabs
+    .filter(c => ['paid', 'released'].includes(c.payment_status))
+    .reduce((s, c) => s + (c.total_amount || 0), 0)
+
+  // Top creators by number of collabs
+  const creatorIds = [...new Set(collabs.map(c => c.creator_id))]
+  let topCreators = []
+  if (creatorIds.length > 0) {
+    const { data: creators } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .in('id', creatorIds)
+    const nameMap = {}
+    ;(creators || []).forEach(c => { nameMap[c.id] = c.full_name })
+    const countMap = {}
+    collabs.forEach(c => {
+      const name = nameMap[c.creator_id] || 'Creator'
+      countMap[c.creator_id] = countMap[c.creator_id] || { title: name, count: 0 }
+      countMap[c.creator_id].count++
+    })
+    topCreators = Object.values(countMap).sort((a, b) => b.count - a.count).slice(0, 5)
+  }
+
+  const dailyCollabs = dailyCountFromRows(collabs, 'created_at', 30)
+
+  return { totalCollabs: collabs.length, completed, cancelled, pending, totalSpent, avgRating, topCreators, dailyCollabs }
 }
 
 export async function getTalentAnalytics(talentId) {
-  const [appsRes, reviewsRes] = await Promise.all([
-    supabase.from('applications').select('*').eq('talent_id', talentId),
+  const [collabsRes, reviewsRes] = await Promise.all([
+    supabase.from('collabs').select('*').eq('creator_id', talentId),
     supabase.from('reviews').select('*').eq('talent_id', talentId),
   ])
-  const apps = appsRes.data || []
+  const collabs = collabsRes.data || []
   const reviews = reviewsRes.data || []
 
-  const accepted = apps.filter(a => a.status === 'accepted').length
-  const rejected = apps.filter(a => a.status === 'rejected').length
-  const pending = apps.filter(a => a.status === 'pending').length
-  const successRate = apps.length ? Math.round((accepted / apps.length) * 100) : 0
+  const completed = collabs.filter(c => c.status === 'completed').length
+  const cancelled = collabs.filter(c => c.status === 'cancelled').length
+  const pending = collabs.filter(c => c.status === 'pending').length
+  const successRate = collabs.length ? Math.round((completed / collabs.length) * 100) : 0
   const avgRating = reviews.length
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
     : null
+  const totalEarned = collabs
+    .filter(c => c.payment_status === 'released')
+    .reduce((s, c) => s + (c.creator_payout || 0), 0)
 
-  // Daily applications last 30 days
-  const since = new Date(); since.setDate(since.getDate() - 30)
-  const recentApps = apps.filter(a => new Date(a.created_at) >= since)
-  const dayMap = {}
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i)
-    dayMap[d.toISOString().slice(0, 10)] = 0
-  }
-  recentApps.forEach(a => {
-    const day = new Date(a.created_at).toISOString().slice(0, 10)
-    if (dayMap[day] !== undefined) dayMap[day]++
-  })
-  const dailyApps = Object.entries(dayMap).map(([date, count]) => ({ date: date.slice(5), count }))
+  const dailyCollabs = dailyCountFromRows(collabs, 'created_at', 30)
 
-  return { totalApps: apps.length, accepted, rejected, pending, successRate, avgRating, totalReviews: reviews.length, dailyApps }
+  return { totalCollabs: collabs.length, completed, cancelled, pending, successRate, avgRating, totalReviews: reviews.length, totalEarned, dailyCollabs }
 }

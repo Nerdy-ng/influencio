@@ -96,13 +96,6 @@ export const CMS_DEFAULTS = {
       search_placeholder: 'Search creators by name, niche or location…',
     },
   },
-  jobs: {
-    header: {
-      title: 'Brand Campaigns',
-      subtitle: 'Discover paid collaborations posted by brands looking for creators like you.',
-      badge: 'Job Board',
-    },
-  },
   global: {
     navbar: {
       logo_text: 'Brandior',
