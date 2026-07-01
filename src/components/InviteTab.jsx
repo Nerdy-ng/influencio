@@ -1,26 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
-  Link2, Copy, CheckCheck, Mail, MessageCircle, Twitter,
-  Users, Send, Clock, CheckCircle, Gift, UserPlus,
+  Link2, Copy, CheckCheck,
+  Users, Send, Clock, CheckCircle, Gift, UserPlus, Loader2,
 } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
-const pink    = '#FF6B9D'
-const purple  = '#7c3aed'
+const purple     = '#7c3aed'
 const darkPurple = '#4c1d95'
 
-// Mock sent invites
-const MOCK_INVITES_TALENT = [
-  { id: 1, email: 'marketing@glowupng.com',  name: 'GlowUp Cosmetics',  status: 'accepted', sentAt: new Date(Date.now() - 86400000 * 2).toISOString() },
-  { id: 2, email: 'hello@technocorp.africa',  name: 'TechnoCorp Africa',  status: 'pending',  sentAt: new Date(Date.now() - 86400000 * 5).toISOString() },
-  { id: 3, email: 'brand@fashionhouseafrica.com',name: 'Fashion House Africa',status: 'accepted', sentAt: new Date(Date.now() - 86400000 * 9).toISOString() },
-]
-
-const MOCK_INVITES_BRAND = [
-  { id: 1, email: 'adaeze@gmail.com',    name: 'Adaeze Okafor',  status: 'accepted', sentAt: new Date(Date.now() - 86400000 * 1).toISOString() },
-  { id: 2, email: 'chidi.tv@gmail.com',  name: 'Chidi Nwosu',    status: 'pending',  sentAt: new Date(Date.now() - 86400000 * 4).toISOString() },
-  { id: 3, email: 'fatimahlooks@ng.co',  name: 'Fatimah Looks',  status: 'declined', sentAt: new Date(Date.now() - 86400000 * 7).toISOString() },
-  { id: 4, email: 'sola.create@gmail.com',name: 'Sola Adesanya', status: 'accepted', sentAt: new Date(Date.now() - 86400000 * 12).toISOString() },
-]
+const AVATAR_COLORS = ['#F72585','#7c3aed','#FA8112','#10b981','#38bdf8','#f59e0b','#c084fc']
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -38,16 +26,56 @@ const STATUS_CFG = {
 
 export default function InviteTab({ userType }) {
   const isTalent = userType === 'talent'
-  const refId    = isTalent ? 'talent_001' : 'brand_demo'
-  const role     = isTalent ? 'brand' : 'talent'
-  const inviteLink = `https://brandiór.co/join?ref=${refId}&role=${role}`
+
+  const [referralCode, setReferralCode] = useState('')
+  const [referrals, setReferrals]       = useState([])
+  const [loadingRef, setLoadingRef]     = useState(true)
 
   const [copied, setCopied]     = useState(false)
   const [email, setEmail]       = useState('')
   const [name, setName]         = useState('')
   const [sending, setSending]   = useState(false)
   const [sent, setSent]         = useState(false)
-  const [invites, setInvites]   = useState(isTalent ? MOCK_INVITES_TALENT : MOCK_INVITES_BRAND)
+
+  useEffect(() => {
+    ;(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoadingRef(false); return }
+
+      // Load or generate referral code
+      let { data: prof } = await supabase.from('profiles').select('referral_code').eq('id', user.id).single()
+      let code = prof?.referral_code
+      if (!code) {
+        const prefix = isTalent ? 'CR' : 'BR'
+        code = `BRANDIOR-${prefix}-${user.id.replace(/-/g,'').slice(0,6).toUpperCase()}`
+        await supabase.from('profiles').update({ referral_code: code }).eq('id', user.id)
+      }
+      setReferralCode(code)
+
+      // Load referral history
+      const { data: refs } = await supabase
+        .from('referrals')
+        .select('*')
+        .eq('referrer_id', user.id)
+        .order('created_at', { ascending: false })
+      if (refs) {
+        setReferrals(refs.map((r, i) => ({
+          id: r.id,
+          name: r.referee_name || 'New user',
+          initials: r.referee_initials || (r.referee_name?.substring(0, 2).toUpperCase() ?? 'NU'),
+          color: r.referee_color || AVATAR_COLORS[i % AVATAR_COLORS.length],
+          date: new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          status: r.status === 'earned' ? 'Earned' : 'Pending',
+          amount: `₦${r.amount.toLocaleString()}`,
+        })))
+      }
+      setLoadingRef(false)
+    })()
+  }, [isTalent])
+
+  const inviteLink = referralCode
+    ? `https://app.brandior.africa/signup?ref=${referralCode}`
+    : ''
 
   function copyLink() {
     navigator.clipboard.writeText(inviteLink).catch(() => {})
@@ -60,13 +88,6 @@ export default function InviteTab({ userType }) {
     if (!email.trim()) return
     setSending(true)
     await new Promise(r => setTimeout(r, 900))
-    setInvites(prev => [{
-      id: Date.now(),
-      email: email.trim(),
-      name: name.trim() || email.trim(),
-      status: 'pending',
-      sentAt: new Date().toISOString(),
-    }, ...prev])
     setEmail('')
     setName('')
     setSending(false)
@@ -74,8 +95,10 @@ export default function InviteTab({ userType }) {
     setTimeout(() => setSent(false), 2500)
   }
 
-  const accepted = invites.filter(i => i.status === 'accepted').length
-  const pending  = invites.filter(i => i.status === 'pending').length
+  const earned  = referrals.filter(r => r.status === 'Earned').length
+  const pending = referrals.filter(r => r.status === 'Pending').length
+  const totalEarned  = referrals.filter(r => r.status === 'Earned').reduce((s, r) => s + parseFloat(r.amount.replace(/[₦,]/g, '')), 0)
+  const totalPending = referrals.filter(r => r.status === 'Pending').reduce((s, r) => s + parseFloat(r.amount.replace(/[₦,]/g, '')), 0)
 
   const whatsappText = isTalent
     ? `Hi! I'm a content creator on Brandior, Africa's top talent marketplace. I'd love to work with your brand 🚀 Join here: ${inviteLink}`
@@ -109,26 +132,63 @@ export default function InviteTab({ userType }) {
               </p>
             </div>
           </div>
+          {/* Reward tiers */}
+          <div className="flex gap-3 mt-4 bg-white/10 rounded-2xl p-3">
+            <div className="flex-1 flex items-center gap-2">
+              <UserPlus className="w-3.5 h-3.5 text-white/70 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-black text-white">₦2,500</p>
+                <p className="text-[10px] text-white/60">Creator joins</p>
+              </div>
+            </div>
+            <div className="w-px bg-white/20" />
+            <div className="flex-1 flex items-center gap-2">
+              <Users className="w-3.5 h-3.5 text-white/70 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-black text-white">₦5,000</p>
+                <p className="text-[10px] text-white/60">Brand joins</p>
+              </div>
+            </div>
+          </div>
           {/* Stats */}
-          <div className="flex gap-4 mt-4">
-            <div className="bg-white/10 rounded-2xl px-4 py-2.5 text-center">
-              <p className="text-xl font-extrabold">{invites.length}</p>
-              <p className="text-[11px] text-white/60">Invited</p>
+          <div className="flex gap-3 mt-3">
+            <div className="bg-white/10 rounded-xl px-4 py-2.5 text-center flex-1">
+              <p className="text-xl font-extrabold">{referrals.length}</p>
+              <p className="text-[11px] text-white/60">Referred</p>
             </div>
-            <div className="bg-white/10 rounded-2xl px-4 py-2.5 text-center">
-              <p className="text-xl font-extrabold">{accepted}</p>
-              <p className="text-[11px] text-white/60">Joined</p>
+            <div className="bg-white/10 rounded-xl px-4 py-2.5 text-center flex-1">
+              <p className="text-xl font-extrabold" style={{ color: '#86efac' }}>₦{totalEarned.toLocaleString()}</p>
+              <p className="text-[11px] text-white/60">Earned</p>
             </div>
-            <div className="bg-white/10 rounded-2xl px-4 py-2.5 text-center">
-              <p className="text-xl font-extrabold">{pending}</p>
+            <div className="bg-white/10 rounded-xl px-4 py-2.5 text-center flex-1">
+              <p className="text-xl font-extrabold" style={{ color: '#fcd34d' }}>₦{totalPending.toLocaleString()}</p>
               <p className="text-[11px] text-white/60">Pending</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Invite link */}
+      {/* Invite link + referral code */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        {loadingRef ? (
+          <div className="flex items-center gap-2 py-3 text-gray-400 text-sm">
+            <Loader2 className="w-4 h-4 animate-spin" /> Loading your referral code…
+          </div>
+        ) : (
+          <>
+            {/* Referral code */}
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Your referral code</p>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex-1 px-4 py-2.5 rounded-xl text-sm font-mono font-bold tracking-widest text-center"
+                style={{ backgroundColor: '#f9f5ff', border: '1px solid #e9d5ff', color: darkPurple }}>
+                {referralCode}
+              </div>
+              <button onClick={() => { navigator.clipboard.writeText(referralCode).catch(() => {}); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
+                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold text-white flex-shrink-0 transition-all"
+                style={{ backgroundColor: copied ? '#22c55e' : purple }}>
+                {copied ? <><CheckCheck className="w-3.5 h-3.5" /> Copied</> : <><Copy className="w-3.5 h-3.5" /> Copy</>}
+              </button>
+            </div>
         <p className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
           <Link2 className="w-4 h-4" style={{ color: purple }} />
           Your Invite Link
@@ -193,6 +253,8 @@ export default function InviteTab({ userType }) {
             <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
           </a>
         </div>
+          </>
+        )}
       </div>
 
       {/* Direct invite form */}
@@ -242,42 +304,45 @@ export default function InviteTab({ userType }) {
         </form>
       </div>
 
-      {/* Invite history */}
-      {invites.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-            <p className="font-bold text-gray-800 text-sm flex items-center gap-2">
-              <Users className="w-4 h-4" style={{ color: purple }} />
-              Invite History
-            </p>
-            <span className="text-xs text-gray-400">{invites.length} sent</span>
-          </div>
-          <div className="divide-y divide-gray-50">
-            {invites.map(inv => {
-              const cfg = STATUS_CFG[inv.status] || STATUS_CFG.pending
-              return (
-                <div key={inv.id} className="flex items-center gap-3 px-5 py-3.5">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                    style={{ backgroundColor: darkPurple }}>
-                    {(inv.name || inv.email)[0].toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-800 truncate">{inv.name || inv.email}</p>
-                    <p className="text-xs text-gray-400 truncate">{inv.email}</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                      style={{ backgroundColor: cfg.bg, color: cfg.color }}>
-                      {cfg.label}
-                    </span>
-                    <span className="text-[10px] text-gray-400">{timeAgo(inv.sentAt)}</span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+      {/* Referral history */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <p className="font-bold text-gray-800 text-sm flex items-center gap-2">
+            <Users className="w-4 h-4" style={{ color: purple }} />
+            Your Referrals
+          </p>
+          <span className="text-xs text-gray-400">{referrals.length} total</span>
         </div>
-      )}
+        {referrals.length === 0 ? (
+          <div className="px-5 py-8 text-center">
+            <p className="text-sm text-gray-400 font-medium">No referrals yet — share your code to start earning!</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {referrals.map(r => (
+              <div key={r.id} className="flex items-center gap-3 px-5 py-3.5">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                  style={{ backgroundColor: r.color }}>
+                  {r.initials}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-800 truncate">{r.name}</p>
+                  <p className="text-xs text-gray-400">Joined {r.date}</p>
+                </div>
+                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                  <span className="text-sm font-bold" style={{ color: r.status === 'Earned' ? '#16a34a' : '#b45309' }}>{r.amount}</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: r.status === 'Earned' ? '#dcfce7' : '#fef9c3', color: r.status === 'Earned' ? '#15803d' : '#92400e' }}>
+                    {r.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <p className="text-xs text-gray-400 text-center">Referral rewards are credited once your referred user completes their first collab. Subject to Brandior's referral terms.</p>
     </div>
   )
 }

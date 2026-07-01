@@ -125,5 +125,9 @@ alter table profiles add column if not exists owner_name text;
 alter table profiles add column if not exists industry text;
 alter table profiles add column if not exists profile_complete boolean not null default false;
 
+-- Payout bank accounts stored as jsonb array on the creator's profile row.
+-- Each element: { id, bankName, accountNumber, accountName, isDefault }
+alter table profiles add column if not exists payout_accounts jsonb not null default '[]'::jsonb;
+
 -- In case collabs was created before revision_reason existed.
 alter table collabs add column if not exists revision_reason text;

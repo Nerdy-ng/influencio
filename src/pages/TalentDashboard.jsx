@@ -189,11 +189,12 @@ const AVATAR_NAV = [
   { id: 'rate-card',    label: 'Rate Card',          icon: CreditCard },
   { id: 'profile',      label: 'My Profile',        icon: LayoutDashboard },
   { id: 'portfolio',    label: 'Portfolio',          icon: ImagePlus },
-  { id: 'transactions', label: 'Transactions',       icon: Wallet },
-  { id: 'messages',     label: 'Messages',           icon: Mail },
-  { id: 'settings',     label: 'Profile Settings',   icon: Settings },
-  { id: 'invite',       label: 'Invite Brands',      icon: UserPlus },
-  { id: 'support',      label: 'Support',            icon: HelpCircle },
+  { id: 'transactions',    label: 'Transactions',       icon: Wallet },
+  { id: 'payout-settings', label: 'Payout Settings',    icon: Building2 },
+  { id: 'messages',        label: 'Messages',           icon: Mail },
+  { id: 'settings',        label: 'Profile Settings',   icon: Settings },
+  { id: 'invite',          label: 'Invite Brands',      icon: UserPlus },
+  { id: 'support',         label: 'Support',            icon: HelpCircle },
 ]
 
 function AvatarMenu({ profile, activeTab, setActiveTab }) {
@@ -311,11 +312,12 @@ function Sidebar({ active, setActive, dashLogo }) {
     { id: 'rate-card',    label: 'Rate Card',         icon: CreditCard },
     { id: 'profile',      label: 'My Profile',       icon: LayoutDashboard },
     { id: 'portfolio',    label: 'Portfolio',         icon: ImagePlus },
-    { id: 'transactions', label: 'Transactions',      icon: Wallet },
-    { id: 'messages',     label: 'Messages',          icon: Mail },
-    { id: 'settings',     label: 'Profile Settings',  icon: Settings },
-    { id: 'invite',       label: 'Invite Brands',     icon: UserPlus },
-    { id: 'support',      label: 'Support',           icon: HelpCircle },
+    { id: 'transactions',    label: 'Transactions',      icon: Wallet },
+    { id: 'payout-settings', label: 'Payout Settings',   icon: Building2 },
+    { id: 'messages',        label: 'Messages',          icon: Mail },
+    { id: 'settings',        label: 'Profile Settings',  icon: Settings },
+    { id: 'invite',          label: 'Invite Brands',     icon: UserPlus },
+    { id: 'support',         label: 'Support',           icon: HelpCircle },
   ]
   return (
     <aside className="hidden lg:flex flex-col w-60 flex-shrink-0 h-screen sticky top-0 overflow-y-auto py-8 px-4"
@@ -2678,6 +2680,9 @@ export default function TalentDashboard() {
           {/* ── RATE CARD TAB ── */}
           {activeTab === 'rate-card' && <RateCardTab />}
 
+          {/* ── PAYOUT SETTINGS TAB ── */}
+          {activeTab === 'payout-settings' && <PayoutSettingsTab />}
+
         </div>
       </main>
     </div>
@@ -2771,19 +2776,18 @@ function TalentAnalyticsTab() {
   )
 }
 
-// status: 'wip' | 'in-review' | 'available' | 'withdrawn'
-const mockTransactions = [
-  { id: 'TXN-0044', date: 'Mar 23, 2026', type: 'credit', desc: 'Campaign Funded — Chill Soda Africa',       amount: 18000, status: 'wip'       },
-  { id: 'TXN-0043', date: 'Mar 21, 2026', type: 'credit', desc: 'Campaign Funded — TechHub Africa',          amount: 25000, status: 'wip'       },
-  { id: 'TXN-0042', date: 'Mar 19, 2026', type: 'credit', desc: 'Campaign Submitted — BeautyBrand Co.',      amount: 22000, status: 'in-review' },
-  { id: 'TXN-0041', date: 'Mar 17, 2026', type: 'credit', desc: 'Campaign Submitted — Konga Flash Sale',     amount: 12000, status: 'in-review' },
-  { id: 'TXN-0040', date: 'Mar 14, 2026', type: 'credit', desc: 'Campaign Approved — African Fashion Week',  amount: 30000, status: 'available' },
-  { id: 'TXN-0039', date: 'Mar 11, 2026', type: 'credit', desc: 'Campaign Approved — AfriTech Summit Bonus', amount: 15200, status: 'available' },
-  { id: 'TXN-0038', date: 'Mar 08, 2026', type: 'debit',  desc: 'Withdrawal — GTBank ****4921',              amount: 20000, status: 'withdrawn' },
-  { id: 'TXN-0037', date: 'Mar 03, 2026', type: 'credit', desc: 'Campaign Approved — PalmOil Kitchen',       amount: 8000,  status: 'available' },
-  { id: 'TXN-0036', date: 'Feb 25, 2026', type: 'debit',  desc: 'Withdrawal — GTBank ****4921',              amount: 15000, status: 'withdrawn' },
-  { id: 'TXN-0035', date: 'Feb 20, 2026', type: 'credit', desc: 'Campaign Approved — Jumia Africa',          amount: 10000, status: 'available' },
-]
+function mapCollabToTx(c) {
+  const brandName = c.brand?.company_name || c.brand?.full_name || 'Brand'
+  const label = c.content_type ? `${c.content_type} — ${brandName}` : `Collab — ${brandName}`
+  const date = new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const short = c.id.replace(/-/g, '').slice(-6).toUpperCase()
+  let status = 'wip'
+  if (c.payment_status === 'released' || c.status === 'completed') status = 'available'
+  else if (c.status === 'delivered' || c.status === 'revision_requested') status = 'in-review'
+  else if (c.status === 'in_progress') status = 'wip'
+  else if (c.status === 'cancelled') status = 'withdrawn'
+  return { id: `C-${short}`, date, type: 'credit', desc: label, amount: c.creator_payout || 0, status }
+}
 
 const TX_STATUS = {
   'wip':       { label: 'Work in Progress', color: '#0a0a0a', bg: '#0a0a0a08', dot: '#0a0a0a' },
@@ -2802,10 +2806,27 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
   const [withdrawStep, setWithdrawStep] = useState('form') // 'form' | 'confirm' | 'success'
   const [processing, setProcessing] = useState(false)
   const [filter, setFilter] = useState('all')
+  const [transactions, setTransactions] = useState([])
+  const [txLoading, setTxLoading] = useState(true)
 
-  const wipTotal      = mockTransactions.filter(t => t.status === 'wip').reduce((s, t) => s + t.amount, 0)
-  const reviewTotal   = mockTransactions.filter(t => t.status === 'in-review').reduce((s, t) => s + t.amount, 0)
-  const availableTotal = mockTransactions.filter(t => t.status === 'available').reduce((s, t) => s + t.amount, 0)
+  useEffect(() => {
+    ;(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setTxLoading(false); return }
+      const { data } = await supabase
+        .from('collabs')
+        .select('id, creator_payout, status, payment_status, content_type, created_at, brand:profiles!brand_id(company_name, full_name)')
+        .eq('creator_id', user.id)
+        .neq('payment_status', 'unpaid')
+        .order('created_at', { ascending: false })
+      if (data) setTransactions(data.map(mapCollabToTx))
+      setTxLoading(false)
+    })()
+  }, [])
+
+  const wipTotal       = transactions.filter(t => t.status === 'wip').reduce((s, t) => s + t.amount, 0)
+  const reviewTotal    = transactions.filter(t => t.status === 'in-review').reduce((s, t) => s + t.amount, 0)
+  const availableTotal = transactions.filter(t => t.status === 'available').reduce((s, t) => s + t.amount, 0)
 
   function handleWithdraw(e) {
     e.preventDefault()
@@ -2823,7 +2844,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
     setWithdrawForm({ amount: '', bank: '', accountNumber: '', accountName: '' })
   }
 
-  const filtered = filter === 'all' ? mockTransactions : mockTransactions.filter(t => t.status === filter)
+  const filtered = filter === 'all' ? transactions : transactions.filter(t => t.status === filter)
 
   return (
     <div className="space-y-5">
@@ -2868,7 +2889,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
             key: 'withdrawn',
             label: 'Withdrawn',
             sub: 'Already paid out',
-            value: mockTransactions.filter(t => t.status === 'withdrawn').reduce((s, t) => s + t.amount, 0),
+            value: transactions.filter(t => t.status === 'withdrawn').reduce((s, t) => s + t.amount, 0),
             icon: ArrowUpRight,
             color: '#9ca3af',
             bg: '#9ca3af0d',
@@ -2965,7 +2986,16 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
         </div>
 
         <div className="space-y-2">
-          {filtered.map(tx => {
+          {txLoading ? (
+            <div className="flex items-center justify-center py-10 gap-2 text-brand-dark/30">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span className="text-sm">Loading transactions…</span>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-10 text-brand-dark/30 text-sm">
+              {transactions.length === 0 ? 'No transactions yet — complete a collab to earn.' : 'No transactions in this category.'}
+            </div>
+          ) : filtered.map(tx => {
             const s = TX_STATUS[tx.status]
             return (
               <div key={tx.id} className="flex items-center gap-4 p-4 rounded-2xl transition-colors hover:bg-[#f9f5ff]"
@@ -3801,6 +3831,499 @@ function RCSection({ label, hint, children }) {
       <p className="text-sm font-black mb-0.5" style={{ color: darkPurple }}>{label}</p>
       <p className="text-xs text-gray-400 mb-3">{hint}</p>
       {children}
+    </div>
+  )
+}
+
+// ── Payout Settings Tab ───────────────────────────────────────────────────────
+
+const NIGERIAN_BANKS_LIST = [
+  'Access Bank', 'Citibank', 'Ecobank', 'Fidelity Bank', 'First Bank',
+  'First City Monument Bank (FCMB)', 'Globus Bank', 'GT Bank',
+  'Heritage Bank', 'Keystone Bank', 'Kuda Bank', 'Moniepoint',
+  'Opay', 'Palmpay', 'Polaris Bank', 'Providus Bank',
+  'Stanbic IBTC Bank', 'Standard Chartered', 'Sterling Bank',
+  'Suntrust Bank', 'Union Bank', 'United Bank for Africa (UBA)',
+  'Unity Bank', 'VFD Microfinance Bank', 'Wema Bank', 'Zenith Bank',
+]
+
+const SECURITY_QUESTIONS_LIST = [
+  "What was the name of your first pet?",
+  "What is your mother's maiden name?",
+  "What was the name of your primary school?",
+  "What city were you born in?",
+  "What is your oldest sibling's middle name?",
+  "What was the make of your first car?",
+  "What is the name of the street you grew up on?",
+  "What was your childhood nickname?",
+]
+
+function PayoutSettingsTab() {
+  const [accounts, setAccounts] = useState([])
+  const [loadingAccounts, setLoadingAccounts] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [bankSearch, setBankSearch] = useState('')
+  const [showBankPicker, setShowBankPicker] = useState(false)
+  const [newBank, setNewBank] = useState('')
+  const [newAccNum, setNewAccNum] = useState('')
+  const [newAccName, setNewAccName] = useState('')
+  const [verifying, setVerifying] = useState(false)
+  const [verified, setVerified] = useState(false)
+
+  const [secQuestion, setSecQuestion] = useState(null)
+  const [showSecModal, setShowSecModal] = useState(false)
+  const [showQPicker, setShowQPicker] = useState(false)
+  const [secStep, setSecStep] = useState('set')
+  const [draftQuestion, setDraftQuestion] = useState('')
+  const [draftAnswer, setDraftAnswer] = useState('')
+  const [confirmAnswer, setConfirmAnswer] = useState('')
+  const [showAnswer, setShowAnswer] = useState(false)
+  const [secError, setSecError] = useState('')
+
+  const [deleteTarget, setDeleteTarget] = useState(null)
+
+  useEffect(() => {
+    ;(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoadingAccounts(false); return }
+      const { data } = await supabase.from('profiles').select('payout_accounts').eq('id', user.id).single()
+      if (data?.payout_accounts) setAccounts(data.payout_accounts)
+      setLoadingAccounts(false)
+    })()
+  }, [])
+
+  async function persistAccounts(next) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('profiles').update({ payout_accounts: next }).eq('id', user.id)
+  }
+
+  function resetForm() {
+    setNewBank(''); setNewAccNum(''); setNewAccName(''); setVerified(false); setVerifying(false); setBankSearch('')
+  }
+
+  function handleAccNumChange(val) {
+    const digits = val.replace(/\D/g, '').slice(0, 10)
+    setNewAccNum(digits); setVerified(false); setNewAccName('')
+    if (digits.length === 10 && newBank) simulateVerify(digits, newBank)
+  }
+
+  function handleSelectBank(bank) {
+    setNewBank(bank); setShowBankPicker(false); setBankSearch('')
+    setVerified(false); setNewAccName('')
+    if (newAccNum.length === 10) simulateVerify(newAccNum, bank)
+  }
+
+  function simulateVerify(accNum, bank) {
+    setVerifying(true)
+    setTimeout(() => {
+      setVerifying(false); setVerified(true)
+      setNewAccName(accounts.length === 0 ? '' : accounts[0].accountName)
+    }, 1200)
+  }
+
+  async function handleSaveAccount() {
+    if (!verified || saving) return
+    setSaving(true)
+    const isFirst = accounts.length === 0
+    const next = [
+      ...accounts.map(a => ({ ...a, isDefault: false })),
+      { id: Date.now().toString(), bankName: newBank, accountNumber: newAccNum, accountName: newAccName || 'Account Holder', isDefault: isFirst },
+    ]
+    await persistAccounts(next)
+    setAccounts(next)
+    setSaving(false); setShowAddModal(false); resetForm()
+  }
+
+  async function setDefault(id) {
+    const next = accounts.map(a => ({ ...a, isDefault: a.id === id }))
+    setAccounts(next)
+    await persistAccounts(next)
+  }
+
+  async function removeAccount(id) {
+    const next = accounts.filter(a => a.id !== id)
+    if (next.length > 0 && !next.some(a => a.isDefault)) next[0].isDefault = true
+    setAccounts(next)
+    await persistAccounts(next)
+    setDeleteTarget(null)
+  }
+
+  function openSecModal() {
+    setDraftQuestion(secQuestion ?? ''); setDraftAnswer(''); setConfirmAnswer('')
+    setSecError(''); setShowAnswer(false); setSecStep('set'); setShowSecModal(true)
+  }
+
+  function handleSecNext() {
+    if (!draftQuestion) { setSecError('Please select a question'); return }
+    if (draftAnswer.trim().length < 2) { setSecError('Answer is too short'); return }
+    setSecError(''); setSecStep('confirm')
+  }
+
+  function handleSecSave() {
+    if (confirmAnswer.trim().toLowerCase() !== draftAnswer.trim().toLowerCase()) {
+      setSecError("Answers don't match. Try again."); setConfirmAnswer(''); return
+    }
+    setSecQuestion(draftQuestion); setShowSecModal(false)
+  }
+
+  const filteredBanks = NIGERIAN_BANKS_LIST.filter(b => b.toLowerCase().includes(bankSearch.toLowerCase()))
+  const canSave = verified && !saving
+
+  return (
+    <div className="space-y-6 max-w-2xl">
+
+      {/* Info banner */}
+      <div className="flex items-start gap-3 rounded-2xl p-4" style={{ backgroundColor: `${darkPurple}10`, border: `1px solid ${purple}30` }}>
+        <ShieldCheck className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: darkPurple }} />
+        <p className="text-sm text-brand-dark/70">Your bank details are encrypted and never shared with brands. Withdrawals are processed within 1–3 business days.</p>
+      </div>
+
+      {/* Linked accounts */}
+      <div>
+        <p className="font-black text-brand-dark mb-3">Linked accounts</p>
+        {loadingAccounts ? (
+          <div className="flex items-center gap-2 py-6 text-brand-dark/30 text-sm">
+            <Loader2 className="w-4 h-4 animate-spin" /> Loading…
+          </div>
+        ) : accounts.length === 0 ? (
+          <div className="rounded-2xl p-8 text-center" style={{ border: '1.5px dashed #e9d5ff' }}>
+            <CreditCard className="w-10 h-10 mx-auto mb-3 text-brand-dark/20" />
+            <p className="font-bold text-brand-dark text-sm mb-1">No bank account linked</p>
+            <p className="text-brand-dark/40 text-xs">Add a bank account to receive your payouts</p>
+          </div>
+        ) : (
+          <div className="rounded-2xl overflow-hidden bg-white" style={{ border: '1px solid #e9d5ff' }}>
+            {accounts.map((acc, i) => (
+              <div key={acc.id} className="flex items-center gap-4 p-4"
+                style={{ borderBottom: i < accounts.length - 1 ? '1px solid #f3eeff' : 'none' }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: `${darkPurple}12` }}>
+                  <Building2 className="w-5 h-5" style={{ color: darkPurple }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="font-bold text-brand-dark text-sm">{acc.bankName}</span>
+                    {acc.isDefault && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#22c55e18', color: '#22c55e' }}>Default</span>
+                    )}
+                  </div>
+                  <p className="text-brand-dark/40 text-xs tracking-widest">•••• •••• {acc.accountNumber.slice(-4)}</p>
+                  <p className="text-brand-dark/60 text-xs font-medium mt-0.5">{acc.accountName}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {!acc.isDefault && (
+                    <button onClick={() => setDefault(acc.id)}
+                      className="text-xs font-bold px-3 py-1.5 rounded-lg transition-colors hover:bg-purple-50"
+                      style={{ color: darkPurple }}>
+                      Set default
+                    </button>
+                  )}
+                  <button onClick={() => setDeleteTarget(acc.id)}
+                    className="p-1.5 rounded-lg hover:bg-red-50 transition-colors text-red-400">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button onClick={() => { resetForm(); setShowAddModal(true) }}
+          className="w-full mt-3 flex items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold transition-colors hover:bg-purple-50"
+          style={{ border: '1.5px dashed #c084fc', color: darkPurple }}>
+          <Plus className="w-4 h-4" /> Add bank account
+        </button>
+      </div>
+
+      {/* Withdrawal security */}
+      <div>
+        <p className="font-black text-brand-dark mb-3">Withdrawal security</p>
+        {secQuestion ? (
+          <div className="rounded-2xl p-4 bg-white" style={{ border: '1px solid #10b98130' }}>
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#10b98118' }}>
+                <ShieldCheck className="w-5 h-5" style={{ color: '#10b981' }} />
+              </div>
+              <div>
+                <p className="text-xs font-bold mb-1" style={{ color: '#10b981' }}>Security question set</p>
+                <p className="text-sm text-brand-dark/70">{secQuestion}</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={openSecModal}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-colors hover:bg-purple-50"
+                style={{ border: `1px solid ${purple}40`, color: darkPurple }}>
+                <Edit3 className="w-3.5 h-3.5" /> Change
+              </button>
+              <button onClick={() => setSecQuestion(null)}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 transition-colors"
+                style={{ border: '1px solid #ef444430' }}>
+                <X className="w-3.5 h-3.5" /> Remove
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button onClick={openSecModal}
+            className="w-full flex items-center gap-4 p-4 rounded-2xl bg-white text-left hover:bg-purple-50 transition-colors"
+            style={{ border: '1.5px dashed #e9d5ff' }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${darkPurple}10` }}>
+              <Lock className="w-5 h-5" style={{ color: darkPurple }} />
+            </div>
+            <div className="flex-1">
+              <p className="font-bold text-brand-dark text-sm">Set a security question</p>
+              <p className="text-brand-dark/40 text-xs mt-0.5">Required to authorise every withdrawal</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-brand-dark/30" />
+          </button>
+        )}
+      </div>
+
+      {/* Payout info */}
+      <div>
+        <p className="font-black text-brand-dark mb-3">Payout info</p>
+        <div className="rounded-2xl overflow-hidden bg-white" style={{ border: '1px solid #e9d5ff' }}>
+          {[
+            { icon: Clock,    label: 'Processing time',    value: '1–3 business days' },
+            { icon: Wallet,   label: 'Minimum withdrawal', value: '₦5,000' },
+            { icon: Mail,     label: 'Support',            value: 'support@brandior.africa' },
+          ].map(({ icon: Icon, label, value }, i, arr) => (
+            <div key={label} className="flex items-center gap-3 px-5 py-3.5"
+              style={{ borderBottom: i < arr.length - 1 ? '1px solid #f3eeff' : 'none' }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${darkPurple}10` }}>
+                <Icon className="w-4 h-4" style={{ color: darkPurple }} />
+              </div>
+              <span className="flex-1 text-sm text-brand-dark/60 font-medium">{label}</span>
+              <span className="text-sm font-bold text-brand-dark">{value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Delete confirmation modal ── */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+          <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl" style={{ border: '1px solid #e9d5ff' }}>
+            <p className="font-black text-brand-dark text-base mb-2">Remove account?</p>
+            <p className="text-brand-dark/50 text-sm mb-5">This bank account will be removed from your payout settings.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteTarget(null)}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold text-brand-dark/60 border border-gray-200 hover:bg-gray-50 transition-colors">
+                Cancel
+              </button>
+              <button onClick={() => removeAccount(deleteTarget)}
+                className="flex-1 py-3 rounded-xl text-sm font-bold text-white transition-colors"
+                style={{ backgroundColor: '#ef4444' }}>
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Add Account Modal ── */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+          <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden" style={{ border: '1px solid #e9d5ff' }}>
+            <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: '1px solid #e9d5ff' }}>
+              <p className="font-black text-brand-dark">Add bank account</p>
+              <button onClick={() => { setShowAddModal(false); resetForm() }} className="p-1.5 rounded-lg hover:bg-gray-100">
+                <X className="w-4 h-4 text-brand-dark/40" />
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              {/* Bank select */}
+              <div>
+                <label className="text-xs font-bold text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Bank *</label>
+                <button onClick={() => setShowBankPicker(true)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm outline-none text-left"
+                  style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
+                  <span className={newBank ? 'text-brand-dark font-semibold' : 'text-brand-dark/40'}>{newBank || 'Select your bank'}</span>
+                  <ChevronDown className="w-4 h-4 text-brand-dark/40" />
+                </button>
+              </div>
+              {/* Account number */}
+              <div>
+                <label className="text-xs font-bold text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Account Number *</label>
+                <div className="flex items-center px-4 rounded-xl" style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
+                  <input
+                    type="text" inputMode="numeric" maxLength={10}
+                    value={newAccNum}
+                    onChange={e => handleAccNumChange(e.target.value)}
+                    placeholder="10-digit account number"
+                    className="flex-1 py-3 text-sm text-brand-dark bg-transparent outline-none font-mono tracking-widest"
+                  />
+                  {verifying && <Loader2 className="w-4 h-4 animate-spin text-brand-dark/30" />}
+                  {verified && <CheckCircle className="w-5 h-5 text-green-500" />}
+                </div>
+                {verified && (
+                  <div className="flex items-center gap-2 mt-2 p-3 rounded-xl" style={{ backgroundColor: '#22c55e12', border: '1px solid #22c55e30' }}>
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <span className="text-sm font-bold text-green-600">{newAccName}</span>
+                  </div>
+                )}
+              </div>
+              {/* Account name (editable if verify didn't auto-fill) */}
+              {verified && !newAccName && (
+                <div>
+                  <label className="text-xs font-bold text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Account Name *</label>
+                  <input
+                    type="text" value={newAccName}
+                    onChange={e => setNewAccName(e.target.value)}
+                    placeholder="Name on account"
+                    className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none"
+                    style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}
+                  />
+                </div>
+              )}
+              <button onClick={handleSaveAccount} disabled={!canSave}
+                className="w-full py-3.5 rounded-xl font-bold text-white text-sm disabled:opacity-40"
+                style={{ backgroundColor: darkPurple }}>
+                {saving ? 'Saving…' : 'Save account'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Bank Picker Sheet ── */}
+      {showBankPicker && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center p-4 sm:items-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+          <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden" style={{ border: '1px solid #e9d5ff', maxHeight: '80vh' }}>
+            <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #e9d5ff' }}>
+              <p className="font-black text-brand-dark">Select bank</p>
+              <button onClick={() => setShowBankPicker(false)} className="p-1.5 rounded-lg hover:bg-gray-100">
+                <X className="w-4 h-4 text-brand-dark/40" />
+              </button>
+            </div>
+            <div className="px-6 py-3" style={{ borderBottom: '1px solid #e9d5ff' }}>
+              <div className="flex items-center gap-2 px-3 rounded-xl" style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
+                <Hash className="w-4 h-4 text-brand-dark/30" />
+                <input type="text" placeholder="Search banks…" value={bankSearch} onChange={e => setBankSearch(e.target.value)}
+                  autoFocus className="flex-1 py-2.5 text-sm text-brand-dark bg-transparent outline-none" />
+              </div>
+            </div>
+            <div className="overflow-y-auto" style={{ maxHeight: '50vh' }}>
+              {filteredBanks.map((bank, i) => (
+                <button key={bank} onClick={() => handleSelectBank(bank)}
+                  className="w-full flex items-center justify-between px-6 py-3.5 text-sm hover:bg-purple-50 transition-colors text-left"
+                  style={{ borderBottom: i < filteredBanks.length - 1 ? '1px solid #f3eeff' : 'none' }}>
+                  <span className={`font-medium ${newBank === bank ? 'font-bold' : ''}`} style={{ color: newBank === bank ? darkPurple : '#374151' }}>{bank}</span>
+                  {newBank === bank && <CheckCircle className="w-4 h-4" style={{ color: darkPurple }} />}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Security Question Modal ── */}
+      {showSecModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+          <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden" style={{ border: '1px solid #e9d5ff' }}>
+            <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: '1px solid #e9d5ff' }}>
+              <p className="font-black text-brand-dark">
+                {secStep === 'set' ? (secQuestion ? 'Change security question' : 'Set security question') : 'Confirm your answer'}
+              </p>
+              <button onClick={() => setShowSecModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100">
+                <X className="w-4 h-4 text-brand-dark/40" />
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              {secStep === 'set' ? (
+                <>
+                  <div>
+                    <label className="text-xs font-bold text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Choose a question *</label>
+                    <button onClick={() => setShowQPicker(true)}
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm outline-none text-left"
+                      style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
+                      <span className={draftQuestion ? 'text-brand-dark font-medium text-xs' : 'text-brand-dark/40'}>{draftQuestion || 'Select a security question'}</span>
+                      <ChevronDown className="w-4 h-4 text-brand-dark/40 flex-shrink-0" />
+                    </button>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Your answer *</label>
+                    <div className="flex items-center px-4 rounded-xl" style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
+                      <input type={showAnswer ? 'text' : 'password'} value={draftAnswer}
+                        onChange={e => { setDraftAnswer(e.target.value); setSecError('') }}
+                        placeholder="Enter your answer" autoComplete="off"
+                        className="flex-1 py-3 text-sm text-brand-dark bg-transparent outline-none" />
+                      <button onClick={() => setShowAnswer(v => !v)} className="p-1">
+                        {showAnswer ? <EyeOff className="w-4 h-4 text-brand-dark/30" /> : <Eye className="w-4 h-4 text-brand-dark/30" />}
+                      </button>
+                    </div>
+                  </div>
+                  {secError && <p className="text-xs text-red-500 font-medium">{secError}</p>}
+                  <p className="text-xs text-brand-dark/40">Remember this exactly — you'll need it to authorise withdrawals. Not case-sensitive.</p>
+                  <button onClick={handleSecNext} disabled={!draftQuestion || draftAnswer.length < 2}
+                    className="w-full py-3.5 rounded-xl font-bold text-white text-sm disabled:opacity-40"
+                    style={{ backgroundColor: darkPurple }}>
+                    Next →
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-start gap-2 p-3 rounded-xl" style={{ backgroundColor: `${darkPurple}08`, border: `1px solid ${purple}25` }}>
+                    <HelpCircle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: darkPurple }} />
+                    <p className="text-xs text-brand-dark/70 font-medium">{draftQuestion}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Re-enter your answer *</label>
+                    <div className="flex items-center px-4 rounded-xl" style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
+                      <input type={showAnswer ? 'text' : 'password'} value={confirmAnswer}
+                        onChange={e => { setConfirmAnswer(e.target.value); setSecError('') }}
+                        placeholder="Re-enter your answer" autoFocus autoComplete="off"
+                        className="flex-1 py-3 text-sm text-brand-dark bg-transparent outline-none" />
+                      <button onClick={() => setShowAnswer(v => !v)} className="p-1">
+                        {showAnswer ? <EyeOff className="w-4 h-4 text-brand-dark/30" /> : <Eye className="w-4 h-4 text-brand-dark/30" />}
+                      </button>
+                    </div>
+                  </div>
+                  {secError && <p className="text-xs text-red-500 font-medium">{secError}</p>}
+                  <div className="flex gap-3">
+                    <button onClick={() => { setSecStep('set'); setSecError('') }}
+                      className="px-5 py-3 rounded-xl text-sm font-semibold text-brand-dark/50 border border-gray-200 hover:bg-gray-50 transition-colors">
+                      ← Back
+                    </button>
+                    <button onClick={handleSecSave} disabled={confirmAnswer.length < 2}
+                      className="flex-1 py-3 rounded-xl font-bold text-white text-sm disabled:opacity-40"
+                      style={{ backgroundColor: darkPurple }}>
+                      Save question
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Question Picker Sheet ── */}
+      {showQPicker && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center p-4 sm:items-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+          <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden" style={{ border: '1px solid #e9d5ff', maxHeight: '75vh' }}>
+            <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #e9d5ff' }}>
+              <p className="font-black text-brand-dark">Choose a question</p>
+              <button onClick={() => setShowQPicker(false)} className="p-1.5 rounded-lg hover:bg-gray-100">
+                <X className="w-4 h-4 text-brand-dark/40" />
+              </button>
+            </div>
+            <div className="overflow-y-auto" style={{ maxHeight: '60vh' }}>
+              {SECURITY_QUESTIONS_LIST.map((q, i) => (
+                <button key={q} onClick={() => { setDraftQuestion(q); setShowQPicker(false); setSecError('') }}
+                  className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-purple-50 transition-colors"
+                  style={{ borderBottom: i < SECURITY_QUESTIONS_LIST.length - 1 ? '1px solid #f3eeff' : 'none' }}>
+                  <span className="text-sm font-medium text-brand-dark pr-4">{q}</span>
+                  {draftQuestion === q && <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: darkPurple }} />}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
