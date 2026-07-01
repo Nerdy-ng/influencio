@@ -10,7 +10,7 @@ import {
   HelpCircle, Send, Ticket, ChevronDown, AlertCircle, CheckSquare,
   Wallet, ArrowDownLeft, ArrowUpRight, CreditCard, Hash, Globe, Building2,
   PieChart, BarChart2, Tag, ImagePlus, FileText, Mail, UserPlus, Inbox, Clock,
-  Shield, Lock, KeyRound, AlertTriangle, ShieldCheck, Loader2,
+  Shield, Lock, KeyRound, AlertTriangle, ShieldCheck, Loader2, ArrowLeftRight,
 } from 'lucide-react'
 
 import MessagingPanel from '../components/MessagingPanel'
@@ -219,6 +219,12 @@ function AvatarMenu({ profile, activeTab, setActiveTab }) {
     setOpen(false)
   }
 
+  function handleSwitchToBrand() {
+    setOpen(false)
+    localStorage.setItem('brandiór_role', 'brand')
+    navigateTo('/brand-dashboard')
+  }
+
   async function handleLogout() {
     setOpen(false)
     await logout()
@@ -292,6 +298,13 @@ function AvatarMenu({ profile, activeTab, setActiveTab }) {
             onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
             <Eye className="w-3.5 h-3.5" /> View Public Profile
           </Link>
+          <button onClick={handleSwitchToBrand}
+            className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium w-full text-left transition-colors"
+            style={{ color: '#F72585' }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(247,37,133,0.08)'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
+            <ArrowLeftRight className="w-3.5 h-3.5" /> Switch to Brand Account
+          </button>
           <button onClick={handleLogout}
             className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium w-full text-left transition-colors"
             style={{ color: '#FF6B9D' }}
@@ -306,6 +319,7 @@ function AvatarMenu({ profile, activeTab, setActiveTab }) {
 }
 
 function Sidebar({ active, setActive, dashLogo }) {
+  const navigate = useNavigate()
   const nav = [
     { id: 'collabs',      label: 'My Collabs',       icon: Inbox },
     { id: 'notifications',label: 'Notifications',    icon: Bell },
@@ -319,6 +333,12 @@ function Sidebar({ active, setActive, dashLogo }) {
     { id: 'invite',          label: 'Invite Brands',     icon: UserPlus },
     { id: 'support',         label: 'Support',           icon: HelpCircle },
   ]
+
+  function switchToBrand() {
+    localStorage.setItem('brandiór_role', 'brand')
+    navigate('/brand-dashboard')
+  }
+
   return (
     <aside className="hidden lg:flex flex-col w-60 flex-shrink-0 h-screen sticky top-0 overflow-y-auto py-8 px-4"
       style={{ backgroundColor: 'var(--b-creatorDashBg)', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
@@ -360,6 +380,16 @@ function Sidebar({ active, setActive, dashLogo }) {
         ))}
       </nav>
 
+      <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <button onClick={switchToBrand}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left"
+          style={{ color: '#F72585' }}
+          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(247,37,133,0.08)'}
+          onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
+          <ArrowLeftRight className="w-4 h-4 flex-shrink-0" />
+          Switch to Brand Account
+        </button>
+      </div>
     </aside>
   )
 }

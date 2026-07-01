@@ -6,7 +6,7 @@ import {
   LayoutDashboard, ShoppingBag, CheckCircle, Wallet, Settings,
   Bell, ChevronDown, ChevronRight, X, AlertCircle, Shield, Loader2,
   ExternalLink, Download, RotateCcw, Zap, Menu, Mail, Heart, MapPin, Star, Users, Search, UserPlus, LogOut,
-  Inbox, Clock, ThumbsUp, ThumbsDown, MessageSquare, FileText, TrendingUp, Send,
+  Inbox, Clock, ThumbsUp, ThumbsDown, MessageSquare, FileText, TrendingUp, Send, ArrowLeftRight,
 } from 'lucide-react'
 import MessagingPanel from '../components/MessagingPanel'
 import InviteTab from '../components/InviteTab'
@@ -963,6 +963,12 @@ function BrandAvatarMenu() {
     })
   }, [])
 
+  function handleSwitchToCreator() {
+    setOpen(false)
+    localStorage.setItem('brandiór_role', 'talent')
+    navigate('/dashboard')
+  }
+
   async function handleLogout() {
     setOpen(false)
     await logout()
@@ -985,6 +991,14 @@ function BrandAvatarMenu() {
             <p className="text-white/35 text-xs truncate">{userEmail || 'Loading...'}</p>
           </div>
           <button
+            onClick={handleSwitchToCreator}
+            className="flex items-center gap-2.5 px-4 py-3 text-sm font-medium w-full transition-colors text-left"
+            style={{ color: '#F72585' }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(247,37,133,0.08)'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
+            <ArrowLeftRight className="w-4 h-4" /> Switch to Creator Account
+          </button>
+          <button
             onClick={handleLogout}
             className="flex items-center gap-2.5 px-4 py-3 text-sm font-medium w-full transition-colors text-left"
             style={{ color: '#c4b5fd' }}
@@ -999,6 +1013,13 @@ function BrandAvatarMenu() {
 }
 
 function SidebarContent({ activeTab, setActiveTab, dashLogo }) {
+  const navigate = useNavigate()
+
+  function switchToCreator() {
+    localStorage.setItem('brandiór_role', 'talent')
+    navigate('/dashboard')
+  }
+
   return (
     <>
       <div className="p-5 border-b border-white/10">
@@ -1036,11 +1057,19 @@ function SidebarContent({ activeTab, setActiveTab, dashLogo }) {
           </button>
         ))}
       </nav>
-      <div className="p-4 border-t border-white/10">
+      <div className="p-4 border-t border-white/10 space-y-1">
         <Link to="/marketplace" className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-white/60 hover:text-white hover:bg-white/10 transition-colors">
           <ExternalLink className="w-4 h-4" />
           Browse Talents
         </Link>
+        <button onClick={switchToCreator}
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors text-left"
+          style={{ color: '#F72585' }}
+          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(247,37,133,0.08)'}
+          onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
+          <ArrowLeftRight className="w-4 h-4 flex-shrink-0" />
+          Switch to Creator Account
+        </button>
       </div>
     </>
   )
