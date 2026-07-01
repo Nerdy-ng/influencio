@@ -23,7 +23,7 @@ import { getOrCreatePhylloUser, getPhylloSDKToken, openPhylloConnect, PHYLLO_PLA
 
 const pink = '#FF6B9D'
 const gold = '#D4AF37'
-const purple = '#c084fc'
+const purple = '#7c3aed'
 const darkPurple = '#4c1d95'
 
 const TIERS = {
@@ -278,12 +278,12 @@ function AvatarMenu({ profile, activeTab, setActiveTab }) {
                   </Link>
                 : <button key={id} onClick={() => navigate(id)}
                     className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium w-full text-left transition-colors"
-                    style={{ color: activeTab === id ? '#c084fc' : 'rgba(255,255,255,0.6)' }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(192,132,252,0.08)'}
+                    style={{ color: activeTab === id ? purple : 'rgba(255,255,255,0.6)' }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = `${purple}14`}
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
-                    <Icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: activeTab === id ? '#c084fc' : 'rgba(255,255,255,0.3)' }} />
+                    <Icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: activeTab === id ? purple : 'rgba(255,255,255,0.3)' }} />
                     {label}
-                    {activeTab === id && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-purple-400" />}
+                    {activeTab === id && <span className="ml-auto w-1.5 h-1.5 rounded-full" style={{ backgroundColor: purple }} />}
                   </button>
             ))}
           </div>
@@ -293,8 +293,8 @@ function AvatarMenu({ profile, activeTab, setActiveTab }) {
           <Link to={`/creators/${profile?.handle || profile?.nickname || 'me'}`} target="_blank" rel="noopener noreferrer"
             onClick={() => setOpen(false)}
             className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium w-full transition-colors"
-            style={{ color: '#c084fc' }}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(192,132,252,0.08)'}
+            style={{ color: purple }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = `${purple}14`}
             onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
             <Eye className="w-3.5 h-3.5" /> View Public Profile
           </Link>
@@ -546,7 +546,7 @@ function NewUserWelcomeBanner({ completion, setActiveTab }) {
   if (completion >= 40) return null
   return (
     <div className="rounded-2xl p-5 mb-2" style={{ background: 'linear-gradient(135deg, #1a0035 0%, #3d0080 100%)', border: '1px solid rgba(192,132,252,0.25)' }}>
-      <p className="text-[11px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: '#c084fc' }}>Getting Started</p>
+      <p className="text-[11px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: '#c4b5fd' }}>Getting Started</p>
       <h3 className="text-white font-bold text-base mb-1">Complete your profile to apply for campaigns</h3>
       <p className="text-white/45 text-sm mb-4">Brands won't be able to hire you until your profile is set up.</p>
       <div className="flex flex-wrap gap-4 mb-4">
@@ -557,7 +557,7 @@ function NewUserWelcomeBanner({ completion, setActiveTab }) {
         ].map(({ n, label }) => (
           <div key={n} className="flex items-center gap-2 text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
             <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
-              style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: '#c084fc', border: '1px solid rgba(192,132,252,0.3)' }}>{n}</div>
+              style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: '#c4b5fd', border: '1px solid rgba(196,181,253,0.3)' }}>{n}</div>
             {label}
           </div>
         ))}

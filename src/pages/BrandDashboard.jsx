@@ -1075,14 +1075,6 @@ function SidebarContent({ activeTab, setActiveTab, dashLogo }) {
   )
 }
 
-const FEATURED_CREATORS = [
-  { id: 'talent_001', name: 'Adaeze Okafor', handle: '@adaeze.creates', niche: 'Beauty & Skincare', avatar: 'https://i.pravatar.cc/150?u=adaeze_okafor', rating: 4.8, followers: '82K', tier: 'top-rated', from: 45000 },
-  { id: 'talent_003', name: 'Chiamaka Eze',  handle: '@chiamaka.tv',    niche: 'Food & Cooking',    avatar: 'https://i.pravatar.cc/150?u=chiamaka_eze',  rating: 4.6, followers: '61K', tier: 'next-rated', from: 30000 },
-  { id: 'talent_005', name: 'Tunde Bakare',  handle: '@tundebakare',    niche: 'Tech & Gadgets',    avatar: 'https://i.pravatar.cc/150?u=tunde_bakare',  rating: 4.9, followers: '120K', tier: 'top-rated', from: 75000 },
-  { id: 'talent_002', name: 'Emeka Obi',     handle: '@emeka.fitness',  niche: 'Fitness & Wellness',avatar: 'https://i.pravatar.cc/150?u=emeka_obi',     rating: 4.5, followers: '34K', tier: 'next-rated', from: 20000 },
-  { id: 'talent_004', name: 'Ngozi Nnaji',   handle: '@ngozi.style',    niche: 'Fashion & Style',   avatar: 'https://i.pravatar.cc/150?u=ngozi_nnaji',   rating: 4.7, followers: '55K', tier: 'top-rated', from: 38000 },
-  { id: 'talent_006', name: 'Sola Adesanya', handle: '@solacomedy',     niche: 'Comedy',             avatar: 'https://i.pravatar.cc/150?u=sola_adesanya', rating: 4.4, followers: '28K', tier: 'fast-rising', from: 15000 },
-]
 
 const TIER_STYLE = {
   'top-rated':   { label: 'Top Rated',   bg: '#D4AF3718', color: '#D4AF37', border: '#D4AF3740' },
@@ -1095,11 +1087,18 @@ function TalentMiniCard({ talent }) {
   const { toggle, isFav } = useFavorites()
   const faved = isFav(talent.id)
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3 hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-2xl p-4 flex flex-col gap-3 hover:shadow-md transition-shadow"
+      style={{ border: '1px solid #e9d5ff', boxShadow: '0 1px 4px rgba(124,58,237,0.06)' }}>
       <div className="flex items-center gap-3">
-        <img src={talent.avatar} alt={talent.name}
-          className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-          onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(talent.name)}&background=4c1d95&color=fff&size=48` }} />
+        {talent.avatar
+          ? <img src={talent.avatar} alt={talent.name}
+              className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+              onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }} />
+          : null}
+        <div className="w-12 h-12 rounded-full flex-shrink-0 items-center justify-center text-white font-bold text-sm"
+          style={{ backgroundColor: darkPurple, display: talent.avatar ? 'none' : 'flex' }}>
+          {(talent.name || '?')[0].toUpperCase()}
+        </div>
         <div className="flex-1 min-w-0">
           <p className="font-bold text-gray-900 text-sm truncate">{talent.name}</p>
           <p className="text-xs text-gray-400 truncate">{talent.handle}</p>
@@ -1252,6 +1251,31 @@ function BrandAnalyticsTab() {
 
 function OverviewTab({ activeOrders, pendingReview, completedOrders, setActiveTab }) {
   const isNewAccount = activeOrders.length === 0 && completedOrders.length === 0
+  const [featuredCreators, setFeaturedCreators] = useState([])
+
+  useEffect(() => {
+    ;(async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, full_name, handle, niches, tier, avg_rating, min_price, avatar_url, total_followers')
+        .eq('role', 'creator')
+        .order('avg_rating', { ascending: false })
+        .limit(6)
+      if (data?.length) {
+        setFeaturedCreators(data.map(p => ({
+          id: p.id,
+          name: p.full_name || 'Creator',
+          handle: p.handle ? `@${p.handle}` : '',
+          niche: (p.niches || [])[0] || '',
+          avatar: p.avatar_url || null,
+          rating: p.avg_rating || 5,
+          followers: p.total_followers ? `${Math.round(p.total_followers / 1000)}K` : '—',
+          tier: p.tier || 'fast-rising',
+          from: p.min_price || 0,
+        })))
+      }
+    })()
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -1278,31 +1302,33 @@ function OverviewTab({ activeOrders, pendingReview, completedOrders, setActiveTa
           </div>
           <Link to="/marketplace"
             className="inline-block px-5 py-2.5 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-80"
-            style={{ backgroundColor: '#7c3aed' }}>
+            style={{ backgroundColor: purple }}>
             Browse Creators →
           </Link>
         </div>
       )}
 
       {/* Stat cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard label="Active Collabs" value={activeOrders.length} icon={ShoppingBag} color={purple} />
         <StatCard label="Pending Review" value={pendingReview.length} icon={RotateCcw} color="#f59e0b" />
         <StatCard label="Completed" value={completedOrders.length} icon={CheckCircle} color="#16a34a" />
       </div>
 
       {/* Featured Talents */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-gray-900">Featured Talents</h3>
-          <Link to="/marketplace" className="text-sm font-medium flex items-center gap-1" style={{ color: purple }}>
-            Browse all <ChevronRight className="w-4 h-4" />
-          </Link>
+      {featuredCreators.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-gray-900">Top Creators</h3>
+            <Link to="/marketplace" className="text-sm font-medium flex items-center gap-1" style={{ color: purple }}>
+              Browse all <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {featuredCreators.map(c => <TalentMiniCard key={c.id} talent={c} />)}
+          </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {FEATURED_CREATORS.map(c => <TalentMiniCard key={c.id} talent={c} />)}
-        </div>
-      </div>
+      )}
     </div>
   )
 }
