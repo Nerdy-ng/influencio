@@ -611,6 +611,142 @@ export default function AdminPanel() {
   const [realStats, setRealStats] = useState({ userCount: null, collabCount: null, reviewCount: null })
   const [adminCharts, setAdminCharts] = useState(null)
 
+  // ── Financial state ──
+  const [finStats, setFinStats]             = useState({ revenue: 0, escrowTotal: 0, releasedTotal: 0, refundedTotal: 0 })
+  const [escrowItems, setEscrowItems]       = useState([])
+  const [finTransactions, setFinTransactions] = useState([])
+  const [wallets, setWallets]               = useState([])
+  const [finLoading, setFinLoading]         = useState(false)
+  const [walletAdjust, setWalletAdjust]     = useState(null) // { profile, delta, reason }
+  const [payoutTarget, setPayoutTarget]     = useState(null) // creator profile
+  const [payoutAmount, setPayoutAmount]     = useState('')
+  const [payoutBusy, setPayoutBusy]         = useState(false)
+
+  async function loadFinancials() {
+    setFinLoading(true)
+    try {
+      const [collabsRes, walletsRes] = await Promise.all([
+        supabase.from('collabs')
+          .select('id, content_type, total_amount, platform_fee, creator_payout, payment_status, status, created_at, brand_id, creator_id')
+          .order('created_at', { ascending: false })
+          .limit(200),
+        supabase.from('profiles')
+          .select('id, full_name, company_name, owner_name, role, wallet_balance, payout_accounts')
+          .order('wallet_balance', { ascending: false })
+          .limit(50),
+      ])
+
+      const collabs = collabsRes.data || []
+      const profiles = walletsRes.data || []
+      const profileMap = Object.fromEntries(profiles.map(p => [p.id, p]))
+
+      function pName(p) { return p?.company_name || p?.full_name || p?.owner_name || 'Unknown' }
+
+      const paid    = collabs.filter(c => c.payment_status === 'paid')
+      const released = collabs.filter(c => c.payment_status === 'released')
+      const refunded = collabs.filter(c => c.payment_status === 'refunded')
+
+      setFinStats({
+        revenue:        released.reduce((s, c) => s + (c.platform_fee || 0), 0),
+        escrowTotal:    paid.reduce((s, c) => s + (c.total_amount || 0), 0),
+        releasedTotal:  released.reduce((s, c) => s + (c.creator_payout || 0), 0),
+        refundedTotal:  refunded.reduce((s, c) => s + (c.total_amount || 0), 0),
+      })
+
+      setEscrowItems(paid.map(c => ({
+        ...c,
+        brandName:   pName(profileMap[c.brand_id]),
+        creatorName: pName(profileMap[c.creator_id]),
+      })))
+
+      setFinTransactions(collabs.filter(c => c.payment_status !== 'unpaid').map(c => ({
+        id: c.id.slice(0, 8).toUpperCase(),
+        fullId: c.id,
+        creator: pName(profileMap[c.creator_id]),
+        brand:   pName(profileMap[c.brand_id]),
+        amount:  c.total_amount,
+        fee:     c.platform_fee || 0,
+        net:     c.creator_payout || 0,
+        date:    new Date(c.created_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }),
+        status:  c.payment_status,
+        type:    c.content_type || 'Collab',
+      })))
+
+      setWallets(profiles.filter(p => (p.wallet_balance || 0) > 0))
+    } finally {
+      setFinLoading(false)
+    }
+  }
+
+  async function releaseEscrow(item) {
+    const { data: creator } = await supabase.from('profiles').select('wallet_balance').eq('id', item.creator_id).single()
+    const newBal = (creator?.wallet_balance || 0) + (item.creator_payout || 0)
+    await Promise.all([
+      supabase.from('collabs').update({ payment_status: 'released' }).eq('id', item.fullId || item.id),
+      supabase.from('profiles').update({ wallet_balance: newBal }).eq('id', item.creator_id),
+    ])
+    showToast(`Released ₦${(item.creator_payout||0).toLocaleString()} to ${item.creatorName}`)
+    loadFinancials()
+  }
+
+  async function refundEscrow(item) {
+    const { data: brand } = await supabase.from('profiles').select('wallet_balance').eq('id', item.brand_id).single()
+    const newBal = (brand?.wallet_balance || 0) + (item.total_amount || 0)
+    await Promise.all([
+      supabase.from('collabs').update({ payment_status: 'refunded', status: 'cancelled' }).eq('id', item.fullId || item.id),
+      supabase.from('profiles').update({ wallet_balance: newBal }).eq('id', item.brand_id),
+    ])
+    showToast(`Refunded ₦${(item.total_amount||0).toLocaleString()} to ${item.brandName}`)
+    loadFinancials()
+  }
+
+  async function applyWalletAdjust() {
+    if (!walletAdjust) return
+    const { profile, delta, reason } = walletAdjust
+    const newBal = Math.max(0, (profile.wallet_balance || 0) + Number(delta))
+    await supabase.from('profiles').update({ wallet_balance: newBal }).eq('id', profile.id)
+    showToast(`Wallet for ${pName(profile)} adjusted to ₦${newBal.toLocaleString()} — ${reason || 'no reason given'}`)
+    setWalletAdjust(null)
+    loadFinancials()
+  }
+
+  function pName(p) { return p?.company_name || p?.full_name || p?.owner_name || 'Unknown' }
+
+  async function triggerPayout() {
+    if (!payoutTarget || !payoutAmount) return
+    setPayoutBusy(true)
+    try {
+      const account = (payoutTarget.payout_accounts || []).find(a => a.isDefault) || payoutTarget.payout_accounts?.[0]
+      if (!account) { showToast('Creator has no payout account set up', 'error'); return }
+      const amt = parseInt(payoutAmount.replace(/\D/g, ''), 10)
+      if (amt < 100) { showToast('Minimum payout is ₦100', 'error'); return }
+      const res = await fetch('/api/paystack-transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: amt,
+          recipient: { bank_code: account.bankCode, account_number: account.accountNumber, name: account.accountName },
+          reason: `Brandior payout — ${payoutTarget.full_name || payoutTarget.company_name}`,
+          meta: { profile_id: payoutTarget.id },
+        }),
+      })
+      const json = await res.json()
+      if (json.status === 'success') {
+        const newBal = Math.max(0, (payoutTarget.wallet_balance || 0) - amt)
+        await supabase.from('profiles').update({ wallet_balance: newBal }).eq('id', payoutTarget.id)
+        showToast(`Transferred ₦${amt.toLocaleString()} to ${account.accountName} (${account.bankName})`)
+        setPayoutTarget(null); setPayoutAmount('')
+        loadFinancials()
+      } else {
+        showToast(json.message || 'Transfer failed', 'error')
+      }
+    } catch (e) {
+      showToast('Payout API not deployed yet — set up /api/paystack-transfer first', 'error')
+    } finally {
+      setPayoutBusy(false)
+    }
+  }
+
   // Persist users to localStorage whenever they change
   useEffect(() => { localStorage.setItem('brandior_admin_users', JSON.stringify(users)) }, [users])
 
@@ -1061,95 +1197,301 @@ export default function AdminPanel() {
 
   const renderFinancials = () => (
     <div className="space-y-6">
+
+      {/* ── Reload button ── */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-400">Live data from Supabase</p>
+        <button onClick={loadFinancials} disabled={finLoading}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:border-indigo-400 hover:text-indigo-600 transition-colors disabled:opacity-50">
+          <RotateCcw className={`w-3.5 h-3.5 ${finLoading ? 'animate-spin' : ''}`} />
+          {finLoading ? 'Loading…' : 'Refresh'}
+        </button>
+      </div>
+
+      {/* ── Stats ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Platform Revenue", value: "₦48,200,000", color: "#16a34a" },
-          { label: "Pending Payouts", value: "₦6,800,000", color: "#d97706" },
-          { label: "Completed Payouts", value: "₦41,400,000", color: "#4f46e5" },
-          { label: "Brand Fee",    value: `${brandFee}%`,   color: "#0ea5e9" },
-          { label: "Creator Fee",  value: `${creatorFee}%`, color: "#8b5cf6" },
-        ].map((s) => (
-          <div key={s.label} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">{s.label}</p>
-            <p className="text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
+          { label: "Platform Revenue", value: `₦${finStats.revenue.toLocaleString()}`,       color: "#16a34a", icon: TrendingUp },
+          { label: "In Escrow",        value: `₦${finStats.escrowTotal.toLocaleString()}`,    color: "#d97706", icon: Clock },
+          { label: "Released",         value: `₦${finStats.releasedTotal.toLocaleString()}`,  color: "#4f46e5", icon: CheckCircle },
+          { label: "Refunded",         value: `₦${finStats.refundedTotal.toLocaleString()}`,  color: "#ef4444", icon: RotateCcw },
+        ].map(s => (
+          <div key={s.label} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{s.label}</p>
+              <s.icon className="w-4 h-4" style={{ color: s.color }} />
+            </div>
+            <p className="text-2xl font-black" style={{ color: s.color }}>{s.value}</p>
           </div>
         ))}
       </div>
 
+      {/* ── Escrow Management ── */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div>
+            <h3 className="font-bold text-gray-900">Escrow Queue</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Payments held in escrow — release to creator or refund to brand</p>
+          </div>
+          {escrowItems.length > 0 && (
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">{escrowItems.length} pending</span>
+          )}
+        </div>
+        {escrowItems.length === 0 ? (
+          <div className="px-5 py-10 text-center text-gray-400 text-sm">No payments in escrow</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ backgroundColor: "#f8fafc" }}>
+                  {["ID", "Brand", "Creator", "Type", "Total", "Creator Gets", "Date", "Actions"].map(h => (
+                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {escrowItems.map(item => (
+                  <tr key={item.id} className="hover:bg-amber-50/40">
+                    <td className="px-4 py-3 text-xs text-gray-400 font-mono">{item.id.slice(0,8).toUpperCase()}</td>
+                    <td className="px-4 py-3 font-medium text-gray-900">{item.brandName}</td>
+                    <td className="px-4 py-3 text-gray-700">{item.creatorName}</td>
+                    <td className="px-4 py-3 text-gray-500 text-xs">{item.content_type || '—'}</td>
+                    <td className="px-4 py-3 font-bold text-gray-900">₦{(item.total_amount||0).toLocaleString()}</td>
+                    <td className="px-4 py-3 font-semibold text-green-600">₦{(item.creator_payout||0).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
+                      {new Date(item.created_at).toLocaleDateString('en-NG', { day:'numeric', month:'short', year:'numeric' })}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => releaseEscrow(item)}
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-green-500 hover:bg-green-600 transition-colors whitespace-nowrap">
+                          Release
+                        </button>
+                        <button onClick={() => refundEscrow(item)}
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold text-red-600 border border-red-200 hover:bg-red-50 transition-colors whitespace-nowrap">
+                          Refund
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* ── Wallet Management ── */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100">
+          <h3 className="font-bold text-gray-900">Wallet Balances</h3>
+          <p className="text-xs text-gray-400 mt-0.5">View and manually adjust user wallet balances</p>
+        </div>
+        {wallets.length === 0 ? (
+          <div className="px-5 py-10 text-center text-gray-400 text-sm">No wallets with positive balances</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ backgroundColor: "#f8fafc" }}>
+                  {["User", "Role", "Balance", "Adjust"].map(h => (
+                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {wallets.map(p => (
+                  <tr key={p.id} className="hover:bg-gray-50/50">
+                    <td className="px-4 py-3 font-medium text-gray-900">{pName(p)}</td>
+                    <td className="px-4 py-3">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full"
+                        style={{ backgroundColor: p.role === 'brand' ? '#dbeafe' : '#f3e8ff', color: p.role === 'brand' ? '#1d4ed8' : '#7c3aed' }}>
+                        {p.role || '—'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 font-bold text-gray-900">₦{(p.wallet_balance||0).toLocaleString()}</td>
+                    <td className="px-4 py-3">
+                      <button onClick={() => setWalletAdjust({ profile: p, delta: '', reason: '' })}
+                        className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:border-indigo-400 hover:text-indigo-600 transition-colors">
+                        Adjust
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* ── Paystack Payout Trigger ── */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100">
+          <h3 className="font-bold text-gray-900">Manual Payout Trigger</h3>
+          <p className="text-xs text-gray-400 mt-0.5">Send a Paystack bank transfer directly to a creator's registered account</p>
+        </div>
+        <div className="p-5 space-y-4">
+          {/* Creator picker */}
+          <div>
+            <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Select Creator</label>
+            <select
+              value={payoutTarget?.id || ''}
+              onChange={e => setPayoutTarget(wallets.find(w => w.id === e.target.value && w.role === 'creator') || null)}
+              className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400 bg-white">
+              <option value="">— choose a creator —</option>
+              {wallets.filter(w => w.role === 'creator').map(w => (
+                <option key={w.id} value={w.id}>{pName(w)} — ₦{(w.wallet_balance||0).toLocaleString()}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Bank account preview */}
+          {payoutTarget && (() => {
+            const acc = (payoutTarget.payout_accounts || []).find(a => a.isDefault) || payoutTarget.payout_accounts?.[0]
+            return acc ? (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
+                <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                  <CreditCard className="w-4 h-4 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">{acc.accountName}</p>
+                  <p className="text-xs text-gray-500">{acc.bankName} · {acc.accountNumber}</p>
+                </div>
+                <span className="ml-auto text-xs font-bold px-2 py-1 rounded-full bg-green-100 text-green-700">Default</span>
+              </div>
+            ) : (
+              <div className="p-3 rounded-lg bg-amber-50 border border-amber-100 text-xs text-amber-700 font-medium">
+                No payout account set up — creator must add one in PayoutSettings
+              </div>
+            )
+          })()}
+
+          {/* Amount + send */}
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Amount (₦)</label>
+              <input type="text" value={payoutAmount}
+                onChange={e => setPayoutAmount(e.target.value.replace(/\D/g, ''))}
+                placeholder="e.g. 50000"
+                className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400" />
+            </div>
+            <div className="flex items-end">
+              <button onClick={triggerPayout} disabled={payoutBusy || !payoutTarget || !payoutAmount}
+                className="px-5 py-2.5 rounded-lg text-sm font-bold text-white transition-colors disabled:opacity-50"
+                style={{ backgroundColor: payoutBusy ? '#94a3b8' : '#7c3aed' }}>
+                {payoutBusy ? 'Sending…' : 'Send Transfer'}
+              </button>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400">Requires <code className="bg-gray-100 px-1 rounded">/api/paystack-transfer</code> endpoint to be deployed.</p>
+        </div>
+      </div>
+
+      {/* ── Transaction History ── */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100">
+          <h3 className="font-semibold text-gray-900">Transaction History</h3>
+        </div>
+        {finTransactions.length === 0 ? (
+          <div className="px-5 py-10 text-center text-gray-400 text-sm">No transactions yet</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ backgroundColor: "#f8fafc" }}>
+                  {["ID", "Creator", "Brand", "Amount", "Fee", "Net", "Type", "Date", "Status"].map(h => (
+                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {finTransactions.map(t => (
+                  <tr key={t.fullId || t.id} className="hover:bg-gray-50/50">
+                    <td className="px-4 py-3 text-xs text-gray-400 font-mono">{t.id}</td>
+                    <td className="px-4 py-3 font-medium text-gray-900">{t.creator}</td>
+                    <td className="px-4 py-3 text-gray-600">{t.brand}</td>
+                    <td className="px-4 py-3 font-semibold text-gray-900">₦{(t.amount||0).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-red-500">₦{(t.fee||0).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-green-600 font-medium">₦{(t.net||0).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-gray-500 text-xs">{t.type}</td>
+                    <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{t.date}</td>
+                    <td className="px-4 py-3"><StatusBadge status={t.status} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* ── Fee Settings ── */}
       <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
         <h3 className="font-semibold text-gray-900 mb-1">Fee Settings</h3>
-        <p className="text-xs text-gray-400 mb-5">Brand fee is added on top of the campaign budget. Creator fee is deducted from the creator's payout.</p>
+        <p className="text-xs text-gray-400 mb-5">Brand fee is added on top of the collab total. Creator fee is deducted from creator's payout.</p>
         <div className="grid sm:grid-cols-2 gap-6">
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Brand Fee (%)</label>
-            <p className="text-xs text-gray-400">Charged to brands on top of campaign budget</p>
             <div className="flex items-center gap-3">
-              <input
-                type="number"
-                value={brandFee}
-                onChange={(e) => setBrandFee(e.target.value)}
-                className="w-20 px-3 py-1.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400"
-                min="0" max="50"
-              />
-              <span className="text-sm text-gray-500">% of campaign value</span>
+              <input type="number" value={brandFee} onChange={e => setBrandFee(e.target.value)}
+                className="w-20 px-3 py-1.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400" min="0" max="50" />
+              <span className="text-sm text-gray-500">% of collab value</span>
             </div>
-            <p className="text-xs text-gray-500">e.g. ₦100,000 campaign → brand pays <strong>₦{(100000 * (1 + Number(brandFee) / 100)).toLocaleString()}</strong></p>
+            <p className="text-xs text-gray-500">e.g. ₦100,000 → brand pays <strong>₦{(100000*(1+Number(brandFee)/100)).toLocaleString()}</strong></p>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Creator Fee (%)</label>
-            <p className="text-xs text-gray-400">Deducted from creator's payout</p>
             <div className="flex items-center gap-3">
-              <input
-                type="number"
-                value={creatorFee}
-                onChange={(e) => setCreatorFee(e.target.value)}
-                className="w-20 px-3 py-1.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400"
-                min="0" max="50"
-              />
+              <input type="number" value={creatorFee} onChange={e => setCreatorFee(e.target.value)}
+                className="w-20 px-3 py-1.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400" min="0" max="50" />
               <span className="text-sm text-gray-500">% of payout</span>
             </div>
-            <p className="text-xs text-gray-500">e.g. ₦100,000 campaign → creator receives <strong>₦{(100000 * (1 - Number(creatorFee) / 100)).toLocaleString()}</strong></p>
+            <p className="text-xs text-gray-500">e.g. ₦100,000 → creator receives <strong>₦{(100000*(1-Number(creatorFee)/100)).toLocaleString()}</strong></p>
           </div>
         </div>
-        <button
-          onClick={() => { saveAllSettings({ brandFee, creatorFee }); showToast("Fee settings saved.") }}
-          className="mt-5 px-5 py-2 rounded-lg text-sm font-medium text-white"
-          style={{ backgroundColor: "#4f46e5" }}
-        >
+        <button onClick={() => { saveAllSettings({ brandFee, creatorFee }); showToast("Fee settings saved.") }}
+          className="mt-5 px-5 py-2 rounded-lg text-sm font-medium text-white" style={{ backgroundColor: "#4f46e5" }}>
           Save Fees
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-900">Recent Transactions</h3>
+      {/* ── Wallet Adjust Modal ── */}
+      {walletAdjust && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <h3 className="font-bold text-gray-900 mb-1">Adjust Wallet</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              {pName(walletAdjust.profile)} · Current: <strong>₦{(walletAdjust.profile.wallet_balance||0).toLocaleString()}</strong>
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Amount (use − to deduct)</label>
+                <input type="number" value={walletAdjust.delta}
+                  onChange={e => setWalletAdjust(a => ({ ...a, delta: e.target.value }))}
+                  placeholder="e.g. 5000 or -2500"
+                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Reason</label>
+                <input type="text" value={walletAdjust.reason}
+                  onChange={e => setWalletAdjust(a => ({ ...a, reason: e.target.value }))}
+                  placeholder="e.g. Manual credit for campaign bonus"
+                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400" />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button onClick={() => setWalletAdjust(null)}
+                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50">
+                Cancel
+              </button>
+              <button onClick={applyWalletAdjust} disabled={!walletAdjust.delta}
+                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-bold text-white disabled:opacity-50"
+                style={{ backgroundColor: '#4f46e5' }}>
+                Apply
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr style={{ backgroundColor: "#f8fafc" }}>
-                {["ID", "Talent", "Brand", "Amount", "Fee", "Net", "Date", "Status"].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {transactions.map((t) => (
-                <tr key={t.id} className="hover:bg-gray-50/50">
-                  <td className="px-4 py-3 text-xs text-gray-400 font-mono">{t.id}</td>
-                  <td className="px-4 py-3 font-medium text-gray-900">{t.talent}</td>
-                  <td className="px-4 py-3 text-gray-600">{t.brand}</td>
-                  <td className="px-4 py-3 font-semibold text-gray-900">{t.amount}</td>
-                  <td className="px-4 py-3 text-red-500">{t.fee}</td>
-                  <td className="px-4 py-3 text-green-600 font-medium">{t.net}</td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">{t.date}</td>
-                  <td className="px-4 py-3"><StatusBadge status={t.status} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      )}
     </div>
   );
 
@@ -2044,7 +2386,7 @@ export default function AdminPanel() {
           {NAV_ITEMS.map(({ id, label, Icon, badge, badgeColor }) => (
             <button
               key={id}
-              onClick={() => setActiveTab(id)}
+              onClick={() => { setActiveTab(id); if (id === 'financials') loadFinancials() }}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left"
               style={{
                 backgroundColor: activeTab === id ? "#4f46e5" : "transparent",
