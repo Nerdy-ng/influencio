@@ -552,31 +552,39 @@ const NAV_ITEMS = [
   { id: 'settings',       label: 'Settings',        icon: Settings },
 ]
 
-const MOCK_TALENTS = [
-  { id: 1, name: 'Adaeze Okafor',   handle: '@adaeze_glam',   initials: 'AO', location: 'Lagos',          niche: 'Beauty & Skincare',    followers: '125K', engagement: '4.2%', rating: 4.8, tier: 'top-rated',   accent: '#FF6B9D', platforms: ['Instagram','TikTok'],            minPrice: 25000  },
-  { id: 2, name: 'Chidi Nwosu',     handle: '@chidi_tech',    initials: 'CN', location: 'Accra, Ghana',   niche: 'Tech & Gadgets',       followers: '45K',  engagement: '5.1%', rating: 4.5, tier: 'next-rated',  accent: '#a78bfa', platforms: ['YouTube','Twitter/X'],           minPrice: 15000  },
-  { id: 3, name: 'Fatimah Abdullahi',handle: '@fatimah_style', initials: 'FA', location: 'Nairobi, Kenya', niche: 'Fashion & Style',      followers: '280K', engagement: '3.8%', rating: 4.9, tier: 'top-rated',   accent: '#D4AF37', platforms: ['Instagram','TikTok','YouTube'],   minPrice: 75000  },
-  { id: 4, name: 'Emeka Eze',       handle: '@emeka_eats',    initials: 'EE', location: 'Abuja',          niche: 'Food & Cooking',       followers: '62K',  engagement: '6.3%', rating: 4.3, tier: 'next-rated',  accent: '#22c55e', platforms: ['TikTok','Instagram'],            minPrice: 18000  },
-  { id: 5, name: 'Ngozi Obi',       handle: '@ngozi_fit',     initials: 'NO', location: 'Nairobi, Kenya', niche: 'Fitness & Wellness',   followers: '189K', engagement: '4.9%', rating: 4.7, tier: 'top-rated',   accent: '#FF6B9D', platforms: ['Instagram','YouTube'],           minPrice: 45000  },
-  { id: 6, name: 'Tunde Bakare',    handle: '@tunde_comedy',  initials: 'TB', location: 'Kumasi, Ghana',  niche: 'Comedy',               followers: '310K', engagement: '5.5%', rating: 4.6, tier: 'next-rated',  accent: '#f59e0b', platforms: ['TikTok','YouTube','Facebook'],    minPrice: 100000 },
-  { id: 7, name: 'Amaka Igwe',      handle: '@amaka_luxe',    initials: 'AI', location: 'Lagos',          niche: 'Fashion & Style',      followers: '95K',  engagement: '3.2%', rating: 5.0, tier: 'top-rated',   accent: '#D4AF37', platforms: ['Instagram','Snapchat'],          minPrice: 55000  },
-  { id: 8, name: 'Femi Adeyemi',    handle: '@femi_finance',  initials: 'FA', location: 'Accra, Ghana',   niche: 'Finance & Business',   followers: '28K',  engagement: '7.1%', rating: 4.1, tier: 'fast-rising', accent: '#3b82f6', platforms: ['LinkedIn','Twitter/X'],          minPrice: 10000  },
-]
-
 const TIER_INFO = {
   'fast-rising': { label: 'Fast Rising', color: '#22c55e' },
   'next-rated':  { label: 'Next',        color: '#a78bfa', diamond: true },
   'top-rated':   { label: 'Top',         color: '#D4AF37', diamond: true },
 }
 
+function initials(name) {
+  return (name || '??').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
+}
+
 function FindTalentsTab() {
   const [search, setSearch] = useState('')
   const [nicheFilter, setNicheFilter] = useState('All')
+  const [talents, setTalents] = useState([])
+  const [loading, setLoading] = useState(true)
   const niches = ['All', 'Beauty & Skincare', 'Fashion & Style', 'Food & Cooking', 'Tech & Gadgets', 'Fitness & Wellness', 'Comedy', 'Finance & Business']
 
-  const filtered = MOCK_TALENTS.filter(t => {
-    if (search && !t.name.toLowerCase().includes(search.toLowerCase()) && !t.handle.toLowerCase().includes(search.toLowerCase())) return false
-    if (nicheFilter !== 'All' && t.niche !== nicheFilter) return false
+  useEffect(() => {
+    ;(async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, full_name, handle, location, niches, tier, avg_rating, min_price, avatar_url')
+        .eq('role', 'creator')
+        .order('avg_rating', { ascending: false })
+        .limit(12)
+      setTalents(data || [])
+      setLoading(false)
+    })()
+  }, [])
+
+  const filtered = talents.filter(t => {
+    if (search && !t.full_name?.toLowerCase().includes(search.toLowerCase()) && !t.handle?.toLowerCase().includes(search.toLowerCase())) return false
+    if (nicheFilter !== 'All' && !(t.niches || []).includes(nicheFilter)) return false
     return true
   })
 
@@ -615,43 +623,52 @@ function FindTalentsTab() {
       </div>
 
       {/* Talent cards */}
+      {loading ? (
+        <div className="flex justify-center py-10"><div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" /></div>
+      ) : (
       <div className="grid sm:grid-cols-2 gap-4">
-        {filtered.map(t => {
-          const tier = TIER_INFO[t.tier]
+        {filtered.length === 0 ? (
+          <p className="col-span-2 text-center text-sm text-gray-400 py-8">No creators found</p>
+        ) : filtered.map(t => {
+          const tier = TIER_INFO[t.tier] || TIER_INFO['fast-rising']
+          const handle = t.handle ? `@${t.handle}` : ''
+          const niche = (t.niches || [])[0] || ''
           return (
             <Link key={t.id} to={`/creators/${t.handle || t.id}`}
               className="flex items-start gap-4 p-4 rounded-2xl transition-all hover:-translate-y-0.5"
               style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 8px rgba(192,132,252,0.07)' }}>
               {/* Avatar */}
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
-                style={{ backgroundColor: t.accent }}>
-                {t.initials}
-              </div>
+              {t.avatar_url
+                ? <img src={t.avatar_url} alt={t.full_name} className="w-14 h-14 rounded-2xl object-cover flex-shrink-0" />
+                : <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+                    style={{ backgroundColor: purple }}>
+                    {initials(t.full_name)}
+                  </div>
+              }
 
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2 mb-0.5">
-                  <p className="font-bold text-brand-dark text-sm truncate">{t.name}</p>
-                  {/* Tier badge */}
+                  <p className="font-bold text-brand-dark text-sm truncate">{t.full_name}</p>
                   <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
                     style={{ color: tier.color, backgroundColor: `${tier.color}18`, border: `1px solid ${tier.color}40` }}>
                     {tier.label}
                     {tier.diamond && <svg width="7" height="7" viewBox="0 0 24 24" fill={tier.color}><path d="M12 2L2 9l10 13L22 9z"/></svg>}
                   </span>
                 </div>
-                <p className="text-brand-dark/40 text-xs mb-1">{t.handle} · {t.location}</p>
-                <p className="text-xs text-brand-dark/50 mb-2">{t.niche}</p>
+                <p className="text-brand-dark/40 text-xs mb-1">{handle}{t.location ? ` · ${t.location}` : ''}</p>
+                {niche && <p className="text-xs text-brand-dark/50 mb-2">{niche}</p>}
 
                 <div className="flex items-center gap-3 text-xs">
-                  <span className="flex items-center gap-0.5 text-brand-dark/60"><Users className="w-3 h-3" />{t.followers}</span>
-                  <span className="flex items-center gap-0.5" style={{ color: t.accent }}><Star className="w-3 h-3 fill-current" />{t.rating}</span>
-                  <span className="font-semibold ml-auto" style={{ color: darkPurple }}>from ₦{t.minPrice.toLocaleString()}</span>
+                  <span className="flex items-center gap-0.5" style={{ color: purple }}><Star className="w-3 h-3 fill-current" />{(t.avg_rating || 5).toFixed(1)}</span>
+                  {t.min_price > 0 && <span className="font-semibold ml-auto" style={{ color: darkPurple }}>from ₦{t.min_price.toLocaleString()}</span>}
                 </div>
               </div>
             </Link>
           )
         })}
       </div>
+      )}
 
       <div className="text-center pt-2">
         <Link to="/marketplace" className="text-sm font-semibold hover:underline" style={{ color: '#7c3aed' }}>
