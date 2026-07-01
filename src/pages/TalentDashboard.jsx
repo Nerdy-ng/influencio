@@ -651,6 +651,9 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
     <div className="max-w-2xl mx-auto">
       <NewUserWelcomeBanner completion={completion} setActiveTab={setActiveTab} />
 
+      {/* Incoming custom offers */}
+      <CustomOffersInbox />
+
       {/* Deliverable upload modal */}
       {deliverCollab && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
@@ -809,6 +812,101 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
                     {c.status === 'revision_requested' ? 'Resubmit' : 'Deliverables'}
                   </button>
                 )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ── Custom Offers Inbox (creator sees incoming offers from brands) ─────────────
+function CustomOffersInbox() {
+  const [offers, setOffers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [expanded, setExpanded] = useState(null)
+  const [acting, setActing] = useState(null)
+
+  useEffect(() => {
+    ;(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoading(false); return }
+      const { data } = await supabase
+        .from('custom_offers')
+        .select('*, brand:profiles!brand_id(id, full_name, company_name, avatar_url)')
+        .eq('creator_id', user.id)
+        .eq('status', 'offer_pending')
+        .order('created_at', { ascending: false })
+      setOffers(data || [])
+      setLoading(false)
+    })()
+  }, [])
+
+  async function respondToOffer(id, action) {
+    setActing(id)
+    await supabase.from('custom_offers').update({ status: action }).eq('id', id)
+    setOffers(prev => prev.filter(o => o.id !== id))
+    setActing(null)
+  }
+
+  if (loading || offers.length === 0) return null
+
+  return (
+    <div className="mb-5">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: pink }} />
+        <p className="font-black text-brand-dark text-sm">Custom Offers ({offers.length})</p>
+      </div>
+      <div className="space-y-3">
+        {offers.map(o => {
+          const brandName = o.brand?.company_name || o.brand?.full_name || 'Brand'
+          const isOpen = expanded === o.id
+          const isActing = acting === o.id
+          return (
+            <div key={o.id} className="rounded-2xl bg-white overflow-hidden" style={{ border: `1px solid ${pink}40` }}>
+              <div className="p-4">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-brand-dark text-sm truncate">{o.title}</p>
+                    <p className="text-xs text-brand-dark/40 mt-0.5">From {brandName} · {new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                  </div>
+                  <p className="font-black text-sm flex-shrink-0" style={{ color: '#22c55e' }}>₦{Number(o.budget).toLocaleString()}</p>
+                </div>
+                {o.timeline && (
+                  <p className="text-xs text-brand-dark/50 mb-2 flex items-center gap-1">
+                    <Clock className="w-3 h-3" /> {o.timeline}
+                  </p>
+                )}
+                <button onClick={() => setExpanded(isOpen ? null : o.id)}
+                  className="text-xs font-semibold flex items-center gap-1 mb-3" style={{ color: purple }}>
+                  {isOpen ? 'Hide details' : 'See brief'}
+                  <ChevronRight className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+                </button>
+                {isOpen && (
+                  <div className="mb-3 space-y-2">
+                    <p className="text-xs text-brand-dark/70 leading-relaxed">{o.brief}</p>
+                    {o.deliverables?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {o.deliverables.map(d => (
+                          <span key={d} className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${darkPurple}10`, color: darkPurple }}>{d}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <button onClick={() => respondToOffer(o.id, 'accepted')} disabled={isActing}
+                    className="flex-1 py-2 rounded-xl text-xs font-bold text-white disabled:opacity-60 transition-opacity"
+                    style={{ backgroundColor: '#22c55e' }}>
+                    {isActing ? '…' : 'Accept'}
+                  </button>
+                  <button onClick={() => respondToOffer(o.id, 'declined')} disabled={isActing}
+                    className="flex-1 py-2 rounded-xl text-xs font-bold text-red-500 disabled:opacity-60 transition-opacity"
+                    style={{ border: '1px solid #ef444440', backgroundColor: '#fef2f2' }}>
+                    {isActing ? '…' : 'Decline'}
+                  </button>
+                </div>
               </div>
             </div>
           )

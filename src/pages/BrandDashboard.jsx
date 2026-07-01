@@ -6,7 +6,7 @@ import {
   LayoutDashboard, ShoppingBag, CheckCircle, Wallet, Settings,
   Bell, ChevronDown, ChevronRight, X, AlertCircle, Shield, Loader2,
   ExternalLink, Download, RotateCcw, Zap, Menu, Mail, Heart, MapPin, Star, Users, Search, UserPlus, LogOut,
-  Inbox, Clock, ThumbsUp, ThumbsDown, MessageSquare, FileText, TrendingUp,
+  Inbox, Clock, ThumbsUp, ThumbsDown, MessageSquare, FileText, TrendingUp, Send,
 } from 'lucide-react'
 import MessagingPanel from '../components/MessagingPanel'
 import InviteTab from '../components/InviteTab'
@@ -871,14 +871,17 @@ export default function BrandDashboard() {
               )}
               {activeTab === 'analytics' && <BrandAnalyticsTab />}
               {activeTab === 'collabs' && (
-                <CampaignsTab
-                  activeOrders={activeOrders}
-                  completedOrders={completedOrders}
-                  onPayNow={setPaymentModal}
-                  onApprove={handleApprove}
-                  onRevision={setRevisionModal}
-                  onReview={setReviewModal}
-                />
+                <>
+                  <BrandCustomOffersPanel />
+                  <CampaignsTab
+                    activeOrders={activeOrders}
+                    completedOrders={completedOrders}
+                    onPayNow={setPaymentModal}
+                    onApprove={handleApprove}
+                    onRevision={setRevisionModal}
+                    onReview={setReviewModal}
+                  />
+                </>
               )}
               {activeTab === 'notifications' && <BrandNotificationsTab />}
               {activeTab === 'payments' && (
@@ -1791,6 +1794,100 @@ function BrandNotificationsTab() {
           })}
         </div>
       )}
+    </div>
+  )
+}
+
+// ── Brand's sent custom offers panel ─────────────────────────────────────────
+function BrandCustomOffersPanel() {
+  const [offers, setOffers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [expanded, setExpanded] = useState(null)
+  const [withdrawing, setWithdrawing] = useState(null)
+
+  useEffect(() => {
+    ;(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoading(false); return }
+      const { data } = await supabase
+        .from('custom_offers')
+        .select('*, creator:profiles!creator_id(id, full_name, avatar_url)')
+        .eq('brand_id', user.id)
+        .order('created_at', { ascending: false })
+      setOffers(data || [])
+      setLoading(false)
+    })()
+  }, [])
+
+  async function withdrawOffer(id) {
+    setWithdrawing(id)
+    await supabase.from('custom_offers').update({ status: 'withdrawn' }).eq('id', id)
+    setOffers(prev => prev.map(o => o.id === id ? { ...o, status: 'withdrawn' } : o))
+    setWithdrawing(null)
+  }
+
+  if (loading || offers.length === 0) return null
+
+  const STATUS_MAP = {
+    offer_pending: { label: 'Awaiting response', bg: '#fef9c3', color: '#854d0e' },
+    accepted:      { label: 'Accepted', bg: '#dcfce7', color: '#15803d' },
+    declined:      { label: 'Declined', bg: '#fef2f2', color: '#991b1b' },
+    withdrawn:     { label: 'Withdrawn', bg: '#f3f4f6', color: '#6b7280' },
+  }
+
+  return (
+    <div className="mb-6">
+      <div className="flex items-center gap-2 mb-3">
+        <Send className="w-4 h-4" style={{ color: purple }} />
+        <p className="font-black text-gray-900 text-sm">Custom Offers Sent</p>
+        <span className="text-xs text-gray-400 font-medium">{offers.length} total</span>
+      </div>
+      <div className="space-y-3">
+        {offers.map(o => {
+          const creatorName = o.creator?.full_name || 'Creator'
+          const s = STATUS_MAP[o.status] || STATUS_MAP.offer_pending
+          const isOpen = expanded === o.id
+          return (
+            <div key={o.id} className="rounded-2xl bg-white overflow-hidden" style={{ border: `1px solid ${purple}25` }}>
+              <div className="p-4">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-gray-900 text-sm truncate">{o.title}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">To {creatorName} · {new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <p className="font-black text-sm" style={{ color: '#22c55e' }}>₦{Number(o.budget).toLocaleString()}</p>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: s.bg, color: s.color }}>{s.label}</span>
+                  </div>
+                </div>
+                <button onClick={() => setExpanded(isOpen ? null : o.id)}
+                  className="text-xs font-semibold flex items-center gap-1 mb-2" style={{ color: purple }}>
+                  {isOpen ? 'Hide' : 'View brief'} <ChevronRight className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+                </button>
+                {isOpen && (
+                  <div className="mb-3 space-y-2 text-xs text-gray-600 leading-relaxed">
+                    <p>{o.brief}</p>
+                    {o.deliverables?.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {o.deliverables.map(d => (
+                          <span key={d} className="px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: `${darkPurple}10`, color: darkPurple }}>{d}</span>
+                        ))}
+                      </div>
+                    )}
+                    {o.timeline && <p className="flex items-center gap-1 mt-1"><Clock className="w-3 h-3" /> {o.timeline}</p>}
+                  </div>
+                )}
+                {o.status === 'offer_pending' && (
+                  <button onClick={() => withdrawOffer(o.id)} disabled={withdrawing === o.id}
+                    className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors disabled:opacity-40">
+                    {withdrawing === o.id ? 'Withdrawing…' : 'Withdraw offer'}
+                  </button>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
