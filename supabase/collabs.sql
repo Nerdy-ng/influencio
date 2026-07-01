@@ -131,3 +131,8 @@ alter table profiles add column if not exists payout_accounts jsonb not null def
 
 -- In case collabs was created before revision_reason existed.
 alter table collabs add column if not exists revision_reason text;
+
+-- Creator-rates-brand review (stored on collab row; brand-rates-creator goes in the reviews table)
+alter table collabs add column if not exists creator_review_rating  smallint check (creator_review_rating between 1 and 5);
+alter table collabs add column if not exists creator_review_comment text;
+alter table collabs add column if not exists creator_reviewed_at    timestamptz;

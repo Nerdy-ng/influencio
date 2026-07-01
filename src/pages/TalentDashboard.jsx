@@ -561,6 +561,11 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
   const [uploading, setUploading] = useState(false)
   const [uploadDone, setUploadDone] = useState(false)
   const deliverFileRef = useRef(null)
+  const [reviewCollab, setReviewCollab] = useState(null)
+  const [reviewRating, setReviewRating] = useState(0)
+  const [reviewComment, setReviewComment] = useState('')
+  const [reviewSubmitting, setReviewSubmitting] = useState(false)
+  const [reviewDone, setReviewDone] = useState(false)
 
   useEffect(() => {
     async function fetchCollabs() {
@@ -628,6 +633,20 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
     } finally {
       setUploading(false)
     }
+  }
+
+  async function submitBrandReview() {
+    if (!reviewCollab || reviewRating === 0 || reviewComment.trim().length < 20) return
+    setReviewSubmitting(true)
+    await supabase.from('collabs').update({
+      creator_review_rating: reviewRating,
+      creator_review_comment: reviewComment.trim(),
+      creator_reviewed_at: new Date().toISOString(),
+    }).eq('id', reviewCollab.id)
+    setCollabs(prev => prev.map(c => c.id === reviewCollab.id ? { ...c, creator_review_rating: reviewRating } : c))
+    setReviewSubmitting(false)
+    setReviewDone(true)
+    setTimeout(() => { setReviewCollab(null); setReviewDone(false); setReviewRating(0); setReviewComment('') }, 2000)
   }
 
   if (loading) return (
@@ -741,6 +760,58 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
         </div>
       )}
 
+      {/* ── Brand review modal ── */}
+      {reviewCollab && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+          <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden" style={{ border: '1px solid #e9d5ff' }}>
+            <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: '1px solid #e9d5ff' }}>
+              <p className="font-black text-brand-dark">Rate the Brand</p>
+              <button onClick={() => setReviewCollab(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><X className="w-4 h-4 text-brand-dark/40" /></button>
+            </div>
+            {reviewDone ? (
+              <div className="text-center py-10 px-6">
+                <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
+                <p className="font-black text-brand-dark text-lg">Review Submitted!</p>
+                <p className="text-sm text-brand-dark/40 mt-1">Your feedback helps the community.</p>
+              </div>
+            ) : (
+              <div className="px-6 py-5 space-y-5">
+                <div>
+                  <p className="text-sm font-bold text-brand-dark mb-3">How was working with {reviewCollab.brand?.company_name || reviewCollab.brand?.full_name || 'this brand'}?</p>
+                  <div className="flex gap-3 justify-center">
+                    {[1,2,3,4,5].map(n => (
+                      <button key={n} onClick={() => setReviewRating(n)}
+                        className="text-3xl transition-transform hover:scale-110"
+                        style={{ color: n <= reviewRating ? '#f59e0b' : '#d1d5db' }}>
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                  {reviewRating > 0 && (
+                    <p className="text-center text-sm font-bold mt-2" style={{ color: '#f59e0b' }}>
+                      {['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent!'][reviewRating]}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Your review * <span className="normal-case font-normal text-brand-dark/30">(min 20 chars)</span></label>
+                  <textarea rows={4} value={reviewComment} onChange={e => setReviewComment(e.target.value)}
+                    placeholder="Describe your experience working with this brand. Was communication clear? Did they provide a detailed brief?"
+                    className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark resize-none outline-none"
+                    style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }} />
+                  <p className={`text-[10px] mt-0.5 ${reviewComment.length > 0 && reviewComment.length < 20 ? 'text-red-500' : 'text-brand-dark/20'}`}>{reviewComment.length} / 20 min</p>
+                </div>
+                <button onClick={submitBrandReview} disabled={reviewRating === 0 || reviewComment.trim().length < 20 || reviewSubmitting}
+                  className="w-full py-3.5 rounded-xl font-bold text-white text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+                  style={{ backgroundColor: darkPurple }}>
+                  {reviewSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</> : <><Star className="w-4 h-4" /> Submit Review</>}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="mb-6">
         <h2 className="text-xl font-black" style={{ color: darkPurple }}>My Collabs</h2>
         <p className="text-sm text-gray-400 mt-0.5">{collabs.length} collab{collabs.length !== 1 ? 's' : ''}</p>
@@ -798,7 +869,7 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
                   </p>
                 </div>
               )}
-              <div className="px-4 pb-3 flex gap-2">
+              <div className="px-4 pb-3 flex gap-2 flex-wrap">
                 <button onClick={() => setActiveTab('messages')}
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold"
                   style={{ backgroundColor: darkPurple, color: 'white' }}>
@@ -811,6 +882,18 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
                     <Upload className="w-4 h-4" />
                     {c.status === 'revision_requested' ? 'Resubmit' : 'Deliverables'}
                   </button>
+                )}
+                {c.status === 'completed' && !c.creator_review_rating && (
+                  <button onClick={() => { setReviewCollab(c); setReviewRating(0); setReviewComment(''); setReviewDone(false) }}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold"
+                    style={{ backgroundColor: '#fef9c3', color: '#854d0e', border: '1px solid #fde68a' }}>
+                    <Star className="w-4 h-4" /> Rate Brand
+                  </button>
+                )}
+                {c.status === 'completed' && c.creator_review_rating > 0 && (
+                  <div className="flex-1 flex items-center justify-center gap-1 py-2.5 text-xs font-semibold text-amber-600">
+                    {'★'.repeat(c.creator_review_rating)}{'☆'.repeat(5 - c.creator_review_rating)} Reviewed
+                  </div>
                 )}
               </div>
             </div>
