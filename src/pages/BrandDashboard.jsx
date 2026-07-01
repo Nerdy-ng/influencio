@@ -541,14 +541,15 @@ function StatCard({ label, value, icon: Icon, color }) {
 }
 
 const NAV_ITEMS = [
-  { id: 'overview',      label: 'Overview',        icon: LayoutDashboard },
-  { id: 'analytics',     label: 'Analytics',       icon: TrendingUp },
-  { id: 'collabs',       label: 'Collabs',         icon: ShoppingBag },
-  { id: 'favorites',     label: 'Saved Talents',   icon: Heart },
-  { id: 'messages',      label: 'Messages',        icon: Mail },
-  { id: 'payments',      label: 'Payments',        icon: Wallet },
-  { id: 'invite',        label: 'Invite Creators', icon: UserPlus },
-  { id: 'settings',      label: 'Settings',        icon: Settings },
+  { id: 'overview',       label: 'Overview',        icon: LayoutDashboard },
+  { id: 'analytics',      label: 'Analytics',       icon: TrendingUp },
+  { id: 'notifications',  label: 'Notifications',   icon: Bell },
+  { id: 'collabs',        label: 'Collabs',         icon: ShoppingBag },
+  { id: 'favorites',      label: 'Saved Talents',   icon: Heart },
+  { id: 'messages',       label: 'Messages',        icon: Mail },
+  { id: 'payments',       label: 'Payments',        icon: Wallet },
+  { id: 'invite',         label: 'Invite Creators', icon: UserPlus },
+  { id: 'settings',       label: 'Settings',        icon: Settings },
 ]
 
 const MOCK_TALENTS = [
@@ -879,6 +880,7 @@ export default function BrandDashboard() {
                   onReview={setReviewModal}
                 />
               )}
+              {activeTab === 'notifications' && <BrandNotificationsTab />}
               {activeTab === 'payments' && (
                 <PaymentsTab orders={orders} totalSpent={totalSpent} onPayNow={setPaymentModal} onApprove={handleApprove} onRevision={setRevisionModal} />
               )}
@@ -1626,80 +1628,169 @@ function FavoritesTab() {
   )
 }
 
+const INDUSTRIES = ['Fashion & Beauty', 'Food & Beverage', 'Tech & Gadgets', 'Health & Wellness', 'Finance & Fintech', 'Travel & Hospitality', 'Entertainment', 'Sports & Fitness', 'Real Estate', 'Education', 'Automotive', 'Retail & E-commerce', 'Other']
+
 function SettingsTab() {
-  const [saved, setSaved] = useState(false)
-  const [form, setForm] = useState({ brandName: '', email: '', website: '', notifications: true })
+  const [saved,    setSaved]    = useState(false)
+  const [saving,   setSaving]   = useState(false)
+  const [loading,  setLoading]  = useState(true)
+  const [form, setForm] = useState({ companyName: '', ownerName: '', industry: '', website: '', email: '' })
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setForm(f => ({
-          ...f,
-          email: session.user.email || '',
-          brandName: session.user.user_metadata?.display_name || session.user.user_metadata?.full_name || '',
-        }))
-      }
-    })
+    ;(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoading(false); return }
+      const { data: profile } = await supabase.from('profiles').select('company_name, owner_name, industry, website, full_name').eq('id', user.id).maybeSingle()
+      setForm({
+        companyName: profile?.company_name || '',
+        ownerName:   profile?.owner_name   || profile?.full_name || '',
+        industry:    profile?.industry     || '',
+        website:     profile?.website      || '',
+        email:       user.email            || '',
+      })
+      setLoading(false)
+    })()
   }, [])
 
-  const handleSave = () => {
+  async function handleSave() {
+    setSaving(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      await supabase.from('profiles').update({
+        company_name: form.companyName.trim(),
+        owner_name:   form.ownerName.trim(),
+        industry:     form.industry,
+        website:      form.website.trim(),
+      }).eq('id', user.id)
+    }
+    setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
 
+  if (loading) return <div className="flex justify-center py-20"><div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" /></div>
+
+  const field = (label, key, opts = {}) => (
+    <div>
+      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">{label}</label>
+      <input
+        type={opts.type || 'text'}
+        value={form[key]}
+        onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+        placeholder={opts.placeholder || ''}
+        disabled={opts.disabled}
+        className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 disabled:bg-gray-50 disabled:text-gray-400"
+      />
+    </div>
+  )
+
   return (
     <div className="space-y-6 max-w-lg">
-      <h2 className="text-xl font-bold text-gray-900">Settings</h2>
+      <h2 className="text-xl font-black" style={{ color: darkPurple }}>Brand Settings</h2>
+
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Brand Info</p>
+        {field('Company / Brand name', 'companyName', { placeholder: 'e.g. GlowUp Cosmetics' })}
+        {field('Owner / Contact name', 'ownerName',   { placeholder: 'e.g. Chisom Adeyemi' })}
+        {field('Website', 'website', { type: 'url', placeholder: 'https://yourbrand.com' })}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Brand Name</label>
-          <input
-            type="text"
-            value={form.brandName}
-            onChange={e => setForm(f => ({ ...f, brandName: e.target.value }))}
-            className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300"
-          />
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Industry</label>
+          <select value={form.industry} onChange={e => setForm(f => ({ ...f, industry: e.target.value }))}
+            className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 bg-white">
+            <option value="">Select industry…</option>
+            {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
+          </select>
         </div>
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
-          <input
-            type="email"
-            value={form.email}
-            onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-            className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Website</label>
-          <input
-            type="url"
-            value={form.website}
-            onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
-            placeholder="https://yourbrand.com"
-            className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300"
-          />
-        </div>
-        <label className="flex items-center gap-3 cursor-pointer">
-          <div
-            onClick={() => setForm(f => ({ ...f, notifications: !f.notifications }))}
-            className="w-10 h-5 rounded-full relative transition-colors cursor-pointer flex-shrink-0"
-            style={{ backgroundColor: form.notifications ? darkPurple : '#d1d5db' }}
-          >
-            <div
-              className="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform"
-              style={{ transform: form.notifications ? 'translateX(22px)' : 'translateX(2px)' }}
-            />
-          </div>
-          <span className="text-sm text-gray-700">Email notifications</span>
-        </label>
-        <button
-          onClick={handleSave}
-          className="w-full py-3 rounded-full text-sm font-bold text-white transition-colors"
-          style={{ backgroundColor: saved ? '#16a34a' : darkPurple }}
-        >
-          {saved ? 'Saved ✓' : 'Save Changes'}
-        </button>
       </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Account</p>
+        {field('Email', 'email', { type: 'email', disabled: true })}
+        <p className="text-xs text-gray-400">To change your email, contact support@brandior.africa</p>
+      </div>
+
+      <button onClick={handleSave} disabled={saving}
+        className="w-full py-3 rounded-full text-sm font-bold text-white transition-colors disabled:opacity-60"
+        style={{ backgroundColor: saved ? '#16a34a' : darkPurple }}>
+        {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save Changes'}
+      </button>
+    </div>
+  )
+}
+
+// ── Brand Notifications Tab ────────────────────────────────────────────────────
+
+const BRAND_NOTIF_ICONS = {
+  delivered:          { color: '#7c3aed', bg: '#f3e8ff' },
+  new_collab:         { color: '#2563eb', bg: '#dbeafe' },
+  revision_requested: { color: '#ea580c', bg: '#fff7ed' },
+  completed:          { color: '#16a34a', bg: '#dcfce7' },
+  message:            { color: '#0284c7', bg: '#e0f2fe' },
+  default:            { color: '#6b7280', bg: '#f3f4f6' },
+}
+
+function BrandNotificationsTab() {
+  const [notifs,  setNotifs]  = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    ;(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoading(false); return }
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50)
+      setNotifs(data || [])
+      setLoading(false)
+      await supabase.from('notifications').update({ read: true }).eq('user_id', user.id).eq('read', false)
+    })()
+  }, [])
+
+  if (loading) return (
+    <div className="flex justify-center py-20">
+      <div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" />
+    </div>
+  )
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-black" style={{ color: darkPurple }}>Notifications</h2>
+        {notifs.length > 0 && (
+          <span className="text-xs text-gray-400">{notifs.filter(n => !n.read).length} unread</span>
+        )}
+      </div>
+      {notifs.length === 0 ? (
+        <div className="text-center py-20">
+          <Bell className="w-12 h-12 mx-auto mb-4 opacity-20 text-gray-400" />
+          <p className="font-semibold text-gray-500">No notifications yet</p>
+          <p className="text-sm text-gray-400 mt-1">We'll let you know when creators submit work or respond to your collabs</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {notifs.map(n => {
+            const meta = BRAND_NOTIF_ICONS[n.type] || BRAND_NOTIF_ICONS.default
+            return (
+              <div key={n.id} className="flex items-start gap-3 p-4 rounded-2xl"
+                style={{ backgroundColor: n.read ? 'white' : meta.bg, border: `1px solid ${n.read ? '#e5e7eb' : meta.color + '30'}` }}>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: meta.bg, border: `1px solid ${meta.color}20` }}>
+                  <Bell className="w-4 h-4" style={{ color: meta.color }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-gray-900">{n.title}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{n.body}</p>
+                  <p className="text-[10px] text-gray-400 mt-1.5">{new Date(n.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                </div>
+                {!n.read && <span className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: meta.color }} />}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

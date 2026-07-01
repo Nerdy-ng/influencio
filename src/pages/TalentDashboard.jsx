@@ -185,6 +185,8 @@ const emptyProfile = {
 const AVATAR_NAV = [
   { id: 'collabs',      label: 'My Collabs',        icon: Inbox },
   { id: 'analytics',    label: 'Analytics',         icon: TrendingUp },
+  { id: 'notifications',label: 'Notifications',     icon: Bell },
+  { id: 'rate-card',    label: 'Rate Card',          icon: CreditCard },
   { id: 'profile',      label: 'My Profile',        icon: LayoutDashboard },
   { id: 'portfolio',    label: 'Portfolio',          icon: ImagePlus },
   { id: 'transactions', label: 'Transactions',       icon: Wallet },
@@ -305,6 +307,8 @@ function AvatarMenu({ profile, activeTab, setActiveTab }) {
 function Sidebar({ active, setActive, dashLogo }) {
   const nav = [
     { id: 'collabs',      label: 'My Collabs',       icon: Inbox },
+    { id: 'notifications',label: 'Notifications',    icon: Bell },
+    { id: 'rate-card',    label: 'Rate Card',         icon: CreditCard },
     { id: 'profile',      label: 'My Profile',       icon: LayoutDashboard },
     { id: 'portfolio',    label: 'Portfolio',         icon: ImagePlus },
     { id: 'transactions', label: 'Transactions',      icon: Wallet },
@@ -550,6 +554,7 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
   const [expanded, setExpanded] = useState(null)
   const [deliverCollab, setDeliverCollab] = useState(null)
   const [deliverFile, setDeliverFile] = useState(null)
+  const [deliverLink, setDeliverLink] = useState('')
   const [deliverNote, setDeliverNote] = useState('')
   const [uploading, setUploading] = useState(false)
   const [uploadDone, setUploadDone] = useState(false)
@@ -587,16 +592,23 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
   }, [])
 
   async function uploadDeliverable() {
-    if (!deliverFile || !deliverCollab) return
+    if (!deliverCollab) return
+    const hasFile = !!deliverFile
+    const hasLink = deliverLink.trim().length > 0
+    if (!hasFile && !hasLink) return
     setUploading(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      const path = `${user.id}/${deliverCollab.id}/${Date.now()}-${deliverFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
-      const { error } = await supabase.storage.from('deliverables').upload(path, deliverFile)
-      if (error) throw error
-      const { data: { publicUrl } } = supabase.storage.from('deliverables').getPublicUrl(path)
-
-      const newFile = { name: deliverFile.name, url: publicUrl, size: deliverFile.size, note: deliverNote.trim() || null, uploaded_at: new Date().toISOString() }
+      let newFile
+      if (hasFile) {
+        const path = `${user.id}/${deliverCollab.id}/${Date.now()}-${deliverFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+        const { error } = await supabase.storage.from('deliverables').upload(path, deliverFile)
+        if (error) throw error
+        const { data: { publicUrl } } = supabase.storage.from('deliverables').getPublicUrl(path)
+        newFile = { name: deliverFile.name, url: publicUrl, size: deliverFile.size, note: deliverNote.trim() || null, uploaded_at: new Date().toISOString() }
+      } else {
+        newFile = { name: 'Shared link', url: deliverLink.trim(), size: null, note: deliverNote.trim() || null, uploaded_at: new Date().toISOString() }
+      }
       const updatedFiles = [...(deliverCollab.delivered_files || []), newFile]
 
       await supabase.from('collabs')
@@ -606,6 +618,7 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
       setCollabs(prev => prev.map(c => c.id === deliverCollab.id ? { ...c, delivered_files: updatedFiles, status: 'delivered' } : c))
       setUploadDone(true)
       setDeliverFile(null)
+      setDeliverLink('')
       setDeliverNote('')
       setTimeout(() => { setDeliverCollab(null); setUploadDone(false) }, 2000)
     } catch {
@@ -640,28 +653,40 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
       {deliverCollab && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-black text-gray-900 text-lg">Upload Deliverable</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-black text-gray-900 text-lg">
+                {deliverCollab.status === 'revision_requested' ? 'Resubmit Work' : 'Submit Deliverable'}
+              </h3>
               <button onClick={() => setDeliverCollab(null)} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-sm text-gray-500 mb-5">
+            <p className="text-sm text-gray-500 mb-4">
               For: <span className="font-semibold text-gray-800">{deliverCollab.content_type} — {deliverCollab.brand?.company_name || deliverCollab.brand?.full_name || 'Brand'}</span>
             </p>
+
+            {deliverCollab.status === 'revision_requested' && deliverCollab.revision_reason && (
+              <div className="flex gap-3 rounded-xl p-3 mb-4" style={{ backgroundColor: '#fff7ed', border: '1px solid #fed7aa' }}>
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#ea580c' }} />
+                <div>
+                  <p className="text-xs font-bold mb-0.5" style={{ color: '#ea580c' }}>Brand's revision feedback</p>
+                  <p className="text-xs text-gray-700 leading-relaxed">{deliverCollab.revision_reason}</p>
+                </div>
+              </div>
+            )}
 
             {uploadDone ? (
               <div className="text-center py-8">
                 <CheckCircle className="w-12 h-12 mx-auto mb-3" style={{ color: '#16a34a' }} />
-                <p className="font-bold text-gray-800">Deliverable uploaded!</p>
+                <p className="font-bold text-gray-800">{deliverCollab.status === 'revision_requested' ? 'Resubmission sent!' : 'Deliverable uploaded!'}</p>
               </div>
             ) : (
               <>
                 <input ref={deliverFileRef} type="file" className="hidden"
-                  onChange={e => setDeliverFile(e.target.files?.[0])} />
+                  onChange={e => { setDeliverFile(e.target.files?.[0]); setDeliverLink('') }} />
 
                 {deliverFile ? (
-                  <div className="flex items-center justify-between p-3 rounded-xl mb-4"
+                  <div className="flex items-center justify-between p-3 rounded-xl mb-3"
                     style={{ backgroundColor: '#f3e8ff', border: '1px solid #e9d5ff' }}>
                     <div className="flex items-center gap-2 min-w-0">
                       <FileText className="w-4 h-4 flex-shrink-0" style={{ color: purple }} />
@@ -674,22 +699,36 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
                   </div>
                 ) : (
                   <div onClick={() => deliverFileRef.current?.click()}
-                    className="cursor-pointer rounded-2xl flex flex-col items-center justify-center gap-2 py-8 mb-4 transition-colors"
+                    className="cursor-pointer rounded-2xl flex flex-col items-center justify-center gap-2 py-6 mb-3 transition-colors"
                     style={{ border: '2px dashed #e9d5ff', backgroundColor: '#f9f5ff' }}>
                     <Upload className="w-7 h-7" style={{ color: purple }} />
-                    <p className="text-sm font-semibold text-gray-700">Click to select file</p>
+                    <p className="text-sm font-semibold text-gray-700">Click to upload file</p>
                     <p className="text-xs text-gray-400">Images, videos, PDFs, ZIP — any format</p>
                   </div>
                 )}
+
+                <div className="flex items-center gap-2 my-3">
+                  <div className="flex-1 h-px bg-gray-200" />
+                  <span className="text-xs font-semibold text-gray-400">or paste a link</span>
+                  <div className="flex-1 h-px bg-gray-200" />
+                </div>
+
+                <input type="url" value={deliverLink} disabled={!!deliverFile}
+                  onChange={e => setDeliverLink(e.target.value)}
+                  placeholder="Instagram, TikTok, YouTube, Drive…"
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none mb-3 disabled:opacity-40"
+                  style={{ borderColor: deliverLink && !deliverFile ? '#e9d5ff' : undefined }} />
 
                 <textarea value={deliverNote} onChange={e => setDeliverNote(e.target.value)}
                   placeholder="Add a note for the brand (optional)..."
                   rows={2} className="w-full rounded-xl border border-gray-200 p-3 text-sm resize-none focus:outline-none mb-4" />
 
-                <button onClick={uploadDeliverable} disabled={!deliverFile || uploading}
+                <button onClick={uploadDeliverable} disabled={(!deliverFile && !deliverLink.trim()) || uploading}
                   className="w-full py-3 rounded-2xl font-bold text-white text-sm disabled:opacity-50 flex items-center justify-center gap-2"
                   style={{ backgroundColor: darkPurple }}>
-                  {uploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</> : 'Upload Deliverable'}
+                  {uploading
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</>
+                    : deliverCollab.status === 'revision_requested' ? 'Resubmit for Review' : 'Submit Deliverable'}
                 </button>
               </>
             )}
@@ -744,6 +783,16 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
                   </div>
                 )}
               </div>
+              {c.status === 'revision_requested' && c.revision_reason && (
+                <div className="mx-4 mb-3 flex gap-2 rounded-xl p-3"
+                  style={{ backgroundColor: '#fff7ed', border: '1px solid #fed7aa' }}>
+                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#ea580c' }} />
+                  <p className="text-xs text-gray-700 leading-relaxed">
+                    <span className="font-bold" style={{ color: '#ea580c' }}>Revision requested: </span>
+                    {c.revision_reason}
+                  </p>
+                </div>
+              )}
               <div className="px-4 pb-3 flex gap-2">
                 <button onClick={() => setActiveTab('messages')}
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold"
@@ -751,10 +800,11 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
                   <Mail className="w-4 h-4" /> Messages
                 </button>
                 {canDeliver && (
-                  <button onClick={() => { setDeliverCollab(c); setDeliverFile(null); setDeliverNote(''); setUploadDone(false) }}
+                  <button onClick={() => { setDeliverCollab(c); setDeliverFile(null); setDeliverLink(''); setDeliverNote(''); setUploadDone(false) }}
                     className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold"
-                    style={{ backgroundColor: '#f3e8ff', color: purple }}>
-                    <Upload className="w-4 h-4" /> Deliverables
+                    style={{ backgroundColor: c.status === 'revision_requested' ? '#fff7ed' : '#f3e8ff', color: c.status === 'revision_requested' ? '#ea580c' : purple, border: c.status === 'revision_requested' ? '1px solid #fed7aa' : 'none' }}>
+                    <Upload className="w-4 h-4" />
+                    {c.status === 'revision_requested' ? 'Resubmit' : 'Deliverables'}
                   </button>
                 )}
               </div>
@@ -2622,6 +2672,12 @@ export default function TalentDashboard() {
           {/* ── SUPPORT TAB ── */}
           {activeTab === 'support' && <SupportTab />}
 
+          {/* ── NOTIFICATIONS TAB ── */}
+          {activeTab === 'notifications' && <NotificationsTab />}
+
+          {/* ── RATE CARD TAB ── */}
+          {activeTab === 'rate-card' && <RateCardTab />}
+
         </div>
       </main>
     </div>
@@ -3382,6 +3438,369 @@ function SupportTab() {
         </div>
       </div>
 
+    </div>
+  )
+}
+
+// ── Notifications Tab ─────────────────────────────────────────────────────────
+
+const NOTIF_ICONS = {
+  new_collab:         { color: '#7c3aed', bg: '#f3e8ff', label: 'New Collab'      },
+  delivered:          { color: '#2563eb', bg: '#dbeafe', label: 'Delivered'       },
+  revision_requested: { color: '#ea580c', bg: '#fff7ed', label: 'Revision'        },
+  completed:          { color: '#16a34a', bg: '#dcfce7', label: 'Completed'       },
+  payment_released:   { color: '#16a34a', bg: '#dcfce7', label: 'Payment'         },
+  message:            { color: '#0284c7', bg: '#e0f2fe', label: 'Message'         },
+  default:            { color: '#6b7280', bg: '#f3f4f6', label: 'Notification'    },
+}
+
+function NotificationsTab() {
+  const [notifs,  setNotifs]  = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    ;(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoading(false); return }
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50)
+      setNotifs(data || [])
+      setLoading(false)
+      // mark all unread as read
+      await supabase.from('notifications').update({ read: true }).eq('user_id', user.id).eq('read', false)
+    })()
+  }, [])
+
+  if (loading) return <div className="flex justify-center py-20"><div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" /></div>
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-black" style={{ color: darkPurple }}>Notifications</h2>
+        {notifs.length > 0 && (
+          <span className="text-xs text-gray-400">{notifs.filter(n => !n.read).length} unread</span>
+        )}
+      </div>
+      {notifs.length === 0 ? (
+        <div className="text-center py-20">
+          <Bell className="w-12 h-12 mx-auto mb-4 opacity-20" style={{ color: purple }} />
+          <p className="font-semibold text-gray-500">No notifications yet</p>
+          <p className="text-sm text-gray-400 mt-1">We'll notify you when brands place orders or respond to your work</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {notifs.map(n => {
+            const meta = NOTIF_ICONS[n.type] || NOTIF_ICONS.default
+            return (
+              <div key={n.id} className="flex items-start gap-3 p-4 rounded-2xl"
+                style={{ backgroundColor: n.read ? 'white' : meta.bg, border: `1px solid ${n.read ? '#e9d5ff' : meta.color + '30'}` }}>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: meta.bg, border: `1px solid ${meta.color}30` }}>
+                  <Bell className="w-4 h-4" style={{ color: meta.color }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-gray-900">{n.title}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{n.body}</p>
+                  <p className="text-[10px] text-gray-400 mt-1.5">{new Date(n.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                </div>
+                {!n.read && <span className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: meta.color }} />}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Rate Card Tab ──────────────────────────────────────────────────────────────
+
+const INIT_CONTENT_TYPES = [
+  { id: 'influencer', label: 'Influencer Post', color: '#F72585', desc: 'You post on your channels', enabled: true },
+  { id: 'ugc',        label: 'UGC Content',     color: '#7c3aed', desc: 'Brand receives content to post', enabled: true },
+]
+const INIT_DURATIONS = [
+  { id: 'd1', label: 'Up to 30s',   price: 20000  },
+  { id: 'd2', label: '31s – 60s',   price: 35000  },
+  { id: 'd3', label: '1 – 3 mins',  price: 55000  },
+  { id: 'd4', label: '3 – 10 mins', price: 90000  },
+  { id: 'd5', label: '10+ mins',    price: 150000 },
+]
+const INIT_PLATFORMS = [
+  { id: 'instagram', label: 'Instagram', color: '#E4405F', reach: 'Reels, Stories, Feed',  enabled: true,  fee: 20000 },
+  { id: 'tiktok',    label: 'TikTok',    color: '#010101', reach: 'Short-form video',       enabled: true,  fee: 15000 },
+  { id: 'youtube',   label: 'YouTube',   color: '#FF0000', reach: 'Videos & Shorts',        enabled: true,  fee: 40000 },
+  { id: 'x',         label: 'X (Twitter)', color: '#1DA1F2', reach: 'Posts & threads',     enabled: false, fee: 10000 },
+  { id: 'facebook',  label: 'Facebook',  color: '#1877F2', reach: 'Feed, Reels, Stories',  enabled: false, fee: 10000 },
+]
+const INIT_ADDONS = [
+  { id: 'script', label: 'Script Writing', color: '#3b82f6', desc: 'You research and write the full script', enabled: true, price: 20000, custom: false },
+]
+const MIN_RATE = 20000
+const fmt = n => '₦' + Number(n || 0).toLocaleString()
+const parseNum = s => { const n = parseInt(String(s).replace(/[^0-9]/g, ''), 10); return isNaN(n) ? 0 : n }
+
+function RateCardTab() {
+  const [types,       setTypes]       = useState(INIT_CONTENT_TYPES)
+  const [durations,   setDurations]   = useState(INIT_DURATIONS)
+  const [platforms,   setPlatforms]   = useState(INIT_PLATFORMS)
+  const [addons,      setAddons]      = useState(INIT_ADDONS)
+  const [isPublic,    setIsPublic]    = useState(true)
+  const [saving,      setSaving]      = useState(false)
+  const [saved,       setSaved]       = useState(false)
+  const [loading,     setLoading]     = useState(true)
+  const [showCustom,  setShowCustom]  = useState(false)
+  const [customName,  setCustomName]  = useState('')
+  const [customPrice, setCustomPrice] = useState('')
+
+  useEffect(() => {
+    ;(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoading(false); return }
+      const { data } = await supabase.from('rate_cards').select('*').eq('creator_id', user.id).maybeSingle()
+      if (data) {
+        if (data.content_types) setTypes(data.content_types)
+        if (data.durations)     setDurations(data.durations)
+        if (data.platforms)     setPlatforms(data.platforms)
+        if (data.addons)        setAddons(data.addons)
+        if (typeof data.is_public === 'boolean') setIsPublic(data.is_public)
+      }
+      setLoading(false)
+    })()
+  }, [])
+
+  const startingFrom = durations[0]?.price ?? MIN_RATE
+  const enabledPlatforms = platforms.filter(p => p.enabled)
+
+  async function handleSave() {
+    setSaving(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setSaving(false); return }
+    await supabase.from('rate_cards').upsert(
+      { creator_id: user.id, content_types: types, durations, platforms, addons, is_public: isPublic },
+      { onConflict: 'creator_id' }
+    )
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 3000)
+  }
+
+  function addCustomAddon() {
+    const name = customName.trim()
+    const price = parseNum(customPrice)
+    if (!name || !price) return
+    setAddons(prev => [...prev, { id: `custom_${Date.now()}`, label: name, desc: 'Custom add-on', color: '#FA8112', enabled: true, price, custom: true }])
+    setShowCustom(false); setCustomName(''); setCustomPrice('')
+  }
+
+  if (loading) return <div className="flex justify-center py-20"><div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" /></div>
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6 pb-20">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-black" style={{ color: darkPurple }}>Rate Card</h2>
+          <p className="text-sm text-gray-400 mt-0.5">Set your pricing — brands see this when they hire you</p>
+        </div>
+        <button onClick={() => setIsPublic(v => !v)}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors"
+          style={{ backgroundColor: isPublic ? '#f3e8ff' : '#f3f4f6', color: isPublic ? purple : '#9ca3af', border: `1px solid ${isPublic ? '#e9d5ff' : '#e5e7eb'}` }}>
+          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isPublic ? purple : '#9ca3af' }} />
+          {isPublic ? 'Public' : 'Hidden'}
+        </button>
+      </div>
+
+      {/* Preview card */}
+      <div className="rounded-2xl p-5" style={{ background: 'linear-gradient(135deg, #7c3aed, #F72585)' }}>
+        <p className="text-xs font-bold text-white/70 uppercase tracking-widest mb-1">Production starts from</p>
+        <p className="text-4xl font-black text-white">{fmt(startingFrom)}</p>
+        <p className="text-sm text-white/75 mt-1">+ platform posting fees on top</p>
+        <p className="text-xs text-white/80 mt-2 font-medium">Platform min {fmt(MIN_RATE)} · {enabledPlatforms.length} posting platforms</p>
+      </div>
+
+      {/* Content Types */}
+      <RCSection label="Content Type" hint="Types of content you offer">
+        <div className="grid grid-cols-2 gap-3">
+          {types.map(t => (
+            <button key={t.id} onClick={() => setTypes(prev => prev.map(x => x.id === t.id ? { ...x, enabled: !x.enabled } : x))}
+              className="rounded-2xl p-4 text-left transition-all"
+              style={{ border: `2px solid ${t.enabled ? t.color : '#e9d5ff'}`, backgroundColor: t.enabled ? t.color + '0C' : 'white' }}>
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-xs font-bold" style={{ color: t.enabled ? t.color : '#9ca3af' }}>{t.label}</span>
+                <span className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
+                  style={{ backgroundColor: t.enabled ? t.color : '#e5e7eb' }}>
+                  {t.enabled ? '✓' : ''}
+                </span>
+              </div>
+              <p className="text-xs text-gray-400">{t.desc}</p>
+            </button>
+          ))}
+        </div>
+      </RCSection>
+
+      {/* Video Production durations */}
+      <RCSection label="Video Production" hint="What you charge to film & edit — same rate regardless of where it's posted">
+        <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #e9d5ff' }}>
+          {durations.map((d, i) => (
+            <div key={d.id} className="flex items-center justify-between px-4 py-3"
+              style={{ borderBottom: i < durations.length - 1 ? '1px solid #e9d5ff' : 'none' }}>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-gray-800">{d.label}</span>
+                {i === 0 && <span className="text-[9px] font-black px-1.5 py-0.5 rounded" style={{ backgroundColor: '#FA8112' + '18', color: '#FA8112' }}>Base</span>}
+              </div>
+              <div className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ backgroundColor: '#f9f5ff' }}>
+                <span className="text-xs font-bold text-gray-400">₦</span>
+                <input type="text" inputMode="numeric"
+                  value={d.price > 0 ? d.price.toLocaleString() : ''}
+                  onChange={e => setDurations(prev => prev.map(r => r.id === d.id ? { ...r, price: parseNum(e.target.value) } : r))}
+                  className="w-24 text-sm font-bold text-gray-800 bg-transparent focus:outline-none text-right"
+                  placeholder="0" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </RCSection>
+
+      {/* Platform Posting */}
+      <RCSection label="Platform Posting" hint="For Influencer Post only — flat fee per platform, added on top of production">
+        <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #e9d5ff' }}>
+          {platforms.map((p, i) => (
+            <div key={p.id} className="flex items-center gap-3 px-4 py-3"
+              style={{ borderBottom: i < platforms.length - 1 ? '1px solid #e9d5ff' : 'none' }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: p.color + '18' }}>
+                <span className="text-xs font-black" style={{ color: p.color }}>{p.label[0]}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold" style={{ color: p.enabled ? p.color : '#374151' }}>{p.label}</p>
+                <p className="text-xs text-gray-400">{p.reach}</p>
+              </div>
+              {p.enabled && (
+                <div className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ backgroundColor: '#f9f5ff' }}>
+                  <span className="text-xs font-bold" style={{ color: p.color }}>+₦</span>
+                  <input type="text" inputMode="numeric"
+                    value={p.fee > 0 ? p.fee.toLocaleString() : ''}
+                    onChange={e => setPlatforms(prev => prev.map(r => r.id === p.id ? { ...r, fee: parseNum(e.target.value) } : r))}
+                    className="w-20 text-sm font-bold bg-transparent focus:outline-none text-right"
+                    style={{ color: p.color }}
+                    placeholder="0" />
+                </div>
+              )}
+              <input type="checkbox" checked={p.enabled}
+                onChange={() => setPlatforms(prev => prev.map(r => r.id === p.id ? { ...r, enabled: !r.enabled } : r))}
+                className="w-4 h-4 accent-purple-600 flex-shrink-0" />
+            </div>
+          ))}
+        </div>
+      </RCSection>
+
+      {/* Add-ons */}
+      <RCSection label="Add-ons" hint="Extras you offer on top of the base price">
+        <div className="space-y-3">
+          {addons.map(a => (
+            <div key={a.id} className="rounded-2xl overflow-hidden"
+              style={{ border: `1.5px solid ${a.enabled ? a.color + '60' : '#e9d5ff'}`, backgroundColor: 'white' }}>
+              <div className="flex items-center gap-3 p-4">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: a.color + '15' }}>
+                  <span className="text-sm font-black" style={{ color: a.color }}>+</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold" style={{ color: a.enabled ? a.color : '#374151' }}>{a.label}</p>
+                  <p className="text-xs text-gray-400">{a.desc}</p>
+                </div>
+                {a.custom ? (
+                  <button onClick={() => setAddons(prev => prev.filter(x => x.id !== a.id))}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: '#fef2f2' }}>
+                    <X className="w-3.5 h-3.5 text-red-400" />
+                  </button>
+                ) : (
+                  <input type="checkbox" checked={a.enabled}
+                    onChange={() => setAddons(prev => prev.map(x => x.id === a.id ? { ...x, enabled: !x.enabled } : x))}
+                    className="w-4 h-4 accent-purple-600 flex-shrink-0" />
+                )}
+              </div>
+              {a.enabled && (
+                <div className="flex items-center justify-between px-4 py-3 border-t" style={{ borderColor: '#f3e8ff', backgroundColor: '#fafafa' }}>
+                  <span className="text-xs font-semibold text-gray-400">Price for this add-on</span>
+                  <div className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ backgroundColor: '#f9f5ff' }}>
+                    <span className="text-xs font-bold" style={{ color: a.color }}>+₦</span>
+                    <input type="text" inputMode="numeric"
+                      value={a.price > 0 ? a.price.toLocaleString() : ''}
+                      onChange={e => setAddons(prev => prev.map(x => x.id === a.id ? { ...x, price: parseNum(e.target.value) } : x))}
+                      className="w-24 text-sm font-bold bg-transparent focus:outline-none text-right"
+                      style={{ color: a.color }}
+                      placeholder="0" />
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+          <button onClick={() => setShowCustom(true)}
+            className="w-full flex items-center gap-3 rounded-2xl px-4 py-3 text-left"
+            style={{ border: '1.5px dashed #a5b4fc', backgroundColor: '#f5f3ff' }}>
+            <Plus className="w-5 h-5" style={{ color: '#6366f1' }} />
+            <span className="text-sm font-bold" style={{ color: '#6366f1' }}>Add custom add-on</span>
+          </button>
+        </div>
+      </RCSection>
+
+      {/* Custom add-on modal */}
+      {showCustom && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="bg-white rounded-t-3xl w-full max-w-md p-6 pb-10">
+            <div className="w-9 h-1 rounded-full bg-gray-200 mx-auto mb-5" />
+            <h3 className="text-lg font-black text-gray-900 mb-1">Custom Add-on</h3>
+            <p className="text-sm text-gray-400 mb-5">Name it and set your price</p>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Add-on name</label>
+            <input type="text" maxLength={40} value={customName} onChange={e => setCustomName(e.target.value)}
+              placeholder="e.g. Express Delivery, Raw Files, Revision…"
+              className="w-full rounded-xl border px-4 py-3 text-sm focus:outline-none mb-4" style={{ borderColor: '#e9d5ff' }} />
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Price</label>
+            <div className="flex items-center rounded-xl border-2 px-4 py-3 mb-5" style={{ borderColor: '#e9d5ff' }}>
+              <span className="text-xl font-black mr-2" style={{ color: purple }}>₦</span>
+              <input type="text" inputMode="numeric" value={customPrice} onChange={e => setCustomPrice(e.target.value.replace(/[^0-9]/g, ''))}
+                placeholder="0" className="flex-1 text-xl font-black focus:outline-none" />
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setShowCustom(false)}
+                className="flex-1 py-3 rounded-xl border font-bold text-sm text-gray-500" style={{ borderColor: '#e9d5ff' }}>
+                Cancel
+              </button>
+              <button onClick={addCustomAddon} disabled={!customName.trim() || !customPrice}
+                className="flex-1 py-3 rounded-xl font-bold text-sm text-white disabled:opacity-40"
+                style={{ backgroundColor: purple }}>
+                Add to Rate Card
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save button */}
+      <button onClick={handleSave} disabled={saving}
+        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-white text-base disabled:opacity-60"
+        style={{ backgroundColor: darkPurple }}>
+        {saving ? <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" /> Saving…</>
+          : saved ? <><CheckCircle className="w-5 h-5" /> Rate Card Saved!</>
+          : <><Save className="w-5 h-5" /> Save Rate Card</>}
+      </button>
+    </div>
+  )
+}
+
+function RCSection({ label, hint, children }) {
+  return (
+    <div>
+      <p className="text-sm font-black mb-0.5" style={{ color: darkPurple }}>{label}</p>
+      <p className="text-xs text-gray-400 mb-3">{hint}</p>
+      {children}
     </div>
   )
 }
