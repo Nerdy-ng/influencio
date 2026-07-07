@@ -7,7 +7,7 @@ import {
   TrendingUp, Activity, Check, ArrowUpRight, Eye, EyeOff, ShieldAlert, Pencil, Save, Globe,
   SlidersHorizontal, Star, Zap, BadgeCheck, RotateCcw, Info, ChevronUp, ChevronRight,
   BarChart2, HelpCircle, MessageSquare, Clock, Send, CreditCard, ToggleLeft, ToggleRight, Layers,
-  Scale, Sparkles,
+  Scale, Sparkles, Smartphone, Tag, ListFilter,
 } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import AdminModerationDashboard from "../../components/AdminModerationDashboard";
@@ -20,18 +20,6 @@ import { supabase } from "../../lib/supabase";
 
 // ─── MOCK DATA ────────────────────────────────────────────────────────────────
 
-const MOCK_USERS = [
-  { id: 1, name: "Adaeze Okafor", email: "adaeze@mail.com", role: "Talent", tier: "top-rated", location: "Lagos", joined: "Jan 12, 2025", status: "active", avatar: "AO", verified: true },
-  { id: 2, name: "Tecno Mobile", email: "brand@tecno.com", role: "Brand", tier: "premium", location: "Abuja", joined: "Feb 3, 2025", status: "active", avatar: "TM", verified: true },
-  { id: 3, name: "Kemi Fashola", email: "kemi.f@mail.com", role: "Talent", tier: "fast-rising", location: "Port Harcourt", joined: "Mar 1, 2025", status: "active", avatar: "KF", verified: false },
-  { id: 4, name: "GTBank Marketing", email: "mktg@gtbank.com", role: "Brand", tier: "premium", location: "Lagos", joined: "Dec 15, 2024", status: "suspended", avatar: "GT", verified: true },
-  { id: 5, name: "Emeka Nwosu", email: "emeka@mail.com", role: "Talent", tier: "next-rated", location: "Enugu", joined: "Feb 20, 2025", status: "active", avatar: "EN", verified: false },
-  { id: 6, name: "Zara Nigeria", email: "hello@zaraNg.com", role: "Brand", tier: "standard", location: "Lagos", joined: "Jan 28, 2025", status: "active", avatar: "ZN", verified: true },
-  { id: 7, name: "Ngozi Adeyemi", email: "ngozi@mail.com", role: "Talent", tier: "top-rated", location: "Ibadan", joined: "Nov 5, 2024", status: "active", avatar: "NA", verified: true },
-  { id: 8, name: "Flutterwave", email: "campaigns@flutterwave.com", role: "Brand", tier: "premium", location: "Lagos", joined: "Oct 10, 2024", status: "active", avatar: "FW", verified: true },
-  { id: 9, name: "Biodun Alabi", email: "biodun@mail.com", role: "Talent", tier: "fast-rising", location: "Kano", joined: "Mar 10, 2025", status: "active", avatar: "BA", verified: false },
-  { id: 10, name: "Pepsi Nigeria", email: "marketing@pepsi.ng", role: "Brand", tier: "premium", location: "Lagos", joined: "Sep 1, 2024", status: "suspended", avatar: "PN", verified: true },
-];
 
 // ─── RANKING ALGORITHM DATA ───────────────────────────────────────────────────
 
@@ -254,6 +242,7 @@ const NAV_ITEMS = [
   { id: "financials",label: "Financials", Icon: DollarSign },
   { id: "legal",     label: "Legal",      Icon: Pencil },
   { id: "support",   label: "Support",    Icon: HelpCircle },
+  { id: "app-config",label: "App Config",  Icon: Smartphone },
   { id: "settings",  label: "Settings",   Icon: Settings },
 ];
 
@@ -351,16 +340,13 @@ export default function AdminPanel() {
   const [toast, setToast] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);
 
-  // State for various tabs — initialized from localStorage so changes survive reload
-  const [users, setUsers] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('brandior_admin_users')) || MOCK_USERS } catch { return MOCK_USERS }
-  });
+  const [users, setUsers] = useState([]);
   const [newCountry, setNewCountry] = useState('');
-  const [managers, setManagers] = useState(MOCK_MANAGERS);
-  const [staffList, setStaffList] = useState(MOCK_STAFF);
-  const [approvals, setApprovals] = useState(MOCK_APPROVALS);
+  const [managers, setManagers] = useState([]);
+  const [staffList, setStaffList] = useState([]);
+  const [approvals, setApprovals] = useState([]);
   const [approvalHistory, setApprovalHistory] = useState([]);
-  const [transactions] = useState(MOCK_TRANSACTIONS);
+  const [activityFeed, setActivityFeed] = useState([]);
   const [brandFee, setBrandFee] = useState(() => getAllSettings().brandFee || "10");
   const [creatorFee, setCreatorFee] = useState(() => getAllSettings().creatorFee || "5");
   const [legalDocs, setLegalDocs] = useState({
@@ -407,6 +393,37 @@ export default function AdminPanel() {
     Object.fromEntries(Object.keys(LOGO_SLOTS).map(slot => [slot, getLogo(slot)]))
   )
   const [logoUploading, setLogoUploading] = useState({})
+
+  const DEFAULT_BRAND_TIERS = {
+    Partner:  { label: 'Brandior Partner',  campaigns: 0,  creators: 0  },
+    Elite:    { label: 'Brandior Elite',    campaigns: 3,  creators: 5  },
+    Champion: { label: 'Brandior Champion', campaigns: 7,  creators: 20 },
+  }
+  const [brandTiers, setBrandTiers] = useState(DEFAULT_BRAND_TIERS)
+  const [tierSaved, setTierSaved] = useState(false)
+
+  const DEFAULT_REFERRAL_CONFIG = { creator_bonus: 2500, brand_bonus: 5000, hold_days: 30 }
+  const [referralConfig, setReferralConfig] = useState(DEFAULT_REFERRAL_CONFIG)
+  const [referralSaved, setReferralSaved] = useState(false)
+
+  useEffect(() => {
+    supabase.from('tier_config').select('config').eq('id', 'brand_tiers').single()
+      .then(({ data }) => { if (data?.config) setBrandTiers(data.config) })
+    supabase.from('tier_config').select('config').eq('id', 'referral_config').single()
+      .then(({ data }) => { if (data?.config) setReferralConfig(data.config) })
+  }, [])
+
+  async function saveBrandTiers() {
+    await supabase.from('tier_config').upsert({ id: 'brand_tiers', config: brandTiers, updated_at: new Date().toISOString() })
+    setTierSaved(true)
+    setTimeout(() => setTierSaved(false), 2000)
+  }
+
+  async function saveReferralConfig() {
+    await supabase.from('tier_config').upsert({ id: 'referral_config', config: referralConfig, updated_at: new Date().toISOString() })
+    setReferralSaved(true)
+    setTimeout(() => setReferralSaved(false), 2000)
+  }
 
   async function handleLogoUpload(slot, e) {
     const file = e.target.files[0]
@@ -508,6 +525,54 @@ export default function AdminPanel() {
       })
   }, [])
 
+  // App Config state
+  const DEFAULT_APP_CONFIG = {
+    collab_types:           ['UGC', 'Brand Ambassador', 'Voiceover', 'Influencer', 'Product Review'],
+    niche_categories:       ['Beauty & Skincare', 'Fashion & Style', 'Fitness & Sports', 'Food & Lifestyle', 'Tech & Gadgets', 'Travel', 'Health & Wellness', 'Entertainment', 'Education', 'Business & Finance', 'Parenting & Family', 'Art & Culture'],
+    content_types:          ['Short Video', 'Photo Post', 'Story / Reel', 'Long-form Video', 'Blog Post', 'Podcast Mention', 'Live Session'],
+    min_creator_rate:       20000,
+    platform_commission_pct: 5,
+  }
+  const [appConfig,        setAppConfig]        = useState(DEFAULT_APP_CONFIG)
+  const [appConfigSaving,  setAppConfigSaving]  = useState(false)
+  const [appConfigSaved,   setAppConfigSaved]   = useState(false)
+  const [appConfigNewItem, setAppConfigNewItem] = useState({ collab_types: '', niche_categories: '', content_types: '' })
+
+  useEffect(() => {
+    supabase.from('site_settings').select('value').eq('key', 'app_config').maybeSingle()
+      .then(({ data }) => {
+        if (data?.value) {
+          try {
+            const p = JSON.parse(data.value)
+            setAppConfig(prev => ({ ...prev, ...p }))
+          } catch {}
+        }
+      })
+  }, [])
+
+  async function saveAppConfig() {
+    setAppConfigSaving(true)
+    await supabase.from('site_settings').upsert({
+      key: 'app_config',
+      value: JSON.stringify(appConfig),
+      updated_at: new Date().toISOString(),
+    })
+    setAppConfigSaving(false)
+    setAppConfigSaved(true)
+    setTimeout(() => setAppConfigSaved(false), 2500)
+  }
+
+  function addAppConfigItem(field) {
+    const val = appConfigNewItem[field]?.trim()
+    if (!val || appConfig[field].includes(val)) return
+    setAppConfig(prev => ({ ...prev, [field]: [...prev[field], val] }))
+    setAppConfigNewItem(prev => ({ ...prev, [field]: '' }))
+  }
+
+  function removeAppConfigItem(field, item) {
+    setAppConfig(prev => ({ ...prev, [field]: prev[field].filter(v => v !== item) }))
+  }
+
   // Search/filter state
   const [userSearch, setUserSearch] = useState("");
   const [userFilter, setUserFilter] = useState("Talents");
@@ -604,6 +669,45 @@ export default function AdminPanel() {
         dailySignups: buildDailyMap(recentProfiles, 'created_at'),
         dailyCollabs: buildDailyMap(recentCollabs, 'created_at'),
       })
+
+      // Team members
+      const { data: teamRows } = await supabase.from('admin_users').select('*').order('created_at')
+      if (teamRows) {
+        const mkAvatar = name => (name || 'U').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()
+        const mkLastLogin = ts => ts ? new Date(ts).toLocaleString('en', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : 'Never'
+        setManagers(teamRows.filter(r => r.role === 'manager').map(r => ({ ...r, avatar: mkAvatar(r.name), lastLogin: mkLastLogin(r.last_login) })))
+        setStaffList(teamRows.filter(r => r.role === 'staff').map(r => ({ ...r, avatar: mkAvatar(r.name), lastLogin: mkLastLogin(r.last_login) })))
+      }
+
+      // Approvals queue
+      const { data: approvalRows } = await supabase.from('admin_approvals').select('*').eq('status', 'pending').order('created_at', { ascending: false })
+      if (approvalRows) {
+        setApprovals(approvalRows.map(r => ({
+          id: r.id, requester: r.requester_name, requesterRole: r.requester_role,
+          type: r.type, description: r.description, target: r.target, targetId: r.target_id,
+          timestamp: new Date(r.created_at).toLocaleString('en', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }),
+          status: r.status,
+        })))
+      }
+
+      // Activity feed from recent platform events
+      const actSince = new Date(); actSince.setHours(actSince.getHours() - 72)
+      const [{ data: recentUsers }, { data: recentCollabsAct }] = await Promise.all([
+        supabase.from('profiles').select('full_name, company_name, role, created_at').gte('created_at', actSince.toISOString()).order('created_at', { ascending: false }).limit(10),
+        supabase.from('collabs').select('content_type, status, created_at, updated_at').gte('updated_at', actSince.toISOString()).order('updated_at', { ascending: false }).limit(10),
+      ])
+      const toRelative = ts => {
+        const diff = Date.now() - new Date(ts).getTime()
+        if (diff < 3600000) return `${Math.max(1, Math.round(diff/60000))} min ago`
+        if (diff < 86400000) return `${Math.round(diff/3600000)} hr ago`
+        return `${Math.round(diff/86400000)} days ago`
+      }
+      const STATUS_LABEL = { in_progress: 'started', delivered: 'submitted work on', completed: 'completed', cancelled: 'cancelled', revision_requested: 'requested revision on' }
+      const feed = [
+        ...(recentUsers || []).map(u => ({ text: `New ${u.role === 'brand' ? 'brand' : 'creator'} ${u.full_name || u.company_name || 'user'} joined`, time: toRelative(u.created_at), type: 'new' })),
+        ...(recentCollabsAct || []).map(c => ({ text: `Collab ${STATUS_LABEL[c.status] || c.status} (${c.content_type || 'collab'})`, time: toRelative(c.updated_at || c.created_at), type: c.status === 'completed' ? 'complete' : c.status === 'cancelled' ? 'flag' : 'approve' })),
+      ].sort((a, b) => 0).slice(0, 8)
+      setActivityFeed(feed.length > 0 ? feed : [{ text: 'No recent activity', time: '', type: 'new' }])
     }
     fetchRealData()
   }, [])
@@ -761,17 +865,21 @@ export default function AdminPanel() {
     navigate("/admin/login");
   };
 
-  const handleApprovalAction = (id, action) => {
+  const handleApprovalAction = async (id, action) => {
     const item = approvals.find((a) => a.id === id);
     if (action === 'approved' && item) {
-      if (item.type === 'Verify Talent') {
-        setUsers(prev => prev.map(u => u.name === item.target ? { ...u, verified: true } : u))
-      } else if (item.type === 'Suspend User') {
-        setUsers(prev => prev.map(u => u.name === item.target ? { ...u, status: 'suspended' } : u))
+      if (item.type === 'Verify Talent' && item.targetId) {
+        await supabase.from('profiles').update({ verified: true }).eq('id', item.targetId)
+        setUsers(prev => prev.map(u => u.id === item.targetId ? { ...u, verified: true } : u))
+      } else if (item.type === 'Suspend User' && item.targetId) {
+        await supabase.from('profiles').update({ status: 'suspended' }).eq('id', item.targetId)
+        setUsers(prev => prev.map(u => u.id === item.targetId ? { ...u, status: 'suspended' } : u))
       } else if (item.type === 'Process Refund') {
         showToast(`Refund initiated for ${item.target}.`, 'info')
       }
     }
+    const adminUser = JSON.parse(localStorage.getItem('brandiór_admin_user') || '{}')
+    await supabase.from('admin_approvals').update({ status: action, reviewed_by: adminUser.name || 'Admin', reviewed_at: new Date().toISOString() }).eq('id', id)
     setApprovals((prev) => prev.filter((a) => a.id !== id));
     setApprovalHistory((prev) => [{ ...item, status: action, reviewedAt: "Just now" }, ...prev]);
     showToast(`Request ${action === "approved" ? "approved" : "rejected"} successfully.`);
@@ -781,8 +889,9 @@ export default function AdminPanel() {
     setConfirmModal({
       title: "Ban User",
       message: "Are you sure you want to permanently ban this user? This action cannot be undone.",
-      onConfirm: () => {
+      onConfirm: async () => {
         setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, status: "banned" } : u));
+        await supabase.from('profiles').update({ status: 'banned' }).eq('id', userId)
         setConfirmModal(null);
         showToast("User has been banned.");
       },
@@ -809,22 +918,30 @@ export default function AdminPanel() {
     showToast("Tier updated.");
   };
 
-  const handleSaveUser = () => {
+  const handleSaveUser = async () => {
     setUsers(prev => prev.map(u => u.id === editUser.id ? editUser : u));
+    await supabase.from('profiles').update({
+      full_name: editUser.name,
+      location: editUser.location,
+      tier: editUser.tier,
+      status: editUser.status,
+      verified: editUser.verified,
+    }).eq('id', editUser.id)
     setEditUser(null);
     showToast("User profile updated successfully.");
   };
 
-  const handleAddTeamMember = () => {
+  const handleAddTeamMember = async () => {
     if (!newMember.name || !newMember.email) return;
+    const role = addTeamModal === "manager" ? "manager" : "staff"
+    const { data: inserted, error } = await supabase.from('admin_users').insert({
+      name: newMember.name, email: newMember.email.trim().toLowerCase(), role, status: 'Active',
+    }).select().single()
+    if (error) { showToast(error.message || 'Failed to add team member', 'error'); return; }
     const member = {
-      id: Date.now(),
-      name: newMember.name,
-      email: newMember.email,
-      role: addTeamModal === "manager" ? "Manager" : "Staff",
-      status: "Active",
-      lastLogin: "Never",
+      ...inserted,
       avatar: newMember.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2),
+      lastLogin: 'Never',
     };
     if (addTeamModal === "manager") setManagers((prev) => [...prev, member]);
     else setStaffList((prev) => [...prev, member]);
@@ -835,9 +952,13 @@ export default function AdminPanel() {
 
   const filteredUsers = users.filter((u) => {
     const matchSearch = u.name.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase());
-    const matchRole = userFilter === "Talents" ? u.role === "Talent" : u.role === "Brand";
-    const matchSuspended = userFilter === "Suspended" ? u.status === "suspended" : true;
-    return matchSearch && matchRole && matchSuspended;
+    const matchRole = userFilter === "Suspended" || userFilter === "Banned"
+      ? true
+      : userFilter === "Talents" ? ['Talent', 'talent', 'creator'].includes(u.role) : ['Brand', 'brand'].includes(u.role);
+    const matchStatus = userFilter === "Suspended" ? u.status === "suspended"
+      : userFilter === "Banned" ? u.status === "banned"
+      : true;
+    return matchSearch && matchRole && matchStatus;
   });
 
   // ─── TABS ─────────────────────────────────────────────────────────────────
@@ -868,7 +989,7 @@ export default function AdminPanel() {
         <div className="lg:col-span-2 bg-white rounded-xl p-5 shadow-sm border border-gray-100">
           <h3 className="font-semibold text-gray-900 mb-4">Recent Activity</h3>
           <div className="space-y-3">
-            {ACTIVITY_FEED.map((a) => (
+            {activityFeed.map((a) => (
               <div key={a.id} className="flex items-start gap-3 py-2 border-b border-gray-50 last:border-0">
                 <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: a.type === "flag" ? "#ef4444" : a.type === "approve" ? "#16a34a" : "#4f46e5" }} />
                 <div className="flex-1 min-w-0">
@@ -950,37 +1071,50 @@ export default function AdminPanel() {
   }
 
   const renderUsers = () => {
-    const talentCount = users.filter(u => u.role === "Talent").length;
-    const brandCount  = users.filter(u => u.role === "Brand").length;
-    const isTalent    = userFilter === "Talents";
-    const accentColor = isTalent ? "#7c3aed" : "#0ea5e9";
-    const accentBg    = isTalent ? "#ede9fe"  : "#dbeafe";
+    const talentCount    = users.filter(u => u.role === "Talent").length;
+    const brandCount     = users.filter(u => u.role === "Brand").length;
+    const suspendedCount = users.filter(u => u.status === "suspended").length;
+    const bannedCount    = users.filter(u => u.status === "banned").length;
+
+    const accentMap = {
+      Talents:   { color: "#7c3aed", bg: "#ede9fe" },
+      Brands:    { color: "#0ea5e9", bg: "#dbeafe" },
+      Suspended: { color: "#d97706", bg: "#fef3c7" },
+      Banned:    { color: "#dc2626", bg: "#fee2e2" },
+    }
+    const accentColor = accentMap[userFilter]?.color ?? "#7c3aed";
+    const accentBg    = accentMap[userFilter]?.bg    ?? "#ede9fe";
 
     return (
       <div className="space-y-4">
         {/* Tabs */}
-        <div className="flex gap-1 bg-white rounded-xl p-1 shadow-sm border border-gray-100 w-fit">
+        <div className="flex gap-1 bg-white rounded-xl p-1 shadow-sm border border-gray-100 w-fit flex-wrap">
           {[
-            { key: "Talents", label: "Talents", count: talentCount, color: "#7c3aed", bg: "#ede9fe" },
-            { key: "Brands",  label: "Brands",  count: brandCount,  color: "#0ea5e9", bg: "#dbeafe" },
-          ].map(({ key, label, count, color, bg }) => (
-            <button
-              key={key}
-              onClick={() => { setUserFilter(key); setUserSearch("") }}
-              className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all"
-              style={userFilter === key
-                ? { backgroundColor: bg, color }
-                : { color: "#94a3b8" }}
-            >
-              {label}
-              <span className="text-xs font-bold px-1.5 py-0.5 rounded-full"
+            { key: "Talents",   label: "Talents",   count: talentCount    },
+            { key: "Brands",    label: "Brands",    count: brandCount     },
+            { key: "Suspended", label: "Suspended", count: suspendedCount },
+            { key: "Banned",    label: "Banned",    count: bannedCount    },
+          ].map(({ key, label, count }) => {
+            const { color, bg } = accentMap[key];
+            return (
+              <button
+                key={key}
+                onClick={() => { setUserFilter(key); setUserSearch("") }}
+                className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all"
                 style={userFilter === key
-                  ? { backgroundColor: color, color: "#fff" }
-                  : { backgroundColor: "#f1f5f9", color: "#94a3b8" }}>
-                {count}
-              </span>
-            </button>
-          ))}
+                  ? { backgroundColor: bg, color }
+                  : { color: "#94a3b8" }}
+              >
+                {label}
+                <span className="text-xs font-bold px-1.5 py-0.5 rounded-full"
+                  style={userFilter === key
+                    ? { backgroundColor: color, color: "#fff" }
+                    : { backgroundColor: "#f1f5f9", color: "#94a3b8" }}>
+                  {count}
+                </span>
+              </button>
+            )
+          })}
         </div>
 
         {/* Search */}
@@ -991,7 +1125,7 @@ export default function AdminPanel() {
               type="text"
               placeholder={`Search ${userFilter.toLowerCase()}...`}
               value={userSearch}
-              onChange={(e) => setUserSearch(e.target.value)}
+              onChange={(e) => setUserSearch(stripInjection(e.target.value))}
               className="w-full pl-9 pr-4 py-2 rounded-lg text-sm border border-gray-200 outline-none"
               style={{ '--tw-ring-color': accentColor }}
             />
@@ -1004,8 +1138,8 @@ export default function AdminPanel() {
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ backgroundColor: "#f8fafc" }}>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{isTalent ? "Talent" : "Brand"}</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{isTalent ? "Tier" : "Plan"}</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">User</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Tier / Plan</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Location</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Joined</th>
@@ -1495,6 +1629,116 @@ export default function AdminPanel() {
     </div>
   );
 
+  const renderAppConfig = () => {
+    const listFields = [
+      { key: 'collab_types',     label: 'Collab Types',      desc: 'Available collaboration types brands can choose when posting a campaign or hiring a creator.' },
+      { key: 'niche_categories', label: 'Niche Categories',  desc: 'Niche options creators pick for their profile and brands use to filter creators.' },
+      { key: 'content_types',    label: 'Content Types',     desc: 'Types of content deliverables creators and brands can select in offers and campaigns.' },
+    ]
+    return (
+      <div className="max-w-2xl space-y-6">
+        <div className="flex items-center gap-3 pb-1">
+          <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+            <Smartphone className="w-4 h-4 text-indigo-600" />
+          </div>
+          <div>
+            <h2 className="font-semibold text-gray-900 text-sm">Mobile App Content</h2>
+            <p className="text-xs text-gray-400">Changes are reflected in the app immediately — no rebuild required.</p>
+          </div>
+        </div>
+
+        {/* List editors */}
+        {listFields.map(({ key, label, desc }) => (
+          <div key={key} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+            <div className="flex items-start gap-2 mb-1">
+              <ListFilter className="w-4 h-4 text-indigo-500 mt-0.5 flex-shrink-0" />
+              <h3 className="font-semibold text-gray-900 text-sm">{label}</h3>
+            </div>
+            <p className="text-xs text-gray-400 mb-4 pl-6">{desc}</p>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {appConfig[key].map(item => (
+                <span key={item} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-xs font-medium text-indigo-700">
+                  {item}
+                  <button
+                    onClick={() => removeAppConfigItem(key, item)}
+                    className="text-indigo-400 hover:text-red-500 transition-colors ml-0.5"
+                    title="Remove"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={appConfigNewItem[key]}
+                onChange={e => setAppConfigNewItem(prev => ({ ...prev, [key]: stripInjection(e.target.value) }))}
+                onKeyDown={e => e.key === 'Enter' && addAppConfigItem(key)}
+                placeholder={`Add a new ${label.toLowerCase().replace('s', '')}…`}
+                className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400"
+              />
+              <button
+                onClick={() => addAppConfigItem(key)}
+                className="px-3 py-2 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 text-sm font-medium hover:bg-indigo-100 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {/* Numeric fields */}
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <div className="flex items-center gap-2 mb-4">
+            <Tag className="w-4 h-4 text-indigo-500" />
+            <h3 className="font-semibold text-gray-900 text-sm">Pricing Rules</h3>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Minimum Creator Rate (₦)</label>
+              <input
+                type="number"
+                min="0"
+                step="1000"
+                value={appConfig.min_creator_rate}
+                onChange={e => setAppConfig(prev => ({ ...prev, min_creator_rate: parseInt(stripInjection(e.target.value)) || 0 }))}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400 font-mono"
+              />
+              <p className="text-xs text-gray-400 mt-1">Creators cannot set a rate card price below this amount. Default: ₦20,000.</p>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Platform Commission (%)</label>
+              <input
+                type="number"
+                min="0"
+                max="50"
+                step="0.5"
+                value={appConfig.platform_commission_pct}
+                onChange={e => setAppConfig(prev => ({ ...prev, platform_commission_pct: parseFloat(stripInjection(e.target.value)) || 0 }))}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400 font-mono"
+              />
+              <p className="text-xs text-gray-400 mt-1">Percentage the platform takes from each collab payment. Default: 5%.</p>
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={saveAppConfig}
+          disabled={appConfigSaving}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-colors"
+          style={{ backgroundColor: appConfigSaved ? '#22c55e' : '#4f46e5', opacity: appConfigSaving ? 0.6 : 1 }}
+        >
+          {appConfigSaved
+            ? <><CheckCircle className="w-4 h-4" /> Saved to app!</>
+            : appConfigSaving
+              ? 'Saving…'
+              : <><Save className="w-4 h-4" /> Save App Config</>}
+        </button>
+      </div>
+    )
+  }
+
   const renderSettings = () => (
     <div className="max-w-2xl space-y-6">
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 space-y-5">
@@ -1535,7 +1779,7 @@ export default function AdminPanel() {
           <input
             type="text"
             value={settings.platformName}
-            onChange={(e) => setSettings((s) => ({ ...s, platformName: e.target.value }))}
+            onChange={(e) => setSettings((s) => ({ ...s, platformName: stripInjection(e.target.value) }))}
             className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400"
           />
         </div>
@@ -1544,7 +1788,7 @@ export default function AdminPanel() {
           <input
             type="text"
             value={settings.tagline}
-            onChange={(e) => setSettings((s) => ({ ...s, tagline: e.target.value }))}
+            onChange={(e) => setSettings((s) => ({ ...s, tagline: stripInjection(e.target.value) }))}
             className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400"
           />
         </div>
@@ -1553,7 +1797,7 @@ export default function AdminPanel() {
           <input
             type="url"
             value={settings.heroVideo}
-            onChange={(e) => setSettings((s) => ({ ...s, heroVideo: e.target.value }))}
+            onChange={(e) => setSettings((s) => ({ ...s, heroVideo: stripInjection(e.target.value) }))}
             placeholder="https://example.com/video.mp4"
             className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400"
           />
@@ -1564,7 +1808,7 @@ export default function AdminPanel() {
           <input
             type="url"
             value={settings.loginIllustration}
-            onChange={(e) => setSettings((s) => ({ ...s, loginIllustration: e.target.value }))}
+            onChange={(e) => setSettings((s) => ({ ...s, loginIllustration: stripInjection(e.target.value) }))}
             placeholder="https://example.com/image.jpg"
             className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400"
           />
@@ -1590,7 +1834,7 @@ export default function AdminPanel() {
             <input
               type="text"
               value={settings.tiktokPixelId}
-              onChange={(e) => setSettings((s) => ({ ...s, tiktokPixelId: e.target.value.trim() }))}
+              onChange={(e) => setSettings((s) => ({ ...s, tiktokPixelId: stripInjection(e.target.value).trim() }))}
               placeholder="e.g. CXXXXXXXXXXXXXXX"
               className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm font-mono outline-none focus:border-indigo-400 bg-white"
             />
@@ -1638,7 +1882,7 @@ export default function AdminPanel() {
           <input
             type="text"
             value={newCountry}
-            onChange={e => setNewCountry(e.target.value)}
+            onChange={e => setNewCountry(stripInjection(e.target.value))}
             onKeyDown={e => {
               if (e.key === 'Enter' && newCountry.trim() && !settings.countries.includes(newCountry.trim())) {
                 setSettings(s => ({ ...s, countries: [...s.countries, newCountry.trim()] }))
@@ -1752,6 +1996,104 @@ export default function AdminPanel() {
           style={{ backgroundColor: '#4f46e5', opacity: themeSaving ? 0.6 : 1 }}
         >
           {themeSaving ? 'Saving…' : 'Save Brand Colours'}
+        </button>
+      </div>
+
+      {/* ── Brand Tier Requirements ── */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 space-y-4">
+        <div>
+          <h3 className="font-semibold text-gray-900">Brand Tier Requirements</h3>
+          <p className="text-xs text-gray-400 mt-1">Set how many campaigns and creators a brand must hire to reach each tier.</p>
+        </div>
+        {Object.entries(brandTiers).map(([tier, cfg]) => (
+          <div key={tier} className="rounded-xl border border-gray-100 bg-gray-50 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-gray-800">{tier}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Label</label>
+                <input
+                  type="text"
+                  value={cfg.label}
+                  onChange={e => setBrandTiers(prev => ({ ...prev, [tier]: { ...prev[tier], label: stripInjection(e.target.value) } }))}
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Min. Campaigns</label>
+                <input
+                  type="number" min="0"
+                  value={cfg.campaigns}
+                  onChange={e => setBrandTiers(prev => ({ ...prev, [tier]: { ...prev[tier], campaigns: Number(stripInjection(e.target.value)) } }))}
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Min. Creators Hired</label>
+                <input
+                  type="number" min="0"
+                  value={cfg.creators}
+                  onChange={e => setBrandTiers(prev => ({ ...prev, [tier]: { ...prev[tier], creators: Number(stripInjection(e.target.value)) } }))}
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+        <button
+          onClick={saveBrandTiers}
+          className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
+          style={{ backgroundColor: tierSaved ? '#10b981' : '#4f46e5' }}
+        >
+          {tierSaved ? 'Saved ✓' : 'Save Tier Requirements'}
+        </button>
+      </div>
+
+      {/* ── Referral Incentive Config ── */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 space-y-4">
+        <div>
+          <h3 className="font-semibold text-gray-900">Referral Incentives</h3>
+          <p className="text-xs text-gray-400 mt-1">Set the bonus amounts paid to referrers and the holding period before payout.</p>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Creator Bonus (₦)</label>
+            <input
+              type="number" min="0" step="100"
+              value={referralConfig.creator_bonus}
+              onChange={e => setReferralConfig(p => ({ ...p, creator_bonus: Number(stripInjection(e.target.value)) }))}
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            />
+            <p className="text-xs text-gray-400 mt-1">Paid when a referred creator completes their first collab</p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Brand Bonus (₦)</label>
+            <input
+              type="number" min="0" step="100"
+              value={referralConfig.brand_bonus}
+              onChange={e => setReferralConfig(p => ({ ...p, brand_bonus: Number(stripInjection(e.target.value)) }))}
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            />
+            <p className="text-xs text-gray-400 mt-1">Paid when a referred brand completes their first collab</p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Hold Period (days)</label>
+            <input
+              type="number" min="1" max="90"
+              value={referralConfig.hold_days}
+              onChange={e => setReferralConfig(p => ({ ...p, hold_days: Number(stripInjection(e.target.value)) }))}
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            />
+            <p className="text-xs text-gray-400 mt-1">Days to hold bonus before crediting wallet</p>
+          </div>
+        </div>
+        <button
+          onClick={saveReferralConfig}
+          className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
+          style={{ backgroundColor: referralSaved ? '#10b981' : '#4f46e5' }}
+        >
+          {referralSaved ? 'Saved ✓' : 'Save Referral Config'}
         </button>
       </div>
 
@@ -1964,7 +2306,7 @@ export default function AdminPanel() {
                     </div>
                     <div className="relative">
                       <input type="range" min={0} max={50} step={1} value={val}
-                        onChange={e => updateWeight(key, e.target.value)}
+                        onChange={e => updateWeight(key, stripInjection(e.target.value))}
                         className="w-full h-2 rounded-full appearance-none cursor-pointer"
                         style={{ accentColor: color }} />
                       <div className="absolute top-0 left-0 h-2 rounded-full pointer-events-none"
@@ -2301,7 +2643,7 @@ export default function AdminPanel() {
                         {paymentConfig.mode === 'test' ? 'Test' : 'Live'} Public Key
                       </label>
                       <input type="text" value={cfg.publicKey}
-                        onChange={e => setPaymentConfig(c => ({ ...c, processors: { ...c.processors, [id]: { ...cfg, publicKey: e.target.value } } }))}
+                        onChange={e => setPaymentConfig(c => ({ ...c, processors: { ...c.processors, [id]: { ...cfg, publicKey: stripInjection(e.target.value) } } }))}
                         placeholder={`${id === 'stripe' ? 'pk_' : id === 'paystack' ? 'pk_' : 'FLWPUBK_'}${paymentConfig.mode}_...`}
                         className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm font-mono outline-none focus:border-indigo-400" />
                     </div>
@@ -2311,7 +2653,7 @@ export default function AdminPanel() {
                       </label>
                       <div className="relative">
                         <input type={cfg.showSecret ? 'text' : 'password'} value={cfg.secretKey}
-                          onChange={e => setPaymentConfig(c => ({ ...c, processors: { ...c.processors, [id]: { ...cfg, secretKey: e.target.value } } }))}
+                          onChange={e => setPaymentConfig(c => ({ ...c, processors: { ...c.processors, [id]: { ...cfg, secretKey: stripInjection(e.target.value) } } }))}
                           placeholder={`${id === 'stripe' ? 'sk_' : id === 'paystack' ? 'sk_' : 'FLWSECK_'}${paymentConfig.mode}_...`}
                           className="w-full pl-3 pr-10 py-2.5 rounded-lg border border-gray-200 text-sm font-mono outline-none focus:border-indigo-400" />
                         <button onClick={() => setPaymentConfig(c => ({ ...c, processors: { ...c.processors, [id]: { ...cfg, showSecret: !cfg.showSecret } } }))}
@@ -2357,6 +2699,7 @@ export default function AdminPanel() {
     financials: renderFinancials,
     legal: renderLegal,
     settings: renderSettings,
+    "app-config": renderAppConfig,
     rankings: renderRankings,
     support: renderSupport,
     disputes: renderDisputes,
@@ -2484,7 +2827,7 @@ export default function AdminPanel() {
               <input
                 type="text"
                 value={newMember.name}
-                onChange={(e) => setNewMember((m) => ({ ...m, name: e.target.value }))}
+                onChange={(e) => setNewMember((m) => ({ ...m, name: stripInjection(e.target.value) }))}
                 placeholder="Jane Okonkwo"
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400"
               />
@@ -2494,7 +2837,7 @@ export default function AdminPanel() {
               <input
                 type="email"
                 value={newMember.email}
-                onChange={(e) => setNewMember((m) => ({ ...m, email: e.target.value }))}
+                onChange={(e) => setNewMember((m) => ({ ...m, email: stripInjection(e.target.value) }))}
                 placeholder="jane@brandior.co"
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400"
               />
@@ -2521,22 +2864,22 @@ export default function AdminPanel() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Full Name</label>
-                <input value={editUser.name} onChange={e => setEditUser(u => ({ ...u, name: e.target.value }))}
+                <input value={editUser.name} onChange={e => setEditUser(u => ({ ...u, name: stripInjection(e.target.value) }))}
                   className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Email</label>
-                <input value={editUser.email} onChange={e => setEditUser(u => ({ ...u, email: e.target.value }))}
+                <input value={editUser.email} onChange={e => setEditUser(u => ({ ...u, email: stripInjection(e.target.value) }))}
                   className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Location</label>
-                <input value={editUser.location} onChange={e => setEditUser(u => ({ ...u, location: e.target.value }))}
+                <input value={editUser.location} onChange={e => setEditUser(u => ({ ...u, location: stripInjection(e.target.value) }))}
                   className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Tier / Plan</label>
-                <select value={editUser.tier} onChange={e => setEditUser(u => ({ ...u, tier: e.target.value }))}
+                <select value={editUser.tier} onChange={e => setEditUser(u => ({ ...u, tier: stripInjection(e.target.value) }))}
                   className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400">
                   <option value="fast-rising">Fast Rising</option>
                   <option value="next-rated">Next Rated</option>
@@ -2547,7 +2890,7 @@ export default function AdminPanel() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Account Status</label>
-                <select value={editUser.status} onChange={e => setEditUser(u => ({ ...u, status: e.target.value }))}
+                <select value={editUser.status} onChange={e => setEditUser(u => ({ ...u, status: stripInjection(e.target.value) }))}
                   className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400">
                   <option value="active">Active</option>
                   <option value="suspended">Suspended</option>
@@ -2556,7 +2899,7 @@ export default function AdminPanel() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Verified</label>
-                <select value={editUser.verified ? "yes" : "no"} onChange={e => setEditUser(u => ({ ...u, verified: e.target.value === "yes" }))}
+                <select value={editUser.verified ? "yes" : "no"} onChange={e => setEditUser(u => ({ ...u, verified: stripInjection(e.target.value) === "yes" }))}
                   className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400">
                   <option value="yes">✓ Verified</option>
                   <option value="no">Not verified</option>
@@ -2736,7 +3079,7 @@ function SupportInbox({ showToast }) {
             <div className="mt-auto space-y-2">
               <textarea
                 value={reply}
-                onChange={e => setReply(e.target.value)}
+                onChange={e => setReply(stripInjection(e.target.value))}
                 rows={4}
                 placeholder="Type your reply to the user…"
                 className="w-full px-4 py-3 rounded-xl text-sm text-gray-800 outline-none resize-none"
@@ -2989,7 +3332,7 @@ function DisputesPanel({ showToast, onCountChange }) {
                 <>
                   <textarea
                     value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
+                    onChange={(e) => setNotes(stripInjection(e.target.value))}
                     rows={3}
                     placeholder="Internal notes about your decision…"
                     className="w-full px-4 py-3 rounded-xl text-sm text-gray-800 outline-none resize-none"
@@ -3107,7 +3450,7 @@ function CollabsPanel({ showToast }) {
             type="text"
             placeholder="Search by brand, creator or content type..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => setSearch(stripInjection(e.target.value))}
             className="w-full pl-9 pr-4 py-2 rounded-lg text-sm border border-gray-200 outline-none focus:border-indigo-400"
           />
         </div>

@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Zap, Mail, Phone, Lock, Eye, EyeOff, ArrowRight, ChevronDown } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getLogo } from '../lib/brandSettings'
+import { stripInjection } from '../utils/sanitize'
 import { getSetting } from '../lib/siteSettings'
 
 const purple = '#c084fc'
@@ -396,7 +397,8 @@ export default function LoginPage() {
   }
 
   function handleChange(field, value) {
-    setForm(f => ({ ...f, [field]: value }))
+    const clean = field.toLowerCase().includes('password') ? value : stripInjection(value)
+    setForm(f => ({ ...f, [field]: clean }))
     if (errors[field]) setErrors(e => ({ ...e, [field]: '' }))
   }
 

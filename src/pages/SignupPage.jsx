@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-do
 import { Zap, Star, TrendingUp, Eye, EyeOff, ArrowRight, CheckCircle, Mail, Lock, User, ChevronLeft, MapPin, Briefcase, FileText, Globe, Hash, Building2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getLogo } from '../lib/brandSettings'
+import { stripInjection } from '../utils/sanitize'
 
 const pink = '#FF6B9D'
 const gold = '#D4AF37'
@@ -229,7 +230,8 @@ export default function SignupPage() {
   }
 
   function handleChange(field, value) {
-    setForm(f => ({ ...f, [field]: value }))
+    const clean = field.toLowerCase().includes('password') ? value : stripInjection(value)
+    setForm(f => ({ ...f, [field]: clean }))
     if (errors[field]) setErrors(e => ({ ...e, [field]: '' }))
   }
 

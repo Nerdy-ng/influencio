@@ -3,6 +3,7 @@ import {
   Link2, Copy, CheckCheck,
   Users, Send, Clock, CheckCircle, Gift, UserPlus, Loader2,
 } from 'lucide-react'
+import { stripInjection } from '../utils/sanitize'
 import { supabase } from '../lib/supabase'
 
 const purple     = '#7c3aed'
@@ -271,7 +272,7 @@ export default function InviteTab({ userType }) {
               </label>
               <input
                 value={name}
-                onChange={e => setName(e.target.value)}
+                onChange={e => setName(stripInjection(e.target.value))}
                 placeholder={isTalent ? 'e.g. GlowUp Cosmetics' : 'e.g. Adaeze Okafor'}
                 className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-200"
               />

@@ -6,6 +6,7 @@ import {
   MessageSquare, ArrowUpRight, User, MapPin, Calendar,
   Instagram, Youtube, Twitter, Flag, FileText
 } from "lucide-react";
+import { supabase } from "../../lib/supabase";
 
 // ─── MOCK DATA ────────────────────────────────────────────────────────────────
 
@@ -203,29 +204,46 @@ export default function StaffPanel() {
     showToast("Task status updated.");
   };
 
-  const handleLookup = (e) => {
+  const handleLookup = async (e) => {
     e.preventDefault();
     const q = lookupQuery.toLowerCase().trim();
-    const found = MOCK_SEARCH_RESULTS.find(
-      (u) => u.name.toLowerCase().includes(q) || u.handle.toLowerCase().includes(q) || u.id.toLowerCase() === q
-    );
-    setLookupResult(found || null);
+    if (!q) return;
+    const { data } = await supabase.from('profiles')
+      .select('id, full_name, company_name, handle, role, tier, location, created_at, verified')
+      .or(`full_name.ilike.%${q}%,handle.ilike.%${q}%,company_name.ilike.%${q}%`)
+      .limit(1)
+      .maybeSingle()
+    const mkAvatar = name => (name||'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()
+    setLookupResult(data ? {
+      id: data.id,
+      name: data.full_name || data.company_name || data.handle || 'Unknown',
+      handle: data.handle ? '@' + data.handle : '',
+      role: ['brand'].includes((data.role||'').toLowerCase()) ? 'Brand' : 'Talent',
+      tier: data.tier || 'fast-rising',
+      location: data.location || '—',
+      joined: data.created_at ? new Date(data.created_at).toLocaleDateString('en', { day:'numeric', month:'short', year:'numeric' }) : '—',
+      socials: [],
+      avatar: mkAvatar(data.full_name || data.company_name || data.handle),
+      verified: data.verified || false,
+    } : null);
     setLookupSearched(true);
     setFlagUserOpen(false);
     setAddNoteOpen(false);
   };
 
-  const handleFlagUser = () => {
+  const handleFlagUser = async () => {
     if (!flagUserReason) return;
-    const newReq = {
-      id: Date.now(),
-      type: "Flag content",
+    const staffUser = JSON.parse(localStorage.getItem('brandiór_admin_user') || '{}')
+    await supabase.from('admin_approvals').insert({
+      requester_name: staffUser.name || 'Staff',
+      requester_role: 'Staff',
+      type: 'Flag User',
+      description: `${flagUserReason}${flagUserDesc ? ' — ' + flagUserDesc : ''}`,
       target: lookupResult.name,
-      submittedDate: "Today",
-      reviewedBy: null,
-      status: "pending",
-      reason: "",
-    };
+      target_id: lookupResult.id || null,
+      status: 'pending',
+    })
+    const newReq = { id: Date.now(), type: "Flag content", target: lookupResult.name, submittedDate: "Today", reviewedBy: null, status: "pending", reason: "" };
     setMyRequests((prev) => [newReq, ...prev]);
     setFlagUserOpen(false);
     setFlagUserReason("");
@@ -240,18 +258,19 @@ export default function StaffPanel() {
     showToast("Note submitted for manager review.", "info");
   };
 
-  const handleFlagSubmit = (e) => {
+  const handleFlagSubmit = async (e) => {
     e.preventDefault();
     if (!flagForm.type || !flagForm.id || !flagForm.reason) return;
-    const newReq = {
-      id: Date.now(),
-      type: "Flag content",
+    const staffUser = JSON.parse(localStorage.getItem('brandiór_admin_user') || '{}')
+    await supabase.from('admin_approvals').insert({
+      requester_name: staffUser.name || 'Staff',
+      requester_role: 'Staff',
+      type: 'Flag content',
+      description: `${flagForm.reason}${flagForm.description ? ' — ' + flagForm.description : ''}`,
       target: `${flagForm.type} #${flagForm.id}`,
-      submittedDate: "Today",
-      reviewedBy: null,
-      status: "pending",
-      reason: "",
-    };
+      status: 'pending',
+    })
+    const newReq = { id: Date.now(), type: "Flag content", target: `${flagForm.type} #${flagForm.id}`, submittedDate: "Today", reviewedBy: null, status: "pending", reason: "" };
     setMyRequests((prev) => [newReq, ...prev]);
     setFlagForm({ type: "", id: "", reason: "", description: "" });
     setFlagSubmitted(true);
@@ -330,7 +349,7 @@ export default function StaffPanel() {
               type="text"
               placeholder="Search by name, handle, or user ID..."
               value={lookupQuery}
-              onChange={(e) => setLookupQuery(e.target.value)}
+              onChange={(e) => setLookupQuery(stripInjection(e.target.value))}
               className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm border border-gray-200 outline-none focus:border-sky-400"
             />
           </div>
@@ -401,7 +420,7 @@ export default function StaffPanel() {
               <p className="text-sm font-semibold text-red-700">Flag User — {lookupResult.name}</p>
               <select
                 value={flagUserReason}
-                onChange={(e) => setFlagUserReason(e.target.value)}
+                onChange={(e) => setFlagUserReason(stripInjection(e.target.value))}
                 className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-red-400"
               >
                 <option value="">Select reason...</option>
@@ -413,7 +432,7 @@ export default function StaffPanel() {
               </select>
               <textarea
                 value={flagUserDesc}
-                onChange={(e) => setFlagUserDesc(e.target.value)}
+                onChange={(e) => setFlagUserDesc(stripInjection(e.target.value))}
                 placeholder="Additional details..."
                 rows={3}
                 className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-red-400 resize-none"
@@ -430,7 +449,7 @@ export default function StaffPanel() {
               <p className="text-sm font-semibold text-gray-700">Internal Note — {lookupResult.name}</p>
               <textarea
                 value={addNoteText}
-                onChange={(e) => setAddNoteText(e.target.value)}
+                onChange={(e) => setAddNoteText(stripInjection(e.target.value))}
                 placeholder="Add internal note visible to managers and admins only..."
                 rows={3}
                 className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-sky-400 resize-none"
@@ -487,7 +506,7 @@ export default function StaffPanel() {
           <input
             type="text"
             value={flagForm.id}
-            onChange={(e) => setFlagForm((f) => ({ ...f, id: e.target.value }))}
+            onChange={(e) => setFlagForm((f) => ({ ...f, id: stripInjection(e.target.value) }))}
             placeholder="e.g. J07 or U03 or paste URL"
             required
             className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-sky-400"
@@ -498,7 +517,7 @@ export default function StaffPanel() {
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Reason</label>
           <select
             value={flagForm.reason}
-            onChange={(e) => setFlagForm((f) => ({ ...f, reason: e.target.value }))}
+            onChange={(e) => setFlagForm((f) => ({ ...f, reason: stripInjection(e.target.value) }))}
             required
             className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-sky-400"
           >
@@ -515,7 +534,7 @@ export default function StaffPanel() {
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
           <textarea
             value={flagForm.description}
-            onChange={(e) => setFlagForm((f) => ({ ...f, description: e.target.value }))}
+            onChange={(e) => setFlagForm((f) => ({ ...f, description: stripInjection(e.target.value) }))}
             placeholder="Describe the issue in detail..."
             rows={4}
             className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-sky-400 resize-none"
@@ -662,7 +681,7 @@ export default function StaffPanel() {
               <div className="flex gap-3">
                 <textarea
                   value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
+                  onChange={(e) => setReplyText(stripInjection(e.target.value))}
                   placeholder="Type your reply..."
                   rows={2}
                   className="flex-1 px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-sky-400 resize-none"

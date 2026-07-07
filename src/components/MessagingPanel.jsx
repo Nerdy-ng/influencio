@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Send, MessageSquare, Search, ChevronLeft, Circle, Inbox, MailOpen, ShoppingBag, SlidersHorizontal, Star, EyeOff, MoreVertical, Eye, DollarSign, Check, X, ChevronDown, AlertTriangle, Scale } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { stripInjection } from '../utils/sanitize'
 const purple = '#7c3aed'
 const darkPurple = '#4c1d95'
 const pink = '#FF6B9D'
@@ -564,7 +565,7 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
               <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
               <input
                 value={search}
-                onChange={e => setSearch(e.target.value)}
+                onChange={e => setSearch(stripInjection(e.target.value))}
                 placeholder="Search conversations…"
                 className="flex-1 text-sm bg-transparent outline-none text-gray-700 placeholder-gray-400"
               />
@@ -724,7 +725,7 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
                   <span className="text-sm font-semibold text-gray-600">₦</span>
                   <input
                     value={offerAmount}
-                    onChange={e => setOfferAmount(e.target.value)}
+                    onChange={e => setOfferAmount(stripInjection(e.target.value))}
                     placeholder="Proposed budget (optional)"
                     className="flex-1 text-sm bg-white border border-purple-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-purple-100"
                   />
@@ -732,7 +733,7 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
                 <div className="flex items-end gap-2">
                   <textarea
                     value={input}
-                    onChange={e => setInput(e.target.value)}
+                    onChange={e => setInput(stripInjection(e.target.value))}
                     placeholder="Describe your project, deliverables, timeline…"
                     rows={2}
                     className="flex-1 text-sm bg-white border border-purple-200 rounded-xl px-3 py-2 outline-none resize-none focus:ring-2 focus:ring-purple-100"
@@ -768,7 +769,7 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
                   style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff', minHeight: 46 }}>
                   <textarea
                     value={input}
-                    onChange={e => setInput(e.target.value)}
+                    onChange={e => setInput(stripInjection(e.target.value))}
                     onKeyDown={e => {
                       if (e.key === 'Enter' && !e.shiftKey) sendMessage(e)
                     }}
@@ -815,7 +816,7 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
                   <label className="text-xs font-semibold text-gray-600 mb-1 block">What's the issue? <span className="text-red-500">*</span></label>
                   <input
                     value={disputeReason}
-                    onChange={e => setDisputeReason(e.target.value)}
+                    onChange={e => setDisputeReason(stripInjection(e.target.value))}
                     placeholder="e.g. Delivered content doesn't match the brief"
                     className="w-full px-3.5 py-2.5 rounded-xl text-sm text-gray-800 outline-none"
                     style={{ border: '1px solid #e5e7eb' }}
@@ -825,7 +826,7 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
                   <label className="text-xs font-semibold text-gray-600 mb-1 block">Tell us more</label>
                   <textarea
                     value={disputeStatement}
-                    onChange={e => setDisputeStatement(e.target.value)}
+                    onChange={e => setDisputeStatement(stripInjection(e.target.value))}
                     rows={4}
                     placeholder="Explain what happened, with as much detail as possible…"
                     className="w-full px-3.5 py-2.5 rounded-xl text-sm text-gray-800 outline-none resize-none"

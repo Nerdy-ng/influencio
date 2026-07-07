@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
+import { stripInjection } from '../utils/sanitize'
 import { logout } from '../lib/logout'
 import { getLogo } from '../lib/brandSettings'
 import {
@@ -517,7 +518,7 @@ function EditableField({ label, value, onChange, placeholder, multiline, isEditi
         multiline ? (
           <textarea
             value={value}
-            onChange={e => onChange(e.target.value)}
+            onChange={e => onChange(stripInjection(e.target.value))}
             rows={3}
             className="w-full px-3 py-2.5 rounded-xl text-sm text-brand-dark outline-none resize-none"
             style={{ border: `1px solid ${purple}50`, backgroundColor: '#f9f5ff' }}
@@ -527,7 +528,7 @@ function EditableField({ label, value, onChange, placeholder, multiline, isEditi
           <input
             type="text"
             value={value}
-            onChange={e => onChange(e.target.value)}
+            onChange={e => onChange(stripInjection(e.target.value))}
             className="w-full px-3 py-2.5 rounded-xl text-sm text-brand-dark outline-none"
             style={{ border: `1px solid ${purple}50`, backgroundColor: '#f9f5ff' }}
             placeholder={placeholder}
@@ -768,12 +769,12 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
                 </div>
 
                 <input type="url" value={deliverLink} disabled={!!deliverFile}
-                  onChange={e => setDeliverLink(e.target.value)}
+                  onChange={e => setDeliverLink(stripInjection(e.target.value))}
                   placeholder="Instagram, TikTok, YouTube, Drive…"
                   className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none mb-3 disabled:opacity-40"
                   style={{ borderColor: deliverLink && !deliverFile ? '#e9d5ff' : undefined }} />
 
-                <textarea value={deliverNote} onChange={e => setDeliverNote(e.target.value)}
+                <textarea value={deliverNote} onChange={e => setDeliverNote(stripInjection(e.target.value))}
                   placeholder="Add a note for the brand (optional)..."
                   rows={2} className="w-full rounded-xl border border-gray-200 p-3 text-sm resize-none focus:outline-none mb-4" />
 
@@ -825,7 +826,7 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
                 </div>
                 <div>
                   <label className="text-xs font-bold text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Your review * <span className="normal-case font-normal text-brand-dark/30">(min 20 chars)</span></label>
-                  <textarea rows={4} value={reviewComment} onChange={e => setReviewComment(e.target.value)}
+                  <textarea rows={4} value={reviewComment} onChange={e => setReviewComment(stripInjection(e.target.value))}
                     placeholder="Describe your experience working with this brand. Was communication clear? Did they provide a detailed brief?"
                     className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark resize-none outline-none"
                     style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }} />
@@ -1239,7 +1240,7 @@ function SecurityCard() {
                   <p className="text-[10px] font-bold text-brand-dark/40 uppercase tracking-widest">Question {i + 1}</p>
                   <select
                     value={q.q}
-                    onChange={e => updateQ(i, 'q', e.target.value)}
+                    onChange={e => updateQ(i, 'q', stripInjection(e.target.value))}
                     className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
                     style={{ border: '1px solid #e9d5ff', color: '#1a0030', backgroundColor: 'white' }}>
                     <option value="">— Select a question —</option>
@@ -1250,7 +1251,7 @@ function SecurityCard() {
                   <input
                     type="text"
                     value={q.a}
-                    onChange={e => updateQ(i, 'a', e.target.value)}
+                    onChange={e => updateQ(i, 'a', stripInjection(e.target.value))}
                     placeholder="Your answer"
                     className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
                     style={{ border: '1px solid #e9d5ff', color: '#1a0030', backgroundColor: 'white' }} />
@@ -1281,7 +1282,7 @@ function SecurityCard() {
                 <input
                   type={pinVisible ? 'text' : 'password'}
                   value={pin}
-                  onChange={e => { if (/^\d{0,4}$/.test(e.target.value)) setPin(e.target.value) }}
+                  onChange={e => { if (/^\d{0,4}$/.test(stripInjection(e.target.value))) setPin(stripInjection(e.target.value)) }}
                   maxLength={4}
                   placeholder="••••"
                   className="w-full px-4 py-3 rounded-xl text-sm outline-none tracking-[0.5em] font-bold"
@@ -1297,7 +1298,7 @@ function SecurityCard() {
               <input
                 type="password"
                 value={pinConfirm}
-                onChange={e => { if (/^\d{0,4}$/.test(e.target.value)) setPinConfirm(e.target.value) }}
+                onChange={e => { if (/^\d{0,4}$/.test(stripInjection(e.target.value))) setPinConfirm(stripInjection(e.target.value)) }}
                 maxLength={4}
                 placeholder="••••"
                 className="w-full px-4 py-3 rounded-xl text-sm outline-none tracking-[0.5em] font-bold"
@@ -2180,7 +2181,7 @@ export default function TalentDashboard() {
                       {/* ── Title ── */}
                       <div>
                         <label className="text-xs font-medium text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Title *</label>
-                        <input required value={newWork.title} onChange={e => setNewWork(w => ({ ...w, title: e.target.value }))}
+                        <input required value={newWork.title} onChange={e => setNewWork(w => ({ ...w, title: stripInjection(e.target.value) }))}
                           placeholder="e.g. GlowSerum Instagram Reel"
                           className="w-full px-4 py-3 rounded-xl text-sm outline-none"
                           style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff', color: '#1e0040' }} />
@@ -2189,7 +2190,7 @@ export default function TalentDashboard() {
                       {/* ── Brand ── */}
                       <div>
                         <label className="text-xs font-medium text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Brand / Client</label>
-                        <input value={newWork.brand} onChange={e => setNewWork(w => ({ ...w, brand: e.target.value }))}
+                        <input value={newWork.brand} onChange={e => setNewWork(w => ({ ...w, brand: stripInjection(e.target.value) }))}
                           placeholder="e.g. GlowLab Skincare"
                           className="w-full px-4 py-3 rounded-xl text-sm outline-none"
                           style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff', color: '#1e0040' }} />
@@ -2198,7 +2199,7 @@ export default function TalentDashboard() {
                       {/* ── Description ── */}
                       <div>
                         <label className="text-xs font-medium text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Description</label>
-                        <textarea value={newWork.desc} onChange={e => setNewWork(w => ({ ...w, desc: e.target.value }))}
+                        <textarea value={newWork.desc} onChange={e => setNewWork(w => ({ ...w, desc: stripInjection(e.target.value) }))}
                           placeholder="Brief description of the campaign…"
                           rows={2} className="w-full px-4 py-3 rounded-xl text-sm outline-none resize-none"
                           style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff', color: '#1e0040' }} />
@@ -2726,7 +2727,7 @@ export default function TalentDashboard() {
                       <span className="pl-3 text-sm font-bold" style={{ color: purple }}>#</span>
                       <input
                         value={hashInput}
-                        onChange={e => setHashInput(e.target.value)}
+                        onChange={e => setHashInput(stripInjection(e.target.value))}
                         onKeyDown={e => e.key === 'Enter' && addHashtag()}
                         placeholder="fashion, beauty, lagos…"
                         className="flex-1 px-2 py-2 text-xs text-brand-dark outline-none bg-transparent"
@@ -3276,7 +3277,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
                       max={availableTotal}
                       required
                       value={withdrawForm.amount}
-                      onChange={e => setWithdrawForm(f => ({ ...f, amount: e.target.value }))}
+                      onChange={e => setWithdrawForm(f => ({ ...f, amount: stripInjection(e.target.value) }))}
                       placeholder="e.g. 10000"
                       className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none"
                       style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}
@@ -3288,7 +3289,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
                     <select
                       required
                       value={withdrawForm.bank}
-                      onChange={e => setWithdrawForm(f => ({ ...f, bank: e.target.value }))}
+                      onChange={e => setWithdrawForm(f => ({ ...f, bank: stripInjection(e.target.value) }))}
                       className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none appearance-none"
                       style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
                       <option value="">Select your bank</option>
@@ -3314,7 +3315,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
                       type="text"
                       required
                       value={withdrawForm.accountName}
-                      onChange={e => setWithdrawForm(f => ({ ...f, accountName: e.target.value }))}
+                      onChange={e => setWithdrawForm(f => ({ ...f, accountName: stripInjection(e.target.value) }))}
                       placeholder="Name on account"
                       className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none"
                       style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}
@@ -3479,7 +3480,7 @@ function SupportTab() {
                 <label className="text-xs font-medium text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Category</label>
                 <select
                   value={ticket.category}
-                  onChange={e => setTicket(t => ({ ...t, category: e.target.value }))}
+                  onChange={e => setTicket(t => ({ ...t, category: stripInjection(e.target.value) }))}
                   className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none appearance-none"
                   style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
                   {['Payment', 'Campaign Issue', 'Account', 'Technical', 'Other'].map(c => (
@@ -3491,7 +3492,7 @@ function SupportTab() {
                 <label className="text-xs font-medium text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Subject</label>
                 <input
                   value={ticket.subject}
-                  onChange={e => setTicket(t => ({ ...t, subject: e.target.value }))}
+                  onChange={e => setTicket(t => ({ ...t, subject: stripInjection(e.target.value) }))}
                   placeholder="Brief description of your issue"
                   required
                   className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark placeholder-brand-dark/25 outline-none"
@@ -3502,7 +3503,7 @@ function SupportTab() {
                 <label className="text-xs font-medium text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Message</label>
                 <textarea
                   value={ticket.message}
-                  onChange={e => setTicket(t => ({ ...t, message: e.target.value }))}
+                  onChange={e => setTicket(t => ({ ...t, message: stripInjection(e.target.value) }))}
                   placeholder="Describe your issue in detail…"
                   required rows={4}
                   className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark placeholder-brand-dark/25 outline-none resize-none"
@@ -3565,7 +3566,7 @@ function SupportTab() {
           <div className="flex items-center gap-2 px-4 py-3 flex-shrink-0" style={{ borderTop: '1px solid #e9d5ff' }}>
             <input
               value={chatMsg}
-              onChange={e => setChatMsg(e.target.value)}
+              onChange={e => setChatMsg(stripInjection(e.target.value))}
               onKeyDown={e => e.key === 'Enter' && sendChat()}
               placeholder="Type a message…"
               className="flex-1 px-4 py-2.5 rounded-full text-sm text-brand-dark placeholder-brand-dark/25 outline-none"
@@ -3898,7 +3899,7 @@ function RateCardTab() {
                 <span className="text-xs font-bold text-gray-400">₦</span>
                 <input type="text" inputMode="numeric"
                   value={d.price > 0 ? d.price.toLocaleString() : ''}
-                  onChange={e => setDurations(prev => prev.map(r => r.id === d.id ? { ...r, price: parseNum(e.target.value) } : r))}
+                  onChange={e => setDurations(prev => prev.map(r => r.id === d.id ? { ...r, price: parseNum(stripInjection(e.target.value)) } : r))}
                   className="w-24 text-sm font-bold text-gray-800 bg-transparent focus:outline-none text-right"
                   placeholder="0" />
               </div>
@@ -3926,7 +3927,7 @@ function RateCardTab() {
                   <span className="text-xs font-bold" style={{ color: p.color }}>+₦</span>
                   <input type="text" inputMode="numeric"
                     value={p.fee > 0 ? p.fee.toLocaleString() : ''}
-                    onChange={e => setPlatforms(prev => prev.map(r => r.id === p.id ? { ...r, fee: parseNum(e.target.value) } : r))}
+                    onChange={e => setPlatforms(prev => prev.map(r => r.id === p.id ? { ...r, fee: parseNum(stripInjection(e.target.value)) } : r))}
                     className="w-20 text-sm font-bold bg-transparent focus:outline-none text-right"
                     style={{ color: p.color }}
                     placeholder="0" />
@@ -3974,7 +3975,7 @@ function RateCardTab() {
                     <span className="text-xs font-bold" style={{ color: a.color }}>+₦</span>
                     <input type="text" inputMode="numeric"
                       value={a.price > 0 ? a.price.toLocaleString() : ''}
-                      onChange={e => setAddons(prev => prev.map(x => x.id === a.id ? { ...x, price: parseNum(e.target.value) } : x))}
+                      onChange={e => setAddons(prev => prev.map(x => x.id === a.id ? { ...x, price: parseNum(stripInjection(e.target.value)) } : x))}
                       className="w-24 text-sm font-bold bg-transparent focus:outline-none text-right"
                       style={{ color: a.color }}
                       placeholder="0" />
@@ -4000,7 +4001,7 @@ function RateCardTab() {
             <h3 className="text-lg font-black text-gray-900 mb-1">Custom Add-on</h3>
             <p className="text-sm text-gray-400 mb-5">Name it and set your price</p>
             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Add-on name</label>
-            <input type="text" maxLength={40} value={customName} onChange={e => setCustomName(e.target.value)}
+            <input type="text" maxLength={40} value={customName} onChange={e => setCustomName(stripInjection(e.target.value))}
               placeholder="e.g. Express Delivery, Raw Files, Revision…"
               className="w-full rounded-xl border px-4 py-3 text-sm focus:outline-none mb-4" style={{ borderColor: '#e9d5ff' }} />
             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Price</label>
@@ -4362,7 +4363,7 @@ function PayoutSettingsTab() {
                   <input
                     type="text" inputMode="numeric" maxLength={10}
                     value={newAccNum}
-                    onChange={e => handleAccNumChange(e.target.value)}
+                    onChange={e => handleAccNumChange(stripInjection(e.target.value))}
                     placeholder="10-digit account number"
                     className="flex-1 py-3 text-sm text-brand-dark bg-transparent outline-none font-mono tracking-widest"
                   />
@@ -4382,7 +4383,7 @@ function PayoutSettingsTab() {
                   <label className="text-xs font-bold text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Account Name *</label>
                   <input
                     type="text" value={newAccName}
-                    onChange={e => setNewAccName(e.target.value)}
+                    onChange={e => setNewAccName(stripInjection(e.target.value))}
                     placeholder="Name on account"
                     className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none"
                     style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}
@@ -4412,7 +4413,7 @@ function PayoutSettingsTab() {
             <div className="px-6 py-3" style={{ borderBottom: '1px solid #e9d5ff' }}>
               <div className="flex items-center gap-2 px-3 rounded-xl" style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
                 <Hash className="w-4 h-4 text-brand-dark/30" />
-                <input type="text" placeholder="Search banks…" value={bankSearch} onChange={e => setBankSearch(e.target.value)}
+                <input type="text" placeholder="Search banks…" value={bankSearch} onChange={e => setBankSearch(stripInjection(e.target.value))}
                   autoFocus className="flex-1 py-2.5 text-sm text-brand-dark bg-transparent outline-none" />
               </div>
             </div>
@@ -4458,7 +4459,7 @@ function PayoutSettingsTab() {
                     <label className="text-xs font-bold text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Your answer *</label>
                     <div className="flex items-center px-4 rounded-xl" style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
                       <input type={showAnswer ? 'text' : 'password'} value={draftAnswer}
-                        onChange={e => { setDraftAnswer(e.target.value); setSecError('') }}
+                        onChange={e => { setDraftAnswer(stripInjection(e.target.value)); setSecError('') }}
                         placeholder="Enter your answer" autoComplete="off"
                         className="flex-1 py-3 text-sm text-brand-dark bg-transparent outline-none" />
                       <button onClick={() => setShowAnswer(v => !v)} className="p-1">
@@ -4484,7 +4485,7 @@ function PayoutSettingsTab() {
                     <label className="text-xs font-bold text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Re-enter your answer *</label>
                     <div className="flex items-center px-4 rounded-xl" style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
                       <input type={showAnswer ? 'text' : 'password'} value={confirmAnswer}
-                        onChange={e => { setConfirmAnswer(e.target.value); setSecError('') }}
+                        onChange={e => { setConfirmAnswer(stripInjection(e.target.value)); setSecError('') }}
                         placeholder="Re-enter your answer" autoFocus autoComplete="off"
                         className="flex-1 py-3 text-sm text-brand-dark bg-transparent outline-none" />
                       <button onClick={() => setShowAnswer(v => !v)} className="p-1">

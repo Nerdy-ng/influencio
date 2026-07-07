@@ -6,6 +6,8 @@ import {
   CheckCircle, XCircle, ArrowUpRight, Clock, Shield, FileText,
   MessageSquare, Send
 } from "lucide-react";
+import { supabase } from "../../lib/supabase";
+import { stripInjection } from "../../utils/sanitize";
 
 // ─── MOCK DATA ────────────────────────────────────────────────────────────────
 
@@ -107,7 +109,7 @@ function NoteModal({ user, onClose, onSave }) {
         </div>
         <textarea
           value={note}
-          onChange={(e) => setNote(e.target.value)}
+          onChange={(e) => setNote(stripInjection(e.target.value))}
           rows={4}
           placeholder="Add internal note visible only to managers and admins..."
           className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm outline-none focus:border-purple-400 resize-none"
@@ -142,8 +144,8 @@ export default function ManagerPanel() {
   const [flaggedContent, setFlaggedContent] = useState(MOCK_FLAGGED_CONTENT);
   const [staffRequests, setStaffRequests] = useState(MOCK_STAFF_REQUESTS);
   const [staffRequestHistory, setStaffRequestHistory] = useState([]);
-  const [users, setUsers] = useState(MOCK_USERS);
-  const [jobs, setJobs] = useState(MOCK_JOBS);
+  const [users, setUsers] = useState([]);
+  const [jobs, setJobs] = useState([]);
 
   const [userSearch, setUserSearch] = useState("");
   const [jobSearch, setJobSearch] = useState("");
@@ -160,6 +162,42 @@ export default function ManagerPanel() {
       return;
     }
     if (user) setManagerUser(JSON.parse(user));
+
+    async function loadData() {
+      const mkAvatar = name => (name || 'U').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()
+      const [{ data: profiles }, { data: collabs }] = await Promise.all([
+        supabase.from('profiles').select('id, full_name, company_name, handle, role, tier, location, created_at, status, verified').order('created_at', { ascending: false }).limit(100),
+        supabase.from('collabs').select('id, content_type, total_amount, status, created_at, brand_id, creator_id, brand:profiles!brand_id(company_name, full_name)').order('created_at', { ascending: false }).limit(50),
+      ])
+      if (profiles) {
+        setUsers(profiles.map(p => ({
+          id: p.id,
+          name: p.full_name || p.company_name || p.handle || 'Unknown',
+          email: p.handle || '',
+          role: ['brand'].includes((p.role||'').toLowerCase()) ? 'Brand' : 'Talent',
+          tier: p.tier || 'fast-rising',
+          location: p.location || '—',
+          joined: p.created_at ? new Date(p.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }) : '—',
+          status: p.status || 'active',
+          verified: p.verified || false,
+          avatar: mkAvatar(p.full_name || p.company_name || p.handle),
+          note: '',
+        })))
+      }
+      if (collabs) {
+        setJobs(collabs.map(c => ({
+          id: c.id.slice(0,8).toUpperCase(),
+          fullId: c.id,
+          brand: c.brand?.company_name || c.brand?.full_name || 'Brand',
+          title: c.content_type || 'Collab',
+          platform: '',
+          budget: c.total_amount ? '₦' + Number(c.total_amount).toLocaleString() : '—',
+          posted: new Date(c.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }),
+          status: c.status === 'pending' ? 'pending' : c.status === 'in_progress' ? 'active' : c.status,
+        })))
+      }
+    }
+    loadData()
   }, [navigate]);
 
   const showToast = (message, type = "success") => {
@@ -179,12 +217,24 @@ export default function ManagerPanel() {
     else showToast(`Content ${action === "approved" ? "approved and kept" : "removed"} successfully.`);
   };
 
-  const handleStaffRequest = (id, action) => {
+  const handleStaffRequest = async (id, action) => {
     const req = staffRequests.find((r) => r.id === id);
     setStaffRequests((prev) => prev.filter((r) => r.id !== id));
     setStaffRequestHistory((prev) => [{ ...req, decision: action, reviewedAt: "Just now" }, ...prev]);
-    if (action === "escalated") showToast("Escalated to admin approval queue.", "info");
-    else showToast(`Request ${action}.`);
+    if (action === "escalated" && req) {
+      const managerUser = JSON.parse(localStorage.getItem('brandiór_admin_user') || '{}')
+      await supabase.from('admin_approvals').insert({
+        requester_name: managerUser.name || 'Manager',
+        requester_role: 'Manager',
+        type: req.type,
+        description: req.description,
+        target: req.target,
+        status: 'pending',
+      })
+      showToast("Escalated to admin approval queue.", "info");
+    } else {
+      showToast(`Request ${action}.`);
+    }
   };
 
   const handleJobAction = (jobId, action) => {
@@ -442,7 +492,7 @@ export default function ManagerPanel() {
             type="text"
             placeholder="Search by name or email..."
             value={userSearch}
-            onChange={(e) => setUserSearch(e.target.value)}
+            onChange={(e) => setUserSearch(stripInjection(e.target.value))}
             className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm border border-gray-200 outline-none focus:border-purple-400"
           />
         </div>
@@ -497,7 +547,7 @@ export default function ManagerPanel() {
             type="text"
             placeholder="Search jobs..."
             value={jobSearch}
-            onChange={(e) => setJobSearch(e.target.value)}
+            onChange={(e) => setJobSearch(stripInjection(e.target.value))}
             className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm border border-gray-200 outline-none focus:border-purple-400"
           />
         </div>

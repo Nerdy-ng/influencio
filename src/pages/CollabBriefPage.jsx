@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
+import { stripInjection } from '../utils/sanitize'
 import { Helmet } from 'react-helmet-async'
 import { ChevronLeft, Zap, ArrowRight } from 'lucide-react'
 
@@ -81,7 +82,7 @@ export default function CollabBriefPage() {
               className="w-full bg-white border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-purple-400"
               placeholder="e.g. Glow Serum by Zuri Skincare"
               value={productName}
-              onChange={e => setProductName(e.target.value)}
+              onChange={e => setProductName(stripInjection(e.target.value))}
             />
           </Field>
 
@@ -90,7 +91,7 @@ export default function CollabBriefPage() {
               className="w-full bg-white border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-purple-400"
               placeholder="e.g. Drive awareness and sales on Instagram"
               value={goal}
-              onChange={e => setGoal(e.target.value)}
+              onChange={e => setGoal(stripInjection(e.target.value))}
             />
           </Field>
 
@@ -99,7 +100,7 @@ export default function CollabBriefPage() {
               className="w-full bg-white border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-purple-400 h-28 resize-none"
               placeholder="Key messages, dos and don'ts, hashtags, links to include…"
               value={instructions}
-              onChange={e => setInstructions(e.target.value)}
+              onChange={e => setInstructions(stripInjection(e.target.value))}
             />
           </Field>
 

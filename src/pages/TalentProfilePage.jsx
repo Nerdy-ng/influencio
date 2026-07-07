@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { stripInjection } from '../utils/sanitize'
 import { supabase } from '../lib/supabase'
 import { Helmet } from 'react-helmet-async'
 import {
@@ -1011,7 +1012,7 @@ export default function TalentProfilePage() {
                 <form onSubmit={sendChatMessage} className="flex items-center gap-2 px-4 py-3 border-t" style={{ borderColor: '#f3e8ff' }}>
                   <input
                     value={chatInput}
-                    onChange={e => setChatInput(e.target.value)}
+                    onChange={e => setChatInput(stripInjection(e.target.value))}
                     placeholder={`Message ${c.name?.split(' ')[0]}…`}
                     className="flex-1 px-4 py-2.5 rounded-xl text-sm outline-none"
                     style={{ backgroundColor: '#f3e8ff', color: '#1a0030' }}
@@ -1106,7 +1107,7 @@ export default function TalentProfilePage() {
               {/* Title */}
               <div>
                 <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Project title *</label>
-                <input type="text" required value={offerForm.title} onChange={e => setOfferForm(f => ({ ...f, title: e.target.value }))}
+                <input type="text" required value={offerForm.title} onChange={e => setOfferForm(f => ({ ...f, title: stripInjection(e.target.value) }))}
                   placeholder="e.g. Summer Glow UGC Campaign"
                   className="w-full px-4 py-2.5 rounded-xl text-sm text-gray-800 outline-none"
                   style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }} />
@@ -1115,7 +1116,7 @@ export default function TalentProfilePage() {
               {/* Brief */}
               <div>
                 <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Brief * <span className="normal-case font-normal text-gray-400">(min 20 chars)</span></label>
-                <textarea required rows={4} value={offerForm.brief} onChange={e => setOfferForm(f => ({ ...f, brief: e.target.value }))}
+                <textarea required rows={4} value={offerForm.brief} onChange={e => setOfferForm(f => ({ ...f, brief: stripInjection(e.target.value) }))}
                   placeholder="Describe your campaign goals, tone, target audience, and specific requirements…"
                   className="w-full px-4 py-2.5 rounded-xl text-sm text-gray-800 outline-none resize-none"
                   style={{ border: `1px solid ${offerForm.brief.length > 0 && offerForm.brief.length < 20 ? '#ef4444' : '#e9d5ff'}`, backgroundColor: '#f9f5ff' }} />

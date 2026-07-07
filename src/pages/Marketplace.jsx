@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { stripInjection } from '../utils/sanitize'
 import { Helmet } from 'react-helmet-async'
 import {
   Search, MapPin, Users, Heart, CheckCircle, Star, Filter,
@@ -1017,7 +1018,7 @@ export default function Marketplace() {
               type="text"
               placeholder="Search by name, handle, or niche..."
               value={search}
-              onChange={e => { setSearch(e.target.value); setVisibleCount(PAGE_SIZE) }}
+              onChange={e => { setSearch(stripInjection(e.target.value)); setVisibleCount(PAGE_SIZE) }}
               className="w-full py-4 text-base bg-white focus:outline-none transition-shadow"
               style={{
                 borderRadius: '9999px',
@@ -1091,7 +1092,7 @@ export default function Marketplace() {
               </p>
               <select
                 value={sort}
-                onChange={e => { setSort(e.target.value); setVisibleCount(PAGE_SIZE) }}
+                onChange={e => { setSort(stripInjection(e.target.value)); setVisibleCount(PAGE_SIZE) }}
                 className="text-sm rounded-xl px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-purple-300"
                 style={{ backgroundColor: '#fff', border: '1px solid rgba(124,58,237,0.2)', color: '#4c1d95' }}
               >

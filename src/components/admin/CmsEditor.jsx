@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Globe, ChevronDown, ChevronRight, Search, RotateCcw, Save, Check, ExternalLink, AlertTriangle, X } from 'lucide-react';
+import { stripInjection } from '../../utils/sanitize'
 import {
   getSectionContent,
   saveSection,
@@ -125,13 +126,13 @@ function FieldInput({ fieldName, value, onChange }) {
           <input
             type="color"
             value={value || '#000000'}
-            onChange={e => onChange(e.target.value)}
+            onChange={e => onChange(stripInjection(e.target.value))}
             className="w-10 h-10 rounded cursor-pointer border border-gray-200"
           />
           <input
             type="text"
             value={value || ''}
-            onChange={e => onChange(e.target.value)}
+            onChange={e => onChange(stripInjection(e.target.value))}
             className="flex-1 px-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2"
             style={{ borderColor: '#e2e8f0', focusRingColor: '#4f46e5' }}
             placeholder="#000000"
@@ -148,7 +149,7 @@ function FieldInput({ fieldName, value, onChange }) {
         <input
           type="text"
           value={value || ''}
-          onChange={e => onChange(e.target.value)}
+          onChange={e => onChange(stripInjection(e.target.value))}
           className="w-full px-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500"
           style={{ borderColor: '#e2e8f0' }}
           placeholder="https:// or /path/to/file"
@@ -175,7 +176,7 @@ function FieldInput({ fieldName, value, onChange }) {
         <textarea
           rows={3}
           value={value || ''}
-          onChange={e => onChange(e.target.value)}
+          onChange={e => onChange(stripInjection(e.target.value))}
           className="w-full px-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
           style={{ borderColor: '#e2e8f0' }}
         />
@@ -193,7 +194,7 @@ function FieldInput({ fieldName, value, onChange }) {
       <input
         type="text"
         value={value || ''}
-        onChange={e => onChange(e.target.value)}
+        onChange={e => onChange(stripInjection(e.target.value))}
         className="w-full px-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500"
         style={{ borderColor: '#e2e8f0' }}
       />
@@ -610,7 +611,7 @@ export default function CmsEditor() {
               type="text"
               placeholder="Search fields…"
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(stripInjection(e.target.value))}
               className="pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500"
               style={{ borderColor: '#e2e8f0', width: '200px' }}
             />

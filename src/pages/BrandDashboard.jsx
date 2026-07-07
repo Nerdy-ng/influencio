@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
+import { stripInjection } from '../utils/sanitize'
 import { logout } from '../lib/logout'
 import { getLogo } from '../lib/brandSettings'
 import {
@@ -7,6 +8,7 @@ import {
   Bell, ChevronDown, ChevronRight, X, AlertCircle, Shield, Loader2,
   ExternalLink, Download, RotateCcw, Zap, Menu, Mail, Heart, MapPin, Star, Users, Search, UserPlus, LogOut,
   Inbox, Clock, ThumbsUp, ThumbsDown, MessageSquare, FileText, TrendingUp, Send, ArrowLeftRight,
+  Plus, CreditCard, Building2, ArrowUpRight,
 } from 'lucide-react'
 import MessagingPanel from '../components/MessagingPanel'
 import InviteTab from '../components/InviteTab'
@@ -161,7 +163,7 @@ function RevisionModal({ order, onClose, onSubmit }) {
         <p className="text-sm text-gray-500 mb-4">Describe what you'd like the talent to change or improve.</p>
         <textarea
           value={reason}
-          onChange={e => setReason(e.target.value)}
+          onChange={e => setReason(stripInjection(e.target.value))}
           rows={5}
           placeholder="e.g. Please adjust the lighting, change the caption to mention our promo code..."
           className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 resize-none mb-5"
@@ -482,7 +484,7 @@ function ReviewModal({ order, onClose, onSubmitted }) {
 
             <textarea
               value={comment}
-              onChange={e => setComment(e.target.value)}
+              onChange={e => setComment(stripInjection(e.target.value))}
               rows={4}
               placeholder="Describe your experience with this creator — quality of content, communication, delivery time…"
               className="w-full rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none border"
@@ -547,7 +549,8 @@ const NAV_ITEMS = [
   { id: 'collabs',        label: 'Collabs',         icon: ShoppingBag },
   { id: 'favorites',      label: 'Saved Talents',   icon: Heart },
   { id: 'messages',       label: 'Messages',        icon: Mail },
-  { id: 'payments',       label: 'Payments',        icon: Wallet },
+  { id: 'wallet',         label: 'Wallet',          icon: Wallet },
+  { id: 'payments',       label: 'Payments',        icon: ArrowLeftRight },
   { id: 'invite',         label: 'Invite Creators', icon: UserPlus },
   { id: 'settings',       label: 'Settings',        icon: Settings },
 ]
@@ -602,7 +605,7 @@ function FindTalentsTab() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-dark/30" />
         <input
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => setSearch(stripInjection(e.target.value))}
           placeholder="Search by name or handle…"
           className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300"
           style={{ border: '1px solid #e9d5ff', backgroundColor: '#faf5ff' }}
@@ -901,6 +904,7 @@ export default function BrandDashboard() {
                 </>
               )}
               {activeTab === 'notifications' && <BrandNotificationsTab />}
+              {activeTab === 'wallet' && <WalletTab />}
               {activeTab === 'payments' && (
                 <PaymentsTab orders={orders} totalSpent={totalSpent} onPayNow={setPaymentModal} onApprove={handleApprove} onRevision={setRevisionModal} />
               )}
@@ -1419,7 +1423,7 @@ function OrdersTab({ title, orders, emptyMsg, onPayNow, onApprove, onRevision, o
             <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
             <input
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={e => setSearch(stripInjection(e.target.value))}
               placeholder="Search by talent name…"
               className="flex-1 text-sm bg-transparent outline-none text-gray-700 placeholder-gray-400"
             />
@@ -1598,6 +1602,251 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
   )
 }
 
+// ── Brand Wallet Tab ─────────────────────────────────────────────────────────
+
+const FUND_METHODS = [
+  { id: 'card',  label: 'Debit / Credit Card', icon: CreditCard,  desc: 'Instant via Paystack' },
+  { id: 'bank',  label: 'Bank Transfer',        icon: Building2,   desc: 'Transfer to virtual account' },
+]
+
+const QUICK_AMOUNTS = [5000, 10000, 25000, 50000, 100000]
+
+function WalletTab() {
+  const [balance,  setBalance]  = useState(0)
+  const [userId,   setUserId]   = useState(null)
+  const [email,    setEmail]    = useState('')
+  const [loading,  setLoading]  = useState(true)
+  const [amount,   setAmount]   = useState('')
+  const [method,   setMethod]   = useState('card')
+  const [funding,  setFunding]  = useState(false)
+  const [success,  setSuccess]  = useState(false)
+  const [txns,     setTxns]     = useState([])
+
+  async function reload(uid) {
+    const [profileRes, collabsRes] = await Promise.all([
+      supabase.from('profiles').select('wallet_balance').eq('id', uid).single(),
+      supabase.from('collabs')
+        .select('id, total_amount, payment_status, content_type, created_at, creator:profiles!creator_id(full_name)')
+        .eq('brand_id', uid)
+        .neq('payment_status', 'unpaid')
+        .order('created_at', { ascending: false })
+        .limit(20)
+    ])
+    if (profileRes.data) setBalance(profileRes.data.wallet_balance || 0)
+    setTxns(collabsRes.data || [])
+  }
+
+  useEffect(() => {
+    if (!document.getElementById('paystack-js')) {
+      const s = document.createElement('script')
+      s.id = 'paystack-js'
+      s.src = 'https://js.paystack.co/v1/inline.js'
+      document.head.appendChild(s)
+    }
+    ;(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoading(false); return }
+      setUserId(user.id)
+      setEmail(user.email || '')
+      await reload(user.id)
+      setLoading(false)
+    })()
+  }, [])
+
+  async function handleFund() {
+    const amt = Number(amount)
+    if (!amt || amt < 500) return
+    setFunding(true)
+
+    if (method === 'card') {
+      const pk = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY
+      if (!pk || !window.PaystackPop) {
+        alert('Paystack public key not configured. Add VITE_PAYSTACK_PUBLIC_KEY to your .env file.')
+        setFunding(false); return
+      }
+      const handler = window.PaystackPop.setup({
+        key: pk,
+        email,
+        amount: amt * 100,
+        currency: 'NGN',
+        metadata: { purpose: 'wallet_topup', user_id: userId },
+        callback: async () => {
+          const newBalance = balance + amt
+          await supabase.from('profiles').update({ wallet_balance: newBalance }).eq('id', userId)
+          setBalance(newBalance)
+          setAmount('')
+          setSuccess(true)
+          setTimeout(() => setSuccess(false), 4000)
+          setFunding(false)
+        },
+        onClose: () => setFunding(false),
+      })
+      handler.openIframe()
+    } else {
+      setFunding(false)
+      alert('Bank transfer: Coming soon. Wallet will be credited after transfer confirms.')
+    }
+  }
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-20">
+      <div className="w-8 h-8 rounded-full border-t-2 border-purple-600 animate-spin" style={{ borderWidth: '3px' }} />
+    </div>
+  )
+
+  const txnStatusLabel = (ps) => ps === 'released' ? 'Released' : ps === 'paid' ? 'In Escrow' : ps === 'refunded' ? 'Refunded' : ps
+  const txnStatusColor = (ps) => ps === 'released' ? { bg: '#dcfce7', color: '#166534' } : ps === 'paid' ? { bg: '#dbeafe', color: '#1e40af' } : { bg: '#fee2e2', color: '#991b1b' }
+
+  return (
+    <div className="space-y-6 max-w-2xl">
+      <h2 className="text-xl font-bold text-gray-900">Wallet</h2>
+
+      {/* Balance card */}
+      <div className="rounded-2xl p-6 text-white" style={{ background: 'linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%)' }}>
+        <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.6)' }}>Brandior Wallet</p>
+        <p className="text-4xl font-black mb-1">{formatNGN(balance)}</p>
+        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>Available balance · Used for collab payments</p>
+        {success && (
+          <div className="mt-3 flex items-center gap-2 bg-white/20 rounded-xl px-3 py-2 w-fit">
+            <CheckCircle className="w-4 h-4 text-green-300" />
+            <span className="text-sm font-semibold text-green-200">Wallet funded successfully!</span>
+          </div>
+        )}
+      </div>
+
+      {/* Fund wallet */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+        <h3 className="font-bold text-gray-900 flex items-center gap-2">
+          <Plus className="w-4 h-4" style={{ color: purple }} /> Fund Wallet
+        </h3>
+
+        {/* Quick amounts */}
+        <div>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Quick amounts</p>
+          <div className="flex flex-wrap gap-2">
+            {QUICK_AMOUNTS.map(a => (
+              <button
+                key={a}
+                onClick={() => setAmount(String(a))}
+                className="px-3 py-1.5 rounded-full text-sm font-semibold border transition-all"
+                style={amount === String(a)
+                  ? { backgroundColor: purple, color: '#fff', borderColor: purple }
+                  : { backgroundColor: '#faf5ff', color: purple, borderColor: '#e9d5ff' }}
+              >
+                {formatNGN(a)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Custom amount */}
+        <div>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Custom amount</p>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">₦</span>
+            <input
+              type="number"
+              placeholder="0"
+              value={amount}
+              onChange={e => setAmount(e.target.value)}
+              className="w-full pl-8 pr-4 py-3 rounded-xl border border-gray-200 text-sm font-medium outline-none focus:border-purple-400"
+            />
+          </div>
+        </div>
+
+        {/* Method */}
+        <div>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Payment method</p>
+          <div className="flex flex-col gap-2">
+            {FUND_METHODS.map(m => {
+              const Icon = m.icon
+              const active = method === m.id
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => setMethod(m.id)}
+                  className="flex items-center gap-3 p-3 rounded-xl border text-left transition-all"
+                  style={active
+                    ? { borderColor: purple, backgroundColor: '#faf5ff' }
+                    : { borderColor: '#e5e7eb', backgroundColor: '#fff' }}
+                >
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: active ? purple + '18' : '#f3f4f6' }}>
+                    <Icon className="w-4 h-4" style={{ color: active ? purple : '#6b7280' }} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-800">{m.label}</p>
+                    <p className="text-xs text-gray-400">{m.desc}</p>
+                  </div>
+                  <div className="w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0"
+                    style={{ borderColor: active ? purple : '#d1d5db', backgroundColor: active ? purple : 'transparent' }}>
+                    {active && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <button
+          onClick={handleFund}
+          disabled={!amount || Number(amount) < 500 || funding}
+          className="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-opacity disabled:opacity-40"
+          style={{ backgroundColor: purple }}
+        >
+          {funding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+          {funding ? 'Processing…' : `Fund ${amount ? formatNGN(Number(amount)) : 'Wallet'}`}
+        </button>
+
+        <p className="text-xs text-gray-400 text-center">
+          Minimum ₦500 · Funds appear instantly on card · Escrow protects every collab payment
+        </p>
+      </div>
+
+      {/* Transaction history */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="font-bold text-gray-900">Transaction History</h3>
+          <span className="text-xs text-gray-400">{txns.length} records</span>
+        </div>
+        {txns.length === 0 ? (
+          <div className="px-5 py-12 text-center">
+            <ArrowUpRight className="w-8 h-8 text-gray-200 mx-auto mb-3" />
+            <p className="text-sm text-gray-400">No transactions yet</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {txns.map(t => {
+              const sc = txnStatusColor(t.payment_status)
+              return (
+                <div key={t.id} className="px-5 py-3 flex items-center gap-4">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: '#f3e8ff' }}>
+                    <ArrowUpRight className="w-4 h-4" style={{ color: purple }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 truncate">
+                      {t.content_type || 'Collab'} · {t.creator?.full_name || 'Creator'}
+                    </p>
+                    <p className="text-xs text-gray-400">{new Date(t.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm font-bold text-gray-800">{formatNGN(t.total_amount)}</p>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                      style={{ backgroundColor: sc.bg, color: sc.color }}>
+                      {txnStatusLabel(t.payment_status)}
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function FavoritesTab() {
   const { favorites, toggle, isFav } = useFavorites()
 
@@ -1751,7 +2000,7 @@ function SettingsTab() {
       <input
         type={opts.type || 'text'}
         value={form[key]}
-        onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+        onChange={e => setForm(f => ({ ...f, [key]: stripInjection(e.target.value) }))}
         placeholder={opts.placeholder || ''}
         disabled={opts.disabled}
         className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 disabled:bg-gray-50 disabled:text-gray-400"
@@ -1770,7 +2019,7 @@ function SettingsTab() {
         {field('Website', 'website', { type: 'url', placeholder: 'https://yourbrand.com' })}
         <div>
           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Industry</label>
-          <select value={form.industry} onChange={e => setForm(f => ({ ...f, industry: e.target.value }))}
+          <select value={form.industry} onChange={e => setForm(f => ({ ...f, industry: stripInjection(e.target.value) }))}
             className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 bg-white">
             <option value="">Select industry…</option>
             {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
