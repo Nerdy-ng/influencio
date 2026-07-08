@@ -527,16 +527,15 @@ export default function AdminPanel() {
 
   // App Config state
   const DEFAULT_APP_CONFIG = {
-    collab_types:           ['UGC', 'Brand Ambassador', 'Voiceover', 'Influencer', 'Product Review'],
     niche_categories:       ['Beauty & Skincare', 'Fashion & Style', 'Fitness & Sports', 'Food & Lifestyle', 'Tech & Gadgets', 'Travel', 'Health & Wellness', 'Entertainment', 'Education', 'Business & Finance', 'Parenting & Family', 'Art & Culture'],
-    content_types:          ['Short Video', 'Photo Post', 'Story / Reel', 'Long-form Video', 'Blog Post', 'Podcast Mention', 'Live Session'],
+    content_types:          ['UGC Content', 'Influencer Post', 'Brand Ambassador', 'Voiceover', 'Product Review'],
     min_creator_rate:       20000,
     platform_commission_pct: 5,
   }
   const [appConfig,        setAppConfig]        = useState(DEFAULT_APP_CONFIG)
   const [appConfigSaving,  setAppConfigSaving]  = useState(false)
   const [appConfigSaved,   setAppConfigSaved]   = useState(false)
-  const [appConfigNewItem, setAppConfigNewItem] = useState({ collab_types: '', niche_categories: '', content_types: '' })
+  const [appConfigNewItem, setAppConfigNewItem] = useState({ niche_categories: '', content_types: '' })
 
   useEffect(() => {
     supabase.from('site_settings').select('value').eq('key', 'app_config').maybeSingle()
@@ -1631,9 +1630,8 @@ export default function AdminPanel() {
 
   const renderAppConfig = () => {
     const listFields = [
-      { key: 'collab_types',     label: 'Collab Types',      desc: 'Available collaboration types brands can choose when posting a campaign or hiring a creator.' },
       { key: 'niche_categories', label: 'Niche Categories',  desc: 'Niche options creators pick for their profile and brands use to filter creators.' },
-      { key: 'content_types',    label: 'Content Types',     desc: 'Types of content deliverables creators and brands can select in offers and campaigns.' },
+      { key: 'content_types',    label: 'Content Types',     desc: 'Types of content a creator can deliver — used in rate cards, campaign creation, and offers.' },
     ]
     return (
       <div className="max-w-2xl space-y-6">
