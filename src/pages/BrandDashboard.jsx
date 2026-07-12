@@ -708,10 +708,11 @@ export default function BrandDashboard() {
   // Shared creator-setup modal (used by sidebar + avatar menu)
   const [showCreatorSetup, setShowCreatorSetup] = useState(false)
   const [csProfileId,  setCsProfileId]  = useState(null)
-  const [csPrefillName, setCsPrefillName] = useState('')
-  const [csCreatorType, setCsCreatorType] = useState('')
+  const [csUsername,       setCsUsername]       = useState('')
+  const [csUsernameStatus, setCsUsernameStatus] = useState('idle') // idle|checking|available|taken|invalid
   const [csActivating,  setCsActivating]  = useState(false)
   const navigate = useNavigate()
+  const csCheckTimer = useRef(null)
 
   async function openCreatorSetup() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -725,18 +726,34 @@ export default function BrandDashboard() {
     }
     setCsProfileId(user.id)
     const { data: profile } = await supabase.from('profiles').select('full_name, company_name').eq('id', user.id).single()
-    setCsPrefillName(profile?.full_name || profile?.company_name || '')
-    setCsCreatorType('')
+    const suggested = (profile?.full_name || profile?.company_name || '')
+      .toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '_').slice(0, 24)
+    setCsUsername(suggested)
+    setCsUsernameStatus('idle')
     setShowCreatorSetup(true)
   }
 
+  function handleCsUsernameChange(val) {
+    const clean = val.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 24)
+    setCsUsername(clean)
+    setCsUsernameStatus('idle')
+    if (csCheckTimer.current) clearTimeout(csCheckTimer.current)
+    if (!clean) return
+    if (clean.length < 3) { setCsUsernameStatus('invalid'); return }
+    setCsUsernameStatus('checking')
+    csCheckTimer.current = setTimeout(async () => {
+      const { data } = await supabase.from('profiles').select('id').eq('username', clean).maybeSingle()
+      setCsUsernameStatus(data ? 'taken' : 'available')
+    }, 500)
+  }
+
   async function activateCreatorMode() {
-    if (!csCreatorType || !csProfileId) return
+    if (csUsernameStatus !== 'available' || !csUsername || !csProfileId) return
     setCsActivating(true)
     try {
       await Promise.all([
-        supabase.auth.updateUser({ data: { creator_type: csCreatorType, role: 'creator' } }),
-        supabase.from('profiles').upsert({ id: csProfileId, role: 'Talent' }, { onConflict: 'id' }),
+        supabase.auth.updateUser({ data: { username: csUsername, role: 'creator' } }),
+        supabase.from('profiles').upsert({ id: csProfileId, username: csUsername, role: 'Talent' }, { onConflict: 'id' }),
         supabase.from('notifications').insert({
           user_id: csProfileId,
           title:   'You just got the Brandior Spark Badge! 🎉',
@@ -1006,34 +1023,33 @@ export default function BrandDashboard() {
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style={{ backgroundColor: '#7c3aed18' }}>
                 <span className="text-2xl">✨</span>
               </div>
-              <h2 className="text-lg font-black text-gray-900 text-center">Activate Creator Mode</h2>
-              <p className="text-sm text-gray-500 text-center mt-1">Your existing account gains creator capabilities. No new login needed.</p>
+              <h2 className="text-lg font-black text-gray-900 text-center">Choose your creator handle</h2>
+              <p className="text-sm text-gray-500 text-center mt-1">This will be your public username on Brandior. You can change it later.</p>
             </div>
 
-            <div className="flex items-center gap-3 p-3 rounded-xl mb-4" style={{ backgroundColor: '#7c3aed0d' }}>
-              <span className="text-gray-500 text-sm">👤</span>
-              <div className="flex-1">
-                <p className="text-xs text-gray-400">Your name</p>
-                <p className="text-sm font-bold text-gray-800">{csPrefillName || 'From your profile'}</p>
-              </div>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-lg" style={{ backgroundColor: '#7c3aed18', color: '#7c3aed' }}>Pre-filled</span>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Username</p>
+            <div className="flex items-center border-2 rounded-xl px-4 py-3 mb-2 transition-colors"
+              style={{ borderColor: csUsernameStatus === 'available' ? '#16a34a' : csUsernameStatus === 'taken' || csUsernameStatus === 'invalid' ? '#ef4444' : '#e5e7eb' }}>
+              <span className="font-bold mr-1" style={{ color: '#7c3aed' }}>@</span>
+              <input
+                className="flex-1 text-sm font-bold text-gray-900 outline-none bg-transparent"
+                placeholder="your_handle"
+                value={csUsername}
+                onChange={e => handleCsUsernameChange(e.target.value)}
+                autoFocus
+                spellCheck={false}
+              />
+              {csUsernameStatus === 'checking'  && <div className="w-4 h-4 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin ml-2" />}
+              {csUsernameStatus === 'available' && <span className="ml-2 text-green-600 text-base">✓</span>}
+              {csUsernameStatus === 'taken'     && <span className="ml-2 text-red-500 text-base">✗</span>}
+              {csUsernameStatus === 'invalid'   && <span className="ml-2 text-amber-500 text-base">!</span>}
             </div>
+            {csUsernameStatus === 'available' && <p className="text-xs font-semibold text-green-600 mb-3">@{csUsername} is available</p>}
+            {csUsernameStatus === 'taken'     && <p className="text-xs font-semibold text-red-500 mb-3">@{csUsername} is already taken — try another</p>}
+            {csUsernameStatus === 'invalid'   && <p className="text-xs font-semibold text-amber-500 mb-3">Letters, numbers and underscores only. Min 3 characters.</p>}
+            {!['available','taken','invalid','checking'].includes(csUsernameStatus) && <div className="mb-3" />}
 
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">What type of creator are you?</p>
-            <div className="space-y-2 max-h-48 overflow-y-auto mb-4">
-              {CREATOR_TYPES.map(t => (
-                <button key={t} onClick={() => setCsCreatorType(t)}
-                  className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all text-left"
-                  style={csCreatorType === t
-                    ? { borderColor: '#7c3aed', backgroundColor: '#7c3aed0d', color: '#7c3aed' }
-                    : { borderColor: '#e5e7eb', color: '#374151' }}>
-                  {t}
-                  {csCreatorType === t && <span style={{ color: '#7c3aed' }}>✓</span>}
-                </button>
-              ))}
-            </div>
-
-            <button onClick={activateCreatorMode} disabled={!csCreatorType || csActivating}
+            <button onClick={activateCreatorMode} disabled={csUsernameStatus !== 'available' || csActivating}
               className="w-full py-3 rounded-xl text-white font-bold text-sm transition-opacity disabled:opacity-40"
               style={{ backgroundColor: '#7c3aed' }}>
               {csActivating ? 'Activating…' : 'Activate Creator Mode →'}
@@ -1048,8 +1064,6 @@ export default function BrandDashboard() {
     </div>
   )
 }
-
-const CREATOR_TYPES = ['Influencer', 'Content Creator', 'Photographer', 'Videographer', 'Comedian', 'Musician', 'Fashion Creator', 'Food Creator']
 
 function BrandAvatarMenu({ onSwitchToCreator }) {
   const [open, setOpen] = useState(false)
