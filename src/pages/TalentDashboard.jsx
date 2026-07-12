@@ -767,12 +767,12 @@ function BrowseTab({ setActiveTab }) {
             <h3 className="font-black text-base" style={{ color: '#1e0040' }}>{job.title}</h3>
             {job.isNew && <span className="flex-shrink-0 text-[10px] font-black px-2 py-0.5 rounded-full" style={{ backgroundColor: '#F7258518', color: '#F72585' }}>New</span>}
           </div>
-          <p className="text-xs font-semibold mb-3" style={{ color: '#9ca3af' }}>{job.brand} · {job.type}</p>
-          <p className="text-sm mb-3 leading-relaxed" style={{ color: '#6b7280' }}>{job.description}</p>
+          <p className="text-xs font-semibold mb-3" style={{ color: '#4b5563' }}>{job.brand} · {job.type}</p>
+          <p className="text-sm mb-3 leading-relaxed" style={{ color: '#1e0040' }}>{job.description}</p>
           <div className="flex flex-wrap gap-2 mb-3">
             {job.tags.map(t => <span key={t} className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: '#f5f3ff', color: '#7c3aed' }}>{t}</span>)}
           </div>
-          <div className="flex flex-wrap gap-4 mb-4 text-xs font-semibold" style={{ color: '#6b7280' }}>
+          <div className="flex flex-wrap gap-4 mb-4 text-xs font-semibold" style={{ color: '#374151' }}>
             <span style={{ color: purple }}>₦ {job.budget.replace('₦','')}</span>
             <span>📅 {job.deadline}</span>
             <span>👥 {job.applicants} applied</span>
