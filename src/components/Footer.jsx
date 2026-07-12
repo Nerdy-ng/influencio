@@ -24,11 +24,9 @@ const links = {
     { label: 'Find Creators',     to: '/marketplace'    },
     { label: 'How Escrow Works',  to: '/how-it-works'   },
     { label: 'Pricing',           to: '/pricing'        },
-    { label: 'Contact Sales',     to: '/contact'        },
   ],
   Company: [
     { label: 'About Us',    to: '/about'   },
-    { label: 'Contact',     to: '/contact' },
     { label: 'Privacy',     to: '/privacy' },
     { label: 'Terms',       to: '/terms'   },
     { label: 'Cookies',     to: '/cookies' },
