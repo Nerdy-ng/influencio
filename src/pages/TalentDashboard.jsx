@@ -621,19 +621,6 @@ function NewUserWelcomeBanner({ completion, setActiveTab }) {
       <p className="text-[11px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: '#c4b5fd' }}>Getting Started</p>
       <h3 className="text-white font-bold text-base mb-1">Complete your profile to apply for campaigns</h3>
       <p className="text-white/45 text-sm mb-4">Brands won't be able to hire you until your profile is set up.</p>
-      <div className="flex flex-wrap gap-4 mb-4">
-        {[
-          { n: 1, label: 'Add your name & bio' },
-          { n: 2, label: 'Connect a social account' },
-          { n: 3, label: 'Set your rates' },
-        ].map(({ n, label }) => (
-          <div key={n} className="flex items-center gap-2 text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
-              style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: '#c4b5fd', border: '1px solid rgba(196,181,253,0.3)' }}>{n}</div>
-            {label}
-          </div>
-        ))}
-      </div>
       <button onClick={() => setActiveTab('settings')}
         className="px-5 py-2 rounded-full text-xs font-bold text-white transition-opacity hover:opacity-80"
         style={{ backgroundColor: '#7c3aed' }}>

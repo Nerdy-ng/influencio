@@ -80,7 +80,7 @@ export default function ContactPage() {
                 <MapPin className="w-5 h-5" style={{ color: '#7c3aed' }} />
               </div>
               <h3 className="font-bold text-sm mb-1" style={{ color: '#1e0040' }}>Our office</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">4 Bashorun Estate,<br />Kolapo Ishola GRA,<br />Ibadan.</p>
+              <p className="text-gray-500 text-sm leading-relaxed">4, Bashorun Estate,<br />Kolapo Ishola GRA,<br />Ibadan.</p>
             </div>
 
             <div className="rounded-2xl p-6" style={{ background: '#f8f5ff', border: '1px solid #e9d5ff' }}>
