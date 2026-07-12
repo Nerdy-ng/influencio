@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
-import { stripInjection } from '../utils/sanitize'
+const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '');
 import { Helmet } from 'react-helmet-async'
 import { ChevronLeft, Zap, ArrowRight } from 'lucide-react'
 

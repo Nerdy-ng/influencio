@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Facebook Cover Preview — Brandior</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #e5e5e5;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      gap: 16px;
+    }
+
+    .label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #999;
+    }
+
+    /* The cover — exact Facebook dimensions */
+    .cover {
+      width: 820px;
+      height: 312px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 0 0 8px 8px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+      background: linear-gradient(125deg, #0d0020 0%, #1a0040 45%, #2d0060 100%);
+    }
+
+    /* Subtle grid */
+    .grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(124,58,237,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,58,237,0.07) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
+    }
+
+    /* Glow blobs */
+    .blob-left {
+      position: absolute;
+      top: -60px;
+      left: -80px;
+      width: 340px;
+      height: 340px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(124,58,237,0.22) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .blob-right {
+      position: absolute;
+      bottom: -80px;
+      right: -60px;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(250,129,18,0.14) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Decorative circles */
+    .ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    .ring1 { width: 420px; height: 420px; top: -160px; right: -80px; }
+    .ring2 { width: 280px; height: 280px; top: -80px; right: 20px; border-color: rgba(250,129,18,0.06); }
+
+    /* Orange accent bar — top */
+    .accent-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent 0%, #FA8112 30%, #f97316 70%, transparent 100%);
+    }
+
+    /* Content */
+    .content {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      padding: 0 64px;
+      gap: 0;
+    }
+
+    /* Left: logo + tagline */
+    .left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .logo-wrap img {
+      height: 72px;
+      width: auto;
+      display: block;
+    }
+
+    .tagline-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .tagline-line1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+
+    .tagline-line2 {
+      font-size: 22px;
+      font-weight: 300;
+      color: rgba(255,255,255,0.6);
+      letter-spacing: 0.3px;
+      line-height: 1;
+    }
+
+    .tagline-line2 span {
+      color: #FA8112;
+    }
+
+    /* Pill badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: 100px;
+      background: rgba(250,129,18,0.1);
+      border: 1px solid rgba(250,129,18,0.3);
+      width: fit-content;
+      margin-top: 4px;
+    }
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #FA8112;
+      animation: pulse 2s infinite;
+    }
+    .badge-text {
+      font-size: 11px;
+      font-weight: 600;
+      color: #FA8112;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    /* Divider */
+    .divider {
+      width: 1px;
+      height: 120px;
+      background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.1), transparent);
+      margin: 0 56px;
+      flex-shrink: 0;
+    }
+
+    /* Right: stats / value props */
+    .right {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .stat-value {
+      font-size: 26px;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1;
+      letter-spacing: -0.5px;
+    }
+    .stat-value span { color: #FA8112; }
+    .stat-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.5px;
+    }
+
+    .stat-divider {
+      width: 32px;
+      height: 1px;
+      background: rgba(255,255,255,0.08);
+    }
+
+    /* URL strip */
+    .url-strip {
+      position: absolute;
+      bottom: 20px;
+      right: 64px;
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.2);
+      letter-spacing: 2px;
+      text-transform: lowercase;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* FB mockup frame */
+    .fb-frame {
+      width: 820px;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    }
+    .fb-profile-row {
+      padding: 0 16px 12px;
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      border-bottom: 1px solid #e4e6ea;
+    }
+    .fb-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4c1d95, #7c3aed);
+      border: 4px solid #fff;
+      margin-top: -30px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 900;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+    }
+    .fb-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #050505;
+      font-family: 'Inter', sans-serif;
+      padding-bottom: 4px;
+    }
+    .fb-handle {
+      font-size: 13px;
+      color: #65676b;
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body>
+
+  <p class="label">Facebook Page Cover Preview · 820 × 312px</p>
+
+  <!-- FB page mockup -->
+  <div class="fb-frame">
+
+    <!-- The actual cover -->
+    <div class="cover">
+      <div class="accent-bar"></div>
+      <div class="grid"></div>
+      <div class="blob-left"></div>
+      <div class="blob-right"></div>
+      <div class="ring ring1"></div>
+      <div class="ring ring2"></div>
+
+      <div class="content">
+        <!-- Left -->
+        <div class="left">
+          <div class="logo-wrap">
+            <img src="https://www.brandior.africa/logo.png" alt="Brandior"
+              onerror="this.style.display='none'" />
+          </div>
+          <div class="tagline-wrap">
+            <p class="tagline-line1">Where <span style="color:#c084fc;">Creators</span> &amp; <span style="color:#FA8112;">Brands</span></p>
+            <p class="tagline-line2">Close <span>Deals.</span></p>
+          </div>
+          <div class="badge">
+            <div class="badge-dot"></div>
+            <span class="badge-text">Join the Waitlist</span>
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="divider"></div>
+
+        <!-- Right -->
+        <div class="right">
+          <div class="stat">
+            <p class="stat-value">2,400<span>+</span></p>
+            <p class="stat-label">Talents on waitlist</p>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <p class="stat-value">556<span>+</span></p>
+            <p class="stat-label">Brands waiting</p>
+          </div>
+        </div>
+      </div>
+
+      <p class="url-strip">brandior.africa</p>
+    </div>
+
+    <!-- FB profile row -->
+    <div class="fb-profile-row">
+      <div class="fb-avatar">B</div>
+      <div>
+        <p class="fb-name">Brandior</p>
+        <p class="fb-handle">@brandior.africa · Media/News Company</p>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="label" style="margin-top:8px;">Shown in Facebook page context</p>
+
+</body>
+</html>

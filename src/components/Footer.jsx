@@ -1,13 +1,38 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { Zap, Camera, Linkedin, PlayCircle, X } from 'lucide-react'
 import { getLogo } from '../lib/brandSettings'
 import { getSetting } from '../lib/siteSettings'
 
 const links = {
-  Product:  ['How it Works', 'For Talents', 'For Brands', 'Pricing', 'Enterprise'],
-  Talents: ['Talent Signup', 'Earn with Brandior', 'Talent Resources', 'Media Kit Builder', 'Success Stories'],
-  Brands:   ['Brand Signup', 'Post a Campaign', 'Talent Discovery', 'Campaign Analytics', 'Case Studies'],
-  Company:  ['About Us', 'Blog', 'Careers', 'Press Kit', 'Contact Us'],
+  Product: [
+    { label: 'How it Works',  to: '/how-it-works' },
+    { label: 'For Creators',  to: '/for-talents'  },
+    { label: 'For Brands',    to: '/for-brands'   },
+    { label: 'Pricing',       to: '/pricing'      },
+    { label: 'Contact Us',    to: '/contact'      },
+  ],
+  Creators: [
+    { label: 'Creator Signup',    to: '/signup/creator'  },
+    { label: 'How Creators Earn', to: '/for-talents'     },
+    { label: 'How It Works',      to: '/how-it-works'    },
+    { label: 'Browse Brands',     to: '/marketplace'     },
+    { label: 'Creator FAQ',       to: '/how-it-works'    },
+  ],
+  Brands: [
+    { label: 'Brand Signup',      to: '/signup/brand'   },
+    { label: 'Find Creators',     to: '/marketplace'    },
+    { label: 'How Escrow Works',  to: '/how-it-works'   },
+    { label: 'Pricing',           to: '/pricing'        },
+    { label: 'Contact Sales',     to: '/contact'        },
+  ],
+  Company: [
+    { label: 'About Us',    to: '/about'   },
+    { label: 'Contact',     to: '/contact' },
+    { label: 'Privacy',     to: '/privacy' },
+    { label: 'Terms',       to: '/terms'   },
+    { label: 'Cookies',     to: '/cookies' },
+  ],
 }
 
 const socials = [
@@ -66,11 +91,11 @@ export default function Footer() {
             <div key={category}>
               <h4 className="text-white font-semibold text-sm mb-5">{category}</h4>
               <ul className="space-y-3">
-                {items.map(item => (
-                  <li key={item}>
-                    <a href="#" className="text-white/30 hover:text-white text-sm transition-colors">
-                      {item}
-                    </a>
+                {items.map(({ label, to }) => (
+                  <li key={label}>
+                    <Link to={to} className="text-white/30 hover:text-white text-sm transition-colors">
+                      {label}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -81,8 +106,12 @@ export default function Footer() {
         <div className="border-t border-brand-cream/5 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-white/20 text-sm">© {new Date().getFullYear()} {platformName} Inc. All rights reserved.</p>
           <div className="flex items-center gap-6">
-            {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map(item => (
-              <a key={item} href="#" className="text-white/20 hover:text-white/50 text-xs transition-colors">{item}</a>
+            {[
+              { label: 'Privacy Policy',  to: '/privacy' },
+              { label: 'Terms of Service', to: '/terms'  },
+              { label: 'Cookie Policy',   to: '/cookies' },
+            ].map(({ label, to }) => (
+              <Link key={label} to={to} className="text-white/20 hover:text-white/50 text-xs transition-colors">{label}</Link>
             ))}
           </div>
         </div>

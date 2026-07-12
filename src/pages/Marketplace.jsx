@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { stripInjection } from '../utils/sanitize'
+const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '');
 import { Helmet } from 'react-helmet-async'
 import {
   Search, MapPin, Users, Heart, CheckCircle, Star, Filter,

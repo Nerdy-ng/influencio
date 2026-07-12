@@ -3,8 +3,9 @@ import {
   Link2, Copy, CheckCheck,
   Users, Send, Clock, CheckCircle, Gift, UserPlus, Loader2,
 } from 'lucide-react'
-import { stripInjection } from '../utils/sanitize'
+const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '');
 import { supabase } from '../lib/supabase'
+import { saveProfile } from '../lib/profile'
 
 const purple     = '#7c3aed'
 const darkPurple = '#4c1d95'
@@ -49,7 +50,7 @@ export default function InviteTab({ userType }) {
       if (!code) {
         const prefix = isTalent ? 'CR' : 'BR'
         code = `BRANDIOR-${prefix}-${user.id.replace(/-/g,'').slice(0,6).toUpperCase()}`
-        await supabase.from('profiles').update({ referral_code: code }).eq('id', user.id)
+        await saveProfile(user.id, { referral_code: code })
       }
       setReferralCode(code)
 

@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sallah Greeting Card Preview — Brandior</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #f5f5f5;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+
+    .scene {
+      width: 100%;
+      max-width: 520px;
+    }
+
+    .preview-label {
+      text-align: center;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: rgba(0,0,0,0.3);
+      margin-bottom: 20px;
+    }
+
+    /* The card itself */
+    .card {
+      background: linear-gradient(175deg, #3b0764 0%, #6d28d9 40%, #9333ea 70%, #c084fc 100%);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(192,132,252,0.2),
+        0 32px 64px rgba(76,29,149,0.35);
+      position: relative;
+    }
+
+    /* Ornamental border inset */
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 10px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.12);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Islamic geometric pattern overlay — purple tint */
+    .pattern-overlay {
+      position: absolute;
+      inset: 0;
+      height: 55%;
+      opacity: 0.06;
+      background-image:
+        repeating-linear-gradient(60deg, #fff 0, #fff 1px, transparent 0, transparent 50%),
+        repeating-linear-gradient(120deg, #fff 0, #fff 1px, transparent 0, transparent 50%),
+        repeating-linear-gradient(0deg, #fff 0, #fff 1px, transparent 0, transparent 50%);
+      background-size: 30px 52px;
+      pointer-events: none;
+    }
+
+    /* Sky section */
+    .sky {
+      position: relative;
+      padding: 48px 40px 0;
+      text-align: center;
+      z-index: 1;
+    }
+
+    /* Stars scattered in sky */
+    .sky-stars {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .s {
+      position: absolute;
+      background: rgba(255,255,255,0.9);
+      border-radius: 50%;
+    }
+    .s1  { width:2px; height:2px; top:12%; left:8%;  opacity:.9; box-shadow:0 0 4px #fff; }
+    .s2  { width:3px; height:3px; top:8%;  left:22%; opacity:.7; box-shadow:0 0 6px #fff; }
+    .s3  { width:2px; height:2px; top:18%; left:38%; opacity:.8; }
+    .s4  { width:4px; height:4px; top:6%;  left:55%; opacity:.9; box-shadow:0 0 8px #fff; }
+    .s5  { width:2px; height:2px; top:14%; left:70%; opacity:.6; }
+    .s6  { width:3px; height:3px; top:9%;  left:84%; opacity:.8; box-shadow:0 0 5px #fff; }
+    .s7  { width:2px; height:2px; top:24%; left:92%; opacity:.5; }
+    .s8  { width:2px; height:2px; top:22%; left:5%;  opacity:.4; }
+    .s9  { width:3px; height:3px; top:30%; left:48%; opacity:.3; }
+    .s10 { width:2px; height:2px; top:35%; left:78%; opacity:.5; }
+
+    /* Glow halo behind moon */
+    .moon-glow {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,200,50,0.18) 0%, rgba(255,165,0,0.08) 40%, transparent 70%);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Crescent moon — CSS only */
+    .crescent {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #FFE066 0%, #FFB800 50%, #FF8C00 100%);
+      box-shadow:
+        0 0 30px rgba(255,200,0,0.6),
+        0 0 60px rgba(255,160,0,0.3),
+        inset -4px -4px 12px rgba(0,0,0,0.2);
+      position: relative;
+    }
+    .crescent::after {
+      content: '';
+      position: absolute;
+      top: 6px;
+      left: 16px;
+      width: 85px;
+      height: 85px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4c1d95, #6d28d9);
+      box-shadow: inset 2px 2px 8px rgba(0,0,0,0.15);
+    }
+
+    /* Star next to crescent */
+    .star-of-eid {
+      position: absolute;
+      top: 14px;
+      right: 28px;
+      width: 18px;
+      height: 18px;
+      color: #FFD700;
+      filter: drop-shadow(0 0 6px rgba(255,215,0,0.8));
+    }
+
+    /* Lantern strings */
+    .lantern-row {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 0;
+      position: relative;
+      margin-top: 8px;
+      padding: 0 20px;
+    }
+    .string-segment {
+      flex: 1;
+      height: 30px;
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    /* The string line */
+    .string-segment::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: rgba(255,255,255,0.2);
+    }
+    .lantern-body {
+      width: 14px;
+      height: 20px;
+      border-radius: 2px 2px 5px 5px;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .lantern-body::before {
+      content: '';
+      position: absolute;
+      top: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 6px;
+      border-radius: 50% 50% 0 0;
+      background: inherit;
+      opacity: 0.6;
+    }
+    .lb1 { background: linear-gradient(180deg, #FA8112, #e06000); box-shadow: 0 0 10px rgba(250,129,18,0.7); }
+    .lb2 { background: linear-gradient(180deg, #c084fc, #7c3aed); box-shadow: 0 0 10px rgba(192,132,252,0.7); }
+    .lb3 { background: linear-gradient(180deg, #FFD700, #FFA500); box-shadow: 0 0 10px rgba(255,215,0,0.7); }
+    .lb4 { background: linear-gradient(180deg, #ff6b9d, #e0104a); box-shadow: 0 0 10px rgba(255,107,157,0.7); }
+    .lb5 { background: linear-gradient(180deg, #FA8112, #e06000); box-shadow: 0 0 10px rgba(250,129,18,0.7); }
+    .lb6 { background: linear-gradient(180deg, #c084fc, #7c3aed); box-shadow: 0 0 10px rgba(192,132,252,0.7); }
+    .lb7 { background: linear-gradient(180deg, #FFD700, #FFA500); box-shadow: 0 0 10px rgba(255,215,0,0.7); }
+
+    /* Ornamental divider top */
+    .ornament-top {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 40px 0;
+    }
+    .orn-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent); }
+    .orn-diamond {
+      width: 6px;
+      height: 6px;
+      background: #FFD700;
+      transform: rotate(45deg);
+      box-shadow: 0 0 6px rgba(255,215,0,0.6);
+    }
+    .orn-dot { width: 3px; height: 3px; background: rgba(255,255,255,0.4); border-radius: 50%; }
+
+    /* Arabic text */
+    .arabic-wrap {
+      text-align: center;
+      padding: 20px 40px 0;
+      position: relative;
+      z-index: 1;
+    }
+    .arabic-text {
+      font-size: 32px;
+      color: #FFD700;
+      letter-spacing: 4px;
+      text-shadow: 0 0 30px rgba(255,215,0,0.5);
+      line-height: 1.3;
+      display: block;
+    }
+    .transliteration {
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* Main heading */
+    .main-heading {
+      text-align: center;
+      padding: 16px 40px 0;
+      position: relative;
+      z-index: 1;
+    }
+    .eid-word {
+      font-family: 'Playfair Display', serif;
+      font-size: 52px;
+      font-weight: 900;
+      line-height: 1;
+      display: block;
+    }
+    .eid-word .w1 { color: #ffffff; }
+    .eid-word .w2 { color: #FFD700; font-style: italic; }
+    .subheading {
+      font-size: 12px;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-top: 10px;
+      padding-bottom: 32px;
+    }
+
+    /* Message body */
+    .card-body {
+      padding: 28px 44px 32px;
+      position: relative;
+      z-index: 1;
+      text-align: center;
+    }
+
+    .ornament-top { margin-bottom: 20px; }
+
+    .personal-msg {
+      font-family: 'Playfair Display', serif;
+      font-size: 17px;
+      font-style: italic;
+      color: rgba(255,255,255,0.92);
+      line-height: 1.8;
+      margin-bottom: 20px;
+    }
+    .personal-msg strong { color: #FFD700; font-style: normal; font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600; }
+
+    .sub-msg {
+      font-size: 13px;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.7;
+      margin-bottom: 28px;
+    }
+
+    /* CTA */
+    .cta-wrap { margin-bottom: 28px; }
+    .cta-btn {
+      display: inline-block;
+      background: linear-gradient(135deg, #FA8112 0%, #f97316 100%);
+      color: #fff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 13px 32px;
+      border-radius: 100px;
+      box-shadow: 0 8px 28px rgba(250,129,18,0.4), 0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    /* Bottom ornament */
+    .ornament-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .orn-line2 { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(124,58,237,0.15), transparent); }
+
+    /* Brandior stamp */
+    .brandior-stamp {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .stamp-logo { height: 90px; width: auto; }
+    .stamp-text {
+      font-size: 11px;
+      color: rgba(255,255,255,0.2);
+      letter-spacing: 1px;
+    }
+
+    /* Footer strip */
+    .card-footer {
+      padding: 14px 40px 18px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+    .footer-text {
+      font-size: 10px;
+      color: rgba(255,255,255,0.3);
+      line-height: 1.7;
+    }
+    .footer-text a { color: rgba(255,255,255,0.5); text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="scene">
+    <p class="preview-label">✉️ Greeting Card Preview · Eid ul Adha 2026</p>
+
+    <div class="card">
+      <div class="pattern-overlay"></div>
+
+      <!-- Sky & Moon -->
+      <div class="sky">
+        <div class="sky-stars">
+          <div class="s s1"></div><div class="s s2"></div><div class="s s3"></div>
+          <div class="s s4"></div><div class="s s5"></div><div class="s s6"></div>
+          <div class="s s7"></div><div class="s s8"></div><div class="s s9"></div>
+          <div class="s s10"></div>
+        </div>
+
+        <div class="moon-glow">
+          <div class="crescent"></div>
+          <!-- Star of Eid -->
+          <svg class="star-of-eid" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Lanterns -->
+      <div class="lantern-row">
+        <div class="string-segment"><div class="lantern-body lb1"></div></div>
+        <div class="string-segment"><div class="lantern-body lb2"></div></div>
+        <div class="string-segment"><div class="lantern-body lb3"></div></div>
+        <div class="string-segment"><div class="lantern-body lb4"></div></div>
+        <div class="string-segment"><div class="lantern-body lb5"></div></div>
+        <div class="string-segment"><div class="lantern-body lb6"></div></div>
+        <div class="string-segment"><div class="lantern-body lb7"></div></div>
+      </div>
+
+      <!-- Arabic greeting -->
+      <div class="arabic-wrap">
+        <span class="arabic-text">عيد مبارك</span>
+        <p class="transliteration">Eid Mubarak</p>
+      </div>
+
+      <!-- Main title -->
+      <div class="main-heading">
+        <span class="eid-word">
+          <span class="w1">Happy </span><span class="w2">Sallah</span>
+        </span>
+        <p class="subheading">Eid ul Adha · 1447 AH</p>
+      </div>
+
+      <!-- Ornament -->
+      <div class="ornament-top" style="margin: 20px 40px 0;">
+        <div class="orn-line"></div>
+        <div class="orn-dot"></div>
+        <div class="orn-diamond"></div>
+        <div class="orn-dot"></div>
+        <div class="orn-line"></div>
+      </div>
+
+      <!-- Card body message -->
+      <div class="card-body">
+        <p class="personal-msg">
+          Wishing you and your family a blessed and joyful Sallah.<br/>
+          May this season bring <strong>peace, love, and abundance</strong><br/>
+          to every corner of your home. 🌙
+        </p>
+
+        <p class="sub-msg">
+          From the entire Brandior team — we're grateful<br/>
+          you're part of this journey. Big things are coming.
+        </p>
+
+        <div class="cta-wrap">
+          <a href="https://www.brandior.africa" class="cta-btn">
+            🎁 &nbsp;Share the love — invite a friend
+          </a>
+        </div>
+
+        <!-- Bottom ornament -->
+        <div class="ornament-bottom">
+          <div class="orn-line2"></div>
+          <div class="orn-dot" style="background:rgba(124,58,237,0.4)"></div>
+          <div class="orn-diamond" style="background:#7c3aed; box-shadow:0 0 6px rgba(124,58,237,0.5)"></div>
+          <div class="orn-dot" style="background:rgba(124,58,237,0.4)"></div>
+          <div class="orn-line2"></div>
+        </div>
+
+        <!-- Stamp -->
+        <div class="brandior-stamp">
+          <img class="stamp-logo" src="https://www.brandior.africa/logo.png" alt="Brandior" onerror="this.style.display='none'" />
+        </div>
+        <p class="stamp-text" style="text-align:center; font-size:10px; color:rgba(255,255,255,0.15); letter-spacing:3px; text-transform:uppercase;">brandior.africa</p>
+      </div>
+
+      <!-- Footer -->
+      <div class="card-footer">
+        <p class="footer-text">
+          You received this because you joined the Brandior waitlist.<br/>
+          <a href="#">Unsubscribe</a> &nbsp;·&nbsp; <a href="https://www.brandior.africa">brandior.africa</a>
+        </p>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

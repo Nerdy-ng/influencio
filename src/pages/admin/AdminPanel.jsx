@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+const stripInjection = (s) => String(s ?? '').replace(/[<>{}\\`]/g, '');
 import {
   LayoutDashboard, Users, Briefcase, Shield, Bell,
   DollarSign, Settings, LogOut, ChevronDown, Search, X,
@@ -7,16 +8,43 @@ import {
   TrendingUp, Activity, Check, ArrowUpRight, Eye, EyeOff, ShieldAlert, Pencil, Save, Globe,
   SlidersHorizontal, Star, Zap, BadgeCheck, RotateCcw, Info, ChevronUp, ChevronRight,
   BarChart2, HelpCircle, MessageSquare, Clock, Send, CreditCard, ToggleLeft, ToggleRight, Layers,
-  Scale, Sparkles, Smartphone, Tag, ListFilter,
+  Scale, Sparkles, Smartphone, Tag, ListFilter, ClipboardList, GitBranch, Star as StarIcon,
 } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import AdminModerationDashboard from "../../components/AdminModerationDashboard";
 import { getModerationStats } from "../../utils/moderationEngine";
 import CmsEditor from "../../components/admin/CmsEditor";
+import PushNotificationPanel from "../../components/admin/PushNotificationPanel";
+import AuditLogPanel from "../../components/admin/AuditLogPanel";
+import UserDetailModal from "../../components/admin/UserDetailModal";
+import ReferralTrackingPanel from "../../components/admin/ReferralTrackingPanel";
+import RateCardModerationPanel from "../../components/admin/RateCardModerationPanel";
+import CollaborationPanel     from "../../components/admin/CollaborationPanel";
+import MessagingModerationPanel from "../../components/admin/MessagingModerationPanel";
+import DisputeCenterPanel     from "../../components/admin/DisputeCenterPanel";
+import WalletManagementPanel  from "../../components/admin/WalletManagementPanel";
+import WithdrawalPanel        from "../../components/admin/WithdrawalPanel";
+import EscrowPanel            from "../../components/admin/EscrowPanel";
+import FinancialReportingPanel from "../../components/admin/FinancialReportingPanel";
+import ReviewsModerationPanel from "../../components/admin/ReviewsModerationPanel";
+import MarketplaceModerationPanel from "../../components/admin/MarketplaceModerationPanel";
+import ReferralManagementPanel from "../../components/admin/ReferralManagementPanel";
+import NotificationsPanel     from "../../components/admin/NotificationsPanel";
+import CMSPanel               from "../../components/admin/CMSPanel";
+import AnalyticsPanel         from "../../components/admin/AnalyticsPanel";
+import AIControlsPanel        from "../../components/admin/AIControlsPanel";
+import DiscoveryAlgorithmPanel from "../../components/admin/DiscoveryAlgorithmPanel";
+import PaymentConfigPanel     from "../../components/admin/PaymentConfigPanel";
+import PitchSettingsPanel     from "../../components/admin/PitchSettingsPanel";
+import CategoryManagementPanel from "../../components/admin/CategoryManagementPanel";
+import TrustSafetyPanel       from "../../components/admin/TrustSafetyPanel";
+import SupportCenterPanel     from "../../components/admin/SupportCenterPanel";
+import SystemSettingsPanel    from "../../components/admin/SystemSettingsPanel";
 import { LOGO_SLOTS, getLogo, uploadLogoFile, removeLogoFromDB } from "../../lib/brandSettings";
 import { getAllSettings, saveAllSettings, loadSettingsFromDB, getSetting, setSetting } from "../../lib/siteSettings";
 import { THEME_VARS, loadThemeFromDB, saveThemeToDB, resetThemeToDB, getThemeDefaults } from "../../lib/themeSettings";
 import { supabase } from "../../lib/supabase";
+import { saveProfile } from "../../lib/profile";
 
 // ─── MOCK DATA ────────────────────────────────────────────────────────────────
 
@@ -137,6 +165,16 @@ function Avatar({ initials, size = "md", color = "#4f46e5" }) {
   );
 }
 
+function MenuRow({ icon: Icon, label, color, onClick, danger }) {
+  return (
+    <button onClick={onClick}
+      className="w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 text-left transition-colors">
+      <Icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color }} />
+      <span style={{ color: danger ? color : "#374151" }}>{label}</span>
+    </button>
+  );
+}
+
 function StatusBadge({ status }) {
   const map = {
     active: { bg: "#dcfce7", color: "#16a34a", label: "Active" },
@@ -231,19 +269,40 @@ const NAV_ITEMS = [
   { id: "analytics", label: "Analytics",  Icon: BarChart2 },
   { id: "users",     label: "Users",      Icon: Users },
   { id: "rankings",  label: "Rankings",   Icon: SlidersHorizontal },
-  { id: "jobs",      label: "Collabs",     Icon: Briefcase },
-  { id: "team",      label: "Team",       Icon: Shield },
-  { id: "approvals", label: "Approvals",  Icon: Bell, badge: true },
-  { id: "disputes",  label: "Disputes",   Icon: Scale, badge: true, badgeColor: "#ef4444" },
-  { id: "content",   label: "Content",    Icon: Globe },
-  { id: "ai-police", label: "AI Police",  Icon: ShieldAlert, badge: true, badgeColor: "#ef4444" },
-  { id: "features",  label: "Features",   Icon: Layers },
-  { id: "payments",  label: "Payments",   Icon: CreditCard },
-  { id: "financials",label: "Financials", Icon: DollarSign },
-  { id: "legal",     label: "Legal",      Icon: Pencil },
-  { id: "support",   label: "Support",    Icon: HelpCircle },
-  { id: "app-config",label: "App Config",  Icon: Smartphone },
-  { id: "settings",  label: "Settings",   Icon: Settings },
+  { id: "jobs",           label: "Collabs",       Icon: Briefcase },
+  { id: "pitches",        label: "Pitches",       Icon: Send },
+  { id: "messaging",      label: "Messaging",     Icon: MessageSquare },
+  { id: "disputes2",      label: "Disputes",      Icon: Scale, badge: true, badgeColor: "#ef4444" },
+  { id: "wallets",        label: "Wallets",       Icon: CreditCard },
+  { id: "withdrawals",    label: "Withdrawals",   Icon: ArrowUpRight },
+  { id: "escrow",         label: "Escrow",        Icon: DollarSign },
+  { id: "financials2",    label: "Financials",    Icon: TrendingUp },
+  { id: "reviews",        label: "Reviews",       Icon: StarIcon },
+  { id: "marketplace",    label: "Marketplace",   Icon: Layers },
+  { id: "referrals2",     label: "Referrals",     Icon: GitBranch },
+  { id: "notifications2", label: "Notify",        Icon: Bell },
+  { id: "cms2",           label: "CMS",           Icon: Globe },
+  { id: "analytics2",     label: "Analytics",     Icon: BarChart2 },
+  { id: "ai-controls",    label: "AI Controls",   Icon: Sparkles },
+  { id: "discovery",      label: "Discovery",     Icon: SlidersHorizontal },
+  { id: "pay-config",     label: "Pay Config",    Icon: CreditCard },
+  { id: "pitch-settings", label: "Pitch Config",  Icon: Send },
+  { id: "categories",     label: "Categories",    Icon: Tag },
+  { id: "trust-safety",   label: "Trust & Safety",Icon: ShieldAlert },
+  { id: "support2",       label: "Support",       Icon: HelpCircle },
+  { id: "system",         label: "System",        Icon: Settings },
+  { id: "team",           label: "Team",          Icon: Shield },
+  { id: "approvals",      label: "Approvals",     Icon: Bell, badge: true },
+  { id: "content",        label: "Content",       Icon: Globe },
+  { id: "ai-police",      label: "AI Police",     Icon: ShieldAlert, badge: true, badgeColor: "#ef4444" },
+  { id: "features",       label: "Features",      Icon: Layers },
+  { id: "payments",       label: "Payments",      Icon: CreditCard },
+  { id: "legal",          label: "Legal",         Icon: Pencil },
+  { id: "app-config",     label: "App Config",    Icon: Smartphone },
+  { id: "push",           label: "Push",          Icon: Send },
+  { id: "rate-cards",     label: "Rate Cards",    Icon: StarIcon },
+  { id: "audit",          label: "Audit Log",     Icon: ClipboardList },
+  { id: "settings",       label: "Settings",      Icon: Settings },
 ];
 
 // ─── DEFAULT LEGAL CONTENT ────────────────────────────────────────────────────
@@ -339,6 +398,7 @@ export default function AdminPanel() {
   const [adminUser, setAdminUser] = useState(null);
   const [toast, setToast] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);
+  const [viewUser, setViewUser] = useState(null);
 
   const [users, setUsers] = useState([]);
   const [newCountry, setNewCountry] = useState('');
@@ -494,6 +554,7 @@ export default function AdminPanel() {
     mode: 'test',
     processors: {
       paystack:    { enabled: false, publicKey: '', secretKey: '', showSecret: false },
+      monnify:     { enabled: false, publicKey: '', secretKey: '', contractCode: '', showSecret: false },
       flutterwave: { enabled: false, publicKey: '', secretKey: '', showSecret: false },
       stripe:      { enabled: false, publicKey: '', secretKey: '', showSecret: false },
     }
@@ -527,10 +588,15 @@ export default function AdminPanel() {
 
   // App Config state
   const DEFAULT_APP_CONFIG = {
-    niche_categories:       ['Beauty & Skincare', 'Fashion & Style', 'Fitness & Sports', 'Food & Lifestyle', 'Tech & Gadgets', 'Travel', 'Health & Wellness', 'Entertainment', 'Education', 'Business & Finance', 'Parenting & Family', 'Art & Culture'],
-    content_types:          ['UGC Content', 'Influencer Post', 'Brand Ambassador', 'Voiceover', 'Product Review'],
-    min_creator_rate:       20000,
-    platform_commission_pct: 5,
+    niche_categories:           ['Beauty & Skincare', 'Fashion & Style', 'Fitness & Sports', 'Food & Lifestyle', 'Tech & Gadgets', 'Travel', 'Health & Wellness', 'Entertainment', 'Education', 'Business & Finance', 'Parenting & Family', 'Art & Culture'],
+    content_types:              ['UGC Content', 'Influencer Post', 'Brand Ambassador', 'Voiceover', 'Product Review'],
+    min_creator_rate:           20000,
+    platform_commission_pct:    10,
+    escrow_release_delay_hours: 48,
+    auto_release_days:          7,
+    max_pitches_per_month:      10,
+    pitch_pack_size:            10,
+    pitch_pack_price:           500,
   }
   const [appConfig,        setAppConfig]        = useState(DEFAULT_APP_CONFIG)
   const [appConfigSaving,  setAppConfigSaving]  = useState(false)
@@ -573,8 +639,10 @@ export default function AdminPanel() {
   }
 
   // Search/filter state
-  const [userSearch, setUserSearch] = useState("");
-  const [userFilter, setUserFilter] = useState("Talents");
+  const [userSearch,     setUserSearch]     = useState("");
+  const [userFilter,     setUserFilter]     = useState("Talents");
+  const [searchField,    setSearchField]    = useState("all");
+  const [openActionMenu, setOpenActionMenu] = useState(null);
 
   // Modal state
   const [addTeamModal, setAddTeamModal] = useState(null); // 'manager' | 'staff'
@@ -640,14 +708,68 @@ export default function AdminPanel() {
         })))
       }
 
-      // Overview stats
-      const { count: userCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true })
-      const { count: collabCount } = await supabase.from('collabs').select('*', { count: 'exact', head: true }).in('status', ['pending', 'in_progress', 'delivered', 'revision_requested'])
-      const { count: reviewCount } = await supabase.from('reviews').select('*', { count: 'exact', head: true })
-      setRealStats({ userCount, collabCount, reviewCount })
+      // Overview stats — all 21 metrics fetched in parallel
+      const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
+      const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)
+
+      const [
+        { count: userCount },
+        { count: creatorCount },
+        { count: brandCount },
+        { count: verifiedCreators },
+        { count: verifiedBrands },
+        { count: pendingVerificationsCount },
+        { count: activeCollabs },
+        { count: openCollabs },
+        { count: completedCollabs },
+        { data: gmvData },
+        { count: pendingDisputeCount },
+        { count: dailySignupCount },
+        { count: newReferralCount },
+        { count: pitchesTodayCount },
+        { data: walletData },
+        { data: escrowData },
+        { data: pendingWithdrawData },
+      ] = await Promise.all([
+        supabase.from('profiles').select('*', { count: 'exact', head: true }),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).in('role', ['creator', 'talent']).eq('status', 'active'),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'brand').eq('status', 'active'),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).in('role', ['creator', 'talent']).eq('verified', true),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'brand').eq('verified', true),
+        supabase.from('admin_approvals').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('collabs').select('*', { count: 'exact', head: true }).in('status', ['in_progress', 'delivered', 'revision_requested']),
+        supabase.from('collabs').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('collabs').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
+        supabase.from('collabs').select('total_amount, platform_fee, creator_payout, payment_status, status'),
+        supabase.from('disputes').select('*', { count: 'exact', head: true }).in('status', ['open', 'pending', 'under_review']),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', todayStart.toISOString()),
+        supabase.from('referrals').select('*', { count: 'exact', head: true }).gte('created_at', monthStart.toISOString()),
+        supabase.from('job_applications').select('*', { count: 'exact', head: true }).gte('created_at', todayStart.toISOString()),
+        supabase.from('profiles').select('wallet_balance'),
+        supabase.from('collabs').select('creator_payout, payment_status'),
+        supabase.from('payout_requests').select('amount, status').eq('status', 'pending'),
+      ])
+
+      const totalGMV = (gmvData || []).filter(r => r.payment_status !== 'unpaid').reduce((s, r) => s + (r.total_amount || 0), 0)
+      const brandiorRevenue = (gmvData || []).reduce((s, r) => s + (r.platform_fee || 0), 0)
+      const walletBalances = (walletData || []).reduce((s, r) => s + (r.wallet_balance || 0), 0)
+      const escrowBalance = (escrowData || []).filter(r => r.payment_status === 'paid').reduce((s, r) => s + (r.creator_payout || 0), 0)
+      const pendingWithdrawals = (pendingWithdrawData || []).reduce((s, r) => s + (r.amount || 0), 0)
+      const totalCollabs = (activeCollabs || 0) + (openCollabs || 0) + (completedCollabs || 0)
+      const conversionRate = totalCollabs > 0 ? Math.round(((completedCollabs || 0) / totalCollabs) * 100) : 0
+
+      setRealStats({
+        userCount, creatorCount, brandCount,
+        verifiedCreators, verifiedBrands, pendingVerifications: pendingVerificationsCount,
+        activeCollabs, openCollabs, completedCollabs,
+        totalGMV, brandiorRevenue, walletBalances,
+        escrowBalance, pendingWithdrawals, pendingDisputes: pendingDisputeCount,
+        dailySignups: dailySignupCount, conversionRate, newReferrals: newReferralCount,
+        pitchesToday: pitchesTodayCount, avgCreatorResponse: null, avgBrandResponse: null,
+      })
 
       // Build 30-day daily charts
-      const buildDailyMap = (rows, dateField) => {
+      const buildDailyCount = (rows, dateField) => {
         const map = {}
         for (let i = 29; i >= 0; i--) {
           const d = new Date(); d.setDate(d.getDate() - i)
@@ -659,14 +781,41 @@ export default function AdminPanel() {
         })
         return Object.entries(map).map(([date, count]) => ({ date: date.slice(5), count }))
       }
+      const buildDailySum = (rows, dateField, valueField) => {
+        const map = {}
+        for (let i = 29; i >= 0; i--) {
+          const d = new Date(); d.setDate(d.getDate() - i)
+          map[d.toISOString().slice(0, 10)] = 0
+        }
+        ;(rows || []).forEach(r => {
+          const day = new Date(r[dateField]).toISOString().slice(0, 10)
+          if (map[day] !== undefined) map[day] += (r[valueField] || 0)
+        })
+        return Object.entries(map).map(([date, count]) => ({ date: date.slice(5), count }))
+      }
       const since = new Date(); since.setDate(since.getDate() - 30)
-      const [{ data: recentProfiles }, { data: recentCollabs }] = await Promise.all([
+      const [
+        { data: recentProfiles },
+        { data: recentCollabsAll },
+        { data: recentCollabsCompleted },
+        { data: recentCollabsRevenue },
+        { data: recentDeposits },
+        { data: recentWithdrawals },
+      ] = await Promise.all([
         supabase.from('profiles').select('created_at').gte('created_at', since.toISOString()),
         supabase.from('collabs').select('created_at').gte('created_at', since.toISOString()),
+        supabase.from('collabs').select('updated_at').eq('status', 'completed').gte('updated_at', since.toISOString()),
+        supabase.from('collabs').select('created_at, platform_fee').eq('payment_status', 'released').gte('created_at', since.toISOString()),
+        supabase.from('wallet_transactions').select('created_at, amount').eq('type', 'deposit').gte('created_at', since.toISOString()),
+        supabase.from('payout_requests').select('created_at, amount').gte('created_at', since.toISOString()),
       ])
       setAdminCharts({
-        dailySignups: buildDailyMap(recentProfiles, 'created_at'),
-        dailyCollabs: buildDailyMap(recentCollabs, 'created_at'),
+        dailySignups:    buildDailyCount(recentProfiles, 'created_at'),
+        dailyCollabs:    buildDailyCount(recentCollabsAll, 'created_at'),
+        dailyCompleted:  buildDailyCount(recentCollabsCompleted, 'updated_at'),
+        dailyRevenue:    buildDailySum(recentCollabsRevenue, 'created_at', 'platform_fee'),
+        dailyDeposits:   buildDailySum(recentDeposits, 'created_at', 'amount'),
+        dailyWithdrawals: buildDailySum(recentWithdrawals, 'created_at', 'amount'),
       })
 
       // Team members
@@ -711,8 +860,21 @@ export default function AdminPanel() {
     fetchRealData()
   }, [])
 
-  const [realStats, setRealStats] = useState({ userCount: null, collabCount: null, reviewCount: null })
+  const [realStats, setRealStats] = useState({
+    // Users
+    userCount: null, creatorCount: null, brandCount: null,
+    verifiedCreators: null, verifiedBrands: null, pendingVerifications: null,
+    // Collabs
+    activeCollabs: null, openCollabs: null, completedCollabs: null,
+    // Financial
+    totalGMV: null, brandiorRevenue: null, walletBalances: null,
+    escrowBalance: null, pendingWithdrawals: null, pendingDisputes: null,
+    // Activity
+    dailySignups: null, conversionRate: null, newReferrals: null,
+    pitchesToday: null, avgCreatorResponse: null, avgBrandResponse: null,
+  })
   const [adminCharts, setAdminCharts] = useState(null)
+  const [chartRange, setChartRange] = useState(30)
 
   // ── Financial state ──
   const [finStats, setFinStats]             = useState({ revenue: 0, escrowTotal: 0, releasedTotal: 0, refundedTotal: 0 })
@@ -721,6 +883,7 @@ export default function AdminPanel() {
   const [wallets, setWallets]               = useState([])
   const [finLoading, setFinLoading]         = useState(false)
   const [walletAdjust, setWalletAdjust]     = useState(null) // { profile, delta, reason }
+  const [pitchAdjust,  setPitchAdjust]      = useState(null) // { profile, amount, reason }
   const [payoutTarget, setPayoutTarget]     = useState(null) // creator profile
   const [payoutAmount, setPayoutAmount]     = useState('')
   const [payoutBusy, setPayoutBusy]         = useState(false)
@@ -734,7 +897,7 @@ export default function AdminPanel() {
           .order('created_at', { ascending: false })
           .limit(200),
         supabase.from('profiles')
-          .select('id, full_name, company_name, owner_name, role, wallet_balance, payout_accounts')
+          .select('id, full_name, company_name, owner_name, role, wallet_balance, extra_pitches, payout_accounts')
           .order('wallet_balance', { ascending: false })
           .limit(50),
       ])
@@ -786,8 +949,9 @@ export default function AdminPanel() {
     const newBal = (creator?.wallet_balance || 0) + (item.creator_payout || 0)
     await Promise.all([
       supabase.from('collabs').update({ payment_status: 'released' }).eq('id', item.fullId || item.id),
-      supabase.from('profiles').update({ wallet_balance: newBal }).eq('id', item.creator_id),
+      saveProfile(item.creator_id, { wallet_balance: newBal }),
     ])
+    auditLog('release_escrow', 'collab', item.fullId || item.id, item.creatorName, { amount: item.creator_payout });
     showToast(`Released ₦${(item.creator_payout||0).toLocaleString()} to ${item.creatorName}`)
     loadFinancials()
   }
@@ -797,8 +961,9 @@ export default function AdminPanel() {
     const newBal = (brand?.wallet_balance || 0) + (item.total_amount || 0)
     await Promise.all([
       supabase.from('collabs').update({ payment_status: 'refunded', status: 'cancelled' }).eq('id', item.fullId || item.id),
-      supabase.from('profiles').update({ wallet_balance: newBal }).eq('id', item.brand_id),
+      saveProfile(item.brand_id, { wallet_balance: newBal }),
     ])
+    auditLog('refund_escrow', 'collab', item.fullId || item.id, item.brandName, { amount: item.total_amount });
     showToast(`Refunded ₦${(item.total_amount||0).toLocaleString()} to ${item.brandName}`)
     loadFinancials()
   }
@@ -807,9 +972,29 @@ export default function AdminPanel() {
     if (!walletAdjust) return
     const { profile, delta, reason } = walletAdjust
     const newBal = Math.max(0, (profile.wallet_balance || 0) + Number(delta))
-    await supabase.from('profiles').update({ wallet_balance: newBal }).eq('id', profile.id)
+    await saveProfile(profile.id, { wallet_balance: newBal })
+    auditLog(Number(delta) >= 0 ? 'wallet_credit' : 'wallet_debit', 'user', profile.id, pName(profile), { delta: Number(delta), reason });
     showToast(`Wallet for ${pName(profile)} adjusted to ₦${newBal.toLocaleString()} — ${reason || 'no reason given'}`)
     setWalletAdjust(null)
+    loadFinancials()
+  }
+
+  async function applyPitchAdjust() {
+    if (!pitchAdjust) return
+    const { profile, amount, reason } = pitchAdjust
+    const current = profile.extra_pitches || 0
+    const newTotal = Math.max(0, current + Number(amount))
+    await saveProfile(profile.id, { extra_pitches: newTotal })
+    await supabase.from('notifications').insert({
+      user_id: profile.id,
+      title:   'Pitches added to your account',
+      body:    `${Number(amount)} extra pitches have been added by the Brandior team. You now have ${newTotal} extra pitches available.${reason ? ` (${reason})` : ''}`,
+      type:    'general',
+      data:    {},
+    })
+    auditLog('pitch_topup', 'user', profile.id, pName(profile), { amount: Number(amount), reason })
+    showToast(`${Number(amount)} pitches added to ${pName(profile)} — total now: ${newTotal}`)
+    setPitchAdjust(null)
     loadFinancials()
   }
 
@@ -819,32 +1004,20 @@ export default function AdminPanel() {
     if (!payoutTarget || !payoutAmount) return
     setPayoutBusy(true)
     try {
-      const account = (payoutTarget.payout_accounts || []).find(a => a.isDefault) || payoutTarget.payout_accounts?.[0]
-      if (!account) { showToast('Creator has no payout account set up', 'error'); return }
       const amt = parseInt(payoutAmount.replace(/\D/g, ''), 10)
       if (amt < 100) { showToast('Minimum payout is ₦100', 'error'); return }
-      const res = await fetch('/api/paystack-transfer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: amt,
-          recipient: { bank_code: account.bankCode, account_number: account.accountNumber, name: account.accountName },
-          reason: `Brandior payout — ${payoutTarget.full_name || payoutTarget.company_name}`,
-          meta: { profile_id: payoutTarget.id },
-        }),
+      const { data, error } = await supabase.functions.invoke('payout-transfer', {
+        body: { amount: amt, target_profile_id: payoutTarget.id },
       })
-      const json = await res.json()
-      if (json.status === 'success') {
-        const newBal = Math.max(0, (payoutTarget.wallet_balance || 0) - amt)
-        await supabase.from('profiles').update({ wallet_balance: newBal }).eq('id', payoutTarget.id)
-        showToast(`Transferred ₦${amt.toLocaleString()} to ${account.accountName} (${account.bankName})`)
-        setPayoutTarget(null); setPayoutAmount('')
-        loadFinancials()
-      } else {
-        showToast(json.message || 'Transfer failed', 'error')
+      if (error || !data?.ok) {
+        showToast(data?.error || error?.message || 'Transfer failed', 'error')
+        return
       }
+      showToast(`Transferred ₦${amt.toLocaleString()} to ${pName(payoutTarget)}`)
+      setPayoutTarget(null); setPayoutAmount('')
+      loadFinancials()
     } catch (e) {
-      showToast('Payout API not deployed yet — set up /api/paystack-transfer first', 'error')
+      showToast(e.message || 'Transfer failed', 'error')
     } finally {
       setPayoutBusy(false)
     }
@@ -858,6 +1031,19 @@ export default function AdminPanel() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const auditLog = (action, targetType, targetId, targetLabel, detail = {}) => {
+    const admin = JSON.parse(localStorage.getItem('brandiór_admin_user') || '{}');
+    supabase.from('admin_audit_log').insert({
+      admin_name:   admin.name  || 'Admin',
+      admin_role:   admin.role  || 'admin',
+      action,
+      target_type:  targetType  ?? null,
+      target_id:    targetId    ? String(targetId) : null,
+      target_label: targetLabel ?? null,
+      detail,
+    }).then(() => {});
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("brandiór_admin_user");
     localStorage.removeItem("brandiór_admin_role");
@@ -868,10 +1054,10 @@ export default function AdminPanel() {
     const item = approvals.find((a) => a.id === id);
     if (action === 'approved' && item) {
       if (item.type === 'Verify Talent' && item.targetId) {
-        await supabase.from('profiles').update({ verified: true }).eq('id', item.targetId)
+        await saveProfile(item.targetId, { verified: true })
         setUsers(prev => prev.map(u => u.id === item.targetId ? { ...u, verified: true } : u))
       } else if (item.type === 'Suspend User' && item.targetId) {
-        await supabase.from('profiles').update({ status: 'suspended' }).eq('id', item.targetId)
+        await saveProfile(item.targetId, { status: 'suspended' })
         setUsers(prev => prev.map(u => u.id === item.targetId ? { ...u, status: 'suspended' } : u))
       } else if (item.type === 'Process Refund') {
         showToast(`Refund initiated for ${item.target}.`, 'info')
@@ -885,12 +1071,14 @@ export default function AdminPanel() {
   };
 
   const handleBanUser = (userId) => {
+    const target = users.find(u => u.id === userId);
     setConfirmModal({
       title: "Ban User",
       message: "Are you sure you want to permanently ban this user? This action cannot be undone.",
       onConfirm: async () => {
         setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, status: "banned" } : u));
-        await supabase.from('profiles').update({ status: 'banned' }).eq('id', userId)
+        await saveProfile(userId, { status: 'banned' })
+        auditLog('ban_user', 'user', userId, target?.name);
         setConfirmModal(null);
         showToast("User has been banned.");
       },
@@ -901,33 +1089,89 @@ export default function AdminPanel() {
     const user = users.find(u => u.id === userId)
     const newStatus = user?.status === "suspended" ? "active" : "suspended"
     setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, status: newStatus } : u));
-    await supabase.from('profiles').update({ status: newStatus }).eq('id', userId)
+    await saveProfile(userId, { status: newStatus })
+    auditLog(newStatus === 'suspended' ? 'suspend_user' : 'unsuspend_user', 'user', userId, user?.name);
     showToast("User status updated.");
   };
 
   const handleVerifyUser = async (userId) => {
+    const target = users.find(u => u.id === userId);
     setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, verified: true } : u));
-    await supabase.from('profiles').update({ verified: true }).eq('id', userId)
+    await saveProfile(userId, { verified: true })
+    auditLog('verify_user', 'user', userId, target?.name);
     showToast("User verified successfully.");
   };
 
   const handleChangeTier = async (userId, tier) => {
     setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, tier } : u));
-    await supabase.from('profiles').update({ tier }).eq('id', userId)
+    await saveProfile(userId, { tier })
     showToast("Tier updated.");
   };
 
   const handleSaveUser = async () => {
     setUsers(prev => prev.map(u => u.id === editUser.id ? editUser : u));
-    await supabase.from('profiles').update({
+    await saveProfile(editUser.id, {
       full_name: editUser.name,
       location: editUser.location,
       tier: editUser.tier,
       status: editUser.status,
       verified: editUser.verified,
-    }).eq('id', editUser.id)
+    })
     setEditUser(null);
     showToast("User profile updated successfully.");
+  };
+
+  const handleDeleteUser = (userId) => {
+    const target = users.find(u => u.id === userId);
+    setConfirmModal({
+      title: "Delete Account",
+      message: `Permanently delete ${target?.name}'s account? This sets their profile to deleted and cannot be undone.`,
+      onConfirm: async () => {
+        await saveProfile(userId, { status: 'deleted' });
+        setUsers(prev => prev.filter(u => u.id !== userId));
+        auditLog('delete_user', 'user', userId, target?.name);
+        setConfirmModal(null);
+        setViewUser(null);
+        showToast("Account deleted.");
+      },
+    });
+  };
+
+  const handleResetPassword = async (userId) => {
+    const target = users.find(u => u.id === userId);
+    const email = target?._raw?.email;
+    if (!email) { showToast("No email found for this user.", "error"); return; }
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    if (error) { showToast(error.message, "error"); return; }
+    auditLog('reset_password', 'user', userId, target?.name);
+    showToast(`Password reset email sent to ${email}`);
+  };
+
+  const handleForceLogout = async (userId) => {
+    const target = users.find(u => u.id === userId);
+    await saveProfile(userId, { force_logout_at: new Date().toISOString() });
+    auditLog('force_logout', 'user', userId, target?.name);
+    showToast(`${target?.name} will be logged out on next app open.`);
+  };
+
+  const handleToggleRestriction = async (userId, key) => {
+    const target = users.find(u => u.id === userId);
+    const current = target?._raw?.restrictions || {};
+    const updated = { ...current, [key]: !current[key] };
+    await saveProfile(userId, { restrictions: updated });
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, _raw: { ...u._raw, restrictions: updated } } : u));
+    auditLog('toggle_restriction', 'user', userId, target?.name, { key, value: updated[key] });
+    showToast(`${key} ${updated[key] ? "disabled" : "enabled"} for ${target?.name}`);
+  };
+
+  const handleUserAction = (type, userId, ...args) => {
+    if (type === 'verify')             handleVerifyUser(userId);
+    else if (type === 'suspend')       handleSuspendUser(userId);
+    else if (type === 'ban')           handleBanUser(userId);
+    else if (type === 'delete')        handleDeleteUser(userId);
+    else if (type === 'resetPassword') handleResetPassword(userId);
+    else if (type === 'forceLogout')   handleForceLogout(userId);
+    else if (type === 'toggleRestriction') handleToggleRestriction(userId, args[0]);
   };
 
   const handleAddTeamMember = async () => {
@@ -950,7 +1194,18 @@ export default function AdminPanel() {
   };
 
   const filteredUsers = users.filter((u) => {
-    const matchSearch = u.name.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase());
+    const p   = u._raw || {};
+    const term = userSearch.toLowerCase().trim();
+    const matchSearch = !term || (() => {
+      if (searchField === 'email')         return (p.email         || '').toLowerCase().includes(term);
+      if (searchField === 'phone')         return (p.phone         || '').toLowerCase().includes(term);
+      if (searchField === 'company_name')  return (p.company_name  || '').toLowerCase().includes(term);
+      if (searchField === 'full_name')     return (p.full_name     || '').toLowerCase().includes(term);
+      if (searchField === 'referral_code') return (p.referral_code || '').toLowerCase().includes(term);
+      if (searchField === 'handle')        return (p.handle        || '').toLowerCase().includes(term);
+      return [p.full_name, p.email, p.phone, p.company_name, p.handle, p.referral_code, p.owner_name]
+        .some(f => (f || '').toLowerCase().includes(term));
+    })();
     const matchRole = userFilter === "Suspended" || userFilter === "Banned"
       ? true
       : userFilter === "Talents" ? ['Talent', 'talent', 'creator'].includes(u.role) : ['Brand', 'brand'].includes(u.role);
@@ -962,109 +1217,174 @@ export default function AdminPanel() {
 
   // ─── TABS ─────────────────────────────────────────────────────────────────
 
-  const renderOverview = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Total Users",       value: realStats.userCount ?? users.length,    icon: Users,    color: "#4f46e5" },
-          { label: "Active Collabs",     value: realStats.collabCount ?? 0,             icon: Activity, color: "#0ea5e9" },
-          { label: "Total Reviews",      value: realStats.reviewCount ?? '—',           icon: Star,     color: "#16a34a" },
-          { label: "Pending Approvals",  value: pendingCount,                           icon: Bell,     color: "#d97706" },
-        ].map((s) => (
-          <div key={s.label} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{s.label}</p>
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: s.color + "20" }}>
-                <s.icon className="w-4 h-4" style={{ color: s.color }} />
-              </div>
+  const renderOverview = () => {
+    const fmtNum = v => v === null || v === undefined ? <span className="text-gray-300 animate-pulse">—</span> : v.toLocaleString()
+    const fmtMoney = v => v === null || v === undefined ? <span className="text-gray-300 animate-pulse">—</span> : `₦${v.toLocaleString()}`
+    const fmtPct = v => v === null || v === undefined ? <span className="text-gray-300 animate-pulse">—</span> : `${v}%`
+    const fmtTime = v => v === null || v === undefined ? <span className="text-gray-300 text-xs">N/A</span> : `${v}h avg`
+
+    const StatCard = ({ label, value, icon: Icon, color, sub }) => (
+      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide leading-tight">{label}</p>
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: color + '18' }}>
+            <Icon className="w-3.5 h-3.5" style={{ color }} />
+          </div>
+        </div>
+        <p className="text-2xl font-bold text-gray-900 tabular-nums">{value}</p>
+        {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+      </div>
+    )
+
+    const SectionLabel = ({ title }) => (
+      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-6 mb-3">{title}</p>
+    )
+
+    return (
+      <div className="space-y-2">
+        <SectionLabel title="Users" />
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+          <StatCard label="Total Users"          value={fmtNum(realStats.userCount)}          icon={Users}      color="#4f46e5" />
+          <StatCard label="Active Creators"      value={fmtNum(realStats.creatorCount)}       icon={Users}      color="#7c3aed" />
+          <StatCard label="Active Brands"        value={fmtNum(realStats.brandCount)}         icon={Briefcase}  color="#0ea5e9" />
+          <StatCard label="Verified Creators"    value={fmtNum(realStats.verifiedCreators)}   icon={BadgeCheck} color="#16a34a" />
+          <StatCard label="Verified Brands"      value={fmtNum(realStats.verifiedBrands)}     icon={BadgeCheck} color="#059669" />
+          <StatCard label="Pending Verifications" value={fmtNum(realStats.pendingVerifications)} icon={Clock}   color="#d97706" />
+        </div>
+
+        <SectionLabel title="Collaborations" />
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <StatCard label="Active Campaigns"        value={fmtNum(realStats.activeCollabs)}    icon={Activity}  color="#0ea5e9" />
+          <StatCard label="Open Collaborations"     value={fmtNum(realStats.openCollabs)}      icon={Layers}    color="#7c3aed" />
+          <StatCard label="Completed Collaborations" value={fmtNum(realStats.completedCollabs)} icon={CheckCircle} color="#16a34a" />
+        </div>
+
+        <SectionLabel title="Financial" />
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          <StatCard label="Total GMV"          value={fmtMoney(realStats.totalGMV)}         icon={DollarSign}  color="#16a34a" />
+          <StatCard label="Brandior Revenue"   value={fmtMoney(realStats.brandiorRevenue)}  icon={TrendingUp}  color="#4f46e5" />
+          <StatCard label="Wallet Balances"    value={fmtMoney(realStats.walletBalances)}   icon={CreditCard}  color="#0ea5e9" />
+          <StatCard label="Escrow Balance"     value={fmtMoney(realStats.escrowBalance)}    icon={Shield}      color="#7c3aed" />
+          <StatCard label="Pending Withdrawals" value={fmtMoney(realStats.pendingWithdrawals)} icon={ArrowUpRight} color="#d97706" />
+          <StatCard label="Pending Disputes"   value={fmtNum(realStats.pendingDisputes)}    icon={Scale}       color="#dc2626" />
+        </div>
+
+        <SectionLabel title="Activity" />
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+          <StatCard label="Daily Signups"     value={fmtNum(realStats.dailySignups)}    icon={Users}        color="#4f46e5" />
+          <StatCard label="Conversion Rate"   value={fmtPct(realStats.conversionRate)}  icon={BarChart2}    color="#16a34a" sub="collabs completed" />
+          <StatCard label="New Referrals"     value={fmtNum(realStats.newReferrals)}    icon={GitBranch}    color="#f97316" sub="this month" />
+          <StatCard label="Pitches Today"     value={fmtNum(realStats.pitchesToday)}    icon={Send}         color="#7c3aed" />
+          <StatCard label="Avg Creator Resp." value={fmtTime(realStats.avgCreatorResponse)} icon={Clock}   color="#0ea5e9" />
+          <StatCard label="Avg Brand Resp."   value={fmtTime(realStats.avgBrandResponse)}  icon={Clock}   color="#d97706" />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+            <h3 className="font-semibold text-gray-900 mb-4">Recent Activity</h3>
+            <div className="space-y-3">
+              {activityFeed.length === 0
+                ? <p className="text-sm text-gray-400">No recent activity</p>
+                : activityFeed.map((a) => (
+                  <div key={a.id} className="flex items-start gap-3 py-2 border-b border-gray-50 last:border-0">
+                    <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: a.type === "flag" ? "#ef4444" : a.type === "approve" ? "#16a34a" : "#4f46e5" }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-700">{a.text}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{a.time}</p>
+                    </div>
+                  </div>
+                ))}
             </div>
-            <p className="text-2xl font-bold text-gray-900">{s.value}</p>
-            <p className="text-xs text-gray-400 mt-1 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> +12% this week</p>
           </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-          <h3 className="font-semibold text-gray-900 mb-4">Recent Activity</h3>
-          <div className="space-y-3">
-            {activityFeed.map((a) => (
-              <div key={a.id} className="flex items-start gap-3 py-2 border-b border-gray-50 last:border-0">
-                <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: a.type === "flag" ? "#ef4444" : a.type === "approve" ? "#16a34a" : "#4f46e5" }} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-700">{a.text}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{a.time}</p>
+          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+            <h3 className="font-semibold text-gray-900 mb-4">Quick Summary</h3>
+            <div className="space-y-2.5">
+              {[
+                { label: 'Creator signups today', value: fmtNum(realStats.dailySignups) },
+                { label: 'Pitches submitted today', value: fmtNum(realStats.pitchesToday) },
+                { label: 'Pending disputes', value: fmtNum(realStats.pendingDisputes) },
+                { label: 'Pending verifications', value: fmtNum(realStats.pendingVerifications) },
+                { label: 'Conversion rate', value: fmtPct(realStats.conversionRate) },
+                { label: 'Total platform revenue', value: fmtMoney(realStats.brandiorRevenue) },
+              ].map(item => (
+                <div key={item.label} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                  <p className="text-sm text-gray-600">{item.label}</p>
+                  <span className="font-semibold text-gray-900 text-sm tabular-nums">{item.value}</span>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-          <h3 className="font-semibold text-gray-900 mb-4">Platform Health</h3>
-          <div className="space-y-3">
-            {[
-              { label: "Talent signups this week", value: 23 },
-              { label: "Brand signups", value: 8 },
-              { label: "Jobs posted", value: 41 },
-              { label: "Campaigns completed", value: 17 },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                <p className="text-sm text-gray-600">{item.label}</p>
-                <span className="font-semibold text-gray-900 text-sm">{item.value}</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    )
+  }
 
   const renderAnalytics = () => {
     if (!adminCharts) return <div className="flex items-center justify-center py-20"><div className="w-6 h-6 rounded-full border-2 border-indigo-300 border-t-indigo-600 animate-spin" /></div>
-    const chartStyle = { border: '1px solid #e2e8f0' }
-    const INDIGO = '#4f46e5'
-    const GREEN  = '#16a34a'
-    const AMBER  = '#d97706'
+
+    const slice = (data) => chartRange === 7 ? data.slice(-7) : data
+    const isMoney = (key) => key === 'dailyRevenue' || key === 'dailyDeposits' || key === 'dailyWithdrawals'
+    const fmtTick = (v, key) => isMoney(key) ? `₦${(v/1000).toFixed(0)}k` : v
+    const fmtTooltip = (v, key) => isMoney(key) ? `₦${v.toLocaleString()}` : v
+
     const charts = [
-      { title: 'User Signups — Last 30 Days',  data: adminCharts.dailySignups, color: INDIGO },
-      { title: 'Collabs Created — Last 30 Days', data: adminCharts.dailyCollabs, color: GREEN  },
+      { key: 'dailySignups',    title: 'Signups',                    color: '#4f46e5' },
+      { key: 'dailyRevenue',    title: 'Revenue (₦)',                color: '#16a34a' },
+      { key: 'dailyCollabs',    title: 'Campaigns Created',          color: '#0ea5e9' },
+      { key: 'dailyCompleted',  title: 'Successful Collaborations',  color: '#7c3aed' },
+      { key: 'dailyDeposits',   title: 'Wallet Deposits (₦)',        color: '#f97316' },
+      { key: 'dailyWithdrawals',title: 'Withdrawals (₦)',            color: '#ef4444' },
     ]
+
     return (
-      <div className="space-y-6">
-        <h2 className="text-xl font-bold text-gray-900">Platform Analytics</h2>
-        {/* Summary cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { label: 'Total Users',      value: realStats.userCount ?? '—',    color: INDIGO },
-            { label: 'Active Collabs',   value: realStats.collabCount ?? '—',  color: GREEN  },
-            { label: 'Total Reviews',    value: realStats.reviewCount ?? '—',  color: '#0ea5e9' },
-            { label: 'Pending Approvals',value: pendingCount,                  color: AMBER  },
-          ].map(s => (
-            <div key={s.label} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">{s.label}</p>
-              <p className="text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
-            </div>
-          ))}
-        </div>
-        {/* Charts */}
-        {charts.map(({ title, data, color }) => (
-          <div key={title} className="bg-white rounded-xl p-5 shadow-sm" style={chartStyle}>
-            <p className="font-semibold text-gray-900 mb-4">{title}</p>
-            {data.some(d => d.count > 0) ? (
-              <ResponsiveContainer width="100%" height={180}>
-                <LineChart data={data}>
-                  <XAxis dataKey="date" tick={{ fontSize: 10 }} interval={4} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 10 }} width={28} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="count" stroke={color} strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-28 text-sm text-gray-400">No data yet</div>
-            )}
+      <div className="space-y-5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-gray-900">Platform Analytics</h2>
+          <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+            {[7, 30].map(r => (
+              <button
+                key={r}
+                onClick={() => setChartRange(r)}
+                className="px-3 py-1 rounded-md text-xs font-semibold transition-all"
+                style={chartRange === r
+                  ? { backgroundColor: '#fff', color: '#4f46e5', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }
+                  : { color: '#6b7280' }}
+              >{r}d</button>
+            ))}
           </div>
-        ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {charts.map(({ key, title, color }) => {
+            const data = slice(adminCharts[key] || [])
+            const hasData = data.some(d => d.count > 0)
+            const total = data.reduce((s, d) => s + d.count, 0)
+            return (
+              <div key={key} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="font-semibold text-gray-800 text-sm">{title}</p>
+                  <span className="text-xs font-bold tabular-nums" style={{ color }}>
+                    {isMoney(key) ? `₦${total.toLocaleString()}` : total.toLocaleString()}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400 mb-4">Last {chartRange} days</p>
+                {hasData ? (
+                  <ResponsiveContainer width="100%" height={160}>
+                    <BarChart data={data} barSize={chartRange === 7 ? 22 : 8}>
+                      <XAxis dataKey="date" tick={{ fontSize: 9 }} interval={chartRange === 7 ? 0 : 4} tickLine={false} axisLine={false} />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 9 }} width={isMoney(key) ? 38 : 24} tickLine={false} axisLine={false}
+                        tickFormatter={v => fmtTick(v, key)} />
+                      <Tooltip formatter={(v) => [fmtTooltip(v, key), title]} labelStyle={{ fontSize: 11 }} contentStyle={{ fontSize: 11, borderRadius: 8 }} />
+                      <Bar dataKey="count" fill={color} radius={[3, 3, 0, 0]} fillOpacity={0.85} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-40 text-sm text-gray-300">No data yet</div>
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
     )
   }
@@ -1118,16 +1438,30 @@ export default function AdminPanel() {
 
         {/* Search */}
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder={`Search ${userFilter.toLowerCase()}...`}
-              value={userSearch}
-              onChange={(e) => setUserSearch(stripInjection(e.target.value))}
-              className="w-full pl-9 pr-4 py-2 rounded-lg text-sm border border-gray-200 outline-none"
-              style={{ '--tw-ring-color': accentColor }}
-            />
+          <div className="flex gap-2">
+            <select
+              value={searchField}
+              onChange={e => setSearchField(e.target.value)}
+              className="px-3 py-2 rounded-lg text-xs font-semibold border border-gray-200 outline-none bg-gray-50 flex-shrink-0"
+              style={{ color: accentColor }}>
+              <option value="all">All fields</option>
+              <option value="full_name">Name</option>
+              <option value="email">Email</option>
+              <option value="phone">Phone</option>
+              <option value="company_name">Brand name</option>
+              <option value="handle">Username</option>
+              <option value="referral_code">Referral code</option>
+            </select>
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder={`Search ${userFilter.toLowerCase()}...`}
+                value={userSearch}
+                onChange={(e) => setUserSearch(stripInjection(e.target.value))}
+                className="w-full pl-9 pr-4 py-2 rounded-lg text-sm border border-gray-200 outline-none"
+              />
+            </div>
           </div>
         </div>
 
@@ -1173,20 +1507,66 @@ export default function AdminPanel() {
                     <td className="px-4 py-3 text-gray-600">{user.location}</td>
                     <td className="px-4 py-3 text-gray-500 text-xs">{user.joined}</td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <button
-                          onClick={() => setEditUser({ ...user })}
-                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg text-white"
+                      <div className="flex items-center gap-1.5">
+                        <button onClick={() => setViewUser(user)}
+                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50">
+                          <Eye className="w-3 h-3" /> View
+                        </button>
+                        <button onClick={() => setEditUser({ ...user })}
+                          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold rounded-lg text-white"
                           style={{ backgroundColor: accentColor }}>
                           <Pencil className="w-3 h-3" /> Edit
                         </button>
-                        {!user.verified && (
-                          <button onClick={() => handleVerifyUser(user.id)} className="px-2 py-1 text-xs rounded-lg text-white" style={{ backgroundColor: "#16a34a" }}>Verify</button>
+                        {/* ⋯ More actions */}
+                        <div className="relative">
+                          <button
+                            onClick={() => setOpenActionMenu(openActionMenu === user.id ? null : user.id)}
+                            className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50">
+                            <MoreVertical className="w-3.5 h-3.5 text-gray-500" />
+                          </button>
+                          {openActionMenu === user.id && (
+                            <>
+                              <div className="fixed inset-0 z-10" onClick={() => setOpenActionMenu(null)} />
+                              <div className="absolute right-0 top-8 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-20 min-w-48">
+                                {!user.verified && (
+                                  <MenuRow icon={CheckCircle} label="Verify" color="#16a34a" onClick={() => { setOpenActionMenu(null); handleVerifyUser(user.id); }} />
+                                )}
+                                <MenuRow icon={ShieldAlert} label={user.status === "suspended" ? "Unsuspend" : "Suspend"} color="#d97706"
+                                  onClick={() => { setOpenActionMenu(null); handleSuspendUser(user.id); }} />
+                                <MenuRow icon={XCircle} label="Ban" color="#dc2626"
+                                  onClick={() => { setOpenActionMenu(null); handleBanUser(user.id); }} />
+                                <MenuRow icon={RotateCcw} label="Reset password" color="#4f46e5"
+                                  onClick={() => { setOpenActionMenu(null); handleResetPassword(user.id); }} />
+                                <MenuRow icon={LogOut} label="Force logout" color="#d97706"
+                                  onClick={() => { setOpenActionMenu(null); handleForceLogout(user.id); }} />
+                                <div className="border-t border-gray-100 my-1" />
+                                <MenuRow icon={MessageSquare} label={(user._raw?.restrictions?.messaging ? "Enable" : "Disable") + " messaging"} color="#6366f1"
+                                  onClick={() => { setOpenActionMenu(null); handleToggleRestriction(user.id, "messaging"); }} />
+                                <MenuRow icon={CreditCard} label={(user._raw?.restrictions?.withdrawals ? "Enable" : "Disable") + " withdrawals"} color="#f97316"
+                                  onClick={() => { setOpenActionMenu(null); handleToggleRestriction(user.id, "withdrawals"); }} />
+                                {['Talent','talent','creator'].includes(user.role) && (
+                                  <MenuRow icon={Send} label={(user._raw?.restrictions?.pitching ? "Enable" : "Disable") + " pitching"} color="#7c3aed"
+                                    onClick={() => { setOpenActionMenu(null); handleToggleRestriction(user.id, "pitching"); }} />
+                                )}
+                                {['Brand','brand'].includes(user.role) && (
+                                  <MenuRow icon={Briefcase} label={(user._raw?.restrictions?.campaigns ? "Enable" : "Disable") + " campaigns"} color="#0ea5e9"
+                                    onClick={() => { setOpenActionMenu(null); handleToggleRestriction(user.id, "campaigns"); }} />
+                                )}
+                                <div className="border-t border-gray-100 my-1" />
+                                <MenuRow icon={X} label="Delete account" color="#ef4444" danger
+                                  onClick={() => { setOpenActionMenu(null); handleDeleteUser(user.id); }} />
+                              </div>
+                            </>
+                          )}
+                        </div>
+                        {/* Pitch top-up for creators */}
+                        {['Talent','talent','creator'].includes(user.role) && (
+                          <button onClick={() => setPitchAdjust({ profile: user._raw, amount: '', reason: '' })}
+                            className="px-2 py-1.5 text-xs font-bold rounded-lg"
+                            style={{ backgroundColor: '#ede9fe', color: '#7c3aed' }}>
+                            + Pitches
+                          </button>
                         )}
-                        <button onClick={() => handleSuspendUser(user.id)} className="px-2 py-1 text-xs rounded-lg font-medium" style={{ backgroundColor: user.status === "suspended" ? "#dcfce7" : "#fef3c7", color: user.status === "suspended" ? "#16a34a" : "#d97706" }}>
-                          {user.status === "suspended" ? "Unsuspend" : "Suspend"}
-                        </button>
-                        <button onClick={() => handleBanUser(user.id)} className="px-2 py-1 text-xs rounded-lg text-white" style={{ backgroundColor: "#dc2626" }}>Ban</button>
                       </div>
                     </td>
                   </tr>
@@ -1444,10 +1824,18 @@ export default function AdminPanel() {
                     </td>
                     <td className="px-4 py-3 font-bold text-gray-900">₦{(p.wallet_balance||0).toLocaleString()}</td>
                     <td className="px-4 py-3">
-                      <button onClick={() => setWalletAdjust({ profile: p, delta: '', reason: '' })}
-                        className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:border-indigo-400 hover:text-indigo-600 transition-colors">
-                        Adjust
-                      </button>
+                      <div className="flex gap-2">
+                        <button onClick={() => setWalletAdjust({ profile: p, delta: '', reason: '' })}
+                          className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:border-indigo-400 hover:text-indigo-600 transition-colors">
+                          Adjust
+                        </button>
+                        {(p.role === 'creator' || p.role === 'talent') && (
+                          <button onClick={() => setPitchAdjust({ profile: p, amount: '', reason: '' })}
+                            className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-purple-200 text-purple-600 hover:bg-purple-50 transition-colors">
+                            + Pitches
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -1625,6 +2013,49 @@ export default function AdminPanel() {
           </div>
         </div>
       )}
+
+      {pitchAdjust && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center">
+                <Send size={13} className="text-purple-600" />
+              </div>
+              <h3 className="font-bold text-gray-900">Top Up Pitches</h3>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              {pName(pitchAdjust.profile)} · Extra pitches now: <strong>{(pitchAdjust.profile.extra_pitches||0)}</strong>
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Pitches to add</label>
+                <input type="number" min="1" value={pitchAdjust.amount}
+                  onChange={e => setPitchAdjust(a => ({ ...a, amount: e.target.value }))}
+                  placeholder="e.g. 10"
+                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-purple-400" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Reason (shown to creator)</label>
+                <input type="text" value={pitchAdjust.reason}
+                  onChange={e => setPitchAdjust(a => ({ ...a, reason: e.target.value }))}
+                  placeholder="e.g. Compensation for technical issue"
+                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-purple-400" />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button onClick={() => setPitchAdjust(null)}
+                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50">
+                Cancel
+              </button>
+              <button onClick={applyPitchAdjust} disabled={!pitchAdjust.amount || Number(pitchAdjust.amount) < 1}
+                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-bold text-white disabled:opacity-50"
+                style={{ backgroundColor: '#7c3aed' }}>
+                Add Pitches
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -1716,7 +2147,78 @@ export default function AdminPanel() {
                 onChange={e => setAppConfig(prev => ({ ...prev, platform_commission_pct: parseFloat(stripInjection(e.target.value)) || 0 }))}
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400 font-mono"
               />
-              <p className="text-xs text-gray-400 mt-1">Percentage the platform takes from each collab payment. Default: 5%.</p>
+              <p className="text-xs text-gray-400 mt-1">Percentage the platform takes from each collab payment. Default: 10%.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Escrow & Payout Controls */}
+        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm space-y-4">
+          <h3 className="text-sm font-bold text-gray-800">Escrow & Payout Rules</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Release Delay (hours)</label>
+              <input
+                type="number"
+                min="0"
+                max="168"
+                step="1"
+                value={appConfig.escrow_release_delay_hours}
+                onChange={e => setAppConfig(prev => ({ ...prev, escrow_release_delay_hours: parseInt(stripInjection(e.target.value)) || 0 }))}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400 font-mono"
+              />
+              <p className="text-xs text-gray-400 mt-1">Hours after brand approval before creator can withdraw. Default: 48hrs.</p>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Auto-Release (days)</label>
+              <input
+                type="number"
+                min="1"
+                max="30"
+                step="1"
+                value={appConfig.auto_release_days}
+                onChange={e => setAppConfig(prev => ({ ...prev, auto_release_days: parseInt(stripInjection(e.target.value)) || 7 }))}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400 font-mono"
+              />
+              <p className="text-xs text-gray-400 mt-1">Days after delivery before funds auto-release if brand doesn't act. Default: 7 days.</p>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Max Pitches Per Month</label>
+              <input
+                type="number"
+                min="1"
+                max="50"
+                step="1"
+                value={appConfig.max_pitches_per_month}
+                onChange={e => setAppConfig(prev => ({ ...prev, max_pitches_per_month: parseInt(stripInjection(e.target.value)) || 10 }))}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400 font-mono"
+              />
+              <p className="text-xs text-gray-400 mt-1">Number of pitches a creator can submit per calendar month. Default: 10.</p>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Pitch Pack Size</label>
+              <input
+                type="number"
+                min="1"
+                max="100"
+                step="1"
+                value={appConfig.pitch_pack_size}
+                onChange={e => setAppConfig(prev => ({ ...prev, pitch_pack_size: parseInt(stripInjection(e.target.value)) || 10 }))}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400 font-mono"
+              />
+              <p className="text-xs text-gray-400 mt-1">Number of extra pitches per purchased pack. Default: 10.</p>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Pitch Pack Price (₦)</label>
+              <input
+                type="number"
+                min="0"
+                step="50"
+                value={appConfig.pitch_pack_price}
+                onChange={e => setAppConfig(prev => ({ ...prev, pitch_pack_price: parseInt(stripInjection(e.target.value)) || 500 }))}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400 font-mono"
+              />
+              <p className="text-xs text-gray-400 mt-1">Price creators pay to buy one pitch pack. Default: ₦500.</p>
             </div>
           </div>
         </div>
@@ -2572,9 +3074,10 @@ export default function AdminPanel() {
   }
 
   const PROCESSORS = [
-    { id: 'paystack',    name: 'Paystack',    color: '#0ba4db', bg: '#e0f7fd', desc: 'Recommended for Nigeria & Africa', logo: 'PS' },
-    { id: 'flutterwave', name: 'Flutterwave', color: '#f5a623', bg: '#fff8ed', desc: 'Pan-African payment gateway',       logo: 'FW' },
-    { id: 'stripe',      name: 'Stripe',      color: '#635bff', bg: '#f0efff', desc: 'Global card & bank payments',       logo: 'ST' },
+    { id: 'paystack',    name: 'Paystack',    color: '#0ba4db', bg: '#e0f7fd', desc: 'Recommended for Nigeria & Africa',         logo: 'PS' },
+    { id: 'monnify',     name: 'Monnify',     color: '#6d28d9', bg: '#ede9fe', desc: 'Nigerian payment gateway by TeamApt/Moniepoint', logo: 'MN' },
+    { id: 'flutterwave', name: 'Flutterwave', color: '#f5a623', bg: '#fff8ed', desc: 'Pan-African payment gateway',               logo: 'FW' },
+    { id: 'stripe',      name: 'Stripe',      color: '#635bff', bg: '#f0efff', desc: 'Global card & bank payments',               logo: 'ST' },
   ]
 
   const renderPayments = () => (
@@ -2638,21 +3141,21 @@ export default function AdminPanel() {
                   <div className="px-5 py-4 border-t border-gray-100 space-y-3 bg-white">
                     <div>
                       <label className="text-xs font-semibold text-gray-500 mb-1.5 block">
-                        {paymentConfig.mode === 'test' ? 'Test' : 'Live'} Public Key
+                        {id === 'monnify' ? 'API Key' : `${paymentConfig.mode === 'test' ? 'Test' : 'Live'} Public Key`}
                       </label>
                       <input type="text" value={cfg.publicKey}
                         onChange={e => setPaymentConfig(c => ({ ...c, processors: { ...c.processors, [id]: { ...cfg, publicKey: stripInjection(e.target.value) } } }))}
-                        placeholder={`${id === 'stripe' ? 'pk_' : id === 'paystack' ? 'pk_' : 'FLWPUBK_'}${paymentConfig.mode}_...`}
+                        placeholder={id === 'monnify' ? 'MK_TEST_...' : id === 'stripe' ? `pk_${paymentConfig.mode}_...` : id === 'paystack' ? `pk_${paymentConfig.mode}_...` : `FLWPUBK_${paymentConfig.mode}_...`}
                         className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm font-mono outline-none focus:border-indigo-400" />
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-gray-500 mb-1.5 block">
-                        {paymentConfig.mode === 'test' ? 'Test' : 'Live'} Secret Key
+                        {id === 'monnify' ? 'Secret Key' : `${paymentConfig.mode === 'test' ? 'Test' : 'Live'} Secret Key`}
                       </label>
                       <div className="relative">
                         <input type={cfg.showSecret ? 'text' : 'password'} value={cfg.secretKey}
                           onChange={e => setPaymentConfig(c => ({ ...c, processors: { ...c.processors, [id]: { ...cfg, secretKey: stripInjection(e.target.value) } } }))}
-                          placeholder={`${id === 'stripe' ? 'sk_' : id === 'paystack' ? 'sk_' : 'FLWSECK_'}${paymentConfig.mode}_...`}
+                          placeholder={id === 'monnify' ? 'Secret key from Monnify dashboard' : id === 'stripe' ? `sk_${paymentConfig.mode}_...` : id === 'paystack' ? `sk_${paymentConfig.mode}_...` : `FLWSECK_${paymentConfig.mode}_...`}
                           className="w-full pl-3 pr-10 py-2.5 rounded-lg border border-gray-200 text-sm font-mono outline-none focus:border-indigo-400" />
                         <button onClick={() => setPaymentConfig(c => ({ ...c, processors: { ...c.processors, [id]: { ...cfg, showSecret: !cfg.showSecret } } }))}
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -2660,6 +3163,15 @@ export default function AdminPanel() {
                         </button>
                       </div>
                     </div>
+                    {id === 'monnify' && (
+                      <div>
+                        <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Contract Code</label>
+                        <input type="text" value={cfg.contractCode ?? ''}
+                          onChange={e => setPaymentConfig(c => ({ ...c, processors: { ...c.processors, [id]: { ...cfg, contractCode: stripInjection(e.target.value) } } }))}
+                          placeholder="Contract code from Monnify dashboard"
+                          className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm font-mono outline-none focus:border-indigo-400" />
+                      </div>
+                    )}
                     {!isDefault && (
                       <button onClick={() => setPaymentConfig(c => ({ ...c, activeProcessor: id }))}
                         className="text-xs font-semibold transition-colors"
@@ -2683,24 +3195,54 @@ export default function AdminPanel() {
     </div>
   )
 
+  const renderPush       = () => <PushNotificationPanel showToast={showToast} auditLog={auditLog} />
+  const renderAudit      = () => <AuditLogPanel />
+  const renderReferrals  = () => <ReferralTrackingPanel />
+  const renderRateCards  = () => <RateCardModerationPanel showToast={showToast} auditLog={auditLog} />
+
   const TAB_CONTENT = {
-    overview: renderOverview,
-    analytics: renderAnalytics,
-    users: renderUsers,
-    jobs: renderCollabs,
-    team: renderTeam,
-    approvals: renderApprovals,
-    content: () => <CmsEditor />,
-    "ai-police": renderAiPolice,
-    features: renderFeatures,
-    payments: renderPayments,
-    financials: renderFinancials,
-    legal: renderLegal,
-    settings: renderSettings,
-    "app-config": renderAppConfig,
-    rankings: renderRankings,
-    support: renderSupport,
-    disputes: renderDisputes,
+    overview:         renderOverview,
+    analytics:        renderAnalytics,
+    users:            renderUsers,
+    jobs:             () => <CollaborationPanel showToast={showToast} auditLog={auditLog} />,
+    pitches:          () => <PitchesPanel showToast={showToast} auditLog={auditLog} />,
+    messaging:        () => <MessagingModerationPanel showToast={showToast} auditLog={auditLog} />,
+    disputes2:        () => <DisputeCenterPanel showToast={showToast} auditLog={auditLog} />,
+    wallets:          () => <WalletManagementPanel showToast={showToast} auditLog={auditLog} />,
+    withdrawals:      () => <WithdrawalPanel showToast={showToast} auditLog={auditLog} />,
+    escrow:           () => <EscrowPanel showToast={showToast} auditLog={auditLog} />,
+    financials2:      () => <FinancialReportingPanel showToast={showToast} auditLog={auditLog} />,
+    reviews:          () => <ReviewsModerationPanel showToast={showToast} auditLog={auditLog} />,
+    marketplace:      () => <MarketplaceModerationPanel showToast={showToast} auditLog={auditLog} />,
+    referrals2:       () => <ReferralManagementPanel showToast={showToast} auditLog={auditLog} />,
+    notifications2:   () => <NotificationsPanel showToast={showToast} auditLog={auditLog} />,
+    cms2:             () => <CMSPanel showToast={showToast} auditLog={auditLog} />,
+    analytics2:       () => <AnalyticsPanel />,
+    "ai-controls":    () => <AIControlsPanel showToast={showToast} auditLog={auditLog} />,
+    discovery:        () => <DiscoveryAlgorithmPanel showToast={showToast} auditLog={auditLog} />,
+    "pay-config":     () => <PaymentConfigPanel showToast={showToast} auditLog={auditLog} />,
+    "pitch-settings": () => <PitchSettingsPanel showToast={showToast} auditLog={auditLog} />,
+    categories:       () => <CategoryManagementPanel showToast={showToast} auditLog={auditLog} />,
+    "trust-safety":   () => <TrustSafetyPanel showToast={showToast} auditLog={auditLog} />,
+    support2:         () => <SupportCenterPanel showToast={showToast} auditLog={auditLog} />,
+    system:           () => <SystemSettingsPanel showToast={showToast} auditLog={auditLog} />,
+    team:             renderTeam,
+    approvals:        renderApprovals,
+    content:          () => <CmsEditor />,
+    "ai-police":      renderAiPolice,
+    features:         renderFeatures,
+    payments:         renderPayments,
+    financials:       renderFinancials,
+    legal:            renderLegal,
+    settings:         renderSettings,
+    "app-config":     renderAppConfig,
+    rankings:         renderRankings,
+    support:          renderSupport,
+    disputes:         renderDisputes,
+    push:             renderPush,
+    audit:            renderAudit,
+    referrals:        renderReferrals,
+    "rate-cards":     renderRateCards,
   };
 
   if (!adminUser) return null;
@@ -2847,6 +3389,9 @@ export default function AdminPanel() {
           </div>
         </Modal>
       )}
+
+      {/* ── User Detail Modal ── */}
+      {viewUser && <UserDetailModal user={viewUser} onClose={() => setViewUser(null)} onAction={handleUserAction} />}
 
       {/* ── Edit User Modal ── */}
       {editUser && (
@@ -3375,182 +3920,715 @@ function DisputesPanel({ showToast, onCountChange }) {
   )
 }
 
-const COLLAB_STATUSES = ['all', 'pending', 'in_progress', 'delivered', 'revision_requested', 'completed', 'cancelled']
+const CAMPAIGN_FILTERS = [
+  { key: 'all',       label: 'All',       color: '#4f46e5' },
+  { key: 'draft',     label: 'Draft',     color: '#94a3b8' },
+  { key: 'active',    label: 'Active',    color: '#16a34a' },
+  { key: 'paused',    label: 'Paused',    color: '#d97706' },
+  { key: 'completed', label: 'Completed', color: '#0ea5e9' },
+  { key: 'expired',   label: 'Expired',   color: '#f97316' },
+  { key: 'reported',  label: 'Reported',  color: '#dc2626' },
+]
+
+const ACTIVE_STATUSES  = ['in_progress', 'delivered', 'revision_requested', 'active']
+const DRAFT_STATUSES   = ['pending', 'draft']
+
+function collabMatchesFilter(c, filter) {
+  if (filter === 'all')       return true
+  if (filter === 'active')    return ACTIVE_STATUSES.includes(c.status)
+  if (filter === 'draft')     return DRAFT_STATUSES.includes(c.status)
+  if (filter === 'reported')  return !!(c.admin_flags?.reported)
+  return c.status === filter
+}
 
 function CollabsPanel({ showToast }) {
-  const [collabs, setCollabs] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState('all')
-  const [selected, setSelected] = useState(null)
+  const [collabs,    setCollabs]    = useState([])
+  const [loading,    setLoading]    = useState(true)
+  const [search,     setSearch]     = useState('')
+  const [filter,     setFilter]     = useState('all')
+  const [selected,   setSelected]   = useState(null)
+  const [rejectModal,   setRejectModal]   = useState(null)  // { id }
+  const [rejectReason,  setRejectReason]  = useState('')
+  const [extendModal,   setExtendModal]   = useState(null)  // { id }
+  const [extendDate,    setExtendDate]    = useState('')
+  const [editModal,     setEditModal]     = useState(null)  // collab snapshot
+  const [actionBusy,    setActionBusy]    = useState(false)
 
   async function loadCollabs() {
     setLoading(true)
     const { data: rows, error } = await supabase
-      .from('collabs')
-      .select('*')
-      .order('created_at', { ascending: false })
+      .from('collabs').select('*').order('created_at', { ascending: false })
     if (error) { showToast(error.message, 'error'); setLoading(false); return }
     const list = rows || []
-    const ids = [...new Set(list.flatMap((c) => [c.brand_id, c.creator_id]))]
+    const ids = [...new Set(list.flatMap(c => [c.brand_id, c.creator_id]))]
     let nameMap = {}
     if (ids.length > 0) {
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name, company_name')
-        .in('id', ids)
-      ;(profiles || []).forEach((p) => { nameMap[p.id] = p.company_name || p.full_name || 'Unknown' })
+      const { data: profiles } = await supabase.from('profiles')
+        .select('id, full_name, company_name').in('id', ids)
+      ;(profiles || []).forEach(p => { nameMap[p.id] = p.company_name || p.full_name || 'Unknown' })
     }
-    setCollabs(list.map((c) => ({
+    const enriched = list.map(c => ({
       ...c,
-      brandName: nameMap[c.brand_id] || 'Unknown Brand',
+      brandName:   nameMap[c.brand_id]   || 'Unknown Brand',
       creatorName: nameMap[c.creator_id] || 'Unknown Creator',
-    })))
+    }))
+    setCollabs(enriched)
+    if (selected) setSelected(enriched.find(c => c.id === selected.id) || null)
     setLoading(false)
   }
 
   useEffect(() => { loadCollabs() }, [])
 
-  const filtered = collabs.filter((c) => {
-    const matchSearch = !search ||
-      c.brandName.toLowerCase().includes(search.toLowerCase()) ||
-      c.creatorName.toLowerCase().includes(search.toLowerCase()) ||
-      c.content_type?.toLowerCase().includes(search.toLowerCase())
-    const matchFilter = filter === 'all' ? true : c.status === filter
-    return matchSearch && matchFilter
+  const filtered = collabs.filter(c => {
+    const term = search.toLowerCase()
+    const matchSearch = !term ||
+      c.brandName.toLowerCase().includes(term) ||
+      c.creatorName.toLowerCase().includes(term) ||
+      (c.content_type || '').toLowerCase().includes(term)
+    return matchSearch && collabMatchesFilter(c, filter)
   })
+
+  async function updateCollab(id, patch) {
+    setActionBusy(true)
+    const { error } = await supabase.from('collabs').update(patch).eq('id', id)
+    if (error) { showToast(error.message, 'error'); setActionBusy(false); return }
+    await loadCollabs()
+    setActionBusy(false)
+  }
+
+  async function updateFlags(id, flagPatch) {
+    const c = collabs.find(x => x.id === id)
+    const current = c?.admin_flags || {}
+    await updateCollab(id, { admin_flags: { ...current, ...flagPatch } })
+  }
+
+  async function handleReject() {
+    if (!rejectReason.trim()) { showToast('Enter a reason', 'error'); return }
+    await updateCollab(rejectModal, { status: 'cancelled', admin_flags: { ...(collabs.find(c => c.id === rejectModal)?.admin_flags || {}), reject_reason: rejectReason.trim() } })
+    showToast('Campaign rejected')
+    setRejectModal(null); setRejectReason('')
+  }
+
+  async function handleExtend() {
+    if (!extendDate) { showToast('Pick a date', 'error'); return }
+    const c = collabs.find(x => x.id === extendModal)
+    const brief = { ...(c?.brief || {}), deadline: extendDate }
+    await updateCollab(extendModal, { brief })
+    showToast('Deadline extended')
+    setExtendModal(null); setExtendDate('')
+  }
+
+  async function handleDuplicate(c) {
+    const { id, brandName, creatorName, created_at, updated_at, payment_status, ...rest } = c
+    const { error } = await supabase.from('collabs').insert({
+      ...rest,
+      status: 'pending',
+      payment_status: 'unpaid',
+      admin_flags: { duplicated_from: id },
+    })
+    if (error) { showToast(error.message, 'error'); return }
+    showToast('Campaign duplicated')
+    loadCollabs()
+  }
+
+  async function handleSaveEdit() {
+    const { id, brandName, creatorName, ...patch } = editModal
+    await updateCollab(id, {
+      content_type:   patch.content_type,
+      brief:          patch.brief,
+      total_amount:   Number(patch.total_amount),
+      platform_fee:   Number(patch.platform_fee),
+      creator_payout: Number(patch.creator_payout),
+    })
+    showToast('Campaign updated')
+    setEditModal(null)
+  }
+
+  const filterCounts = Object.fromEntries(
+    CAMPAIGN_FILTERS.map(f => [f.key, f.key === 'all' ? collabs.length : collabs.filter(c => collabMatchesFilter(c, f.key)).length])
+  )
+
+  const fmt = n => `₦${Number(n || 0).toLocaleString()}`
+  const fmtDate = d => d ? new Date(d).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
   return (
     <div className="space-y-4">
+      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <Briefcase className="w-5 h-5 text-indigo-500" />
-            Collabs
-          </h2>
-          <p className="text-sm text-gray-500 mt-0.5">{collabs.length} total collabs</p>
+          <h2 className="text-xl font-bold text-gray-900">Campaign Management</h2>
+          <p className="text-sm text-gray-500 mt-0.5">{collabs.length} total campaigns</p>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {COLLAB_STATUSES.map((f) => (
-            <button key={f} onClick={() => setFilter(f)}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-colors"
-              style={{ backgroundColor: filter === f ? '#4f46e5' : '#f1f5f9', color: filter === f ? '#fff' : '#64748b' }}>
-              {f.replace('_', ' ')}
-            </button>
-          ))}
-        </div>
+        <button onClick={loadCollabs} disabled={loading}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50">
+          <RotateCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
+        </button>
       </div>
 
+      {/* Filter tabs */}
+      <div className="flex gap-1.5 flex-wrap">
+        {CAMPAIGN_FILTERS.map(f => (
+          <button key={f.key} onClick={() => setFilter(f.key)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            style={filter === f.key
+              ? { backgroundColor: f.color, color: '#fff' }
+              : { backgroundColor: '#f1f5f9', color: '#64748b' }}>
+            {f.label}
+            <span className="text-xs px-1.5 py-0.5 rounded-full"
+              style={filter === f.key ? { backgroundColor: 'rgba(255,255,255,0.25)', color: '#fff' } : { backgroundColor: '#e2e8f0', color: '#64748b' }}>
+              {filterCounts[f.key]}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Search */}
       <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search by brand, creator or content type..."
-            value={search}
-            onChange={(e) => setSearch(stripInjection(e.target.value))}
-            className="w-full pl-9 pr-4 py-2 rounded-lg text-sm border border-gray-200 outline-none focus:border-indigo-400"
-          />
+          <input type="text" placeholder="Search by brand, creator or content type…"
+            value={search} onChange={e => setSearch(stripInjection(e.target.value))}
+            className="w-full pl-9 pr-4 py-2 rounded-lg text-sm border border-gray-200 outline-none focus:border-indigo-400" />
         </div>
       </div>
 
+      {/* List + Detail */}
       <div className="flex gap-4" style={{ minHeight: 500 }}>
+        {/* List */}
         <div className="w-80 flex-shrink-0 space-y-2 overflow-y-auto" style={{ maxHeight: 700 }}>
           {loading ? (
             <p className="text-sm text-gray-400 text-center py-10">Loading…</p>
           ) : filtered.length === 0 ? (
             <div className="text-center py-16">
               <Briefcase className="w-10 h-10 mx-auto mb-2 text-gray-200" />
-              <p className="text-sm text-gray-400">No collabs</p>
+              <p className="text-sm text-gray-400">No campaigns</p>
             </div>
-          ) : filtered.map((c) => (
+          ) : filtered.map(c => (
             <button key={c.id} onClick={() => setSelected(c)}
               className="w-full text-left p-4 rounded-xl transition-all"
-              style={{
-                backgroundColor: selected?.id === c.id ? '#eef2ff' : '#fff',
-                border: `1px solid ${selected?.id === c.id ? '#c7d2fe' : '#e2e8f0'}`,
-              }}>
+              style={{ backgroundColor: selected?.id === c.id ? '#eef2ff' : '#fff', border: `1px solid ${selected?.id === c.id ? '#c7d2fe' : '#e2e8f0'}` }}>
               <div className="flex items-start justify-between gap-2 mb-1">
-                <p className="text-sm font-semibold text-gray-900 truncate">{c.content_type}</p>
-                <StatusBadge status={c.status} />
+                <p className="text-sm font-semibold text-gray-900 truncate">{c.content_type || 'Collab'}</p>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  {c.admin_flags?.featured  && <span className="text-xs px-1.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700">⭐</span>}
+                  {c.admin_flags?.hidden    && <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">Hidden</span>}
+                  {c.admin_flags?.reported  && <span className="text-xs px-1.5 py-0.5 rounded-full bg-red-100 text-red-600">Reported</span>}
+                  <StatusBadge status={c.status} />
+                </div>
               </div>
               <p className="text-xs text-gray-500 truncate">{c.brandName} → {c.creatorName}</p>
-              <p className="text-xs text-gray-400 mt-1">₦{Number(c.total_amount || 0).toLocaleString()} · {c.created_at ? new Date(c.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</p>
+              <p className="text-xs text-gray-400 mt-1">{fmt(c.total_amount)} · {fmtDate(c.created_at)}</p>
             </button>
           ))}
         </div>
 
+        {/* Detail */}
         {selected ? (
-          <div className="flex-1 rounded-2xl bg-white p-6 overflow-y-auto" style={{ border: '1px solid #e2e8f0', maxHeight: 700 }}>
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">{selected.content_type}</h3>
-                <p className="text-sm text-gray-500">{selected.brandName} → {selected.creatorName}</p>
+          <div className="flex-1 rounded-2xl bg-white overflow-y-auto" style={{ border: '1px solid #e2e8f0', maxHeight: 700 }}>
+            {/* Detail header */}
+            <div className="px-6 pt-5 pb-4 border-b border-gray-100">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">{selected.content_type || 'Collab'}</h3>
+                  <p className="text-sm text-gray-500">{selected.brandName} → {selected.creatorName}</p>
+                </div>
+                <div className="flex gap-1.5">
+                  <StatusBadge status={selected.status} />
+                  <StatusBadge status={selected.payment_status} />
+                </div>
               </div>
-              <div className="flex gap-2">
-                <StatusBadge status={selected.status} />
-                <StatusBadge status={selected.payment_status} />
+
+              {/* Admin action buttons */}
+              <div className="flex flex-wrap gap-1.5 mt-4">
+                <ActionBtn label="Edit"     color="#4f46e5" onClick={() => setEditModal({ ...selected })} />
+                <ActionBtn label="Duplicate" color="#0ea5e9" onClick={() => handleDuplicate(selected)} busy={actionBusy} />
+                {selected.status !== 'paused' && selected.status !== 'cancelled' && selected.status !== 'completed' && (
+                  <ActionBtn label="Pause" color="#d97706"
+                    onClick={() => { updateCollab(selected.id, { status: 'paused' }); showToast('Campaign paused') }} busy={actionBusy} />
+                )}
+                {selected.status === 'paused' && (
+                  <ActionBtn label="Resume" color="#16a34a"
+                    onClick={() => { updateCollab(selected.id, { status: 'in_progress' }); showToast('Campaign resumed') }} busy={actionBusy} />
+                )}
+                <ActionBtn label="Extend deadline" color="#7c3aed" onClick={() => setExtendModal(selected.id)} />
+                <ActionBtn label={selected.admin_flags?.featured ? '★ Unfeature' : '☆ Feature'} color="#f59e0b"
+                  onClick={() => { updateFlags(selected.id, { featured: !selected.admin_flags?.featured }); showToast(selected.admin_flags?.featured ? 'Unfeatured' : 'Campaign featured') }} busy={actionBusy} />
+                <ActionBtn label={selected.admin_flags?.hidden ? 'Unhide' : 'Hide'} color="#64748b"
+                  onClick={() => { updateFlags(selected.id, { hidden: !selected.admin_flags?.hidden }); showToast(selected.admin_flags?.hidden ? 'Campaign visible' : 'Campaign hidden') }} busy={actionBusy} />
+                <ActionBtn label="Close" color="#f97316"
+                  onClick={() => { updateCollab(selected.id, { status: 'cancelled' }); showToast('Campaign closed') }} busy={actionBusy} />
+                <ActionBtn label="Reject" color="#dc2626" onClick={() => { setRejectModal(selected.id); setRejectReason('') }} />
+                <ActionBtn label="Delete" color="#ef4444" danger
+                  onClick={async () => {
+                    if (!window.confirm('Delete this campaign permanently?')) return
+                    await supabase.from('collabs').delete().eq('id', selected.id)
+                    setSelected(null)
+                    loadCollabs()
+                    showToast('Campaign deleted')
+                  }} />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Duration</p>
-                <p className="text-sm font-medium text-gray-900">{selected.duration_label}</p>
+            {/* Detail body */}
+            <div className="p-6 space-y-5">
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { label: 'Duration',       value: selected.duration_label || '—' },
+                  { label: 'Total Amount',   value: fmt(selected.total_amount) },
+                  { label: 'Platform Fee',   value: fmt(selected.platform_fee) },
+                  { label: 'Creator Payout', value: fmt(selected.creator_payout) },
+                  { label: 'Created',        value: fmtDate(selected.created_at) },
+                  { label: 'Updated',        value: fmtDate(selected.updated_at) },
+                ].map(({ label, value }) => (
+                  <div key={label} className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5">{label}</p>
+                    <p className="text-sm font-semibold text-gray-800">{value}</p>
+                  </div>
+                ))}
               </div>
-              <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Total Amount</p>
-                <p className="text-sm font-medium text-gray-900">₦{Number(selected.total_amount || 0).toLocaleString()}</p>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Platform Fee</p>
-                <p className="text-sm font-medium text-gray-900">₦{Number(selected.platform_fee || 0).toLocaleString()}</p>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Creator Payout</p>
-                <p className="text-sm font-medium text-gray-900">₦{Number(selected.creator_payout || 0).toLocaleString()}</p>
-              </div>
+
+              {selected.brief && Object.keys(selected.brief).length > 0 && (
+                <div>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Brief</p>
+                  <div className="bg-gray-50 rounded-xl p-4 space-y-1.5 text-sm text-gray-700">
+                    {selected.brief.productName  && <p><span className="font-semibold">Product:</span> {selected.brief.productName}</p>}
+                    {selected.brief.goal         && <p><span className="font-semibold">Goal:</span> {selected.brief.goal}</p>}
+                    {selected.brief.instructions && <p><span className="font-semibold">Instructions:</span> {selected.brief.instructions}</p>}
+                    {selected.brief.deadline     && <p><span className="font-semibold">Deadline:</span> {selected.brief.deadline}</p>}
+                  </div>
+                </div>
+              )}
+
+              {selected.admin_flags?.reject_reason && (
+                <div>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Rejection Reason</p>
+                  <div className="bg-red-50 rounded-xl p-4 text-sm text-red-700">{selected.admin_flags.reject_reason}</div>
+                </div>
+              )}
+
+              {selected.revision_reason && (
+                <div>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Revision Reason</p>
+                  <div className="bg-red-50 rounded-xl p-4 text-sm text-red-700">{selected.revision_reason}</div>
+                </div>
+              )}
+
+              {Array.isArray(selected.delivered_files) && selected.delivered_files.length > 0 && (
+                <div>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Delivered Files</p>
+                  <div className="space-y-2">
+                    {selected.delivered_files.map((f, i) => (
+                      <a key={i} href={f.url} target="_blank" rel="noreferrer"
+                        className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 text-sm">
+                        <span className="text-gray-700 truncate">{f.name}</span>
+                        <span className="text-gray-400 text-xs ml-2">{f.uploaded_at ? new Date(f.uploaded_at).toLocaleDateString('en', { day: 'numeric', month: 'short' }) : ''}</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-
-            {selected.brief && Object.keys(selected.brief).length > 0 && (
-              <div className="mb-6">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Brief</p>
-                <div className="bg-gray-50 rounded-xl p-4 space-y-1.5 text-sm text-gray-700">
-                  {selected.brief.productName && <p><span className="font-medium">Product:</span> {selected.brief.productName}</p>}
-                  {selected.brief.goal && <p><span className="font-medium">Goal:</span> {selected.brief.goal}</p>}
-                  {selected.brief.instructions && <p><span className="font-medium">Instructions:</span> {selected.brief.instructions}</p>}
-                  {selected.brief.deadline && <p><span className="font-medium">Deadline:</span> {selected.brief.deadline}</p>}
-                </div>
-              </div>
-            )}
-
-            {selected.revision_reason && (
-              <div className="mb-6">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Revision Reason</p>
-                <div className="bg-red-50 rounded-xl p-4 text-sm text-red-700">{selected.revision_reason}</div>
-              </div>
-            )}
-
-            {Array.isArray(selected.delivered_files) && selected.delivered_files.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Delivered Files</p>
-                <div className="space-y-2">
-                  {selected.delivered_files.map((f, i) => (
-                    <a key={i} href={f.url} target="_blank" rel="noreferrer"
-                      className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors text-sm">
-                      <span className="text-gray-700 truncate">{f.name}</span>
-                      <span className="text-gray-400 text-xs flex-shrink-0 ml-2">{f.uploaded_at ? new Date(f.uploaded_at).toLocaleDateString('en', { day: 'numeric', month: 'short' }) : ''}</span>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         ) : (
           <div className="flex-1 rounded-2xl bg-white flex items-center justify-center" style={{ border: '1px solid #e2e8f0' }}>
             <div className="text-center">
               <Briefcase className="w-10 h-10 mx-auto mb-2 text-gray-200" />
-              <p className="text-sm text-gray-400">Select a collab to view details</p>
+              <p className="text-sm text-gray-400">Select a campaign to view details</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Reject modal */}
+      {rejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h3 className="font-bold text-gray-900 mb-1">Reject Campaign</h3>
+            <p className="text-sm text-gray-500 mb-4">Provide a reason. This will be stored with the campaign record.</p>
+            <textarea rows={3} value={rejectReason} onChange={e => setRejectReason(stripInjection(e.target.value))}
+              placeholder="Enter rejection reason…"
+              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400 resize-none mb-4" />
+            <div className="flex gap-3">
+              <button onClick={() => setRejectModal(null)} className="flex-1 py-2.5 rounded-xl border text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+              <button onClick={handleReject} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: '#dc2626' }}>Reject</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Extend deadline modal */}
+      {extendModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <h3 className="font-bold text-gray-900 mb-1">Extend Deadline</h3>
+            <p className="text-sm text-gray-500 mb-4">Set a new deadline for this campaign.</p>
+            <input type="date" value={extendDate} onChange={e => setExtendDate(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-purple-400 mb-4" />
+            <div className="flex gap-3">
+              <button onClick={() => setExtendModal(null)} className="flex-1 py-2.5 rounded-xl border text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+              <button onClick={handleExtend} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: '#7c3aed' }}>Extend</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit modal */}
+      {editModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
+            <h3 className="font-bold text-gray-900 mb-4">Edit Campaign</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Content Type</label>
+                <input value={editModal.content_type || ''} onChange={e => setEditModal(m => ({ ...m, content_type: stripInjection(e.target.value) }))}
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-indigo-400" />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Total (₦)</label>
+                  <input type="number" value={editModal.total_amount || 0} onChange={e => setEditModal(m => ({ ...m, total_amount: e.target.value }))}
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-indigo-400" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Fee (₦)</label>
+                  <input type="number" value={editModal.platform_fee || 0} onChange={e => setEditModal(m => ({ ...m, platform_fee: e.target.value }))}
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-indigo-400" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Payout (₦)</label>
+                  <input type="number" value={editModal.creator_payout || 0} onChange={e => setEditModal(m => ({ ...m, creator_payout: e.target.value }))}
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-indigo-400" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Deadline</label>
+                <input type="date" value={editModal.brief?.deadline || ''} onChange={e => setEditModal(m => ({ ...m, brief: { ...(m.brief || {}), deadline: e.target.value } }))}
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-indigo-400" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Goal</label>
+                <textarea rows={2} value={editModal.brief?.goal || ''} onChange={e => setEditModal(m => ({ ...m, brief: { ...(m.brief || {}), goal: stripInjection(e.target.value) } }))}
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-indigo-400 resize-none" />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button onClick={() => setEditModal(null)} className="flex-1 py-2.5 rounded-xl border text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+              <button onClick={handleSaveEdit} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: '#4f46e5' }}>Save Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ActionBtn({ label, color, onClick, busy, danger }) {
+  return (
+    <button onClick={onClick} disabled={busy}
+      className="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+      style={danger
+        ? { backgroundColor: '#fee2e2', color }
+        : { backgroundColor: color + '18', color }}>
+      {label}
+    </button>
+  )
+}
+
+// ─── PITCH MANAGEMENT ────────────────────────────────────────────────────────
+
+const PITCH_FILTERS = [
+  { key: 'all',       label: 'All',       color: '#4f46e5' },
+  { key: 'pending',   label: 'Pending',   color: '#d97706' },
+  { key: 'accepted',  label: 'Accepted',  color: '#16a34a' },
+  { key: 'rejected',  label: 'Rejected',  color: '#dc2626' },
+  { key: 'withdrawn', label: 'Withdrawn', color: '#64748b' },
+  { key: 'expired',   label: 'Expired',   color: '#f97316' },
+  { key: 'flagged',   label: 'Flagged',   color: '#7c3aed' },
+]
+
+function PitchesPanel({ showToast, auditLog }) {
+  const [pitches,  setPitches]  = useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [search,   setSearch]   = useState('')
+  const [filter,   setFilter]   = useState('all')
+  const [selected, setSelected] = useState(null)
+  const [busy,     setBusy]     = useState(false)
+
+  async function load() {
+    setLoading(true)
+    const { data: rows, error } = await supabase
+      .from('job_applications')
+      .select('id, job_id, creator_id, pitch, rate, status, admin_flags, created_at')
+      .order('created_at', { ascending: false })
+    if (error) { showToast(error.message, 'error'); setLoading(false); return }
+    const list = rows || []
+
+    // Fetch creator names
+    const creatorIds = [...new Set(list.map(r => r.creator_id).filter(Boolean))]
+    let creatorMap = {}
+    if (creatorIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, handle, extra_pitches')
+        .in('id', creatorIds)
+      ;(profiles || []).forEach(p => { creatorMap[p.id] = p })
+    }
+
+    // Fetch collab/job titles
+    const jobIds = [...new Set(list.map(r => r.job_id).filter(Boolean))]
+    let jobMap = {}
+    if (jobIds.length > 0) {
+      const { data: jobs } = await supabase
+        .from('collabs')
+        .select('id, content_type')
+        .in('id', jobIds)
+      ;(jobs || []).forEach(j => { jobMap[j.id] = j.content_type || 'Campaign' })
+    }
+
+    setPitches(list.map(r => ({
+      ...r,
+      creatorName:    creatorMap[r.creator_id]?.full_name || creatorMap[r.creator_id]?.handle || 'Unknown',
+      creatorProfile: creatorMap[r.creator_id] || null,
+      campaignTitle:  jobMap[r.job_id] || '—',
+    })))
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [])
+
+  const filtered = pitches.filter(p => {
+    const term = search.toLowerCase()
+    const matchSearch = !term ||
+      p.creatorName.toLowerCase().includes(term) ||
+      (p.pitch || '').toLowerCase().includes(term) ||
+      p.campaignTitle.toLowerCase().includes(term)
+    const matchFilter = filter === 'all'     ? true
+      : filter === 'flagged' ? !!(p.admin_flags?.abuse)
+      : p.status === filter
+    return matchSearch && matchFilter
+  })
+
+  const counts = Object.fromEntries(
+    PITCH_FILTERS.map(f => [f.key,
+      f.key === 'all'     ? pitches.length
+      : f.key === 'flagged' ? pitches.filter(p => p.admin_flags?.abuse).length
+      : pitches.filter(p => p.status === f.key).length
+    ])
+  )
+
+  async function updatePitch(id, patch) {
+    setBusy(true)
+    const { error } = await supabase.from('job_applications').update(patch).eq('id', id)
+    if (error) { showToast(error.message, 'error'); setBusy(false); return }
+    await load()
+    setBusy(false)
+  }
+
+  async function handleDelete(p) {
+    if (!window.confirm(`Delete this pitch from ${p.creatorName}? This cannot be undone.`)) return
+    setBusy(true)
+    await supabase.from('job_applications').delete().eq('id', p.id)
+    auditLog?.('delete_pitch', 'pitch', p.id, p.creatorName)
+    showToast('Pitch deleted')
+    setSelected(null)
+    await load()
+    setBusy(false)
+  }
+
+  async function handleFlagAbuse(p) {
+    const current = p.admin_flags || {}
+    const nowFlagged = !current.abuse
+    await updatePitch(p.id, { admin_flags: { ...current, abuse: nowFlagged } })
+    auditLog?.('flag_pitch_abuse', 'pitch', p.id, p.creatorName)
+    showToast(nowFlagged ? 'Pitch flagged for abuse' : 'Abuse flag removed')
+  }
+
+  async function handleRestore(p) {
+    await updatePitch(p.id, { status: 'pending', admin_flags: { ...(p.admin_flags || {}), restored: true } })
+    auditLog?.('restore_pitch', 'pitch', p.id, p.creatorName)
+    showToast('Pitch restored to pending')
+  }
+
+  async function handleCreditBack(p) {
+    if (!p.creatorProfile) { showToast('Creator profile not found', 'error'); return }
+    const current = p.creatorProfile.extra_pitches || 0
+    setBusy(true)
+    const { error } = await supabase.from('profiles')
+      .update({ extra_pitches: current + 1 })
+      .eq('id', p.creator_id)
+    if (error) { showToast(error.message, 'error'); setBusy(false); return }
+    auditLog?.('credit_pitch_back', 'pitch', p.id, p.creatorName)
+    showToast(`1 pitch credited back to ${p.creatorName}`)
+    await load()
+    setBusy(false)
+  }
+
+  const fmtDate = d => d ? new Date(d).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
+
+  const STATUS_STYLE = {
+    pending:   { bg: '#fef3c7', color: '#d97706' },
+    accepted:  { bg: '#dcfce7', color: '#16a34a' },
+    rejected:  { bg: '#fee2e2', color: '#dc2626' },
+    withdrawn: { bg: '#f1f5f9', color: '#64748b' },
+    expired:   { bg: '#fff7ed', color: '#f97316' },
+    interview: { bg: '#ede9fe', color: '#7c3aed' },
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">Pitch Management</h2>
+          <p className="text-sm text-gray-500 mt-0.5">{pitches.length} total pitches</p>
+        </div>
+        <button onClick={load} disabled={loading}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50">
+          <RotateCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
+        </button>
+      </div>
+
+      {/* Filter tabs */}
+      <div className="flex gap-1.5 flex-wrap">
+        {PITCH_FILTERS.map(f => (
+          <button key={f.key} onClick={() => setFilter(f.key)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            style={filter === f.key
+              ? { backgroundColor: f.color, color: '#fff' }
+              : { backgroundColor: '#f1f5f9', color: '#64748b' }}>
+            {f.label}
+            <span className="text-xs px-1.5 py-0.5 rounded-full"
+              style={filter === f.key
+                ? { backgroundColor: 'rgba(255,255,255,0.25)', color: '#fff' }
+                : { backgroundColor: '#e2e8f0', color: '#64748b' }}>
+              {counts[f.key]}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Search */}
+      <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input type="text" placeholder="Search by creator, campaign or pitch text…"
+            value={search} onChange={e => setSearch(stripInjection(e.target.value))}
+            className="w-full pl-9 pr-4 py-2 rounded-lg text-sm border border-gray-200 outline-none focus:border-indigo-400" />
+        </div>
+      </div>
+
+      {/* List + Detail */}
+      <div className="flex gap-4" style={{ minHeight: 500 }}>
+
+        {/* List */}
+        <div className="w-80 flex-shrink-0 space-y-2 overflow-y-auto" style={{ maxHeight: 700 }}>
+          {loading ? (
+            <p className="text-sm text-gray-400 text-center py-10">Loading…</p>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-16">
+              <Send className="w-10 h-10 mx-auto mb-2 text-gray-200" />
+              <p className="text-sm text-gray-400">No pitches</p>
+            </div>
+          ) : filtered.map(p => {
+            const ss = STATUS_STYLE[p.status] || { bg: '#f1f5f9', color: '#64748b' }
+            return (
+              <button key={p.id} onClick={() => setSelected(p)}
+                className="w-full text-left p-4 rounded-xl transition-all"
+                style={{ backgroundColor: selected?.id === p.id ? '#eef2ff' : '#fff', border: `1px solid ${selected?.id === p.id ? '#c7d2fe' : '#e2e8f0'}` }}>
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <p className="text-sm font-semibold text-gray-900 truncate">{p.creatorName}</p>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {p.admin_flags?.abuse && <span className="text-xs px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700">Flagged</span>}
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full capitalize" style={ss}>{p.status}</span>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 truncate">{p.campaignTitle}</p>
+                <p className="text-xs text-gray-400 mt-1 truncate">{p.pitch ? p.pitch.slice(0, 60) + '…' : '—'}</p>
+                <p className="text-xs text-gray-300 mt-1">{fmtDate(p.created_at)}</p>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Detail */}
+        {selected ? (
+          <div className="flex-1 rounded-2xl bg-white overflow-y-auto" style={{ border: '1px solid #e2e8f0', maxHeight: 700 }}>
+
+            {/* Detail header */}
+            <div className="px-6 pt-5 pb-4 border-b border-gray-100">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div>
+                  <p className="text-lg font-bold text-gray-900">{selected.creatorName}</p>
+                  <p className="text-sm text-gray-500">{selected.campaignTitle}</p>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {selected.admin_flags?.abuse && (
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Abuse flagged</span>
+                  )}
+                  {selected.admin_flags?.restored && (
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-600">Restored</span>
+                  )}
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full capitalize"
+                    style={STATUS_STYLE[selected.status] || { bg: '#f1f5f9', color: '#64748b' }}>
+                    {selected.status}
+                  </span>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-wrap gap-1.5">
+                <ActionBtn label="🗑 Delete spam"      color="#ef4444" danger onClick={() => handleDelete(selected)} busy={busy} />
+                <ActionBtn label={selected.admin_flags?.abuse ? '✓ Unflag abuse' : '⚑ Flag abuse'} color="#7c3aed"
+                  onClick={() => handleFlagAbuse(selected)} busy={busy} />
+                <ActionBtn label="↩ Restore pitch"    color="#0ea5e9" onClick={() => handleRestore(selected)} busy={busy} />
+                <ActionBtn label="+ Credit pitch back" color="#16a34a" onClick={() => handleCreditBack(selected)} busy={busy} />
+              </div>
+            </div>
+
+            {/* Detail body */}
+            <div className="p-6 space-y-5">
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-gray-50 rounded-xl p-3">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Proposed Rate</p>
+                  <p className="text-base font-black text-gray-800 tabular-nums">₦{Number(selected.rate || 0).toLocaleString()}</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-3">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Submitted</p>
+                  <p className="text-sm font-semibold text-gray-800">{fmtDate(selected.created_at)}</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-3">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Extra Pitches</p>
+                  <p className="text-base font-black text-purple-600 tabular-nums">{selected.creatorProfile?.extra_pitches ?? '—'}</p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Pitch Text</p>
+                <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  {selected.pitch || 'No pitch text'}
+                </div>
+              </div>
+
+              {selected.admin_flags && Object.keys(selected.admin_flags).length > 0 && (
+                <div>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Admin Flags</p>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(selected.admin_flags).map(([k, v]) => v && (
+                      <span key={k} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 capitalize">
+                        {k.replace(/_/g, ' ')}: {String(v)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 rounded-2xl bg-white flex items-center justify-center" style={{ border: '1px solid #e2e8f0' }}>
+            <div className="text-center">
+              <Send className="w-10 h-10 mx-auto mb-2 text-gray-200" />
+              <p className="text-sm text-gray-400">Select a pitch to view details</p>
             </div>
           </div>
         )}

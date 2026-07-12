@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Zap, Mail, Phone, Lock, Eye, EyeOff, ArrowRight, ChevronDown } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getLogo } from '../lib/brandSettings'
-import { stripInjection } from '../utils/sanitize'
+const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '');
 import { getSetting } from '../lib/siteSettings'
 
 const purple = '#c084fc'
@@ -353,6 +353,7 @@ export default function LoginPage() {
   const [form, setForm] = useState({ identifier: '', password: '' })
   const [errors, setErrors] = useState({})
   const [authError, setAuthError] = useState('')
+  const [resendSent, setResendSent] = useState(false)
   const [authLogo, setAuthLogo] = useState(() => getLogo('auth'))
   const [loginIllustration, setLoginIllustration] = useState(() => getSetting('loginIllustration'))
   useEffect(() => {
@@ -388,7 +389,11 @@ export default function LoginPage() {
     })
     if (error) {
       setLoading(false)
-      setAuthError(error.message)
+      if (error.message?.toLowerCase().includes('email not confirmed') || error.message?.toLowerCase().includes('not confirmed')) {
+        setAuthError('__unconfirmed__')
+      } else {
+        setAuthError('Email or password is incorrect.')
+      }
       return
     }
     localStorage.setItem('brandiór_user', data.user.id)
@@ -577,12 +582,26 @@ export default function LoginPage() {
             </div>
 
             <div className="text-right">
-              <a href="#" className="text-xs font-medium" style={{ color: purple }}>Forgot password?</a>
+              <Link to="/forgot-password" className="text-xs font-medium" style={{ color: purple }}>Forgot password?</Link>
             </div>
 
-            {authError && (
+            {authError === '__unconfirmed__' ? (
+              <div className="py-3 px-4 rounded-xl text-center" style={{ backgroundColor: '#fff7ed', border: '1px solid #fed7aa' }}>
+                <p className="text-xs font-semibold mb-1" style={{ color: '#c2410c' }}>Email not confirmed</p>
+                <p className="text-xs mb-2" style={{ color: '#9a3412' }}>Check your inbox for the confirmation link we sent when you signed up.</p>
+                {resendSent
+                  ? <p className="text-xs font-semibold" style={{ color: '#16a34a' }}>Confirmation email resent ✓</p>
+                  : <button type="button" onClick={async () => {
+                      await supabase.auth.resend({ type: 'signup', email: form.identifier.trim() }).catch(() => {})
+                      setResendSent(true)
+                    }} className="text-xs font-bold underline" style={{ color: '#c2410c', background: 'none', border: 'none', cursor: 'pointer' }}>
+                      Resend confirmation email
+                    </button>
+                }
+              </div>
+            ) : authError ? (
               <p className="text-xs text-center py-2 px-3 rounded-lg" style={{ color: pink, backgroundColor: '#fff0f5' }}>{authError}</p>
-            )}
+            ) : null}
             <button type="submit" disabled={loading}
               className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-60"
               style={{ backgroundColor: darkPurple }}>

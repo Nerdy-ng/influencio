@@ -1,6 +1,19 @@
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 const FROM = 'Brandior <support@brandior.africa>'
 const ADMIN_EMAIL = 'nerd.owl.integrated@gmail.com'
+const AUDIENCE_CREATORS = '44dedbc3-8ded-4ca8-a079-0e48b8e7566f'
+const AUDIENCE_BRANDS    = '933656fe-8f8c-47dc-97a9-7fd5e53a6f37'
+
+async function addToAudience(audienceId, email, firstName) {
+  await fetch(`https://api.resend.com/audiences/${audienceId}/contacts`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, first_name: firstName, unsubscribed: false }),
+  })
+}
 
 async function sendEmail(to, subject, html) {
   const res = await fetch('https://api.resend.com/emails', {
@@ -297,9 +310,12 @@ export default async function handler(req, res) {
   </div>
 </div>`
 
+    const audienceId = isCreator ? AUDIENCE_CREATORS : AUDIENCE_BRANDS
+
     const [subscriberResult] = await Promise.all([
       sendEmail(email, subject, subscriberHtml),
       sendEmail(ADMIN_EMAIL, `🔔 New ${isCreator ? 'Talent' : 'Brand'} — ${name}`, adminHtml).catch(() => {}),
+      addToAudience(audienceId, email, firstName).catch(() => {}),
     ])
 
     return res.status(200).json(subscriberResult)

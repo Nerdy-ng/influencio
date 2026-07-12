@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+const stripInjection = (s) => String(s ?? '').replace(/[<>{}\\`]/g, '');
 import {
   CheckSquare, Search, AlertTriangle, Send, HelpCircle,
   LogOut, Shield, CheckCircle, Clock, X, ChevronDown,

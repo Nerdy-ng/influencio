@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
-import { stripInjection } from '../utils/sanitize'
+const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '');
 import { logout } from '../lib/logout'
 import { getLogo } from '../lib/brandSettings'
 import {
@@ -15,9 +15,11 @@ import InviteTab from '../components/InviteTab'
 import { useFavorites } from '../hooks/useFavorites'
 import { supabase } from '../lib/supabase'
 import { createNotification, sendNotificationEmail } from '../lib/notifications'
+import { saveProfile } from '../lib/profile'
 import { getBrandAnalytics } from '../lib/analytics'
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import OnboardingTour from '../components/OnboardingTour'
+import OnboardingChecklist from '../components/OnboardingChecklist'
 
 const pink = '#FF6B9D'
 const darkPurple = '#4c1d95'
@@ -703,6 +705,56 @@ export default function BrandDashboard() {
   const brandUserId = localStorage.getItem('brandiór_user') || 'guest'
   const [showTour, setShowTour] = useState(() => !localStorage.getItem(`brandior_tour_done_${brandUserId}`))
 
+  // Shared creator-setup modal (used by sidebar + avatar menu)
+  const [showCreatorSetup, setShowCreatorSetup] = useState(false)
+  const [csProfileId,  setCsProfileId]  = useState(null)
+  const [csPrefillName, setCsPrefillName] = useState('')
+  const [csCreatorType, setCsCreatorType] = useState('')
+  const [csActivating,  setCsActivating]  = useState(false)
+  const navigate = useNavigate()
+
+  async function openCreatorSetup() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const hasCreatorAccount = !!user.user_metadata?.creator_type
+    if (hasCreatorAccount) {
+      await supabase.auth.updateUser({ data: { role: 'creator' } })
+      localStorage.setItem('brandiór_role', 'talent')
+      navigate('/dashboard')
+      return
+    }
+    setCsProfileId(user.id)
+    const { data: profile } = await supabase.from('profiles').select('full_name, company_name').eq('id', user.id).single()
+    setCsPrefillName(profile?.full_name || profile?.company_name || '')
+    setCsCreatorType('')
+    setShowCreatorSetup(true)
+  }
+
+  async function activateCreatorMode() {
+    if (!csCreatorType || !csProfileId) return
+    setCsActivating(true)
+    try {
+      await Promise.all([
+        supabase.auth.updateUser({ data: { creator_type: csCreatorType, role: 'creator' } }),
+        supabase.from('profiles').upsert({ id: csProfileId, role: 'Talent' }, { onConflict: 'id' }),
+        supabase.from('notifications').insert({
+          user_id: csProfileId,
+          title:   'You just got the Brandior Spark Badge! 🎉',
+          body:    `Your creator mode is now active. Complete your creator profile and set your rate card so brands can discover you.\n\n— The Brandior Team`,
+          type:    'badge',
+          data:    { screen: 'badge' },
+        }),
+      ])
+      localStorage.setItem('brandiór_role', 'talent')
+      navigate('/dashboard')
+    } catch {
+      localStorage.setItem('brandiór_role', 'talent')
+      navigate('/dashboard')
+    } finally {
+      setCsActivating(false)
+    }
+  }
+
   const showToast = (message, type = 'success') => setToast({ message, type })
 
   const fetchOrders = useCallback(async () => {
@@ -824,7 +876,7 @@ export default function BrandDashboard() {
           className="hidden md:flex flex-col w-60 flex-shrink-0 min-h-screen sticky top-0"
           style={{ backgroundColor: 'var(--b-brandDashBg)' }}
         >
-          <SidebarContent activeTab={activeTab} setActiveTab={setActiveTab} dashLogo={dashLogo} />
+          <SidebarContent activeTab={activeTab} setActiveTab={setActiveTab} dashLogo={dashLogo} onSwitchToCreator={openCreatorSetup} />
         </aside>
 
         {/* Mobile sidebar overlay */}
@@ -832,7 +884,7 @@ export default function BrandDashboard() {
           <div className="fixed inset-0 z-50 flex md:hidden">
             <div className="bg-black/40 flex-1" onClick={() => setSidebarOpen(false)} />
             <aside className="w-60 flex flex-col" style={{ backgroundColor: 'var(--b-brandDashBg)' }}>
-              <SidebarContent activeTab={activeTab} setActiveTab={(t) => { setActiveTab(t); setSidebarOpen(false) }} dashLogo={dashLogo} />
+              <SidebarContent activeTab={activeTab} setActiveTab={(t) => { setActiveTab(t); setSidebarOpen(false) }} dashLogo={dashLogo} onSwitchToCreator={openCreatorSetup} />
             </aside>
           </div>
         )}
@@ -867,7 +919,7 @@ export default function BrandDashboard() {
                   <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
                 )}
               </button>
-              <BrandAvatarMenu />
+              <BrandAvatarMenu onSwitchToCreator={openCreatorSetup} />
             </div>
           </div>
         </header>
@@ -945,13 +997,64 @@ export default function BrandDashboard() {
         />
       )}
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
+      {/* Creator-mode activation modal */}
+      {showCreatorSetup && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4" onClick={() => !csActivating && setShowCreatorSetup(false)}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex flex-col items-center mb-5">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style={{ backgroundColor: '#7c3aed18' }}>
+                <span className="text-2xl">✨</span>
+              </div>
+              <h2 className="text-lg font-black text-gray-900 text-center">Activate Creator Mode</h2>
+              <p className="text-sm text-gray-500 text-center mt-1">Your existing account gains creator capabilities. No new login needed.</p>
+            </div>
+
+            <div className="flex items-center gap-3 p-3 rounded-xl mb-4" style={{ backgroundColor: '#7c3aed0d' }}>
+              <span className="text-gray-500 text-sm">👤</span>
+              <div className="flex-1">
+                <p className="text-xs text-gray-400">Your name</p>
+                <p className="text-sm font-bold text-gray-800">{csPrefillName || 'From your profile'}</p>
+              </div>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-lg" style={{ backgroundColor: '#7c3aed18', color: '#7c3aed' }}>Pre-filled</span>
+            </div>
+
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">What type of creator are you?</p>
+            <div className="space-y-2 max-h-48 overflow-y-auto mb-4">
+              {CREATOR_TYPES.map(t => (
+                <button key={t} onClick={() => setCsCreatorType(t)}
+                  className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all text-left"
+                  style={csCreatorType === t
+                    ? { borderColor: '#7c3aed', backgroundColor: '#7c3aed0d', color: '#7c3aed' }
+                    : { borderColor: '#e5e7eb', color: '#374151' }}>
+                  {t}
+                  {csCreatorType === t && <span style={{ color: '#7c3aed' }}>✓</span>}
+                </button>
+              ))}
+            </div>
+
+            <button onClick={activateCreatorMode} disabled={!csCreatorType || csActivating}
+              className="w-full py-3 rounded-xl text-white font-bold text-sm transition-opacity disabled:opacity-40"
+              style={{ backgroundColor: '#7c3aed' }}>
+              {csActivating ? 'Activating…' : 'Activate Creator Mode →'}
+            </button>
+            <button onClick={() => setShowCreatorSetup(false)} disabled={csActivating}
+              className="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-40">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-function BrandAvatarMenu() {
+const CREATOR_TYPES = ['Influencer', 'Content Creator', 'Photographer', 'Videographer', 'Comedian', 'Musician', 'Fashion Creator', 'Food Creator']
+
+function BrandAvatarMenu({ onSwitchToCreator }) {
   const [open, setOpen] = useState(false)
   const [userEmail, setUserEmail] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState('')
   const ref = useRef(null)
   const navigate = useNavigate()
 
@@ -963,15 +1066,12 @@ function BrandAvatarMenu() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user?.email) setUserEmail(session.user.email)
+      if (!session?.user) return
+      setUserEmail(session.user.email || '')
+      supabase.from('profiles').select('avatar_url').eq('id', session.user.id).single()
+        .then(({ data }) => { if (data?.avatar_url) setAvatarUrl(data.avatar_url) })
     })
   }, [])
-
-  function handleSwitchToCreator() {
-    setOpen(false)
-    localStorage.setItem('brandiór_role', 'talent')
-    navigate('/dashboard')
-  }
 
   async function handleLogout() {
     setOpen(false)
@@ -982,9 +1082,12 @@ function BrandAvatarMenu() {
   return (
     <div className="relative" ref={ref}>
       <button onClick={() => setOpen(v => !v)} className="relative focus:outline-none">
-        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white" style={{ backgroundColor: darkPurple }}>
-          {userEmail ? userEmail[0].toUpperCase() : 'B'}
-        </div>
+        {avatarUrl
+          ? <img src={avatarUrl} alt="Profile" className="w-8 h-8 rounded-full object-cover ring-2 ring-white/20" />
+          : <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white" style={{ backgroundColor: darkPurple }}>
+              {userEmail ? userEmail[0].toUpperCase() : 'B'}
+            </div>
+        }
         <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-500 ring-2 ring-white" title="Online" />
       </button>
       {open && (
@@ -995,7 +1098,7 @@ function BrandAvatarMenu() {
             <p className="text-white/35 text-xs truncate">{userEmail || 'Loading...'}</p>
           </div>
           <button
-            onClick={handleSwitchToCreator}
+            onClick={() => { setOpen(false); onSwitchToCreator() }}
             className="flex items-center gap-2.5 px-4 py-3 text-sm font-medium w-full transition-colors text-left"
             style={{ color: '#F72585' }}
             onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(247,37,133,0.08)'}
@@ -1016,13 +1119,7 @@ function BrandAvatarMenu() {
   )
 }
 
-function SidebarContent({ activeTab, setActiveTab, dashLogo }) {
-  const navigate = useNavigate()
-
-  function switchToCreator() {
-    localStorage.setItem('brandiór_role', 'talent')
-    navigate('/dashboard')
-  }
+function SidebarContent({ activeTab, setActiveTab, dashLogo, onSwitchToCreator }) {
 
   return (
     <>
@@ -1066,7 +1163,7 @@ function SidebarContent({ activeTab, setActiveTab, dashLogo }) {
           <ExternalLink className="w-4 h-4" />
           Browse Talents
         </Link>
-        <button onClick={switchToCreator}
+        <button onClick={onSwitchToCreator}
           className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors text-left"
           style={{ color: '#F72585' }}
           onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(247,37,133,0.08)'}
@@ -1285,32 +1382,8 @@ function OverviewTab({ activeOrders, pendingReview, completedOrders, setActiveTa
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-gray-900">Overview</h2>
 
-      {/* New account onboarding */}
-      {isNewAccount && (
-        <div className="rounded-2xl p-6" style={{ background: 'linear-gradient(135deg, #1a0035 0%, #3d0080 100%)', border: '1px solid rgba(124,58,237,0.3)' }}>
-          <p className="text-[11px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: '#c4b5fd' }}>Getting Started</p>
-          <h3 className="text-white font-bold text-lg mb-1">Book your first creator collab</h3>
-          <p className="text-white/45 text-sm mb-5">Find the right creators, set up a collab, and track results — all in one place.</p>
-          <div className="flex flex-wrap gap-5 mb-5">
-            {[
-              { n: 1, label: 'Browse the marketplace' },
-              { n: 2, label: 'Set up a collab' },
-              { n: 3, label: 'Track your results here' },
-            ].map(({ n, label }) => (
-              <div key={n} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: '#c4b5fd', border: '1px solid rgba(196,181,253,0.3)' }}>{n}</div>
-                {label}
-              </div>
-            ))}
-          </div>
-          <Link to="/marketplace"
-            className="inline-block px-5 py-2.5 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-80"
-            style={{ backgroundColor: purple }}>
-            Browse Creators →
-          </Link>
-        </div>
-      )}
+      {/* Onboarding checklist */}
+      <OnboardingChecklist role="brand" setActiveTab={setActiveTab} />
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -1609,7 +1682,7 @@ const FUND_METHODS = [
   { id: 'bank',  label: 'Bank Transfer',        icon: Building2,   desc: 'Transfer to virtual account' },
 ]
 
-const QUICK_AMOUNTS = [5000, 10000, 25000, 50000, 100000]
+const QUICK_AMOUNTS = [20000, 50000, 100000, 200000]
 
 function WalletTab() {
   const [balance,  setBalance]  = useState(0)
@@ -1655,7 +1728,7 @@ function WalletTab() {
 
   async function handleFund() {
     const amt = Number(amount)
-    if (!amt || amt < 500) return
+    if (!amt || amt < 20000) return
     setFunding(true)
 
     if (method === 'card') {
@@ -1672,7 +1745,7 @@ function WalletTab() {
         metadata: { purpose: 'wallet_topup', user_id: userId },
         callback: async () => {
           const newBalance = balance + amt
-          await supabase.from('profiles').update({ wallet_balance: newBalance }).eq('id', userId)
+          await saveProfile(userId, { wallet_balance: newBalance })
           setBalance(newBalance)
           setAmount('')
           setSuccess(true)
@@ -1790,7 +1863,7 @@ function WalletTab() {
 
         <button
           onClick={handleFund}
-          disabled={!amount || Number(amount) < 500 || funding}
+          disabled={!amount || Number(amount) < 20000 || funding}
           className="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-opacity disabled:opacity-40"
           style={{ backgroundColor: purple }}
         >
@@ -1799,7 +1872,7 @@ function WalletTab() {
         </button>
 
         <p className="text-xs text-gray-400 text-center">
-          Minimum ₦500 · Funds appear instantly on card · Escrow protects every collab payment
+          Minimum ₦20,000 · Funds appear instantly on card · Escrow protects every collab payment
         </p>
       </div>
 
@@ -1955,21 +2028,26 @@ function FavoritesTab() {
 const INDUSTRIES = ['Fashion & Beauty', 'Food & Beverage', 'Tech & Gadgets', 'Health & Wellness', 'Finance & Fintech', 'Travel & Hospitality', 'Entertainment', 'Sports & Fitness', 'Real Estate', 'Education', 'Automotive', 'Retail & E-commerce', 'Other']
 
 function SettingsTab() {
-  const [saved,    setSaved]    = useState(false)
-  const [saving,   setSaving]   = useState(false)
-  const [loading,  setLoading]  = useState(true)
-  const [form, setForm] = useState({ companyName: '', ownerName: '', industry: '', website: '', email: '' })
+  const [saved,          setSaved]          = useState(false)
+  const [saving,         setSaving]         = useState(false)
+  const [loading,        setLoading]        = useState(true)
+  const [form,           setForm]           = useState({ companyName: '', ownerName: '', industry: '', website: '', email: '' })
+  const [pwForm,         setPwForm]         = useState({ current: '', next: '', confirm: '' })
+  const [pwSaving,       setPwSaving]       = useState(false)
+  const [pwMsg,          setPwMsg]          = useState(null)
+  const [downloading,    setDownloading]    = useState(false)
 
   useEffect(() => {
     ;(async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
       const { data: profile } = await supabase.from('profiles').select('company_name, owner_name, industry, website, full_name').eq('id', user.id).maybeSingle()
+      const meta = user.user_metadata || {}
       setForm({
-        companyName: profile?.company_name || '',
-        ownerName:   profile?.owner_name   || profile?.full_name || '',
-        industry:    profile?.industry     || '',
-        website:     profile?.website      || '',
+        companyName: profile?.company_name || meta.brand_name || meta.full_name || '',
+        ownerName:   profile?.owner_name   || profile?.full_name || meta.full_name || '',
+        industry:    profile?.industry     || meta.industry || '',
+        website:     profile?.website      || meta.website  || '',
         email:       user.email            || '',
       })
       setLoading(false)
@@ -1980,16 +2058,64 @@ function SettingsTab() {
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      await supabase.from('profiles').update({
+      await supabase.from('profiles').upsert({
+        id:           user.id,
         company_name: form.companyName.trim(),
         owner_name:   form.ownerName.trim(),
         industry:     form.industry,
         website:      form.website.trim(),
-      }).eq('id', user.id)
+      }, { onConflict: 'id' })
     }
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
+  }
+
+  async function handleChangePassword() {
+    if (!pwForm.next || pwForm.next !== pwForm.confirm) {
+      setPwMsg({ type: 'error', text: 'New passwords do not match.' }); return
+    }
+    if (pwForm.next.length < 8) {
+      setPwMsg({ type: 'error', text: 'Password must be at least 8 characters.' }); return
+    }
+    setPwSaving(true)
+    const { error } = await supabase.auth.updateUser({ password: pwForm.next })
+    setPwSaving(false)
+    if (error) { setPwMsg({ type: 'error', text: error.message }); return }
+    setPwMsg({ type: 'success', text: 'Password updated successfully.' })
+    setPwForm({ current: '', next: '', confirm: '' })
+    setTimeout(() => setPwMsg(null), 4000)
+  }
+
+  async function handleDownloadData() {
+    setDownloading(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not signed in')
+      const [{ data: profile }, { data: notifications }, { data: collabs }] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', user.id).single(),
+        supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('collabs').select('*').eq('brand_id', user.id).order('created_at', { ascending: false }),
+      ])
+      const json = JSON.stringify({
+        exported_at: new Date().toISOString(),
+        account:     { email: user.email, created_at: user.created_at },
+        profile:     profile ?? {},
+        notifications: notifications ?? [],
+        collabs:     collabs ?? [],
+      }, null, 2)
+      const blob = new Blob([json], { type: 'application/json' })
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement('a')
+      a.href     = url
+      a.download = `brandior-data-${Date.now()}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      alert('Export failed: ' + (e.message || 'Something went wrong.'))
+    } finally {
+      setDownloading(false)
+    }
   }
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" /></div>
@@ -2038,6 +2164,46 @@ function SettingsTab() {
         style={{ backgroundColor: saved ? '#16a34a' : darkPurple }}>
         {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save Changes'}
       </button>
+
+      {/* Change Password */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Change Password</p>
+        {['next', 'confirm'].map(k => (
+          <div key={k}>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+              {k === 'next' ? 'New password' : 'Confirm new password'}
+            </label>
+            <input type="password" value={pwForm[k]} onChange={e => setPwForm(f => ({ ...f, [k]: e.target.value }))}
+              placeholder={k === 'next' ? 'At least 8 characters' : 'Repeat new password'}
+              className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300" />
+          </div>
+        ))}
+        {pwMsg && (
+          <p className={`text-xs font-semibold ${pwMsg.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>{pwMsg.text}</p>
+        )}
+        <button onClick={handleChangePassword} disabled={pwSaving || !pwForm.next || !pwForm.confirm}
+          className="w-full py-3 rounded-full text-sm font-bold text-white transition-colors disabled:opacity-50"
+          style={{ backgroundColor: darkPurple }}>
+          {pwSaving ? 'Updating…' : 'Update Password'}
+        </button>
+      </div>
+
+      {/* Privacy & Data */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-4">Privacy & Data</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold text-gray-800">Download my data</p>
+            <p className="text-xs text-gray-400 mt-0.5">Get a JSON export of your account, collabs, and notifications</p>
+          </div>
+          <button onClick={handleDownloadData} disabled={downloading}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity disabled:opacity-50"
+            style={{ backgroundColor: darkPurple }}>
+            <Download className="w-4 h-4" />
+            {downloading ? 'Exporting…' : 'Download Now'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -2056,6 +2222,20 @@ const BRAND_NOTIF_ICONS = {
 function BrandNotificationsTab() {
   const [notifs,  setNotifs]  = useState([])
   const [loading, setLoading] = useState(true)
+  const [prefs, setPrefs] = useState({ creatorMatch: true, platformUpdate: true })
+
+  useEffect(() => {
+    const stored = localStorage.getItem('brandior_notif_prefs')
+    if (stored) { try { setPrefs(JSON.parse(stored)) } catch {} }
+  }, [])
+
+  function togglePref(key) {
+    setPrefs(p => {
+      const next = { ...p, [key]: !p[key] }
+      localStorage.setItem('brandior_notif_prefs', JSON.stringify(next))
+      return next
+    })
+  }
 
   useEffect(() => {
     ;(async () => {
@@ -2079,10 +2259,41 @@ function BrandNotificationsTab() {
     </div>
   )
 
+  const PREF_ITEMS = [
+    { key: 'creatorMatch',   label: 'Creator Matches',  desc: 'Creators matching your active campaigns',   color: '#c084fc' },
+    { key: 'platformUpdate', label: 'New Features',     desc: 'New features and announcements',            color: '#94a3b8' },
+  ]
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-black" style={{ color: darkPurple }}>Notifications</h2>
+    <div className="space-y-6">
+      {/* Preferences section */}
+      <div>
+        <h2 className="text-xl font-black mb-4" style={{ color: darkPurple }}>Notification Preferences</h2>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+          {PREF_ITEMS.map(({ key, label, desc, color }) => (
+            <div key={key} className="flex items-center justify-between px-5 py-4">
+              <div className="flex items-center gap-3">
+                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                <div>
+                  <p className="text-sm font-bold text-gray-800">{label}</p>
+                  <p className="text-xs text-gray-400">{desc}</p>
+                </div>
+              </div>
+              <button onClick={() => togglePref(key)}
+                className="w-11 h-6 rounded-full flex items-center transition-colors duration-200 flex-shrink-0"
+                style={{ backgroundColor: prefs[key] ? darkPurple : '#d1d5db' }}>
+                <span className="w-4.5 h-4.5 rounded-full bg-white shadow-sm transition-transform duration-200 ml-0.5"
+                  style={{ transform: prefs[key] ? 'translateX(20px)' : 'translateX(0)', width: '18px', height: '18px', minWidth: '18px' }} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Activity feed */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-black" style={{ color: darkPurple }}>Recent Activity</h2>
         {notifs.length > 0 && (
           <span className="text-xs text-gray-400">{notifs.filter(n => !n.read).length} unread</span>
         )}
@@ -2115,6 +2326,7 @@ function BrandNotificationsTab() {
           })}
         </div>
       )}
+      </div>
     </div>
   )
 }

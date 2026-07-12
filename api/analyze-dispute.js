@@ -148,7 +148,7 @@ export default async function handler(req, res) {
       const { data } = await supabase
         .from('deliverables')
         .select('*')
-        .eq('job_id', dispute.collab_id)
+        .eq('collab_id', dispute.collab_id)
         .eq('talent_id', dispute.talent_id)
         .order('created_at', { ascending: true })
       deliverables = data || []

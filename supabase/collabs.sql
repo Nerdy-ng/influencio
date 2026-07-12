@@ -138,3 +138,10 @@ alter table collabs add column if not exists revision_reason text;
 alter table collabs add column if not exists creator_review_rating  smallint check (creator_review_rating between 1 and 5);
 alter table collabs add column if not exists creator_review_comment text;
 alter table collabs add column if not exists creator_reviewed_at    timestamptz;
+
+-- Creator profile fields used by the mobile EditProfile / MyNicheSkills screens
+alter table profiles add column if not exists bio     text;
+alter table profiles add column if not exists handle  text unique;
+alter table profiles add column if not exists niches  jsonb not null default '[]'::jsonb;
+alter table profiles add column if not exists skills  jsonb not null default '[]'::jsonb;
+alter table profiles add column if not exists socials jsonb not null default '{}'::jsonb;

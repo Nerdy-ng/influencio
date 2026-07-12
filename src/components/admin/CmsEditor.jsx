@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Globe, ChevronDown, ChevronRight, Search, RotateCcw, Save, Check, ExternalLink, AlertTriangle, X } from 'lucide-react';
-import { stripInjection } from '../../utils/sanitize'
+const stripInjection = (s) => String(s ?? '').replace(/[<>{}\\`]/g, '');
 import {
   getSectionContent,
   saveSection,

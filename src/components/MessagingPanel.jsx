@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Send, MessageSquare, Search, ChevronLeft, Circle, Inbox, MailOpen, ShoppingBag, SlidersHorizontal, Star, EyeOff, MoreVertical, Eye, DollarSign, Check, X, ChevronDown, AlertTriangle, Scale } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { stripInjection } from '../utils/sanitize'
+const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '');
 const purple = '#7c3aed'
 const darkPurple = '#4c1d95'
 const pink = '#FF6B9D'
@@ -247,6 +247,9 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
   const [mobileView, setMobileView] = useState(initialConvId ? 'thread' : 'list') // 'list' | 'thread'
   const [showOfferPanel, setShowOfferPanel] = useState(false)
   const [offerAmount, setOfferAmount] = useState('')
+  const [welcomeDismissed, setWelcomeDismissed] = useState(() =>
+    userId ? !!localStorage.getItem(`brandior_welcome_msg_${userId}`) : false
+  )
   const [showDisputeModal, setShowDisputeModal] = useState(false)
   const [disputeReason, setDisputeReason] = useState('')
   const [disputeStatement, setDisputeStatement] = useState('')
@@ -268,10 +271,22 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
+  const WELCOME_BODY = userType === 'brand'
+    ? `Hi there 👋\n\nWelcome to Brandior — Africa's marketplace for creator collabs.\n\nHere's how it works:\n\n1. Browse the marketplace to find creators by niche, platform, and budget.\n2. Review their rate card to see exactly what they charge before booking.\n3. Set up a collab — your payment goes into escrow and is only released when you approve the delivered content.\n\nIf you have any questions, reach us at support@brandior.africa.\n\n— The Brandior Team`
+    : `Hi there 👋\n\nWelcome to Brandior — Africa's platform connecting creators with brands.\n\nHere's how to get started:\n\n1. Complete your profile — add a bio, social handles, and portfolio samples. Brands browse profiles before reaching out.\n2. Set your rate card — this tells brands what you charge for different content types and platforms.\n3. Browse campaigns — explore open briefs and pitch to brands that match your niche.\n\nIf you have any questions, reach us at support@brandior.africa.\n\n— The Brandior Team`
+
+  function dismissWelcome() {
+    if (userId) localStorage.setItem(`brandior_welcome_msg_${userId}`, '1')
+    setWelcomeDismissed(true)
+    if (activeConvId === 'welcome') setActiveConvId(null)
+  }
+
   const activeConv = conversations.find(c => c.id === activeConvId)
-  const otherName = activeConv
-    ? (userType === 'brand' ? activeConv.talentName : activeConv.brandName)
-    : ''
+  const otherName = activeConvId === 'welcome'
+    ? 'Brandior'
+    : activeConv
+      ? (userType === 'brand' ? activeConv.talentName : activeConv.brandName)
+      : ''
   const otherAvatar = activeConv && userType === 'brand' ? activeConv.talentAvatar : null
 
   // ── Map Supabase snake_case → camelCase ──────────────────────────────────────
@@ -617,7 +632,27 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
 
         {/* List */}
         <div className="flex-1 overflow-y-auto">
-          {filtered.length === 0 ? (
+          {/* ── Welcome pinned thread ── */}
+          {!welcomeDismissed && (
+            <div
+              className="flex items-center gap-3 px-4 py-3.5 cursor-pointer border-b transition-colors hover:bg-gray-50"
+              style={{ borderColor: '#f3e8ff', backgroundColor: activeConvId === 'welcome' ? '#faf5ff' : undefined }}
+              onClick={() => { setActiveConvId('welcome'); setMobileView('thread') }}
+            >
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-bold"
+                style={{ background: 'linear-gradient(135deg, #7c3aed, #ec4899)' }}>B</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-0.5">
+                  <p className="text-sm font-bold text-gray-900">Brandior</p>
+                  <p className="text-[11px] text-gray-400">just now</p>
+                </div>
+                <p className="text-xs text-gray-500 truncate">👋 Welcome to Brandior! Here's how to get started…</p>
+              </div>
+              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: purple }} />
+            </div>
+          )}
+
+          {filtered.length === 0 && welcomeDismissed ? (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
               <MessageSquare className="w-8 h-8 mb-3 text-gray-300" />
               <p className="text-sm text-gray-400">No conversations yet</p>
@@ -642,7 +677,38 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
 
       {/* ── Thread panel ── */}
       <div className={`flex-1 flex flex-col bg-white ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}`}>
-        {!activeConvId ? (
+        {activeConvId === 'welcome' ? (
+          // ── Welcome thread (read-only) ──────────────────────────────
+          <div className="flex-1 flex flex-col">
+            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: '1px solid #f3e8ff' }}>
+              <button className="md:hidden p-1.5 -ml-1.5 rounded-lg hover:bg-gray-100"
+                onClick={() => setMobileView('list')}>
+                <ChevronLeft className="w-4 h-4 text-gray-500" />
+              </button>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
+                style={{ background: 'linear-gradient(135deg, #7c3aed, #ec4899)' }}>B</div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-gray-900 text-sm">Brandior</p>
+                <p className="text-xs" style={{ color: purple }}>Platform team</p>
+              </div>
+              <button onClick={dismissWelcome} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 text-xs">
+                Dismiss
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-6">
+              <div className="flex gap-3 max-w-lg">
+                <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-bold"
+                  style={{ background: 'linear-gradient(135deg, #7c3aed, #ec4899)' }}>B</div>
+                <div className="bg-gray-50 rounded-2xl rounded-tl-none px-4 py-3 max-w-sm" style={{ border: '1px solid #f3e8ff' }}>
+                  {WELCOME_BODY.split('\n').map((line, i) => (
+                    <p key={i} className={`text-sm text-gray-700 ${line === '' ? 'mt-2' : ''}`}>{line || ' '}</p>
+                  ))}
+                  <p className="text-[10px] text-gray-400 mt-2">Just now</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : !activeConvId ? (
           // No conversation selected
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
             <div className="w-16 h-16 rounded-3xl flex items-center justify-center mb-5"

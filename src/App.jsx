@@ -22,6 +22,13 @@ const AdminPanel      = lazy(() => import('./pages/admin/AdminPanel'))
 const ManagerPanel    = lazy(() => import('./pages/admin/ManagerPanel'))
 const StaffPanel      = lazy(() => import('./pages/admin/StaffPanel'))
 const LegalPage       = lazy(() => import('./pages/LegalPage'))
+const AboutPage       = lazy(() => import('./pages/AboutPage'))
+const ContactPage     = lazy(() => import('./pages/ContactPage'))
+const HowItWorksPage  = lazy(() => import('./pages/HowItWorksPage'))
+const PricingPage     = lazy(() => import('./pages/PricingPage'))
+const ConfirmedPage      = lazy(() => import('./pages/ConfirmedPage'))
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
+const ResetPasswordPage  = lazy(() => import('./pages/ResetPasswordPage'))
 
 function PageLoader() {
   return (
@@ -100,7 +107,13 @@ export default function App() {
       if (session) {
         const metaRole = session.user.user_metadata?.role
 
-        if (event === 'SIGNED_IN') {
+        if (event === 'PASSWORD_RECOVERY') {
+          // User followed a password reset link — stay on /reset-password, don't redirect anywhere
+          setAuthReady(true)
+          return
+        } else if (event === 'SIGNED_IN') {
+          // Don't redirect away from the reset-password page — the user needs to set their new password
+          if (location.pathname === '/reset-password') { setAuthReady(true); return }
           localStorage.setItem('brandiór_user', session.user.id)
           // Pick up role the user selected before Google OAuth redirect
           const pendingRole = sessionStorage.getItem('brandiór_pending_role')
@@ -189,6 +202,13 @@ export default function App() {
         <Route path="/terms"                  element={<LegalPage />} />
         <Route path="/privacy"                element={<LegalPage />} />
         <Route path="/cookies"                element={<LegalPage />} />
+        <Route path="/about"                  element={<AboutPage />} />
+        <Route path="/contact"                element={<ContactPage />} />
+        <Route path="/how-it-works"           element={<HowItWorksPage />} />
+        <Route path="/pricing"                element={<PricingPage />} />
+        <Route path="/confirmed"              element={<ConfirmedPage />} />
+        <Route path="/forgot-password"        element={<ForgotPasswordPage />} />
+        <Route path="/reset-password"         element={<ResetPasswordPage />} />
       </Routes>
     </Suspense>
     </MaintenanceGate>

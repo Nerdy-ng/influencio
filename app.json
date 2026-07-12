@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "0164c448-efcb-4d9d-b1b9-84c7d810f9bf"
+      }
+    },
+    "android": {
+      "package": "africa.brandior.app"
+    }
+  }
+}

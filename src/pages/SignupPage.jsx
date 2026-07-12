@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-do
 import { Zap, Star, TrendingUp, Eye, EyeOff, ArrowRight, CheckCircle, Mail, Lock, User, ChevronLeft, MapPin, Briefcase, FileText, Globe, Hash, Building2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getLogo } from '../lib/brandSettings'
-import { stripInjection } from '../utils/sanitize'
+const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '');
 
 const pink = '#FF6B9D'
 const gold = '#D4AF37'
@@ -144,6 +144,7 @@ export default function SignupPage() {
       email: form.email,
       password: form.password,
       options: {
+        emailRedirectTo: `${window.location.origin}/confirmed`,
         data: {
           full_name: form.name,
           role,
@@ -209,19 +210,32 @@ export default function SignupPage() {
     })
     localStorage.setItem('brandiór_role', role)
 
-    // Send role-specific welcome email
+    // Sync signup data into the profiles table so dashboards have it immediately
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (user?.email) {
-        fetch('/api/send-welcome-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: user.email,
-            name: profile.displayName || user.email,
-            role,
+      if (user) {
+        await supabase.from('profiles').upsert({
+          id: user.id,
+          full_name: profile.displayName,
+          role: role === 'talent' ? 'Talent' : 'Brand',
+          ...(role === 'talent' ? {
+            bio: profile.bio || null,
+            location: profile.location || null,
+            niches: profile.niches.length ? profile.niches : null,
+          } : {
+            company_name: profile.displayName,
+            industry: profile.industry || null,
           }),
-        }).catch(() => {})
+        }, { onConflict: 'id' })
+
+        // Send welcome email
+        if (user.email) {
+          fetch('/api/send-welcome-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: user.email, name: profile.displayName || user.email, role }),
+          }).catch(() => {})
+        }
       }
     } catch (_) {}
 

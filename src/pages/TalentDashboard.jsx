@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
-import { stripInjection } from '../utils/sanitize'
+const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '');
 import { logout } from '../lib/logout'
 import { getLogo } from '../lib/brandSettings'
 import {
@@ -11,7 +11,7 @@ import {
   HelpCircle, Send, Ticket, ChevronDown, AlertCircle, CheckSquare,
   Wallet, ArrowDownLeft, ArrowUpRight, CreditCard, Hash, Globe, Building2,
   PieChart, BarChart2, Tag, ImagePlus, FileText, Mail, UserPlus, Inbox, Clock,
-  Shield, Lock, KeyRound, AlertTriangle, ShieldCheck, Loader2, ArrowLeftRight,
+  Shield, Lock, KeyRound, AlertTriangle, ShieldCheck, Loader2, ArrowLeftRight, Download,
 } from 'lucide-react'
 
 import MessagingPanel from '../components/MessagingPanel'
@@ -20,6 +20,7 @@ import InviteTab from '../components/InviteTab'
 import { getTalentAnalytics } from '../lib/analytics'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell } from 'recharts'
 import OnboardingTour from '../components/OnboardingTour'
+import OnboardingChecklist from '../components/OnboardingChecklist'
 import { getOrCreatePhylloUser, getPhylloSDKToken, openPhylloConnect, PHYLLO_PLATFORMS } from '../lib/phyllo'
 
 const pink = '#FF6B9D'
@@ -31,19 +32,19 @@ const TIERS = {
   'fast-rising': {
     label: 'Fast Rising', color: '#22c55e', bg: '#22c55e18', border: '#22c55e40', emoji: null, StarIcon: true, diamond: false,
     desc: 'You\'re new and climbing. Keep creating!',
-    perks: ['Profile listed on Brandior', 'Apply for entry-level gigs', 'Access talent community'],
+    perks: ['Profile listed on Brandior', 'Receive collab offers from brands', 'Access talent community'],
     criteria: ['Complete your profile', 'Connect 1 social account', '3+ completed campaigns'],
   },
   'next-rated': {
     label: 'Next', color: '#a78bfa', bg: '#a78bfa18', border: '#a78bfa40', emoji: '⚡', StarIcon: false, diamond: true,
     desc: 'You\'re gaining traction. Brands are noticing you.',
-    perks: ['Priority in brand searches', 'Access mid-tier gigs', 'Verified badge eligibility', 'Dedicated account manager'],
+    perks: ['Priority in brand searches', 'Higher-value collab access', 'Verified badge eligibility', 'Dedicated account manager'],
     criteria: ['10+ completed campaigns', '4.0+ average rating', '5K+ total followers'],
   },
   'top-rated': {
     label: 'Top', color: '#D4AF37', bg: '#D4AF3718', border: '#D4AF3740', emoji: '👑', StarIcon: false, diamond: true,
     desc: 'The elite. Brands seek you out directly.',
-    perks: ['Featured in brand discovery', 'Premium gig access', 'Negotiated rates unlocked', 'Early access to new features', 'Dedicated talent manager'],
+    perks: ['Featured in brand discovery', 'Premium collab access', 'Negotiated rates unlocked', 'Early access to new features', 'Dedicated talent manager'],
     criteria: ['30+ completed campaigns', '4.7+ average rating', '25K+ total followers'],
   },
 }
@@ -72,6 +73,79 @@ function TierIcon({ tier }) {
   const t = TIERS[tier]
   if (t.StarIcon) return <Star className="w-3 h-3 fill-current" style={{ color: t.color }} />
   return <span>{t.emoji}</span>
+}
+
+function TierInfoModal({ tier, onClose }) {
+  const t = TIERS[tier]
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+      <div className="w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl" style={{ backgroundColor: '#13092a' }}>
+        <div className="px-6 pt-6 pb-4" style={{ background: `linear-gradient(135deg, ${t.color}22 0%, #13092a 100%)`, borderBottom: `1px solid ${t.color}30` }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${t.color}25`, border: `1px solid ${t.color}40` }}>
+              {t.StarIcon ? <Star className="w-6 h-6 fill-current" style={{ color: t.color }} /> : <span className="text-2xl">{t.emoji}</span>}
+            </div>
+            <button onClick={onClose} className="text-white/40 hover:text-white/80 transition-colors text-xl leading-none">✕</button>
+          </div>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: t.color }}>Brandior Tier</p>
+          <h2 className="text-xl font-black text-white mb-2">{t.label}</h2>
+          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>{t.desc}</p>
+        </div>
+        <div className="px-6 py-5">
+          <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>What you get</p>
+          <ul className="space-y-2.5 mb-6">
+            {t.perks.map((perk, i) => (
+              <li key={i} className="flex items-start gap-2.5 text-sm" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                <span className="mt-0.5 flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: `${t.color}25` }}>
+                  <svg className="w-2.5 h-2.5" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke={t.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </span>
+                {perk}
+              </li>
+            ))}
+          </ul>
+          <button onClick={onClose} className="w-full py-3 rounded-xl font-bold text-sm text-white transition-opacity hover:opacity-90"
+            style={{ background: `linear-gradient(135deg, #7c3aed 0%, #ec4899 100%)` }}>
+            Got it
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TierUpgradeModal({ tier, onClose }) {
+  const t = TIERS[tier]
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}>
+      <div className="w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl text-center" style={{ backgroundColor: '#13092a' }}>
+        <div className="px-6 pt-8 pb-6" style={{ background: `linear-gradient(160deg, ${t.color}30 0%, #13092a 60%)` }}>
+          <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${t.color}22`, border: `2px solid ${t.color}50` }}>
+            {t.StarIcon ? <Star className="w-9 h-9 fill-current" style={{ color: t.color }} /> : <span className="text-4xl">{t.emoji}</span>}
+          </div>
+          <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: t.color }}>Tier Upgrade 🎉</p>
+          <h2 className="text-2xl font-black text-white mb-3">You're now <span style={{ color: t.color }}>{t.label}</span></h2>
+          <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>{t.desc}</p>
+        </div>
+        <div className="px-6 pb-6">
+          <p className="text-xs font-bold uppercase tracking-wider mb-3 text-left" style={{ color: 'rgba(255,255,255,0.35)' }}>Your new perks</p>
+          <ul className="space-y-2 mb-6 text-left">
+            {t.perks.map((perk, i) => (
+              <li key={i} className="flex items-start gap-2.5 text-sm" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                <span className="mt-0.5 flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: `${t.color}25` }}>
+                  <svg className="w-2.5 h-2.5" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke={t.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </span>
+                {perk}
+              </li>
+            ))}
+          </ul>
+          <button onClick={onClose} className="w-full py-3 rounded-xl font-bold text-sm text-white transition-opacity hover:opacity-90"
+            style={{ background: `linear-gradient(135deg, #7c3aed 0%, #ec4899 100%)` }}>
+            Let's go!
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 const NICHES = [
@@ -198,7 +272,7 @@ const AVATAR_NAV = [
   { id: 'support',         label: 'Support',            icon: HelpCircle },
 ]
 
-function AvatarMenu({ profile, activeTab, setActiveTab }) {
+function AvatarMenu({ profile, activeTab, setActiveTab, onSwitchToBrand }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   const navigateTo = useNavigate()
@@ -222,8 +296,7 @@ function AvatarMenu({ profile, activeTab, setActiveTab }) {
 
   function handleSwitchToBrand() {
     setOpen(false)
-    localStorage.setItem('brandiór_role', 'brand')
-    navigateTo('/brand-dashboard')
+    onSwitchToBrand()
   }
 
   async function handleLogout() {
@@ -319,8 +392,7 @@ function AvatarMenu({ profile, activeTab, setActiveTab }) {
   )
 }
 
-function Sidebar({ active, setActive, dashLogo }) {
-  const navigate = useNavigate()
+function Sidebar({ active, setActive, dashLogo, onSwitchToBrand }) {
   const nav = [
     { id: 'collabs',      label: 'My Collabs',       icon: Inbox },
     { id: 'notifications',label: 'Notifications',    icon: Bell },
@@ -336,8 +408,7 @@ function Sidebar({ active, setActive, dashLogo }) {
   ]
 
   function switchToBrand() {
-    localStorage.setItem('brandiór_role', 'brand')
-    navigate('/brand-dashboard')
+    onSwitchToBrand()
   }
 
   return (
@@ -1358,6 +1429,117 @@ export default function TalentDashboard() {
   const userId = localStorage.getItem('brandiór_user') || 'guest'
   const [showTour, setShowTour] = useState(() => !localStorage.getItem(`brandior_tour_done_${userId}`))
   const [showOffPlatformWarning, setShowOffPlatformWarning] = useState(() => !localStorage.getItem(`brandior_offplatform_seen_${userId}`))
+  const [tierInfoOpen, setTierInfoOpen] = useState(false)
+  const [tierUpgradeModal, setTierUpgradeModal] = useState(null) // tier key when upgrade detected
+
+  // Password + data export state (used in inline settings section)
+  const [pwForm,      setPwForm]      = useState({ next: '', confirm: '' })
+  const [pwSaving,    setPwSaving]    = useState(false)
+  const [pwMsg,       setPwMsg]       = useState(null)
+  const [downloading, setDownloading] = useState(false)
+
+  async function handleChangePassword() {
+    if (!pwForm.next || pwForm.next !== pwForm.confirm) {
+      setPwMsg({ type: 'error', text: 'New passwords do not match.' }); return
+    }
+    if (pwForm.next.length < 8) {
+      setPwMsg({ type: 'error', text: 'Password must be at least 8 characters.' }); return
+    }
+    setPwSaving(true)
+    const { error } = await supabase.auth.updateUser({ password: pwForm.next })
+    setPwSaving(false)
+    if (error) { setPwMsg({ type: 'error', text: error.message }); return }
+    setPwMsg({ type: 'success', text: 'Password updated successfully.' })
+    setPwForm({ next: '', confirm: '' })
+    setTimeout(() => setPwMsg(null), 4000)
+  }
+
+  async function handleDownloadCreatorData() {
+    setDownloading(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not signed in')
+      const [{ data: profileRow }, { data: notifications }, { data: collabs }] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', user.id).single(),
+        supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('collabs').select('*').eq('creator_id', user.id).order('created_at', { ascending: false }),
+      ])
+      const json = JSON.stringify({
+        exported_at: new Date().toISOString(),
+        account:     { email: user.email, created_at: user.created_at },
+        profile:     profileRow ?? {},
+        notifications: notifications ?? [],
+        collabs:     collabs ?? [],
+      }, null, 2)
+      const blob = new Blob([json], { type: 'application/json' })
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement('a')
+      a.href     = url
+      a.download = `brandior-creator-data-${Date.now()}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      alert('Export failed: ' + (e.message || 'Something went wrong.'))
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  // Shared brand-setup modal
+  const [showBrandSetup, setShowBrandSetup] = useState(false)
+  const [bsProfileId,   setBsProfileId]   = useState(null)
+  const [bsCompanyName, setBsCompanyName] = useState('')
+  const [bsIndustry,    setBsIndustry]    = useState('')
+  const [bsActivating,  setBsActivating]  = useState(false)
+  const navigateTo = useNavigate()
+
+  const INDUSTRIES = [
+    'Fashion', 'Beauty & Skincare', 'Food & Beverage', 'Technology',
+    'Health & Wellness', 'Entertainment', 'Finance', 'Sports',
+    'Travel', 'Education', 'Real Estate', 'Other',
+  ]
+
+  async function openBrandSetup() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const hasBrandAccount = !!user.user_metadata?.brand_name
+    if (hasBrandAccount) {
+      await supabase.auth.updateUser({ data: { role: 'brand' } })
+      localStorage.setItem('brandiór_role', 'brand')
+      navigateTo('/brand-dashboard')
+      return
+    }
+    setBsProfileId(user.id)
+    const { data: prof } = await supabase.from('profiles').select('full_name, company_name').eq('id', user.id).single()
+    setBsCompanyName(prof?.company_name || prof?.full_name || '')
+    setBsIndustry('')
+    setShowBrandSetup(true)
+  }
+
+  async function activateBrandMode() {
+    if (!bsCompanyName.trim() || !bsIndustry || !bsProfileId) return
+    setBsActivating(true)
+    try {
+      await Promise.all([
+        supabase.auth.updateUser({ data: { brand_name: bsCompanyName.trim(), role: 'brand' } }),
+        supabase.from('profiles').upsert({ id: bsProfileId, company_name: bsCompanyName.trim(), industry: bsIndustry, role: 'Brand' }, { onConflict: 'id' }),
+        supabase.from('notifications').insert({
+          user_id: bsProfileId,
+          title:   'You just got the Brandior Partner badge! 🎉',
+          body:    `Your brand mode is now active. Complete your brand profile so creators can find you.\n\n— The Brandior Team`,
+          type:    'badge',
+          data:    { screen: 'badge' },
+        }),
+      ])
+      localStorage.setItem('brandiór_role', 'brand')
+      navigateTo('/brand-dashboard')
+    } catch {
+      localStorage.setItem('brandiór_role', 'brand')
+      navigateTo('/brand-dashboard')
+    } finally {
+      setBsActivating(false)
+    }
+  }
 
   // Load profile from Supabase user metadata
   useEffect(() => {
@@ -1389,14 +1571,23 @@ export default function TalentDashboard() {
         } : p.pricing,
         socials: m.socials || p.socials,
       }))
-      // Load portfolio + avatar from profiles table
-      const { data: profileRow } = await supabase.from('profiles').select('portfolio, avatar_url').eq('id', user.id).single()
+      // Load portfolio, avatar, and tier from profiles table
+      const { data: profileRow } = await supabase.from('profiles').select('portfolio, avatar_url, tier').eq('id', user.id).single()
       if (profileRow) {
+        const newTier = profileRow.tier || 'fast-rising'
         setProfile(p => ({
           ...p,
           portfolio: profileRow.portfolio?.length ? profileRow.portfolio : p.portfolio,
           avatar: profileRow.avatar_url || m.avatar || p.avatar,
+          tier: newTier,
         }))
+        // Detect tier upgrade
+        const lastTier = localStorage.getItem(`brandior_last_tier_${user.id}`)
+        const tierOrder = Object.keys(TIERS)
+        if (lastTier && tierOrder.indexOf(newTier) > tierOrder.indexOf(lastTier)) {
+          setTierUpgradeModal(newTier)
+        }
+        localStorage.setItem(`brandior_last_tier_${user.id}`, newTier)
       }
     })
   }, [])
@@ -1678,6 +1869,57 @@ export default function TalentDashboard() {
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: '#f9f5ff' }}>
+      {tierInfoOpen && <TierInfoModal tier={profile.tier} onClose={() => setTierInfoOpen(false)} />}
+      {tierUpgradeModal && <TierUpgradeModal tier={tierUpgradeModal} onClose={() => setTierUpgradeModal(null)} />}
+
+      {/* Brand-mode activation modal */}
+      {showBrandSetup && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4" onClick={() => !bsActivating && setShowBrandSetup(false)}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex flex-col items-center mb-5">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style={{ backgroundColor: '#F7258518' }}>
+                <span className="text-2xl">🏢</span>
+              </div>
+              <h2 className="text-lg font-black text-gray-900 text-center">Activate Brand Mode</h2>
+              <p className="text-sm text-gray-500 text-center mt-1">Your existing account gains brand capabilities. No new login needed.</p>
+            </div>
+
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Brand / Company name</p>
+            <input
+              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-800 mb-4 focus:outline-none focus:border-pink-400 transition-colors"
+              placeholder="e.g. Zuri Glow, MTN Nigeria"
+              value={bsCompanyName}
+              onChange={e => setBsCompanyName(e.target.value)}
+              autoCapitalize="words"
+            />
+
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Industry</p>
+            <div className="space-y-2 max-h-44 overflow-y-auto mb-4">
+              {INDUSTRIES.map(ind => (
+                <button key={ind} onClick={() => setBsIndustry(ind)}
+                  className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all text-left"
+                  style={bsIndustry === ind
+                    ? { borderColor: '#F72585', backgroundColor: '#F7258508', color: '#F72585' }
+                    : { borderColor: '#e5e7eb', color: '#374151' }}>
+                  {ind}
+                  {bsIndustry === ind && <span style={{ color: '#F72585' }}>✓</span>}
+                </button>
+              ))}
+            </div>
+
+            <button onClick={activateBrandMode} disabled={!bsCompanyName.trim() || !bsIndustry || bsActivating}
+              className="w-full py-3 rounded-xl text-white font-bold text-sm transition-opacity disabled:opacity-40"
+              style={{ backgroundColor: '#F72585' }}>
+              {bsActivating ? 'Activating…' : 'Activate Brand Mode →'}
+            </button>
+            <button onClick={() => setShowBrandSetup(false)} disabled={bsActivating}
+              className="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-40">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       {showTour && (
         <OnboardingTour
           role="talent"
@@ -1729,7 +1971,7 @@ export default function TalentDashboard() {
       <Sidebar active={activeTab} setActive={tab => {
         if (settingsEditMode) { cancelEditSettings() }
         setActiveTab(tab)
-      }} dashLogo={dashLogo} />
+      }} dashLogo={dashLogo} onSwitchToBrand={openBrandSetup} />
 
       <main className="flex-1 overflow-auto">
         {/* Top bar */}
@@ -1751,13 +1993,14 @@ export default function TalentDashboard() {
             </button>
             {/* Tier badge */}
             {(() => { const t = TIERS[profile.tier]; return (
-              <span className="hidden sm:flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full"
+              <button onClick={() => setTierInfoOpen(true)}
+                className="hidden sm:flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full transition-opacity hover:opacity-80 cursor-pointer"
                 style={{ backgroundColor: t.bg, color: t.color, border: `1px solid ${t.border}` }}>
                 <TierIcon tier={profile.tier} /> <TierLabel tier={profile.tier} />
-              </span>
+              </button>
             )})()}
             {/* Avatar with dropdown */}
-            <AvatarMenu profile={profile} activeTab={activeTab} setActiveTab={setActiveTab} />
+            <AvatarMenu profile={profile} activeTab={activeTab} setActiveTab={setActiveTab} onSwitchToBrand={openBrandSetup} />
           </div>
         </div>
 
@@ -1779,7 +2022,12 @@ export default function TalentDashboard() {
           </div>
 
           {/* ── COLLABS TAB ── */}
-          {activeTab === 'collabs' && <MyCollabsTab completion={completion} setActiveTab={setActiveTab} />}
+          {activeTab === 'collabs' && (
+            <>
+              <OnboardingChecklist role="creator" setActiveTab={setActiveTab} />
+              <MyCollabsTab completion={completion} setActiveTab={setActiveTab} />
+            </>
+          )}
 
           {/* ── PROFILE TAB ── */}
           {activeTab === 'profile' && (
@@ -1841,10 +2089,11 @@ export default function TalentDashboard() {
                       {profile.handle && <span className="text-sm text-brand-dark/40">{profile.handle}</span>}
                       {/* Tier badge */}
                       {(() => { const t = TIERS[profile.tier]; return (
-                        <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full"
+                        <button onClick={() => setTierInfoOpen(true)}
+                          className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full transition-opacity hover:opacity-80 cursor-pointer"
                           style={{ backgroundColor: t.bg, color: t.color, border: `1px solid ${t.border}` }}>
                           <TierIcon tier={profile.tier} /> <TierLabel tier={profile.tier} />
-                        </span>
+                        </button>
                       )})()}
                       {/* Available for hire badge */}
                       <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"
@@ -2682,7 +2931,7 @@ export default function TalentDashboard() {
                       const next = !profile.availableForHire
                       setProfile(p => ({ ...p, availableForHire: next }))
                       const { data: { user } } = await supabase.auth.getUser()
-                      if (user) await supabase.from('profiles').update({ available_for_hire: next }).eq('id', user.id)
+                      if (user) await supabase.from('profiles').upsert({ id: user.id, available_for_hire: next }, { onConflict: 'id' })
                     }}
                     className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer flex-shrink-0"
                     style={{
@@ -2861,6 +3110,41 @@ export default function TalentDashboard() {
                     )
                   })}
                 </div>
+              </div>
+
+              {/* Change Password */}
+              <div className="rounded-3xl p-6 shadow-sm space-y-4" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+                <p className="font-bold text-gray-900">Change Password</p>
+                {['next', 'confirm'].map(k => (
+                  <div key={k}>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                      {k === 'next' ? 'New password' : 'Confirm new password'}
+                    </label>
+                    <input type="password" value={pwForm[k]} onChange={e => setPwForm(f => ({ ...f, [k]: e.target.value }))}
+                      placeholder={k === 'next' ? 'At least 8 characters' : 'Repeat new password'}
+                      className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:border-purple-300" />
+                  </div>
+                ))}
+                {pwMsg && (
+                  <p className={`text-xs font-semibold ${pwMsg.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>{pwMsg.text}</p>
+                )}
+                <button onClick={handleChangePassword} disabled={pwSaving || !pwForm.next || !pwForm.confirm}
+                  className="px-6 py-2.5 rounded-full text-sm font-bold text-white transition-colors disabled:opacity-50"
+                  style={{ backgroundColor: darkPurple }}>
+                  {pwSaving ? 'Updating…' : 'Update Password'}
+                </button>
+              </div>
+
+              {/* Privacy & Data */}
+              <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+                <p className="font-bold text-gray-900 mb-1">Privacy & Data</p>
+                <p className="text-brand-dark/40 text-sm mb-4">Download a copy of all your account data, collabs, and notifications.</p>
+                <button onClick={handleDownloadCreatorData} disabled={downloading}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold text-white transition-opacity disabled:opacity-50"
+                  style={{ backgroundColor: darkPurple }}>
+                  <Download className="w-4 h-4" />
+                  {downloading ? 'Exporting…' : 'Download My Data'}
+                </button>
               </div>
 
               <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #ffe4e6', backgroundColor: 'white' }}>
@@ -3432,7 +3716,7 @@ function SupportTab() {
   const faqs = [
     { q: 'When do I get paid for a completed campaign?', a: 'Payments are released within 24–48 hours after the brand approves your content. Funds go directly to your Brandior wallet.' },
     { q: 'How do I dispute a rejected submission?', a: 'Go to the campaign in your dashboard, click "View Feedback", and use the dispute button. Our team reviews all disputes within 2 business days.' },
-    { q: 'Can I change my rate card after applying to a gig?', a: 'Your rate card applies to future gig applications. Rates already agreed upon in an active campaign cannot be changed.' },
+    { q: 'Can I change my rate card after a collab is booked?', a: 'Your rate card updates apply to new collabs only. Rates already agreed upon in an active collab cannot be changed.' },
     { q: 'How do I withdraw my earnings?', a: 'Go to Wallet → Withdraw. We support bank transfer across our supported countries, Paystack, and Flutterwave. Minimum withdrawal is ₦5,000.' },
     { q: 'What happens if a brand ghosts me?', a: "If a brand doesn't respond within 5 days of your submission, you can escalate the campaign to our team and we'll mediate." },
   ]
@@ -4109,7 +4393,7 @@ function PayoutSettingsTab() {
   async function persistAccounts(next) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    await supabase.from('profiles').update({ payout_accounts: next }).eq('id', user.id)
+    await supabase.from('profiles').upsert({ id: user.id, payout_accounts: next }, { onConflict: 'id' })
   }
 
   function resetForm() {

@@ -7,7 +7,7 @@ import {
   MessageSquare, Send
 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
-import { stripInjection } from "../../utils/sanitize";
+const stripInjection = (s) => String(s ?? '').replace(/[<>{}\\`]/g, '');
 
 // ─── MOCK DATA ────────────────────────────────────────────────────────────────
 
@@ -129,7 +129,7 @@ const NAV_ITEMS = [
   { id: "content", label: "Content Review", Icon: Eye, badge: true },
   { id: "queue", label: "Staff Queue", Icon: Inbox, badge: true },
   { id: "users", label: "Users", Icon: Users },
-  { id: "jobs", label: "Jobs", Icon: Briefcase },
+  { id: "jobs", label: "Collabs", Icon: Briefcase },
   { id: "reports", label: "Reports", Icon: BarChart2 },
 ];
 
@@ -545,7 +545,7 @@ export default function ManagerPanel() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search jobs..."
+            placeholder="Search collabs..."
             value={jobSearch}
             onChange={(e) => setJobSearch(stripInjection(e.target.value))}
             className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm border border-gray-200 outline-none focus:border-purple-400"
@@ -558,7 +558,7 @@ export default function ManagerPanel() {
           <table className="w-full text-sm">
             <thead>
               <tr style={{ backgroundColor: "#f8fafc" }}>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Job</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Collab</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Platform</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Budget</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
