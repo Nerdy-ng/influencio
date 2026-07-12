@@ -75,6 +75,9 @@ export default function Footer() {
             <p className="text-white/30 text-sm leading-relaxed max-w-xs mb-6">
               {tagline}
             </p>
+            <a href="mailto:support@brandior.africa" className="text-white/40 hover:text-white text-sm transition-colors mb-5 block">
+              support@brandior.africa
+            </a>
             <div className="flex items-center gap-3">
               {socials.map(({ Icon, label }) => (
                 <a key={label} href="#" aria-label={label}
