@@ -148,6 +148,115 @@ function TierUpgradeModal({ tier, onClose }) {
   )
 }
 
+const BRANDIOR_RANKS = {
+  spark:    { label: 'Brandior Spark',    trophyCount: 1, color: '#f59e0b', barWidth: 0.25, barLabel: ['Spark', 'Rising at 60'], message: "Every champion starts here. You're the spark — full of potential and ready to ignite. Complete your profile and land your first collab.", ctaLabel: 'Complete my profile', ctaTab: 'settings', next: { trophyCount: 2, label: 'Brandior Rising', hint: 'Reach 60+ score to unlock Rising status and get noticed by more brands.' } },
+  rising:   { label: 'Brandior Rising',   trophyCount: 2, color: '#a855f7', barWidth: 0.55, barLabel: ['Rising', 'Pro at 75'], message: "Brands are starting to notice you. You're building momentum — keep completing collabs and growing your presence.", ctaLabel: 'View open campaigns', ctaTab: 'browse', next: { trophyCount: 3, label: 'Brandior Pro', hint: 'Reach 75+ score to unlock Pro status and access higher-value collabs.' } },
+  pro:      { label: 'Brandior Pro',      trophyCount: 3, color: '#F72585', barWidth: 0.80, barLabel: ['Pro', 'Champion at 90'], message: "You're in the top tier. Top brands want you. Your profile is strong — keep delivering and the best collabs will come to you.", ctaLabel: 'Browse campaigns', ctaTab: 'browse', next: { trophyCount: 4, label: 'Brandior Champion', hint: 'Reach 90+ score to become a Champion and unlock elite brand deals.' } },
+  champion: { label: 'Brandior Champion', trophyCount: 4, color: '#4c1d95', barWidth: 1.00, barLabel: ['Champion', '100'], message: "You've reached the highest rank. Elite brands seek you out directly. Keep delivering excellence — your reputation precedes you.", ctaLabel: 'See open campaigns', ctaTab: 'browse', next: null },
+}
+
+function getBrandiorRank(score) {
+  if (score >= 90) return BRANDIOR_RANKS.champion
+  if (score >= 75) return BRANDIOR_RANKS.pro
+  if (score >= 60) return BRANDIOR_RANKS.rising
+  return BRANDIOR_RANKS.spark
+}
+
+function TrophyIcon({ color, size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color} style={{ display: 'inline-block', flexShrink: 0 }}>
+      <path d="M19 5h-2V3H7v2H5C3.9 5 3 5.9 3 7v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0011 15.9V18H9v2h6v-2h-2v-2.1a5.01 5.01 0 003.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zm-2 3c0 1.65-1.35 3-3 3s-3-1.35-3-3V7h6v1z"/>
+    </svg>
+  )
+}
+
+function BrandiorRankModal({ score, profileComplete, onClose, onNavigate }) {
+  const rank = getBrandiorRank(score)
+  const [barW, setBarW] = useState(0)
+  useEffect(() => { const t = setTimeout(() => setBarW(profileComplete ? rank.barWidth : 0), 150); return () => clearTimeout(t) }, [rank, profileComplete])
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-end justify-center p-4 pb-8" style={{ backgroundColor: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} onClick={onClose}>
+      <div className="w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl" style={{ backgroundColor: '#150025', border: '1px solid rgba(168,85,247,0.2)' }} onClick={e => e.stopPropagation()}>
+        <div className="px-6 pt-7 pb-6">
+          <div className="w-10 h-1 rounded-full mx-auto mb-6" style={{ backgroundColor: 'rgba(168,85,247,0.3)' }} />
+
+          {/* Trophy icons */}
+          <div className="flex justify-center gap-2.5 mb-4">
+            {Array.from({ length: profileComplete ? rank.trophyCount : 1 }).map((_, i) => (
+              <div key={i} className="w-13 h-13 rounded-2xl flex items-center justify-center"
+                style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: profileComplete ? `${rank.color}22` : 'rgba(255,255,255,0.06)', border: `1.5px solid ${profileComplete ? rank.color + '50' : 'rgba(255,255,255,0.12)'}`, opacity: profileComplete ? 1 : (i === 0 ? 0.5 : 0.2) }}>
+                <TrophyIcon color={profileComplete ? rank.color : '#666'} size={24} />
+              </div>
+            ))}
+          </div>
+
+          {profileComplete ? (
+            <>
+              <p className="text-[10px] font-black uppercase tracking-widest text-center mb-1" style={{ color: 'rgba(240,230,255,0.4)' }}>Your current rank</p>
+              <h2 className="text-2xl font-black text-center mb-3" style={{ color: rank.color }}>{rank.label}</h2>
+              <p className="text-sm leading-relaxed text-center mb-5" style={{ color: 'rgba(240,230,255,0.65)' }}>{rank.message}</p>
+
+              {rank.next && (
+                <div className="flex items-start gap-3 rounded-xl p-3 mb-5" style={{ backgroundColor: 'rgba(100,100,200,0.08)', border: '1px solid rgba(100,100,200,0.18)' }}>
+                  <div className="flex gap-0.5 flex-shrink-0 mt-0.5">
+                    {Array.from({ length: rank.next.trophyCount }).map((_, i) => <TrophyIcon key={i} color="rgba(200,200,255,0.4)" size={13} />)}
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold mb-0.5" style={{ color: 'rgba(240,230,255,0.9)' }}>Next: {rank.next.label}</p>
+                    <p className="text-xs leading-relaxed" style={{ color: 'rgba(240,230,255,0.45)' }}>{rank.next.hint}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="h-1.5 rounded-full mb-1.5 overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${barW * 100}%`, backgroundColor: rank.color }} />
+              </div>
+              <div className="flex justify-between text-[10px] font-bold mb-5" style={{ color: 'rgba(240,230,255,0.4)' }}>
+                <span>{rank.barLabel[0]}</span><span>{rank.barLabel[1]}</span>
+              </div>
+
+              <button onClick={() => { onClose(); onNavigate(rank.ctaTab) }}
+                className="w-full py-3.5 rounded-2xl font-black text-sm text-white mb-2 transition-opacity hover:opacity-90"
+                style={{ backgroundColor: rank.color }}>
+                {rank.ctaLabel} →
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-[10px] font-black uppercase tracking-widest text-center mb-1" style={{ color: 'rgba(240,230,255,0.4)' }}>Unlock your rank</p>
+              <h2 className="text-2xl font-black text-center mb-3" style={{ color: '#f59e0b' }}>Become a Brandior Spark</h2>
+              <p className="text-sm leading-relaxed text-center mb-5" style={{ color: 'rgba(240,230,255,0.65)' }}>
+                Complete your profile to earn your first rank and get discovered by brands.
+              </p>
+              <ul className="space-y-2.5 mb-5">
+                {['Get listed on Brandior', 'Receive collab opportunities from brands', 'Access the creator community'].map((b, i) => (
+                  <li key={i} className="flex items-center gap-2.5 text-sm" style={{ color: 'rgba(240,230,255,0.75)' }}>
+                    <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#f59e0b25' }}>
+                      <svg className="w-2.5 h-2.5" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </span>
+                    {b}
+                  </li>
+                ))}
+              </ul>
+              <button onClick={() => { onClose(); onNavigate('settings') }}
+                className="w-full py-3.5 rounded-2xl font-black text-sm mb-2 transition-opacity hover:opacity-90"
+                style={{ backgroundColor: '#f59e0b', color: '#1a0010' }}>
+                Complete my profile →
+              </button>
+            </>
+          )}
+
+          <button onClick={onClose} className="w-full py-2.5 text-sm font-semibold transition-colors hover:text-white"
+            style={{ color: 'rgba(255,255,255,0.35)' }}>
+            Maybe later
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const NICHES = [
   'Beauty & Skincare', 'Fashion & Style', 'Food & Cooking', 'Tech & Gadgets',
   'Fitness & Health', 'Travel', 'Comedy & Entertainment', 'Parenting',
@@ -695,15 +804,33 @@ function BrowseTab({ setActiveTab }) {
                 )}
                 {currentStep.key === 'niche' && (
                   <div style={{ marginBottom: 12 }}>
-                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginBottom: 10 }}>Pick up to 2 niches</p>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginBottom: 10 }}>Pick up to 3 niches</p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                       {BROWSE_NICHES.map(n => (
-                        <button key={n} onClick={() => setFormNiches(prev => prev.includes(n) ? prev.filter(x => x !== n) : prev.length < 2 ? [...prev, n] : prev)}
+                        <button key={n} onClick={() => setFormNiches(prev => prev.includes(n) ? prev.filter(x => x !== n) : prev.length < 3 ? [...prev, n] : prev)}
                           style={{ padding: '7px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: formNiches.includes(n) ? 'none' : '1px solid rgba(255,255,255,0.2)', backgroundColor: formNiches.includes(n) ? '#fff' : 'rgba(255,255,255,0.1)', color: formNiches.includes(n) ? '#6d28d9' : 'rgba(255,255,255,0.8)' }}>
                           {n}
                         </button>
                       ))}
                     </div>
+                    {formNiches.length < 3 && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '6px 10px', border: '1px solid rgba(255,255,255,0.15)' }}>
+                        <input
+                          placeholder="Add your own niche…"
+                          style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 12, color: '#fff' }}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              const val = e.target.value.trim()
+                              if (val && !formNiches.includes(val) && formNiches.length < 3) {
+                                setFormNiches(prev => [...prev, val])
+                                e.target.value = ''
+                              }
+                            }
+                          }}
+                        />
+                        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Enter ↵</span>
+                      </div>
+                    )}
                   </div>
                 )}
                 {currentStep.key === 'rate' && (
@@ -1776,6 +1903,7 @@ export default function TalentDashboard() {
   const [showOffPlatformWarning, setShowOffPlatformWarning] = useState(() => !localStorage.getItem(`brandior_offplatform_seen_${userId}`))
   const [tierInfoOpen, setTierInfoOpen] = useState(false)
   const [tierUpgradeModal, setTierUpgradeModal] = useState(null) // tier key when upgrade detected
+  const [rankModalOpen, setRankModalOpen] = useState(false)
 
   // Password + data export state (used in inline settings section)
   const [pwForm,      setPwForm]      = useState({ next: '', confirm: '' })
@@ -2216,6 +2344,7 @@ export default function TalentDashboard() {
     <div className="min-h-screen flex" style={{ backgroundColor: '#f9f5ff' }}>
       {tierInfoOpen && <TierInfoModal tier={profile.tier} onClose={() => setTierInfoOpen(false)} />}
       {tierUpgradeModal && <TierUpgradeModal tier={tierUpgradeModal} onClose={() => setTierUpgradeModal(null)} />}
+      {rankModalOpen && <BrandiorRankModal score={completion} profileComplete={!!profile.nickname} onClose={() => setRankModalOpen(false)} onNavigate={tab => setActiveTab(tab)} />}
 
       {/* Brand-mode activation modal */}
       {showBrandSetup && (
@@ -2336,14 +2465,23 @@ export default function TalentDashboard() {
             <button className="relative p-2 rounded-xl hover:bg-white transition-colors">
               <Bell className="w-5 h-5 text-brand-dark/40" />
             </button>
-            {/* Tier badge */}
-            {(() => { const t = TIERS[profile.tier]; return (
-              <button onClick={() => setTierInfoOpen(true)}
-                className="hidden sm:flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full transition-opacity hover:opacity-80 cursor-pointer"
-                style={{ backgroundColor: t.bg, color: t.color, border: `1px solid ${t.border}` }}>
-                <TierIcon tier={profile.tier} /> <TierLabel tier={profile.tier} />
-              </button>
-            )})()}
+            {/* Brandior Rank badge */}
+            {(() => {
+              const hasProfile = !!profile.nickname
+              const r = getBrandiorRank(completion)
+              const col = hasProfile ? r.color : '#9ca3af'
+              return (
+                <button onClick={() => setRankModalOpen(true)}
+                  className="hidden sm:flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full transition-opacity hover:opacity-80 cursor-pointer"
+                  style={{ backgroundColor: `${col}18`, color: col, border: `1px solid ${col}40` }}>
+                  {hasProfile
+                    ? Array.from({ length: r.trophyCount }).map((_, i) => <TrophyIcon key={i} color={r.color} size={10} />)
+                    : <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                  }
+                  <span>{hasProfile ? r.label : 'Unlock rank'}</span>
+                </button>
+              )
+            })()}
             {/* Avatar with dropdown */}
             <AvatarMenu profile={profile} activeTab={activeTab} setActiveTab={setActiveTab} onSwitchToBrand={openBrandSetup} />
           </div>
@@ -2437,14 +2575,23 @@ export default function TalentDashboard() {
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <h2 className="text-xl font-black text-brand-dark">{profile.nickname || <span className="text-brand-dark/25 font-normal italic text-base">No name set</span>}</h2>
                       {profile.handle && <span className="text-sm text-brand-dark/40">{profile.handle}</span>}
-                      {/* Tier badge */}
-                      {(() => { const t = TIERS[profile.tier]; return (
-                        <button onClick={() => setTierInfoOpen(true)}
-                          className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full transition-opacity hover:opacity-80 cursor-pointer"
-                          style={{ backgroundColor: t.bg, color: t.color, border: `1px solid ${t.border}` }}>
-                          <TierIcon tier={profile.tier} /> <TierLabel tier={profile.tier} />
-                        </button>
-                      )})()}
+                      {/* Brandior Rank badge */}
+                      {(() => {
+                        const hasProfile = !!profile.nickname
+                        const r = getBrandiorRank(completion)
+                        const col = hasProfile ? r.color : '#9ca3af'
+                        return (
+                          <button onClick={() => setRankModalOpen(true)}
+                            className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full transition-opacity hover:opacity-80 cursor-pointer"
+                            style={{ backgroundColor: `${col}18`, color: col, border: `1px solid ${col}40` }}>
+                            {hasProfile
+                              ? Array.from({ length: r.trophyCount }).map((_, i) => <TrophyIcon key={i} color={r.color} size={10} />)
+                              : <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                            }
+                            <span>{hasProfile ? r.label : 'Unlock rank'}</span>
+                          </button>
+                        )
+                      })()}
                       {/* Available for hire badge */}
                       <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"
                         style={{
@@ -3217,20 +3364,20 @@ export default function TalentDashboard() {
                       </p>
                     )}
                   </div>
-                  {/* Niche — multi-select, max 5 */}
+                  {/* Niche — multi-select, max 3 */}
                   <div className="sm:col-span-2">
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-xs font-medium text-brand-dark/40 uppercase tracking-widest">Niche / Category</label>
                       {settingsEditMode && (
-                        <span className="text-[10px]" style={{ color: profile.niches.length >= 5 ? pink : '#9ca3af' }}>
-                          {profile.niches.length}/5 selected
+                        <span className="text-[10px]" style={{ color: profile.niches.length >= 3 ? pink : '#9ca3af' }}>
+                          {profile.niches.length}/3 selected
                         </span>
                       )}
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {settingsEditMode ? NICHES.map(n => {
                         const selected = profile.niches.includes(n)
-                        const maxed = profile.niches.length >= 5 && !selected
+                        const maxed = profile.niches.length >= 3 && !selected
                         return (
                           <button key={n} type="button"
                             disabled={maxed}
