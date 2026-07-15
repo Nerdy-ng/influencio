@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { saveProfile } from "../../lib/profile";
 import { supabase } from "../../lib/supabase";
 import { Scale, RotateCcw, Search, FileText, Download, CheckCircle, XCircle, RefreshCw } from "lucide-react";
 
@@ -43,17 +42,33 @@ export default function DisputeCenterPanel({ showToast, auditLog }) {
     setLoading(true);
     const { data: rows } = await supabase.from("disputes").select("*").order("created_at", { ascending: false });
     const list = rows || [];
-    const ids = [...new Set(list.flatMap(d => [d.brand_id, d.creator_id]).filter(Boolean))];
+
+    const userIds = [...new Set(list.flatMap(d => [d.brand_id, d.creator_id]).filter(Boolean))];
     let nameMap = {};
-    if (ids.length) {
-      const { data: profs } = await supabase.from("profiles").select("id, full_name, company_name, handle").in("id", ids);
+    if (userIds.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, full_name, company_name, handle").in("id", userIds);
       (profs || []).forEach(p => { nameMap[p.id] = p.company_name || p.full_name || p.handle || "User"; });
     }
-    setDisputes(list.map(d => ({
-      ...d,
-      brandName:   nameMap[d.brand_id]   || "Brand",
-      creatorName: nameMap[d.creator_id] || "Creator",
-    })));
+
+    const collabIds = [...new Set(list.map(d => d.collab_id).filter(Boolean))];
+    let collabMap = {};
+    if (collabIds.length) {
+      const { data: collabs } = await supabase.from("collabs").select("id, total_amount, creator_payout, platform_fee, payment_status").in("id", collabIds);
+      (collabs || []).forEach(c => { collabMap[c.id] = c; });
+    }
+
+    setDisputes(list.map(d => {
+      const c = collabMap[d.collab_id] || {};
+      return {
+        ...d,
+        brandName:      nameMap[d.brand_id]   || "Brand",
+        creatorName:    nameMap[d.creator_id] || "Creator",
+        total_amount:   c.total_amount   ?? d.amount ?? 0,
+        creator_payout: c.creator_payout ?? 0,
+        platform_fee:   c.platform_fee   ?? 0,
+        payment_status: c.payment_status ?? d.payment_status ?? "—",
+      };
+    }));
     setLoading(false);
   }
 
@@ -73,54 +88,34 @@ export default function DisputeCenterPanel({ showToast, auditLog }) {
 
   const counts = Object.fromEntries(FILTERS.map(f => [f.key, f.key === "all" ? disputes.length : disputes.filter(d => d.status === f.key).length]));
 
-  async function updateStatus(status, extra = {}) {
-    if (!selected) return;
+  async function callResolve(action, extra = {}) {
+    if (!selected || busy) return;
     setBusy(true);
-    await supabase.from("disputes").update({ status, ...extra, resolved_at: status === "resolved" ? new Date().toISOString() : undefined }).eq("id", selected.id);
-    auditLog?.(`dispute_${status}`, "dispute", selected.id, `${selected.brandName} vs ${selected.creatorName}`, extra);
-    showToast(`Dispute marked ${status}`);
-    await load();
-    setSelected(prev => ({ ...prev, status, ...extra }));
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-dispute-resolve", {
+        body: { dispute_id: selected.id, action, note: resolution.note, ...extra },
+      });
+      if (error || !data?.ok) throw new Error(data?.error ?? error?.message ?? "Resolution failed");
+      auditLog?.(`dispute_${action}`, "dispute", selected.id, `${selected.brandName} vs ${selected.creatorName}`, extra);
+      const toasts = {
+        release: `Released ${fmtMoney(data.payout)} to creator`,
+        refund:  `Refunded ${fmtMoney(data.refunded)} to brand`,
+        split:   `Split: ${fmtMoney(data.brand_share)} to brand, ${fmtMoney(data.creator_share)} to creator`,
+        close:   "Dispute closed",
+      };
+      showToast(toasts[action] || `Dispute ${action}`);
+      await load();
+      setSelected(null);
+    } catch (e) {
+      showToast(`Error: ${e.message}`);
+    }
     setBusy(false);
   }
 
-  async function handleRefund() {
-    if (!selected) return;
-    await updateStatus("resolved", { resolution_type: "refund", resolution_note: resolution.note });
-    if (selected.brand_id && selected.amount) {
-      const { data: p } = await supabase.from("profiles").select("wallet_balance").eq("id", selected.brand_id).single();
-      saveProfile(selected.brand_id, { wallet_balance: (p?.wallet_balance || 0) + Number(selected.amount) });
-      showToast(`₦${Number(selected.amount).toLocaleString()} refunded to brand`);
-    }
-  }
-
-  async function handleRelease() {
-    if (!selected) return;
-    await updateStatus("resolved", { resolution_type: "release", resolution_note: resolution.note });
-    if (selected.creator_id && selected.amount) {
-      const { data: p } = await supabase.from("profiles").select("wallet_balance").eq("id", selected.creator_id).single();
-      const payout = selected.creator_payout || selected.amount;
-      saveProfile(selected.creator_id, { wallet_balance: (p?.wallet_balance || 0) + Number(payout) });
-      showToast(`₦${Number(payout).toLocaleString()} released to creator`);
-    }
-  }
-
-  async function handleSplit() {
-    if (!selected || !selected.amount) return;
-    const total = Number(selected.amount);
-    const brandShare = Math.round(total * (splitPct / 100));
-    const creatorShare = total - brandShare;
-    await updateStatus("resolved", { resolution_type: "split", resolution_note: `${splitPct}% / ${100 - splitPct}% split`, split_brand_pct: splitPct });
-    if (selected.brand_id) {
-      const { data: bp } = await supabase.from("profiles").select("wallet_balance").eq("id", selected.brand_id).single();
-      saveProfile(selected.brand_id, { wallet_balance: (bp?.wallet_balance || 0) + brandShare });
-    }
-    if (selected.creator_id) {
-      const { data: cp } = await supabase.from("profiles").select("wallet_balance").eq("id", selected.creator_id).single();
-      saveProfile(selected.creator_id, { wallet_balance: (cp?.wallet_balance || 0) + creatorShare });
-    }
-    showToast(`Split applied: ${fmtMoney(brandShare)} to brand, ${fmtMoney(creatorShare)} to creator`);
-  }
+  const handleRefund  = () => callResolve("refund");
+  const handleRelease = () => callResolve("release");
+  const handleSplit   = () => callResolve("split", { split_pct: splitPct });
+  const handleClose   = () => callResolve("close");
 
   async function getAiSummary() {
     if (!selected) return;
@@ -208,7 +203,7 @@ export default function DisputeCenterPanel({ showToast, auditLog }) {
                   <span className="text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 capitalize" style={sc}>{d.status}</span>
                 </div>
                 <p className="text-xs text-gray-500 truncate mb-1">{d.reason || "No reason stated"}</p>
-                <p className="text-xs text-gray-400">{fmtMoney(d.amount)} · {fmtDate(d.created_at)}</p>
+                <p className="text-xs text-gray-400">{fmtMoney(d.total_amount)} · {fmtDate(d.created_at)}</p>
               </button>
             );
           })}
@@ -248,7 +243,7 @@ export default function DisputeCenterPanel({ showToast, auditLog }) {
                     {[
                       ["Brand",    selected.brandName],
                       ["Creator",  selected.creatorName],
-                      ["Amount",   fmtMoney(selected.amount)],
+                      ["Amount",   fmtMoney(selected.total_amount)],
                       ["Opened",   fmtDate(selected.created_at)],
                       ["Resolved", fmtDate(selected.resolved_at)],
                       ["Raised by",selected.raised_by || "User"],
@@ -299,7 +294,7 @@ export default function DisputeCenterPanel({ showToast, auditLog }) {
                               <span className="text-xs font-semibold text-purple-600 w-20">{splitPct}% / {100 - splitPct}%</span>
                             </div>
                           </div>
-                          <button onClick={() => updateStatus("closed", { resolution_note: resolution.note })} disabled={busy}
+                          <button onClick={handleClose} disabled={busy}
                             className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-600 disabled:opacity-50">
                             <XCircle className="w-3 h-3 inline mr-1" />Close No Action
                           </button>
@@ -368,11 +363,11 @@ export default function DisputeCenterPanel({ showToast, auditLog }) {
               {tab === "payment" && (
                 <div className="space-y-3">
                   {[
-                    ["Disputed Amount", fmtMoney(selected.amount)],
-                    ["Platform Fee", fmtMoney(selected.platform_fee)],
+                    ["Total Amount",    fmtMoney(selected.total_amount)],
+                    ["Platform Fee",   fmtMoney(selected.platform_fee)],
                     ["Creator Payout", fmtMoney(selected.creator_payout)],
                     ["Payment Status", selected.payment_status || "—"],
-                    ["Resolution Type", selected.resolution_type || "Pending"],
+                    ["Resolution",     selected.resolution_type || "Pending"],
                   ].map(([l, v]) => (
                     <div key={l} className="bg-gray-50 rounded-xl p-3 flex items-center justify-between">
                       <p className="text-sm text-gray-500">{l}</p>
