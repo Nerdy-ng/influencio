@@ -61,7 +61,7 @@ export default function DisputeCenterPanel({ showToast, auditLog }) {
 
   useEffect(() => {
     if (!selected || tab !== "messages") return;
-    supabase.from("messages").select("*").eq("conversation_id", selected.conversation_id || "").order("created_at").then(({ data }) => setMessages(data || []));
+    supabase.from("messages").select("*").eq("collab_id", selected.collab_id || "").order("created_at").then(({ data }) => setMessages(data || []));
   }, [selected?.id, tab]);
 
   const filtered = disputes.filter(d => {
