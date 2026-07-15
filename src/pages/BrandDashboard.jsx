@@ -51,6 +51,49 @@ const STATUS_CONFIG = {
   cancelled: { label: 'Cancelled', bg: '#fef2f2', color: '#991b1b', border: '#fca5a5' },
 }
 
+const STEPS       = ['Hired', 'In Progress', 'Submitted', 'Approved']
+const STEP_COLORS = ['#10b981', '#f59e0b', '#be185d', '#a855f7']
+function stepIndex(status) {
+  if (status === 'pending')            return 0
+  if (status === 'in_progress')        return 1
+  if (status === 'revision_requested') return 1
+  if (status === 'delivered')          return 2
+  if (status === 'completed')          return 3
+  return 0
+}
+
+function CollabStepper({ status }) {
+  const step = stepIndex(status)
+  return (
+    <div className="flex items-center mt-2">
+      {STEPS.map((label, i) => {
+        const done   = i < step
+        const active = i === step
+        const color  = STEP_COLORS[i]
+        return (
+          <div key={label} className="flex items-center" style={{ flex: i < STEPS.length - 1 ? '1' : 'none' }}>
+            <span
+              className="flex items-center gap-1 text-xs font-black px-2 py-1 rounded-full border-2 whitespace-nowrap flex-shrink-0"
+              style={{
+                backgroundColor: active ? color : done ? color + '28' : '#f0eff5',
+                borderColor:     active ? color : done ? color + '80' : '#d1d5db',
+                color:           active ? '#fff' : done ? color : '#9ca3af',
+              }}
+            >
+              {done && <span style={{ fontSize: 9 }}>✓</span>}
+              {active && <span style={{ width: 5, height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.6)', display: 'inline-block' }} />}
+              {label}
+            </span>
+            {i < STEPS.length - 1 && (
+              <div className="mx-1 rounded-full" style={{ flex: 1, height: 2.5, backgroundColor: done ? color + '55' : '#e5e7eb', minWidth: 8 }} />
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function StatusBadge({ status }) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending
   return (
@@ -279,6 +322,7 @@ function OrderCard({ order, onPayNow, onApprove, onRevision, onReview }) {
             </div>
             <p className="text-xs text-gray-500 mb-1.5">{order.brief?.productName} · {timeAgo(order.createdAt)}</p>
             <StatusBadge status={order.status} />
+            <CollabStepper status={order.status} />
           </div>
 
           {/* Price + actions */}
