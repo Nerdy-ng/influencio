@@ -104,6 +104,13 @@ export default function PaymentConfigPanel({ showToast, auditLog }) {
   async function save() {
     setSaving(true);
     const upserts = Object.entries(config).map(([key, value]) => ({ key: `pay_${key}`, value: String(value), updated_at: new Date().toISOString() }));
+    // app_config JSON blob consumed by collab-pay, collab-release, payout-transfer edge functions
+    const appConfig = {
+      platform_commission_pct:    Number(config.commission_pct),
+      escrow_release_delay_hours: Number(config.escrow_auto_release_days) * 24,
+      auto_release_days:          Number(config.escrow_auto_release_days),
+    };
+    upserts.push({ key: "app_config", value: JSON.stringify(appConfig), updated_at: new Date().toISOString() });
     await supabase.from("site_settings").upsert(upserts, { onConflict: "key" }).catch(() => {});
     auditLog?.("update_payment_config", "payment_config", null, "Payment Configuration");
     showToast("Payment configuration saved");
