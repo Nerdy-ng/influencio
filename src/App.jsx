@@ -104,11 +104,12 @@ export default function App() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (location.pathname.startsWith('/admin')) { setAuthReady(true); return }
+      // Never redirect away when user is on the reset-password page or following a recovery link
+      if (event === 'PASSWORD_RECOVERY' || location.pathname === '/reset-password') { setAuthReady(true); return }
       if (session) {
         const metaRole = session.user.user_metadata?.role
 
         if (event === 'PASSWORD_RECOVERY') {
-          // User followed a password reset link — stay on /reset-password, don't redirect anywhere
           setAuthReady(true)
           return
         } else if (event === 'SIGNED_IN') {
