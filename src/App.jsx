@@ -119,8 +119,12 @@ export default function App() {
           setAuthReady(true)
           return
         } else if (event === 'SIGNED_IN') {
-          // Don't redirect away from the reset-password page — the user needs to set their new password
           if (location.pathname === '/reset-password') { setAuthReady(true); return }
+          // If URL has a code param or recovery hash, SIGNED_IN fired as part of a recovery flow.
+          // Hold off — PASSWORD_RECOVERY fires next and will handle the redirect.
+          const urlParams = new URLSearchParams(window.location.search)
+          const hashParams = new URLSearchParams(window.location.hash.slice(1))
+          if (urlParams.has('code') || hashParams.get('type') === 'recovery') { setAuthReady(true); return }
           localStorage.setItem('brandiór_user', session.user.id)
           // Pick up role the user selected before Google OAuth redirect
           const pendingRole = sessionStorage.getItem('brandiór_pending_role')
@@ -150,6 +154,10 @@ export default function App() {
             }
           }
         } else if (event === 'INITIAL_SESSION') {
+          // Don't process initial session if it came from a recovery link
+          const urlParams = new URLSearchParams(window.location.search)
+          const hashParams = new URLSearchParams(window.location.hash.slice(1))
+          if (urlParams.has('code') || hashParams.get('type') === 'recovery') { setAuthReady(true); return }
           localStorage.setItem('brandiór_user', session.user.id)
           if (!localStorage.getItem('brandiór_role')) {
             if (metaRole) {
