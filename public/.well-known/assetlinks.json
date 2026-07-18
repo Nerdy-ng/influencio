@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "africa.brandior.app",
+      "sha256_cert_fingerprints": ["CE:2C:6B:D4:06:FE:0F:49:D8:0B:EE:7D:1C:C0:A0:80:99:4B:7B:68:1D:A6:AF:36:CF:B5:C1:A9:49:3A:CE:DA"]
+    }
+  }
+]
