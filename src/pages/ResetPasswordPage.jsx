@@ -41,7 +41,14 @@ export default function ResetPasswordPage() {
     setLoading(true)
     const { error: err } = await supabase.auth.updateUser({ password })
     setLoading(false)
-    if (err) { setError(err.message); return }
+    if (err) {
+      if (err.message?.includes('AAL2')) {
+        setError('This account has two-factor authentication enabled. Please contact support to reset your password.')
+      } else {
+        setError(err.message)
+      }
+      return
+    }
     setDone(true)
     await supabase.auth.signOut()
     setTimeout(() => navigate('/login', { replace: true }), 2000)
