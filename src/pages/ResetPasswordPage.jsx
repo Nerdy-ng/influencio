@@ -48,8 +48,18 @@ export default function ResetPasswordPage() {
     e.preventDefault()
     setError('')
     if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
-    if (password !== confirm) { setError('Passwords don\'t match.'); return }
+    if (password !== confirm) { setError("Passwords don't match."); return }
     setLoading(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    const email = session?.user?.email
+    if (email) {
+      const { error: diffErr } = await supabase.auth.signInWithPassword({ email, password })
+      if (!diffErr) {
+        setError('New password must be different from your current password.')
+        setLoading(false)
+        return
+      }
+    }
     const { error: err } = await supabase.auth.updateUser({ password })
     setLoading(false)
     if (err) {
