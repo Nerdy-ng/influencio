@@ -6,6 +6,13 @@ import { getSetting, loadSettingsFromDB } from './lib/siteSettings'
 import { loadLogosFromDB } from './lib/brandSettings'
 import { loadThemeFromDB } from './lib/themeSettings'
 
+// Capture at module load time — before Supabase processes/strips the ?code= parameter.
+// This is the only reliable way to detect a password-recovery link click.
+const STARTED_WITH_RECOVERY = (
+  new URLSearchParams(window.location.search).has('code') ||
+  new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery'
+)
+
 const Landing         = lazy(() => import('./pages/Landing'))
 const TalentLanding   = lazy(() => import('./pages/TalentLanding'))
 const BrandLanding    = lazy(() => import('./pages/BrandLanding'))
@@ -120,11 +127,13 @@ export default function App() {
           return
         } else if (event === 'SIGNED_IN') {
           if (location.pathname === '/reset-password') { setAuthReady(true); return }
-          // If URL has a code param or recovery hash, SIGNED_IN fired as part of a recovery flow.
-          // Hold off — PASSWORD_RECOVERY fires next and will handle the redirect.
-          const urlParams = new URLSearchParams(window.location.search)
-          const hashParams = new URLSearchParams(window.location.hash.slice(1))
-          if (urlParams.has('code') || hashParams.get('type') === 'recovery') { setAuthReady(true); return }
+          // SIGNED_IN fires as part of the recovery code exchange — PASSWORD_RECOVERY follows next.
+          // Supabase strips ?code= from the URL before events fire, so check the module-level flag.
+          if (STARTED_WITH_RECOVERY) {
+            navigate('/reset-password', { replace: true })
+            setAuthReady(true)
+            return
+          }
           localStorage.setItem('brandiór_user', session.user.id)
           // Pick up role the user selected before Google OAuth redirect
           const pendingRole = sessionStorage.getItem('brandiór_pending_role')
@@ -155,9 +164,7 @@ export default function App() {
           }
         } else if (event === 'INITIAL_SESSION') {
           // Don't process initial session if it came from a recovery link
-          const urlParams = new URLSearchParams(window.location.search)
-          const hashParams = new URLSearchParams(window.location.hash.slice(1))
-          if (urlParams.has('code') || hashParams.get('type') === 'recovery') { setAuthReady(true); return }
+          if (STARTED_WITH_RECOVERY) { setAuthReady(true); return }
           localStorage.setItem('brandiór_user', session.user.id)
           if (!localStorage.getItem('brandiór_role')) {
             if (metaRole) {
