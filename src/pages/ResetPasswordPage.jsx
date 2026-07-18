@@ -20,17 +20,28 @@ export default function ResetPasswordPage() {
   const logo = getLogo('light')
 
   useEffect(() => {
-    // If App.jsx already processed the recovery token and navigated here,
-    // the session is already active — set ready immediately without waiting for events.
+    let done = false
+    function activate() { if (!done) { done = true; setReady(true) } }
+
+    // If App.jsx already exchanged the code, the session exists — set ready immediately.
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setReady(true)
+      if (session) activate()
     })
 
+    // Catch all possible auth events — INITIAL_SESSION fires for late subscribers
+    // when the session was already established before this page mounted.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY') { setReady(true); return }
-      if (event === 'SIGNED_IN' && session) setReady(true)
+      if (session && (
+        event === 'PASSWORD_RECOVERY' ||
+        event === 'SIGNED_IN' ||
+        event === 'INITIAL_SESSION'
+      )) activate()
     })
-    return () => subscription.unsubscribe()
+
+    // Fallback: if still not ready after 10 s, the link has expired
+    const timer = setTimeout(() => setReady('expired'), 10000)
+
+    return () => { subscription.unsubscribe(); clearTimeout(timer) }
   }, [])
 
   async function handleSubmit(e) {
@@ -78,14 +89,27 @@ export default function ResetPasswordPage() {
               <p className="text-sm" style={{ color: '#6b7280' }}>Redirecting you to login…</p>
             </div>
 
+          ) : ready === 'expired' ? (
+            <div className="text-center py-4">
+              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5"
+                style={{ backgroundColor: '#fef2f2', border: '2px solid #fecaca' }}>
+                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="#dc2626" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M12 3a9 9 0 100 18A9 9 0 0012 3z" />
+                </svg>
+              </div>
+              <h1 className="text-xl font-black mb-2" style={{ color: darkPurple }}>Link expired</h1>
+              <p className="text-sm mb-5" style={{ color: '#6b7280' }}>This reset link has expired or already been used.</p>
+              <Link to="/forgot-password"
+                className="inline-block px-5 py-2.5 rounded-xl text-sm font-bold text-white"
+                style={{ backgroundColor: darkPurple }}>
+                Request a new link
+              </Link>
+            </div>
+
           ) : !ready ? (
             <div className="text-center py-4">
               <div className="w-8 h-8 rounded-full border-4 border-purple-200 border-t-purple-600 animate-spin mx-auto mb-4" />
               <p className="text-sm" style={{ color: '#6b7280' }}>Verifying your reset link…</p>
-              <p className="text-xs mt-3" style={{ color: '#9ca3af' }}>
-                If this takes too long, the link may have expired.{' '}
-                <Link to="/forgot-password" className="font-semibold underline" style={{ color: darkPurple }}>Request a new one</Link>
-              </p>
             </div>
 
           ) : (
