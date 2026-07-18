@@ -19,10 +19,14 @@ export default function ResetPasswordPage() {
   const logo = getLogo('light')
 
   useEffect(() => {
-    // Supabase fires PASSWORD_RECOVERY when it parses the recovery hash from the email link.
+    // If App.jsx already processed the recovery token and navigated here,
+    // the session is already active — set ready immediately without waiting for events.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setReady(true)
+    })
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') { setReady(true); return }
-      // If SIGNED_IN fires here it means the recovery session is already active (e.g. page refresh).
       if (event === 'SIGNED_IN' && session) setReady(true)
     })
     return () => subscription.unsubscribe()
