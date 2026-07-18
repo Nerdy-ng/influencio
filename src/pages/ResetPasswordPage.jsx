@@ -12,6 +12,7 @@ export default function ResetPasswordPage() {
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [showPass, setShowPass] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
@@ -110,15 +111,34 @@ export default function ResetPasswordPage() {
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#c4b5fd' }} />
                     <input
-                      type={showPass ? 'text' : 'password'}
+                      type={showConfirm ? 'text' : 'password'}
                       value={confirm}
                       onChange={e => setConfirm(e.target.value)}
                       placeholder="Confirm new password"
                       autoComplete="new-password"
-                      className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none"
-                      style={{ border: error ? `1.5px solid ${pink}` : '1.5px solid #e9d5ff', color: '#1a1a2e' }}
+                      className="w-full pl-10 pr-11 py-3 rounded-xl text-sm outline-none"
+                      style={{
+                        border: error
+                          ? `1.5px solid ${pink}`
+                          : confirm && password && confirm === password
+                            ? '1.5px solid #86efac'
+                            : '1.5px solid #e9d5ff',
+                        color: '#1a1a2e',
+                      }}
                     />
+                    <button type="button" onClick={() => setShowConfirm(v => !v)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-70 transition-opacity">
+                      {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
+                  {confirm && password && confirm === password && !error && (
+                    <p className="text-xs mt-1.5 flex items-center gap-1" style={{ color: '#16a34a' }}>
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Passwords match
+                    </p>
+                  )}
                   {error && <p className="text-xs mt-1.5" style={{ color: pink }}>{error}</p>}
                 </div>
 
