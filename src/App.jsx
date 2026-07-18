@@ -81,11 +81,10 @@ function PublicOnly({ children }) {
   return children
 }
 
-// Logged-in → show the page. Logged-out → redirect to /login.
-function PrivateRoute({ children }) {
-  if (!localStorage.getItem('brandiór_user')) {
-    return <Navigate to="/login" replace />
-  }
+// Logged-in → show the page. Logged-out → redirect to /login. Recovery session → reset page only.
+function PrivateRoute({ children, isRecoverySession }) {
+  if (isRecoverySession) return <Navigate to="/reset-password" replace />
+  if (!localStorage.getItem('brandiór_user')) return <Navigate to="/login" replace />
   return children
 }
 
@@ -96,6 +95,7 @@ export default function App() {
   const navigate = useNavigate()
   const location = useLocation()
   const [authReady, setAuthReady] = useState(!!localStorage.getItem('brandiór_user'))
+  const [isRecoverySession, setIsRecoverySession] = useState(false)
 
   // Load logos, theme colours, and platform settings from DB on startup
   useEffect(() => { loadLogosFromDB(); loadThemeFromDB(); loadSettingsFromDB() }, [])
@@ -104,8 +104,14 @@ export default function App() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (location.pathname.startsWith('/admin')) { setAuthReady(true); return }
-      // Never redirect away when user is on the reset-password page or following a recovery link
-      if (event === 'PASSWORD_RECOVERY' || location.pathname === '/reset-password') { setAuthReady(true); return }
+      // Recovery link clicked — lock session to /reset-password only, no dashboard access
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecoverySession(true)
+        setAuthReady(true)
+        navigate('/reset-password', { replace: true })
+        return
+      }
+      if (location.pathname === '/reset-password') { setAuthReady(true); return }
       if (session) {
         const metaRole = session.user.user_metadata?.role
 
@@ -189,13 +195,13 @@ export default function App() {
         <Route path="/signup/brand"   element={<PublicOnly><SignupPage /></PublicOnly>} />
         <Route path="/signup/creator" element={<PublicOnly><SignupPage /></PublicOnly>} />
         <Route path="/login"          element={<PublicOnly><LoginPage /></PublicOnly>} />
-        <Route path="/dashboard"              element={<PrivateRoute><TalentDashboard /></PrivateRoute>} />
+        <Route path="/dashboard"              element={<PrivateRoute isRecoverySession={isRecoverySession}><TalentDashboard /></PrivateRoute>} />
         <Route path="/marketplace"            element={<Marketplace />} />
         <Route path="/creators/:handle"       element={<TalentProfilePage />} />
         <Route path="/marketplace/:handle"    element={<TalentProfilePage />} />
-        <Route path="/brand-dashboard"        element={<PrivateRoute><BrandDashboard /></PrivateRoute>} />
-        <Route path="/collab/brief"           element={<PrivateRoute><CollabBriefPage /></PrivateRoute>} />
-        <Route path="/collab/review"          element={<PrivateRoute><CollabReviewPage /></PrivateRoute>} />
+        <Route path="/brand-dashboard"        element={<PrivateRoute isRecoverySession={isRecoverySession}><BrandDashboard /></PrivateRoute>} />
+        <Route path="/collab/brief"           element={<PrivateRoute isRecoverySession={isRecoverySession}><CollabBriefPage /></PrivateRoute>} />
+        <Route path="/collab/review"          element={<PrivateRoute isRecoverySession={isRecoverySession}><CollabReviewPage /></PrivateRoute>} />
         <Route path="/admin/login"            element={<AdminLogin />} />
         <Route path="/admin"                  element={<AdminPanel />} />
         <Route path="/admin/manager"          element={<ManagerPanel />} />

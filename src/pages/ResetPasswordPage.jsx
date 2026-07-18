@@ -38,7 +38,8 @@ export default function ResetPasswordPage() {
     setLoading(false)
     if (err) { setError(err.message); return }
     setDone(true)
-    setTimeout(() => navigate('/login', { replace: true }), 3000)
+    await supabase.auth.signOut()
+    setTimeout(() => navigate('/login', { replace: true }), 2000)
   }
 
   return (
