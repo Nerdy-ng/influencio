@@ -8,6 +8,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <!-- Redirect recovery links to /reset-password before React or Supabase loads -->
+  <script>
+    (function () {
+      var search = window.location.search
+      var hash   = window.location.hash
+      var isRecovery = search.indexOf('code=') !== -1 ||
+                       hash.indexOf('type=recovery') !== -1
+      if (isRecovery && window.location.pathname !== '/reset-password') {
+        window.location.replace('/reset-password' + search + hash)
+      }
+    })()
+  </script>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-QS84PCD2BH"></script>
   <script>
