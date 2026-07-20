@@ -4471,7 +4471,8 @@ function PitchesPanel({ showToast, auditLog }) {
     rejected:  { bg: '#fee2e2', color: '#dc2626' },
     withdrawn: { bg: '#f1f5f9', color: '#64748b' },
     expired:   { bg: '#fff7ed', color: '#f97316' },
-    interview: { bg: '#ede9fe', color: '#7c3aed' },
+    interview:     { bg: '#ede9fe', color: '#7c3aed' },
+    in_discussion: { bg: '#ede9fe', color: '#7c3aed' },
   }
 
   return (

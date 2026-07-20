@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Send, MessageSquare, Search, ChevronLeft, Circle, Inbox, MailOpen, ShoppingBag, SlidersHorizontal, Star, EyeOff, MoreVertical, Eye, DollarSign, Check, X, ChevronDown, AlertTriangle, Scale } from 'lucide-react'
+import { Send, MessageSquare, Search, ChevronLeft, Circle, Inbox, MailOpen, ShoppingBag, SlidersHorizontal, Star, EyeOff, MoreVertical, Eye, DollarSign, Check, X, ChevronDown, AlertTriangle, Scale, Paperclip } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '');
 const purple = '#7c3aed'
@@ -117,18 +117,48 @@ function ConvItem({ conv, active, userType, onClick, isFav, isHidden, onToggleFa
 
 // ── Message bubble ────────────────────────────────────────────────────────────
 function MessageBubble({ msg, isMine }) {
+  const isFile  = msg.type === 'file'
+  const isImage = isFile && msg.fileUrl && /\.(jpg|jpeg|png|webp|gif)$/i.test(msg.fileName || '')
+
   return (
     <div className={`flex ${isMine ? 'justify-end' : 'justify-start'} mb-2`}>
       <div className="max-w-[72%]">
-        <div className="px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
-          style={{
-            backgroundColor: isMine ? darkPurple : '#f3f4f6',
-            color: isMine ? 'white' : '#111827',
-            borderBottomRightRadius: isMine ? 4 : 16,
-            borderBottomLeftRadius: isMine ? 16 : 4,
-          }}>
-          {msg.body}
-        </div>
+        {isFile ? (
+          isImage ? (
+            <a href={msg.fileUrl} target="_blank" rel="noreferrer">
+              <img src={msg.fileUrl} alt={msg.fileName}
+                className="rounded-2xl max-w-[240px] max-h-[240px] object-cover cursor-pointer"
+                style={{ borderBottomRightRadius: isMine ? 4 : 16, borderBottomLeftRadius: isMine ? 16 : 4 }} />
+            </a>
+          ) : (
+            <a href={msg.fileUrl} target="_blank" rel="noreferrer"
+              className="flex items-center gap-3 px-4 py-3 rounded-2xl no-underline"
+              style={{
+                backgroundColor: isMine ? darkPurple : '#f3f4f6',
+                borderBottomRightRadius: isMine ? 4 : 16,
+                borderBottomLeftRadius: isMine ? 16 : 4,
+              }}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: isMine ? 'rgba(255,255,255,0.15)' : '#ede9fe' }}>
+                <Paperclip className="w-4 h-4" style={{ color: isMine ? 'white' : purple }} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold truncate" style={{ color: isMine ? 'white' : '#111827' }}>{msg.fileName}</p>
+                <p className="text-xs" style={{ color: isMine ? 'rgba(255,255,255,0.6)' : '#9ca3af' }}>{msg.fileSize}</p>
+              </div>
+            </a>
+          )
+        ) : (
+          <div className="px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
+            style={{
+              backgroundColor: isMine ? darkPurple : '#f3f4f6',
+              color: isMine ? 'white' : '#111827',
+              borderBottomRightRadius: isMine ? 4 : 16,
+              borderBottomLeftRadius: isMine ? 16 : 4,
+            }}>
+            {msg.body}
+          </div>
+        )}
         <p className={`text-[10px] mt-1 text-gray-400 ${isMine ? 'text-right' : 'text-left'}`}>
           {timeAgo(msg.createdAt)}
           {isMine && <span className="ml-1">{msg.read ? '✓✓' : '✓'}</span>}
@@ -317,6 +347,9 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
       body: m.body,
       type: m.type || 'text',
       offerData: m.offer_data,
+      fileUrl:   m.file_url  ?? null,
+      fileName:  m.file_name ?? null,
+      fileSize:  m.file_size ?? null,
       createdAt: m.created_at,
       read: m.read ?? false,
     }
@@ -439,6 +472,79 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
       }).eq('id', activeConvId),
     ])
     setSending(false)
+  }
+
+  // ── Send file attachment ──────────────────────────────────────────────────────
+  async function sendFile(e) {
+    const file = e.target.files?.[0]
+    if (!file || !activeConvId) return
+    e.target.value = ''
+
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf']
+    if (!allowed.includes(file.type)) {
+      alert('Only images (JPG, PNG, WebP) and PDF files are allowed.')
+      return
+    }
+
+    setSending(true)
+
+    // Optimistic scanning bubble
+    const scanId = `scan_${Date.now()}`
+    setMessages(prev => [...prev, {
+      id: scanId, conversationId: activeConvId, senderId: userId,
+      senderType: userType, body: '🔍 Scanning file for safety…',
+      type: 'text', createdAt: new Date().toISOString(), read: false,
+    }])
+
+    try {
+      const path    = `${userId}/${activeConvId}/${Date.now()}-${file.name}`
+      const sizeStr = file.size < 1024 * 1024
+        ? `${(file.size / 1024).toFixed(1)} KB`
+        : `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+
+      const { error: upErr } = await supabase.storage.from('chat-files').upload(path, file, { contentType: file.type })
+      if (upErr) throw upErr
+
+      const { data: { publicUrl } } = supabase.storage.from('chat-files').getPublicUrl(path)
+
+      // Virus scan
+      const { data: scanResult } = await supabase.functions.invoke('scan-attachment', {
+        body: { fileUrl: publicUrl, storagePath: path, bucket: 'chat-files' },
+      })
+
+      setMessages(prev => prev.filter(m => m.id !== scanId))
+
+      if (!scanResult?.safe) {
+        alert('File blocked — potential security risk detected.')
+        setSending(false)
+        return
+      }
+
+      const now = new Date().toISOString()
+      const otherUnread = userType === 'brand' ? 'unread_talent' : 'unread_brand'
+      await Promise.all([
+        supabase.from('messages').insert({
+          conversation_id: activeConvId,
+          sender_id: userId,
+          sender_type: userType,
+          body: null,
+          type: 'file',
+          file_url:  publicUrl,
+          file_name: file.name,
+          file_size: sizeStr,
+        }),
+        supabase.from('conversations').update({
+          last_message: `📎 ${file.name}`,
+          last_message_at: now,
+          [otherUnread]: supabase.rpc ? undefined : undefined,
+        }).eq('id', activeConvId),
+      ])
+    } catch (err) {
+      setMessages(prev => prev.filter(m => m.id !== scanId))
+      alert(err?.message || 'Could not upload file. Please try again.')
+    } finally {
+      setSending(false)
+    }
   }
 
   // ── Send offer ────────────────────────────────────────────────────────────────
@@ -819,6 +925,13 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
               <form onSubmit={sendMessage}
                 className="flex items-end gap-2 px-4 py-3"
                 style={{ borderTop: '1px solid #f3e8ff' }}>
+                {/* File attachment */}
+                <label title="Attach file (image or PDF)" className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 cursor-pointer transition-colors hover:bg-purple-50"
+                  style={{ color: '#9ca3af' }}>
+                  <Paperclip className="w-4 h-4" />
+                  <input type="file" accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
+                    className="hidden" onChange={sendFile} disabled={sending} />
+                </label>
                 {/* Offer trigger — brand only */}
                 {userType === 'brand' && (
                   <button

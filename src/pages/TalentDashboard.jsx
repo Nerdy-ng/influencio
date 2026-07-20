@@ -735,11 +735,41 @@ function BrowseTab({ setActiveTab }) {
     setPitching(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      await supabase.from('job_applications').insert({ job_id: pitchJob.id, creator_id: user.id, pitch: pitchNote.trim() })
+
+      // Block self-pitch
+      if (pitchJob.brand_id && user.id === pitchJob.brand_id) {
+        alert("You can't pitch on your own collab.")
+        setPitching(false)
+        return
+      }
+
+      const { error } = await supabase.from('job_applications').insert({
+        job_id:     pitchJob.id,
+        creator_id: user.id,
+        pitch:      pitchNote.trim(),
+        status:     'pending',
+      })
+      if (error) throw error
+
+      // Notify the brand
+      const { data: profileData } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+      const creatorName = profileData?.full_name || 'A creator'
+      await supabase.from('notifications').insert({
+        user_id: pitchJob.brand_id,
+        title:   `New pitch — ${pitchJob.title}`,
+        body:    `${creatorName} pitched for your collab`,
+        type:    'general',
+        data:    { screen: 'CampaignProposals' },
+      })
+
       setApplied(prev => [...prev, pitchJob.id])
-      setPitchJob(null); setPitchNote('')
-    } catch { /* silent */ }
-    finally { setPitching(false) }
+      setPitchJob(null)
+      setPitchNote('')
+    } catch (err) {
+      alert(err?.message || 'Could not submit pitch. Please try again.')
+    } finally {
+      setPitching(false)
+    }
   }
 
   const visible = jobs.filter(j => {
