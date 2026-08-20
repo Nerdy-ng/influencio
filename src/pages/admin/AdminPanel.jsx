@@ -307,6 +307,20 @@ const NAV_ITEMS = [
   { id: "settings",       label: "Settings",      Icon: Settings },
 ];
 
+const NAV_GROUPS = [
+  { items: ["overview", "analytics"] },
+  { divider: true },
+  { items: ["users", "rankings", "jobs", "pitches", "messaging"] },
+  { divider: true },
+  { items: ["wallets", "withdrawals", "escrow", "financials2", "rubies", "pay-config", "pitch-settings"] },
+  { divider: true },
+  { items: ["disputes2", "reviews", "ai-police", "trust-safety", "marketplace", "referrals2"] },
+  { divider: true },
+  { items: ["notifications2", "cms2", "push", "ai-controls", "discovery", "categories", "support2", "rate-cards"] },
+  { divider: true },
+  { items: ["team", "approvals", "content", "features", "legal", "app-config", "system", "analytics2", "audit"] },
+];
+
 // ─── DEFAULT LEGAL CONTENT ────────────────────────────────────────────────────
 
 const DEFAULT_TERMS = `## Terms & Conditions
@@ -398,6 +412,7 @@ export default function AdminPanel() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [adminUser, setAdminUser] = useState(null);
+  const [overviewFilter, setOverviewFilter] = useState("all");
   const [toast, setToast] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);
   const [viewUser, setViewUser] = useState(null);
@@ -1227,101 +1242,288 @@ export default function AdminPanel() {
   // ─── TABS ─────────────────────────────────────────────────────────────────
 
   const renderOverview = () => {
-    const fmtNum = v => v === null || v === undefined ? <span className="text-gray-300 animate-pulse">—</span> : v.toLocaleString()
-    const fmtMoney = v => v === null || v === undefined ? <span className="text-gray-300 animate-pulse">—</span> : `₦${v.toLocaleString()}`
-    const fmtPct = v => v === null || v === undefined ? <span className="text-gray-300 animate-pulse">—</span> : `${v}%`
-    const fmtTime = v => v === null || v === undefined ? <span className="text-gray-300 text-xs">N/A</span> : `${v}h avg`
+    const fmtNum   = v => v == null ? "—" : v.toLocaleString()
+    const fmtMoney = v => v == null ? "₦0" : `₦${v.toLocaleString()}`
+    const fmtPct   = v => v == null ? "—" : `${v}%`
 
-    const StatCard = ({ label, value, icon: Icon, color, sub }) => (
-      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide leading-tight">{label}</p>
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: color + '18' }}>
-            <Icon className="w-3.5 h-3.5" style={{ color }} />
-          </div>
-        </div>
-        <p className="text-2xl font-bold text-gray-900 tabular-nums">{value}</p>
-        {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
-      </div>
-    )
+    // Top stat strip
+    const allStats = [
+      { label: "Total Users",        value: fmtNum(realStats.userCount),           icon: Users,      color: "#7c3aed", bg: "#f3f0ff" },
+      { label: "Creators",           value: fmtNum(realStats.creatorCount),         icon: Users,      color: "#0ea5e9", bg: "#e0f2fe" },
+      { label: "Brands",             value: fmtNum(realStats.brandCount),           icon: Briefcase,  color: "#f97316", bg: "#fff7ed" },
+      { label: "Verified",           value: fmtNum(realStats.verifiedCreators),     icon: BadgeCheck, color: "#10b981", bg: "#ecfdf5" },
+      { label: "Wallet Balance",     value: fmtMoney(realStats.walletBalances),     icon: CreditCard, color: "#6366f1", bg: "#eef2ff" },
+      { label: "Active Campaigns",   value: fmtNum(realStats.activeCollabs),        icon: Activity,   color: "#ec4899", bg: "#fdf2f8" },
+    ]
+    const creatorStats = [
+      { label: "Active Creators",    value: fmtNum(realStats.creatorCount),         icon: Users,      color: "#7c3aed", bg: "#f3f0ff" },
+      { label: "Verified Creators",  value: fmtNum(realStats.verifiedCreators),     icon: BadgeCheck, color: "#10b981", bg: "#ecfdf5" },
+      { label: "Pending Verify",     value: fmtNum(realStats.pendingVerifications), icon: Clock,      color: "#d97706", bg: "#fef3c7" },
+      { label: "Pitches Today",      value: fmtNum(realStats.pitchesToday),         icon: Send,       color: "#7c3aed", bg: "#f3f0ff" },
+      { label: "Creator Payouts",    value: fmtMoney(realStats.escrowBalance),      icon: Wallet,     color: "#16a34a", bg: "#dcfce7" },
+      { label: "Avg Response",       value: realStats.avgCreatorResponse ? `${realStats.avgCreatorResponse}h` : "—", icon: Clock, color: "#0ea5e9", bg: "#e0f2fe" },
+    ]
+    const brandStats = [
+      { label: "Active Brands",      value: fmtNum(realStats.brandCount),           icon: Briefcase,  color: "#f97316", bg: "#fff7ed" },
+      { label: "Verified Brands",    value: fmtNum(realStats.verifiedBrands),       icon: BadgeCheck, color: "#10b981", bg: "#ecfdf5" },
+      { label: "Total GMV",          value: fmtMoney(realStats.totalGMV),           icon: TrendingUp, color: "#16a34a", bg: "#dcfce7" },
+      { label: "Revenue",            value: fmtMoney(realStats.brandiorRevenue),    icon: DollarSign, color: "#4f46e5", bg: "#eef2ff" },
+      { label: "In Escrow",          value: fmtMoney(realStats.escrowBalance),      icon: Shield,     color: "#6366f1", bg: "#eef2ff" },
+      { label: "Avg Response",       value: realStats.avgBrandResponse ? `${realStats.avgBrandResponse}h` : "—", icon: Clock, color: "#d97706", bg: "#fef3c7" },
+    ]
+    const platformStats = [
+      { label: "Total Users",        value: fmtNum(realStats.userCount),            icon: Users,      color: "#7c3aed", bg: "#f3f0ff" },
+      { label: "Completed Collabs",  value: fmtNum(realStats.completedCollabs),     icon: CheckCircle,color: "#16a34a", bg: "#dcfce7" },
+      { label: "Conversion Rate",    value: fmtPct(realStats.conversionRate),       icon: BarChart2,  color: "#10b981", bg: "#ecfdf5" },
+      { label: "Pending Disputes",   value: fmtNum(realStats.pendingDisputes),      icon: Scale,      color: "#ef4444", bg: "#fee2e2" },
+      { label: "Platform Revenue",   value: fmtMoney(realStats.brandiorRevenue),    icon: TrendingUp, color: "#4f46e5", bg: "#eef2ff" },
+      { label: "Daily Signups",      value: fmtNum(realStats.dailySignups),         icon: Users,      color: "#0ea5e9", bg: "#e0f2fe" },
+    ]
 
-    const SectionLabel = ({ title }) => (
-      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-6 mb-3">{title}</p>
-    )
+    const statsRow = overviewFilter === "creator" ? creatorStats : overviewFilter === "brand" ? brandStats : overviewFilter === "platform" ? platformStats : allStats
+
+    const flowItems = [
+      { label: "Creators",       sub: "Talent building the future",    value: fmtNum(realStats.creatorCount),    color: "#7c3aed", bg: "#f3f0ff", icon: Users },
+      { label: "Brands",         sub: "Businesses creating impact",    value: fmtNum(realStats.brandCount),      color: "#f97316", bg: "#fff7ed", icon: Briefcase },
+      { label: "Campaigns",      sub: "Active opportunities",          value: fmtNum(realStats.activeCollabs),   color: "#0ea5e9", bg: "#e0f2fe", icon: Activity },
+      { label: "Collaborations", sub: "Creator-brand matches",         value: fmtNum(realStats.openCollabs),     color: "#10b981", bg: "#ecfdf5", icon: Layers },
+      { label: "Payments",       sub: "Secure & transparent",          value: fmtMoney(realStats.totalGMV),      color: "#6366f1", bg: "#eef2ff", icon: CreditCard },
+    ]
+
+    const systemAlerts = [
+      { label: "Pending Verifications", value: realStats.pendingVerifications ?? 0, color: "#f97316", Icon: BadgeCheck, tab: "users" },
+      { label: "Open Disputes",         value: openDisputeCount,                    color: "#ef4444", Icon: Scale,      tab: "disputes2" },
+      { label: "Reported Content",      value: modStats.pending ?? 0,              color: "#7c3aed", Icon: ShieldAlert, tab: "ai-police" },
+      { label: "Escrow Balance",        value: fmtMoney(realStats.escrowBalance),   color: "#6366f1", Icon: Shield,     tab: "escrow" },
+    ]
+
+    const moneyFlow = [
+      { label: "Brand Payment", Icon: Briefcase, color: "#f97316" },
+      { label: "Escrow",        Icon: Shield,    color: "#6366f1" },
+      { label: "Creator Wallet",Icon: Wallet,    color: "#10b981" },
+      { label: "Withdrawal",    Icon: ArrowUpRight, color: "#0ea5e9" },
+    ]
+
+    const quickActions = [
+      { label: "Add Creator",          Icon: Users,      color: "#7c3aed", tab: "users" },
+      { label: "Add Brand",            Icon: Briefcase,  color: "#f97316", tab: "users" },
+      { label: "Create Campaign",      Icon: Activity,   color: "#0ea5e9", tab: "jobs" },
+      { label: "Review Verifications", Icon: BadgeCheck, color: "#10b981", tab: "users" },
+      { label: "Manage Disputes",      Icon: Scale,      color: "#ef4444", tab: "disputes2" },
+      { label: "Platform Settings",    Icon: Settings,   color: "#6366f1", tab: "system" },
+    ]
 
     return (
-      <div className="space-y-2">
-        <SectionLabel title="Users" />
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-          <StatCard label="Total Users"          value={fmtNum(realStats.userCount)}          icon={Users}      color="#4f46e5" />
-          <StatCard label="Active Creators"      value={fmtNum(realStats.creatorCount)}       icon={Users}      color="#7c3aed" />
-          <StatCard label="Active Brands"        value={fmtNum(realStats.brandCount)}         icon={Briefcase}  color="#0ea5e9" />
-          <StatCard label="Verified Creators"    value={fmtNum(realStats.verifiedCreators)}   icon={BadgeCheck} color="#16a34a" />
-          <StatCard label="Verified Brands"      value={fmtNum(realStats.verifiedBrands)}     icon={BadgeCheck} color="#059669" />
-          <StatCard label="Pending Verifications" value={fmtNum(realStats.pendingVerifications)} icon={Clock}   color="#d97706" />
-        </div>
-
-        <SectionLabel title="Collaborations" />
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-          <StatCard label="Active Campaigns"        value={fmtNum(realStats.activeCollabs)}    icon={Activity}  color="#0ea5e9" />
-          <StatCard label="Open Collaborations"     value={fmtNum(realStats.openCollabs)}      icon={Layers}    color="#7c3aed" />
-          <StatCard label="Completed Collaborations" value={fmtNum(realStats.completedCollabs)} icon={CheckCircle} color="#16a34a" />
-        </div>
-
-        <SectionLabel title="Financial" />
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-          <StatCard label="Total GMV"          value={fmtMoney(realStats.totalGMV)}         icon={DollarSign}  color="#16a34a" />
-          <StatCard label="Brandior Revenue"   value={fmtMoney(realStats.brandiorRevenue)}  icon={TrendingUp}  color="#4f46e5" />
-          <StatCard label="Wallet Balances"    value={fmtMoney(realStats.walletBalances)}   icon={CreditCard}  color="#0ea5e9" />
-          <StatCard label="Escrow Balance"     value={fmtMoney(realStats.escrowBalance)}    icon={Shield}      color="#7c3aed" />
-          <StatCard label="Pending Withdrawals" value={fmtMoney(realStats.pendingWithdrawals)} icon={ArrowUpRight} color="#d97706" />
-          <StatCard label="Pending Disputes"   value={fmtNum(realStats.pendingDisputes)}    icon={Scale}       color="#dc2626" />
-        </div>
-
-        <SectionLabel title="Activity" />
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-          <StatCard label="Daily Signups"     value={fmtNum(realStats.dailySignups)}    icon={Users}        color="#4f46e5" />
-          <StatCard label="Conversion Rate"   value={fmtPct(realStats.conversionRate)}  icon={BarChart2}    color="#16a34a" sub="collabs completed" />
-          <StatCard label="New Referrals"     value={fmtNum(realStats.newReferrals)}    icon={GitBranch}    color="#f97316" sub="this month" />
-          <StatCard label="Pitches Today"     value={fmtNum(realStats.pitchesToday)}    icon={Send}         color="#7c3aed" />
-          <StatCard label="Avg Creator Resp." value={fmtTime(realStats.avgCreatorResponse)} icon={Clock}   color="#0ea5e9" />
-          <StatCard label="Avg Brand Resp."   value={fmtTime(realStats.avgBrandResponse)}  icon={Clock}   color="#d97706" />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-            <h3 className="font-semibold text-gray-900 mb-4">Recent Activity</h3>
-            <div className="space-y-3">
-              {activityFeed.length === 0
-                ? <p className="text-sm text-gray-400">No recent activity</p>
-                : activityFeed.map((a) => (
-                  <div key={a.id} className="flex items-start gap-3 py-2 border-b border-gray-50 last:border-0">
-                    <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: a.type === "flag" ? "#ef4444" : a.type === "approve" ? "#16a34a" : "#4f46e5" }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-700">{a.text}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{a.time}</p>
-                    </div>
-                  </div>
-                ))}
+      <div className="space-y-5">
+        {/* ── Top stat strip ── */}
+        <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(6, 1fr)" }}>
+          {statsRow.map(({ label, value, icon: Icon, color, bg }) => (
+            <div key={label} className="rounded-2xl p-4" style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb" }}>
+              <div className="flex items-center gap-2 mb-3">
+                <div style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Icon style={{ width: 15, height: 15, color }} />
+                </div>
+                <p style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", lineHeight: 1.2 }}>{label}</p>
+              </div>
+              <p style={{ fontSize: 22, fontWeight: 900, color: "#111827", lineHeight: 1 }} className="tabular-nums">{value}</p>
+              <p style={{ fontSize: 11, color: "#10b981", marginTop: 4, fontWeight: 600 }}>↑ 100% vs last 30 days</p>
             </div>
-          </div>
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-            <h3 className="font-semibold text-gray-900 mb-4">Quick Summary</h3>
-            <div className="space-y-2.5">
-              {[
-                { label: 'Creator signups today', value: fmtNum(realStats.dailySignups) },
-                { label: 'Pitches submitted today', value: fmtNum(realStats.pitchesToday) },
-                { label: 'Pending disputes', value: fmtNum(realStats.pendingDisputes) },
-                { label: 'Pending verifications', value: fmtNum(realStats.pendingVerifications) },
-                { label: 'Conversion rate', value: fmtPct(realStats.conversionRate) },
-                { label: 'Total platform revenue', value: fmtMoney(realStats.brandiorRevenue) },
-              ].map(item => (
-                <div key={item.label} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                  <p className="text-sm text-gray-600">{item.label}</p>
-                  <span className="font-semibold text-gray-900 text-sm tabular-nums">{item.value}</span>
+          ))}
+        </div>
+
+        {/* ── Three column layout ── */}
+        <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1.6fr 1fr" }}>
+          {/* ── Ecosystem Flow ── */}
+          <div className="rounded-2xl p-5" style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb" }}>
+            <p style={{ fontSize: 14, fontWeight: 800, color: "#111827", marginBottom: 16 }}>Ecosystem Flow</p>
+            <div className="space-y-1">
+              {flowItems.map(({ label, sub, value, color, bg, icon: Icon }, i) => (
+                <div key={label}>
+                  <div className="flex items-center gap-3 py-2.5 rounded-xl px-2" style={{ backgroundColor: "#fafafa" }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Icon style={{ width: 16, height: 16, color }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>{label}</p>
+                      <p style={{ fontSize: 11, color: "#9ca3af" }}>{sub}</p>
+                    </div>
+                    <p style={{ fontSize: 14, fontWeight: 800, color, flexShrink: 0 }}>{value}</p>
+                  </div>
+                  {i < flowItems.length - 1 && (
+                    <div className="flex justify-center my-0.5">
+                      <div style={{ width: 1.5, height: 14, backgroundColor: "#e5e7eb" }} />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* ── Marketplace Overview ── */}
+          <div className="rounded-2xl p-5" style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb" }}>
+            <p style={{ fontSize: 14, fontWeight: 800, color: "#111827", marginBottom: 12 }}>Marketplace Overview</p>
+            {/* Circular visual */}
+            <div style={{ position: "relative", height: 220, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {/* Outer ring */}
+              <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", border: "1.5px dashed #e5e7eb" }} />
+              <div style={{ position: "absolute", width: 140, height: 140, borderRadius: "50%", border: "1px dashed #f3f4f6" }} />
+              {/* Center logo */}
+              <div style={{ width: 60, height: 60, borderRadius: "50%", backgroundColor: "#fff", border: "2px solid #e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2, boxShadow: "0 4px 16px rgba(0,0,0,0.06)" }}>
+                <img src="/Brandiör-2.png" style={{ width: 36, height: 36, objectFit: "contain" }} alt="" />
+              </div>
+              {/* Orbit nodes */}
+              {[
+                { label: fmtNum(realStats.creatorCount),  sub: "Creators",       color: "#7c3aed", Icon: Users,      angle: -90 },
+                { label: fmtNum(realStats.brandCount),    sub: "Brands",         color: "#f97316", Icon: Briefcase,  angle: 30 },
+                { label: fmtNum(realStats.activeCollabs), sub: "Campaigns",      color: "#0ea5e9", Icon: Activity,   angle: 150 },
+                { label: fmtMoney(realStats.totalGMV),    sub: "Payments",       color: "#10b981", Icon: CreditCard, angle: 210 },
+                { label: fmtNum(realStats.openCollabs),   sub: "Collaborations", color: "#6366f1", Icon: Layers,     angle: 330 },
+              ].map(({ label, sub, color, Icon, angle }) => {
+                const rad = (angle * Math.PI) / 180
+                const r = 95
+                const x = Math.cos(rad) * r
+                const y = Math.sin(rad) * r
+                return (
+                  <div key={sub} style={{ position: "absolute", transform: `translate(${x}px,${y}px)`, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: color + "18", display: "flex", alignItems: "center", justifyContent: "center", border: `1.5px solid ${color}30` }}>
+                      <Icon style={{ width: 16, height: 16, color }} />
+                    </div>
+                    <p style={{ fontSize: 11, fontWeight: 800, color: "#111827", textAlign: "center", whiteSpace: "nowrap" }}>{label}</p>
+                    <p style={{ fontSize: 10, color: "#9ca3af", textAlign: "center" }}>{sub}</p>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Bottom stats */}
+            <div className="grid grid-cols-3 gap-3 mt-2">
+              {[
+                { label: "Active Collabs",   value: fmtNum(realStats.openCollabs), color: "#7c3aed" },
+                { label: "Pending Approvals",value: fmtNum(pendingCount),          color: "#f97316" },
+                { label: "Completed",        value: fmtNum(realStats.completedCollabs), color: "#10b981" },
+              ].map(({ label, value, color }) => (
+                <div key={label} className="rounded-xl p-3 text-center" style={{ backgroundColor: "#f9fafb" }}>
+                  <p style={{ fontSize: 16, fontWeight: 900, color }} className="tabular-nums">{value}</p>
+                  <p style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>{label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Right column: Alerts + Activity ── */}
+          <div className="space-y-4">
+            {/* System Alerts */}
+            <div className="rounded-2xl p-5" style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb" }}>
+              <div className="flex items-center justify-between mb-4">
+                <p style={{ fontSize: 14, fontWeight: 800, color: "#111827" }}>System Alerts</p>
+                <button onClick={() => setActiveTab("audit")} style={{ fontSize: 11, color: "#7c3aed", fontWeight: 700, background: "none", border: "none", cursor: "pointer" }}>View all</button>
+              </div>
+              <div className="space-y-2">
+                {systemAlerts.map(({ label, value, color, Icon, tab }) => (
+                  <button key={label} onClick={() => setActiveTab(tab)}
+                    className="w-full flex items-center justify-between p-2.5 rounded-xl transition-all"
+                    style={{ backgroundColor: "#fafafa", border: "1px solid #f3f4f6", cursor: "pointer" }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = "#f3f4f6"}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = "#fafafa"}>
+                    <div className="flex items-center gap-2.5">
+                      <div style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: color + "15", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <Icon style={{ width: 13, height: 13, color }} />
+                      </div>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{label}</p>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span style={{ fontSize: 13, fontWeight: 800, color: typeof value === "string" ? "#111827" : (value > 0 ? color : "#10b981") }} className="tabular-nums">
+                        {typeof value === "string" ? value : (value > 0 ? value : 0)}
+                      </span>
+                      <ChevronRight style={{ width: 12, height: 12, color: "#d1d5db" }} />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Live Activity */}
+            <div className="rounded-2xl p-5" style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb" }}>
+              <div className="flex items-center justify-between mb-4">
+                <p style={{ fontSize: 14, fontWeight: 800, color: "#111827" }}>Live Activity</p>
+                <button onClick={() => setActiveTab("audit")} style={{ fontSize: 11, color: "#7c3aed", fontWeight: 700, background: "none", border: "none", cursor: "pointer" }}>View all</button>
+              </div>
+              <div className="space-y-2.5">
+                {activityFeed.length === 0 ? (
+                  <p style={{ fontSize: 12, color: "#9ca3af" }}>No recent activity</p>
+                ) : activityFeed.slice(0, 6).map((a) => {
+                  const dotColor = a.type === "flag" ? "#ef4444" : a.type === "approve" ? "#10b981" : "#7c3aed"
+                  const icons = { flag: ShieldAlert, approve: CheckCircle, signup: Users, collab: Layers, pitch: Send, wallet: Wallet }
+                  const AIcon = icons[a.type] || Activity
+                  return (
+                    <div key={a.id} className="flex items-center gap-2.5">
+                      <div style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: dotColor + "15", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <AIcon style={{ width: 12, height: 12, color: dotColor }} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 12, color: "#374151", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.text}</p>
+                        <p style={{ fontSize: 10, color: "#9ca3af" }}>{a.time}</p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Financial Overview + Quick Actions ── */}
+        <div className="rounded-2xl p-5" style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb" }}>
+          <p style={{ fontSize: 14, fontWeight: 800, color: "#111827", marginBottom: 16 }}>Financial Overview</p>
+          <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr 1fr 1fr 1.2fr" }}>
+            {[
+              { label: "Total GMV",           value: fmtMoney(realStats.totalGMV),           color: "#7c3aed" },
+              { label: "Platform Revenue",     value: fmtMoney(realStats.brandiorRevenue),    color: "#10b981" },
+              { label: "Escrow Balance",       value: fmtMoney(realStats.escrowBalance),      color: "#6366f1" },
+              { label: "Pending Withdrawals",  value: fmtMoney(realStats.pendingWithdrawals), color: "#f97316" },
+            ].map(({ label, value, color }) => (
+              <div key={label} className="rounded-xl p-4" style={{ backgroundColor: "#f9fafb" }}>
+                <p style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600, marginBottom: 6 }}>{label}</p>
+                <p style={{ fontSize: 18, fontWeight: 900, color }} className="tabular-nums">{value}</p>
+                <p style={{ fontSize: 10, color: "#d1d5db", marginTop: 4 }}>—</p>
+              </div>
+            ))}
+            {/* Money Flow */}
+            <div className="rounded-xl p-4" style={{ backgroundColor: "#f9fafb" }}>
+              <p style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600, marginBottom: 12 }}>Money Flow</p>
+              <div className="flex items-center gap-1">
+                {moneyFlow.map(({ label, Icon, color }, i) => (
+                  <div key={label} className="flex items-center gap-1">
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: color + "18", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Icon style={{ width: 12, height: 12, color }} />
+                      </div>
+                      <p style={{ fontSize: 9, color: "#9ca3af", textAlign: "center", lineHeight: 1.2, maxWidth: 36 }}>{label}</p>
+                    </div>
+                    {i < moneyFlow.length - 1 && <ArrowUpRight style={{ width: 10, height: 10, color: "#d1d5db", transform: "rotate(0deg)", flexShrink: 0 }} />}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Quick Actions ── */}
+        <div className="rounded-2xl p-5" style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb" }}>
+          <p style={{ fontSize: 14, fontWeight: 800, color: "#111827", marginBottom: 14 }}>Quick Actions</p>
+          <div className="flex gap-3 flex-wrap">
+            {quickActions.map(({ label, Icon, color, tab }) => (
+              <button key={label} onClick={() => setActiveTab(tab)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all"
+                style={{ backgroundColor: "#f9fafb", border: "1px solid #e5e7eb", cursor: "pointer" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = color + "10"; e.currentTarget.style.borderColor = color + "40"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#f9fafb"; e.currentTarget.style.borderColor = "#e5e7eb"; }}>
+                <div style={{ width: 26, height: 26, borderRadius: 7, backgroundColor: color + "18", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon style={{ width: 12, height: 12, color }} />
+                </div>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>{label}</span>
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -3257,104 +3459,169 @@ export default function AdminPanel() {
 
   if (!adminUser) return null;
 
+  const navItemMap = Object.fromEntries(NAV_ITEMS.map(n => [n.id, n]));
+  const totalAlerts = (modStats.pending || 0) + (pendingCount || 0) + (openDisputeCount || 0);
+
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: "#f1f5f9" }}>
-      {/* Sidebar */}
-      <aside className="w-60 flex-shrink-0 flex flex-col" style={{ backgroundColor: "#0f172a", minHeight: "100vh" }}>
-        {/* Logo */}
-        <div className="px-5 py-5 border-b" style={{ borderColor: "#1e293b" }}>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#4f46e5" }}>
-              <Shield className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <p className="text-white font-bold text-sm leading-none">Brandior</p>
-              <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Admin Portal</p>
-            </div>
-          </div>
+    <div className="flex min-h-screen" style={{ backgroundColor: "#f0f2f5" }}>
+      {/* ── Sidebar ── */}
+      <aside className="flex-shrink-0 flex flex-col" style={{ width: 72, backgroundColor: "#0d1117", minHeight: "100vh", position: "sticky", top: 0, height: "100vh" }}>
+        {/* Logo mark */}
+        <div className="flex items-center justify-center py-4 border-b" style={{ borderColor: "#161b22" }}>
+          <img src="/Brandiör-2.png" alt="Brandior" style={{ width: 34, height: 34, objectFit: "contain" }} />
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-0.5">
-          {NAV_ITEMS.map(({ id, label, Icon, badge, badgeColor }) => (
-            <button
-              key={id}
-              onClick={() => { setActiveTab(id); if (id === 'financials') loadFinancials() }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left"
-              style={{
-                backgroundColor: activeTab === id ? "#4f46e5" : "transparent",
-                color: activeTab === id ? "#fff" : "#94a3b8",
-              }}
-            >
-              <Icon className="w-4 h-4 flex-shrink-0" />
-              <span className="flex-1">{label}</span>
-              {badge && id === "ai-police" && modStats.pending > 0 && (
-                <span className="min-w-[18px] h-[18px] px-1 rounded-full text-xs font-bold flex items-center justify-center" style={{ backgroundColor: badgeColor || "#ef4444", color: "#fff" }}>
-                  {modStats.pending}
-                </span>
-              )}
-              {badge && id === "approvals" && pendingCount > 0 && (
-                <span className="min-w-[18px] h-[18px] px-1 rounded-full text-xs font-bold flex items-center justify-center" style={{ backgroundColor: "#ef4444", color: "#fff" }}>
-                  {pendingCount}
-                </span>
-              )}
-              {badge && id === "disputes" && openDisputeCount > 0 && (
-                <span className="min-w-[18px] h-[18px] px-1 rounded-full text-xs font-bold flex items-center justify-center" style={{ backgroundColor: badgeColor || "#ef4444", color: "#fff" }}>
-                  {openDisputeCount}
-                </span>
-              )}
-            </button>
-          ))}
+        {/* Nav icons */}
+        <nav className="flex-1 overflow-y-auto py-3 flex flex-col items-center gap-0.5" style={{ scrollbarWidth: "none" }}>
+          {NAV_GROUPS.map((group, gi) => {
+            if (group.divider) return (
+              <div key={`div-${gi}`} style={{ width: 32, height: 1, backgroundColor: "#21262d", margin: "6px 0", flexShrink: 0 }} />
+            );
+            return group.items.map(id => {
+              const item = navItemMap[id];
+              if (!item) return null;
+              const { Icon, label, badge, badgeColor } = item;
+              const active = activeTab === id;
+              const badgeCount =
+                badge && id === "ai-police" ? modStats.pending :
+                badge && id === "approvals" ? pendingCount :
+                badge && id === "disputes2" ? openDisputeCount : 0;
+              return (
+                <button
+                  key={id}
+                  title={label}
+                  onClick={() => { setActiveTab(id); if (id === 'financials') loadFinancials(); }}
+                  style={{
+                    width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    backgroundColor: active ? "#7c3aed" : "transparent",
+                    color: active ? "#fff" : "#6e7681",
+                    position: "relative",
+                    transition: "background-color 0.15s, color 0.15s",
+                    border: "none", cursor: "pointer",
+                  }}
+                  onMouseEnter={e => { if (!active) { e.currentTarget.style.backgroundColor = "#21262d"; e.currentTarget.style.color = "#c9d1d9"; } }}
+                  onMouseLeave={e => { if (!active) { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#6e7681"; } }}
+                >
+                  <Icon style={{ width: 18, height: 18 }} />
+                  {badge && badgeCount > 0 && (
+                    <span style={{
+                      position: "absolute", top: 6, right: 6,
+                      width: 8, height: 8, borderRadius: "50%",
+                      backgroundColor: badgeColor || "#ef4444",
+                      border: "1.5px solid #0d1117",
+                    }} />
+                  )}
+                </button>
+              );
+            });
+          })}
         </nav>
 
-        {/* User */}
-        <div className="px-3 py-4 border-t" style={{ borderColor: "#1e293b" }}>
-          <div className="flex items-center gap-2.5 px-2">
-            <Avatar initials="SA" size="sm" color="#4f46e5" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">{adminUser.name}</p>
-              <p className="text-xs truncate" style={{ color: "#64748b" }}>Super Admin</p>
-            </div>
-          </div>
+        {/* Bottom */}
+        <div className="flex flex-col items-center gap-2 py-4 border-t" style={{ borderColor: "#161b22" }}>
           <button
+            title={adminUser.name}
+            style={{ width: 34, height: 34, borderRadius: "50%", backgroundColor: "#7c3aed", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: "#fff" }}>
+              {(adminUser.name || "SA").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
+            </span>
+          </button>
+          <button
+            title="Logout"
             onClick={handleLogout}
-            className="mt-3 w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors"
-            style={{ color: "#64748b" }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#1e293b"; e.currentTarget.style.color = "#f87171"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#64748b"; }}
+            style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#6e7681" }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#21262d"; e.currentTarget.style.color = "#f87171"; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#6e7681"; }}
           >
-            <LogOut className="w-4 h-4" /> Logout
+            <LogOut style={{ width: 16, height: 16 }} />
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
+      {/* ── Main Content ── */}
       <main className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
-          <div>
-            <h1 className="font-bold text-gray-900 text-lg capitalize">{NAV_ITEMS.find((n) => n.id === activeTab)?.label}</h1>
-            <p className="text-xs text-gray-400">Brandior Admin Portal · Super Admin</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2.5">
-              <Avatar initials="SA" size="sm" color="#4f46e5" />
-              <div className="hidden sm:block">
-                <p className="text-sm font-medium text-gray-900 leading-none">{adminUser.name}</p>
-                <p className="text-xs text-gray-400">super admin</p>
+        <header className="flex-shrink-0 flex items-center gap-4 px-6" style={{ backgroundColor: "#fff", borderBottom: "1px solid #e5e7eb", height: 64 }}>
+          {/* Title */}
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="font-black text-gray-900" style={{ fontSize: 17 }}>
+                  {activeTab === "overview" ? "Command Center" : NAV_ITEMS.find(n => n.id === activeTab)?.label}
+                </h1>
+                {activeTab === "overview" && (
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold" style={{ backgroundColor: "#dcfce7", color: "#16a34a" }}>
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: "#16a34a", display: "inline-block" }} />
+                    Live
+                  </span>
+                )}
               </div>
+              <p className="text-xs font-medium" style={{ color: "#9ca3af" }}>Real-time overview of the Brandior ecosystem</p>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-gray-500 border border-gray-200 hover:bg-gray-50 transition-colors"
-            >
-              <LogOut className="w-4 h-4" /> Logout
+          </div>
+
+          {/* Filter tabs — overview only */}
+          {activeTab === "overview" && (
+            <div className="flex items-center gap-1 rounded-xl p-1" style={{ backgroundColor: "#f3f4f6" }}>
+              {[
+                { key: "all",      label: "ALL" },
+                { key: "creator",  label: "CREATOR" },
+                { key: "brand",    label: "BRAND" },
+                { key: "platform", label: "PLATFORM" },
+              ].map(f => (
+                <button key={f.key} onClick={() => setOverviewFilter(f.key)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all"
+                  style={overviewFilter === f.key
+                    ? { backgroundColor: "#0d1117", color: "#fff" }
+                    : { backgroundColor: "transparent", color: "#6b7280" }}>
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Right controls */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {/* Search */}
+            <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: "#f3f4f6", border: "1px solid #e5e7eb" }}>
+              <Search style={{ width: 14, height: 14, color: "#9ca3af" }} />
+              <span style={{ fontSize: 13, color: "#9ca3af" }}>Search anything…</span>
+              <span style={{ fontSize: 11, color: "#d1d5db", backgroundColor: "#e5e7eb", borderRadius: 4, padding: "1px 5px", fontWeight: 700 }}>⌘K</span>
+            </div>
+            {/* Notifications */}
+            <button style={{ position: "relative", width: 36, height: 36, borderRadius: 10, border: "1px solid #e5e7eb", backgroundColor: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+              onClick={() => setActiveTab("notifications2")}>
+              <Bell style={{ width: 16, height: 16, color: "#6b7280" }} />
+              {totalAlerts > 0 && (
+                <span style={{
+                  position: "absolute", top: -4, right: -4,
+                  minWidth: 18, height: 18, borderRadius: 9, padding: "0 4px",
+                  backgroundColor: "#ef4444", color: "#fff",
+                  fontSize: 10, fontWeight: 800,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  border: "2px solid #fff",
+                }}>{totalAlerts > 99 ? "99+" : totalAlerts}</span>
+              )}
             </button>
+            {/* User */}
+            <div className="flex items-center gap-2 cursor-pointer">
+              <div style={{ width: 34, height: 34, borderRadius: "50%", backgroundColor: "#7c3aed", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ fontSize: 12, fontWeight: 800, color: "#fff" }}>
+                  {(adminUser.name || "SA").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
+                </span>
+              </div>
+              <div className="hidden lg:block">
+                <p className="text-sm font-semibold text-gray-900 leading-none">{adminUser.name}</p>
+                <p className="text-xs" style={{ color: "#9ca3af" }}>Super Admin</p>
+              </div>
+              <ChevronDown style={{ width: 14, height: 14, color: "#9ca3af" }} />
+            </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 p-6 overflow-auto">
+        <div className="flex-1 overflow-auto" style={{ padding: "24px 28px" }}>
           {TAB_CONTENT[activeTab]?.()}
         </div>
       </main>
