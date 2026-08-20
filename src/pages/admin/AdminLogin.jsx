@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Lock, Mail, Eye, EyeOff, Shield, AlertCircle, Smartphone } from "lucide-react";
+import { Shield, Mail, AlertCircle, Smartphone } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
 const ROLE_ROUTES = {
@@ -9,45 +9,73 @@ const ROLE_ROUTES = {
 };
 
 export default function AdminLogin() {
-  const [step, setStep]           = useState("credentials"); // credentials | setup | verify
-  const [email, setEmail]         = useState("");
-  const [password, setPassword]   = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [totpCode, setTotpCode]   = useState("");
-  const [error, setError]         = useState("");
-  const [loading, setLoading]     = useState(false);
+  const [step, setStep]     = useState("email"); // email | otp
+  const [email, setEmail]   = useState("");
+  const [otp, setOtp]       = useState("");
+  const [error, setError]   = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent]     = useState(false);
 
-  const [factorId, setFactorId]   = useState(null);
-  const [challengeId, setChallengeId] = useState(null);
-  const [qrCode, setQrCode]       = useState(null);
-  const [secret, setSecret]       = useState(null);
-  const [adminData, setAdminData] = useState(null);
-
-  async function handleCredentials(e) {
+  async function handleSendOtp(e) {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
-      password,
-    });
+    // Check this email is actually an admin before sending OTP
+    const { data: adminRow } = await supabase
+      .from("admin_users")
+      .select("role, name")
+      .eq("email", email.trim().toLowerCase())
+      .single();
 
-    if (authError || !data.user) {
-      setError("Invalid email or password.");
+    if (!adminRow) {
+      setError("This email does not have admin access.");
       setLoading(false);
       return;
     }
 
-    const { data: adminRow, error: tableError } = await supabase
+    const { error: otpErr } = await supabase.auth.signInWithOtp({
+      email: email.trim().toLowerCase(),
+      options: { shouldCreateUser: false },
+    });
+
+    if (otpErr) {
+      setError("Failed to send code. Make sure the email exists in the system.");
+      setLoading(false);
+      return;
+    }
+
+    setSent(true);
+    setStep("otp");
+    setLoading(false);
+  }
+
+  async function handleVerifyOtp(e) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    const { data, error: verifyErr } = await supabase.auth.verifyOtp({
+      email: email.trim().toLowerCase(),
+      token: otp.trim(),
+      type:  "email",
+    });
+
+    if (verifyErr || !data.user) {
+      setError("Invalid or expired code. Try again.");
+      setLoading(false);
+      return;
+    }
+
+    const { data: adminRow } = await supabase
       .from("admin_users")
       .select("role, name")
       .eq("email", data.user.email)
       .single();
 
-    if (tableError || !adminRow) {
+    if (!adminRow) {
       await supabase.auth.signOut();
-      setError("Access denied. This account does not have admin privileges.");
+      setError("Access denied.");
       setLoading(false);
       return;
     }
@@ -62,72 +90,20 @@ export default function AdminLogin() {
       return;
     }
 
-    setAdminData({ email: data.user.email, name: adminRow.name, role, route });
-
-    const { data: factors } = await supabase.auth.mfa.listFactors();
-    const verified = factors?.totp?.find(f => f.status === "verified");
-
-    if (verified) {
-      const { data: challenge, error: cErr } = await supabase.auth.mfa.challenge({ factorId: verified.id });
-      if (cErr) { setError("Failed to start 2FA challenge."); setLoading(false); return; }
-      setFactorId(verified.id);
-      setChallengeId(challenge.id);
-      setStep("verify");
-    } else {
-      const { data: enrollment, error: eErr } = await supabase.auth.mfa.enroll({
-        factorType: "totp",
-        friendlyName: "Brandior Admin",
-      });
-      if (eErr) { setError("Failed to set up 2FA."); setLoading(false); return; }
-      setFactorId(enrollment.id);
-      setQrCode(enrollment.totp.qr_code);
-      setSecret(enrollment.totp.secret);
-      setStep("setup");
-    }
-
-    setLoading(false);
-  }
-
-  async function handleVerify(e) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    let cId = challengeId;
-
-    if (step === "setup") {
-      const { data: challenge, error: cErr } = await supabase.auth.mfa.challenge({ factorId });
-      if (cErr) { setError("Failed to create challenge."); setLoading(false); return; }
-      cId = challenge.id;
-    }
-
-    const { error: verifyError } = await supabase.auth.mfa.verify({
-      factorId,
-      challengeId: cId,
-      code: totpCode.trim(),
-    });
-
-    if (verifyError) {
-      setError("Invalid code. Please try again.");
-      setLoading(false);
-      return;
-    }
-
-    localStorage.setItem("brandiór_admin_user", JSON.stringify({ email: adminData.email, name: adminData.name }));
-    localStorage.setItem("brandiór_admin_role", adminData.role);
+    localStorage.setItem("brandiór_admin_user", JSON.stringify({ email: data.user.email, name: adminRow.name }));
+    localStorage.setItem("brandiór_admin_role", role);
 
     await supabase.auth.signOut();
-    window.location.href = adminData.route;
+    window.location.href = route;
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#0f172a" }}>
       <div className="w-full max-w-md">
 
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style={{ backgroundColor: "#4f46e5" }}>
-            {step === "credentials" ? <Shield className="w-8 h-8 text-white" /> : <Smartphone className="w-8 h-8 text-white" />}
+            {step === "email" ? <Shield className="w-8 h-8 text-white" /> : <Smartphone className="w-8 h-8 text-white" />}
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight">Brandior</h1>
           <div className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold tracking-widest uppercase"
@@ -136,107 +112,65 @@ export default function AdminLogin() {
           </div>
         </div>
 
-        {/* Card */}
         <div className="rounded-2xl p-8 shadow-2xl" style={{ backgroundColor: "#1e293b", border: "1px solid #334155" }}>
 
-          {step === "credentials" && (
+          {step === "email" && (
             <>
               <h2 className="text-xl font-semibold text-white mb-1">Sign in</h2>
-              <p className="text-sm mb-6" style={{ color: "#94a3b8" }}>Enter your admin credentials.</p>
+              <p className="text-sm mb-6" style={{ color: "#94a3b8" }}>
+                Enter your admin email and we'll send a one-time code.
+              </p>
 
               {error && <ErrorBox message={error} />}
 
-              <form onSubmit={handleCredentials} className="space-y-5">
-                <Field label="Email Address">
+              <form onSubmit={handleSendOtp} className="space-y-5">
+                <Field label="Admin Email">
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#64748b" }} />
-                    <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                      placeholder="you@brandior.co" required
+                    <input
+                      type="email" value={email} onChange={e => setEmail(e.target.value)}
+                      placeholder="you@brandior.co" required autoFocus
                       className="w-full pl-10 pr-4 py-2.5 rounded-lg text-sm outline-none"
                       style={inputStyle}
                       onFocus={e => e.target.style.borderColor = "#4f46e5"}
-                      onBlur={e => e.target.style.borderColor = "#334155"} />
+                      onBlur={e => e.target.style.borderColor = "#334155"}
+                    />
                   </div>
                 </Field>
-
-                <Field label="Password">
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#64748b" }} />
-                    <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
-                      placeholder="••••••••" required
-                      className="w-full pl-10 pr-10 py-2.5 rounded-lg text-sm outline-none"
-                      style={inputStyle}
-                      onFocus={e => e.target.style.borderColor = "#4f46e5"}
-                      onBlur={e => e.target.style.borderColor = "#334155"} />
-                    <button type="button" onClick={() => setShowPassword(v => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "#64748b" }}>
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </Field>
-
-                <SubmitBtn loading={loading} label="Continue" />
+                <SubmitBtn loading={loading} label="Send Code" />
               </form>
             </>
           )}
 
-          {step === "setup" && (
+          {step === "otp" && (
             <>
-              <h2 className="text-xl font-semibold text-white mb-1">Set up 2FA</h2>
+              <h2 className="text-xl font-semibold text-white mb-1">Check your email</h2>
               <p className="text-sm mb-6" style={{ color: "#94a3b8" }}>
-                Scan this QR code with <strong style={{ color: "#fff" }}>Google Authenticator</strong> or <strong style={{ color: "#fff" }}>Authy</strong>, then enter the 6-digit code.
+                We sent a 6-digit code to <strong style={{ color: "#fff" }}>{email}</strong>. Enter it below.
               </p>
 
               {error && <ErrorBox message={error} />}
 
-              {qrCode && (
-                <div className="flex justify-center mb-4">
-                  <div className="p-3 bg-white rounded-xl">
-                    <img src={qrCode} alt="2FA QR Code" style={{ width: 180, height: 180 }} />
-                  </div>
-                </div>
-              )}
-
-              {secret && (
-                <p className="text-center text-xs mb-6" style={{ color: "#64748b" }}>
-                  Manual key: <span style={{ color: "#94a3b8", fontFamily: "monospace" }}>{secret}</span>
-                </p>
-              )}
-
-              <form onSubmit={handleVerify} className="space-y-5">
-                <Field label="6-digit code from your app">
-                  <input type="text" value={totpCode} onChange={e => setTotpCode(e.target.value)}
-                    placeholder="000000" maxLength={6} required inputMode="numeric"
+              <form onSubmit={handleVerifyOtp} className="space-y-5">
+                <Field label="One-time code">
+                  <input
+                    type="text" value={otp} onChange={e => setOtp(e.target.value)}
+                    placeholder="000000" maxLength={6} required inputMode="numeric" autoFocus
                     className="w-full px-4 py-2.5 rounded-lg text-sm outline-none text-center tracking-widest text-lg"
                     style={inputStyle}
                     onFocus={e => e.target.style.borderColor = "#4f46e5"}
-                    onBlur={e => e.target.style.borderColor = "#334155"} />
+                    onBlur={e => e.target.style.borderColor = "#334155"}
+                  />
                 </Field>
-                <SubmitBtn loading={loading} label="Activate 2FA & Sign In" />
+                <SubmitBtn loading={loading} label="Sign In" />
               </form>
-            </>
-          )}
 
-          {step === "verify" && (
-            <>
-              <h2 className="text-xl font-semibold text-white mb-1">Two-factor authentication</h2>
-              <p className="text-sm mb-6" style={{ color: "#94a3b8" }}>
-                Enter the 6-digit code from your authenticator app.
-              </p>
-
-              {error && <ErrorBox message={error} />}
-
-              <form onSubmit={handleVerify} className="space-y-5">
-                <Field label="Authentication code">
-                  <input type="text" value={totpCode} onChange={e => setTotpCode(e.target.value)}
-                    placeholder="000000" maxLength={6} required inputMode="numeric"
-                    className="w-full px-4 py-2.5 rounded-lg text-sm outline-none text-center tracking-widest text-lg"
-                    style={inputStyle}
-                    onFocus={e => e.target.style.borderColor = "#4f46e5"}
-                    onBlur={e => e.target.style.borderColor = "#334155"} />
-                </Field>
-                <SubmitBtn loading={loading} label="Verify & Sign In" />
-              </form>
+              <button
+                onClick={() => { setStep("email"); setOtp(""); setError(""); setSent(false); }}
+                className="w-full mt-3 text-xs text-center"
+                style={{ color: "#64748b" }}>
+                Use a different email
+              </button>
             </>
           )}
 
