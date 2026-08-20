@@ -110,7 +110,7 @@ export default function App() {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (location.pathname.startsWith('/admin')) { setAuthReady(true); return }
+      if (window.location.pathname.startsWith('/admin')) { setAuthReady(true); return }
       // Recovery link clicked — lock session to /reset-password only, no dashboard access
       if (event === 'PASSWORD_RECOVERY') {
         setIsRecoverySession(true)
