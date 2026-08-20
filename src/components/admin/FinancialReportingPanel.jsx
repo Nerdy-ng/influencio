@@ -42,22 +42,26 @@ export default function FinancialReportingPanel({ showToast }) {
     const [
       { data: completedCollabs },
       { data: allCollabs },
-      { data: payouts },
+      { data: rubiesPayouts },
+      { data: cardPayments },
     ] = await Promise.all([
       supabase.from("collabs").select("total_amount, platform_fee, creator_payout, brand_id, creator_id, created_at").eq("status", "completed").gte("created_at", since.toISOString()),
       supabase.from("collabs").select("total_amount, platform_fee, created_at").gte("created_at", since.toISOString()),
-      supabase.from("payout_requests").select("amount, created_at").eq("status", "paid").gte("created_at", since.toISOString()),
+      supabase.from("rubies_transactions").select("amount, created_at").eq("type", "payout").eq("status", "completed").gte("created_at", since.toISOString()),
+      supabase.from("wallet_topups").select("amount, created_at").eq("status", "completed").gte("created_at", since.toISOString()),
     ]);
 
     const completed = completedCollabs || [];
     const all = allCollabs || [];
-    const pd = payouts || [];
+    const pd = rubiesPayouts || [];
+    const cp = cardPayments || [];
 
     const gmv = completed.reduce((s, c) => s + Number(c.total_amount || 0), 0);
     const revenue = all.reduce((s, c) => s + Number(c.platform_fee || 0), 0);
     const payoutTotal = pd.reduce((s, p) => s + Number(p.amount || 0), 0);
+    const cardTotal = cp.reduce((s, p) => s + Number(p.amount || 0), 0);
 
-    setMetrics({ gmv, revenue, payoutTotal, completedCollabs: completed.length, allCollabs: all.length });
+    setMetrics({ gmv, revenue, payoutTotal, cardTotal, completedCollabs: completed.length, allCollabs: all.length });
     setGmvData(buildMonthlyData(all, "total_amount"));
     setFeeData(buildMonthlyData(all, "platform_fee"));
 
@@ -94,7 +98,8 @@ export default function FinancialReportingPanel({ showToast }) {
       ["Metric", "Value"],
       ["GMV", metrics?.gmv],
       ["Revenue", metrics?.revenue],
-      ["Payouts", metrics?.payoutTotal],
+      ["Creator Payouts (Rubies)", metrics?.payoutTotal],
+      ["Card Payments In", metrics?.cardTotal],
       ["Completed Collabs", metrics?.completedCollabs],
       ["Total Collabs", metrics?.allCollabs],
       [],
@@ -133,13 +138,14 @@ export default function FinancialReportingPanel({ showToast }) {
       </div>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         {[
-          { label: "GMV",                value: fmtMoney(metrics?.gmv),           color: "#4f46e5" },
-          { label: "Platform Revenue",   value: fmtMoney(metrics?.revenue),        color: "#16a34a" },
-          { label: "Creator Payouts",    value: fmtMoney(metrics?.payoutTotal),    color: "#7c3aed" },
-          { label: "Completed Collabs",  value: metrics?.completedCollabs ?? "—",  color: "#0ea5e9" },
-          { label: "Commission Rate",    value: metrics?.gmv ? `${((metrics.revenue / metrics.gmv) * 100).toFixed(1)}%` : "—", color: "#d97706" },
+          { label: "GMV",                   value: fmtMoney(metrics?.gmv),         color: "#4f46e5" },
+          { label: "Platform Revenue",       value: fmtMoney(metrics?.revenue),     color: "#16a34a" },
+          { label: "Creator Payouts (Rubies)", value: fmtMoney(metrics?.payoutTotal), color: "#7c3aed" },
+          { label: "Card Payments In",       value: fmtMoney(metrics?.cardTotal),   color: "#0ea5e9" },
+          { label: "Completed Collabs",      value: metrics?.completedCollabs ?? "—", color: "#f59e0b" },
+          { label: "Commission Rate",        value: metrics?.gmv ? `${((metrics.revenue / metrics.gmv) * 100).toFixed(1)}%` : "—", color: "#d97706" },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{s.label}</p>
