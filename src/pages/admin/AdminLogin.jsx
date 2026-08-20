@@ -21,26 +21,13 @@ export default function AdminLogin() {
     setError("");
     setLoading(true);
 
-    // Check this email is actually an admin before sending OTP
-    const { data: adminRow } = await supabase
-      .from("admin_users")
-      .select("role, name")
-      .eq("email", email.trim().toLowerCase())
-      .single();
-
-    if (!adminRow) {
-      setError("This email does not have admin access.");
-      setLoading(false);
-      return;
-    }
-
     const { error: otpErr } = await supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
       options: { shouldCreateUser: false },
     });
 
     if (otpErr) {
-      setError("Failed to send code. Make sure the email exists in the system.");
+      setError("Failed to send code. Check the email and try again.");
       setLoading(false);
       return;
     }
