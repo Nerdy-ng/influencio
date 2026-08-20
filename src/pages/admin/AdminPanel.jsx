@@ -675,13 +675,19 @@ export default function AdminPanel() {
   }, []);
 
   useEffect(() => {
-    const role = localStorage.getItem("brandiór_admin_role");
-    const user = localStorage.getItem("brandiór_admin_user");
-    if (role !== "admin") {
-      navigate("/admin/login");
-      return;
+    async function verifySession() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { navigate("/admin/login"); return; }
+      const { data: adminRow } = await supabase
+        .from("admin_users").select("role, name").eq("email", user.email).single();
+      if (!adminRow || !["admin", "manager", "staff"].includes(adminRow.role?.toLowerCase().trim())) {
+        await supabase.auth.signOut();
+        navigate("/admin/login");
+        return;
+      }
+      setAdminUser({ email: user.email, name: adminRow.name });
     }
-    if (user) setAdminUser(JSON.parse(user));
+    verifySession();
   }, [navigate]);
 
   // ── Sync settings from DB so admin sees persisted values ───────────────────
@@ -1046,7 +1052,8 @@ export default function AdminPanel() {
     }).then(() => {});
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     localStorage.removeItem("brandiór_admin_user");
     localStorage.removeItem("brandiór_admin_role");
     navigate("/admin/login");

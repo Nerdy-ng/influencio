@@ -10,50 +10,51 @@ const ROLE_ROUTES = {
 
 const REDIRECT_URL = `${window.location.origin}/admin/login`;
 
-async function resolveAdminSession(user) {
-  const { data: adminRow } = await supabase
-    .from("admin_users")
-    .select("role, name")
-    .eq("email", user.email)
-    .single();
-
-  if (!adminRow) {
-    await supabase.auth.signOut();
-    return { error: "Access denied. This account does not have admin privileges." };
-  }
-
-  const role  = adminRow.role?.toLowerCase().trim();
-  const route = ROLE_ROUTES[role];
-
-  if (!route) {
-    await supabase.auth.signOut();
-    return { error: "Admin role not recognised. Contact support." };
-  }
-
-  localStorage.setItem("brandiór_admin_user", JSON.stringify({ email: user.email, name: adminRow.name }));
-  localStorage.setItem("brandiór_admin_role", role);
-  await supabase.auth.signOut();
-  return { route };
-}
-
 export default function AdminLogin() {
   const [step, setStep]       = useState("email"); // email | sent | checking | error
   const [email, setEmail]     = useState("");
   const [error, setError]     = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Handle magic link redirect — Supabase puts the session in the URL on return
+  // Called after Supabase session is confirmed (magic link click or page reload with active session)
+  async function handleAuthenticatedUser(user) {
+    setStep("checking");
+
+    const { data: adminRow } = await supabase
+      .from("admin_users")
+      .select("role, name")
+      .eq("email", user.email)
+      .single();
+
+    if (!adminRow) {
+      await supabase.auth.signOut();
+      setError("Access denied. This account does not have admin privileges.");
+      setStep("error");
+      return;
+    }
+
+    const role  = adminRow.role?.toLowerCase().trim();
+    const route = ROLE_ROUTES[role];
+
+    if (!route) {
+      await supabase.auth.signOut();
+      setError("Admin role not recognised. Contact support.");
+      setStep("error");
+      return;
+    }
+
+    // Keep session alive — AdminPanel will re-verify on mount
+    // Store display info only (not used as security gate)
+    localStorage.setItem("brandiór_admin_user", JSON.stringify({ email: user.email, name: adminRow.name }));
+    localStorage.setItem("brandiór_admin_role", role);
+    window.location.href = route;
+  }
+
+  // Listen for magic link redirect completing
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session?.user) {
-        setStep("checking");
-        const result = await resolveAdminSession(session.user);
-        if (result.error) {
-          setError(result.error);
-          setStep("error");
-        } else {
-          window.location.href = result.route;
-        }
+        await handleAuthenticatedUser(session.user);
       }
     });
     return () => subscription.unsubscribe();
@@ -67,8 +68,8 @@ export default function AdminLogin() {
     const { error: otpErr } = await supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
       options: {
-        shouldCreateUser:  false,
-        emailRedirectTo:   REDIRECT_URL,
+        shouldCreateUser: false,
+        emailRedirectTo:  REDIRECT_URL,
       },
     });
 
@@ -82,7 +83,6 @@ export default function AdminLogin() {
     setLoading(false);
   }
 
-  // ── Checking state (redirected back from magic link) ─────────────────────
   if (step === "checking") {
     return (
       <Screen>
@@ -94,7 +94,6 @@ export default function AdminLogin() {
     );
   }
 
-  // ── Error state ───────────────────────────────────────────────────────────
   if (step === "error") {
     return (
       <Screen>
@@ -108,7 +107,6 @@ export default function AdminLogin() {
     );
   }
 
-  // ── Link sent confirmation ────────────────────────────────────────────────
   if (step === "sent") {
     return (
       <Screen>
@@ -118,15 +116,13 @@ export default function AdminLogin() {
             <CheckCircle className="w-7 h-7 text-green-400" />
           </div>
           <h2 className="text-xl font-bold text-white mb-2">Check your inbox</h2>
-          <p className="text-sm mb-1" style={{ color: "#94a3b8" }}>
-            We sent a login link to
-          </p>
+          <p className="text-sm mb-1" style={{ color: "#94a3b8" }}>We sent a login link to</p>
           <p className="font-semibold text-white text-sm mb-5">{email}</p>
           <p className="text-xs" style={{ color: "#64748b" }}>
-            Click the link in the email to access the admin panel. It expires in 1 hour.
+            Click the link in the email — it opens the admin panel automatically. Expires in 1 hour.
           </p>
         </div>
-        <button onClick={() => { setStep("email"); }}
+        <button onClick={() => setStep("email")}
           className="w-full mt-4 py-2 rounded-lg text-xs font-semibold border"
           style={{ borderColor: "#334155", color: "#64748b" }}>
           Use a different email
@@ -135,21 +131,18 @@ export default function AdminLogin() {
     );
   }
 
-  // ── Email entry ───────────────────────────────────────────────────────────
   return (
     <Screen>
       <h2 className="text-xl font-semibold text-white mb-1">Sign in</h2>
       <p className="text-sm mb-6" style={{ color: "#94a3b8" }}>
-        Enter your admin email and we'll send a login link.
+        Enter your admin email and we'll send a secure login link.
       </p>
 
       {error && <ErrorBox message={error} />}
 
       <form onSubmit={handleSendLink} className="space-y-5">
         <div>
-          <label className="block text-sm font-medium mb-1.5" style={{ color: "#cbd5e1" }}>
-            Admin Email
-          </label>
+          <label className="block text-sm font-medium mb-1.5" style={{ color: "#cbd5e1" }}>Admin Email</label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#64748b" }} />
             <input
@@ -163,7 +156,7 @@ export default function AdminLogin() {
           </div>
         </div>
         <button type="submit" disabled={loading}
-          className="w-full py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity flex items-center justify-center gap-2"
+          className="w-full py-2.5 rounded-lg text-sm font-semibold text-white flex items-center justify-center gap-2"
           style={{ backgroundColor: "#4f46e5", opacity: loading ? 0.7 : 1 }}>
           {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Sending…</> : "Send Login Link"}
         </button>
@@ -189,9 +182,7 @@ function Screen({ children }) {
         <div className="rounded-2xl p-8 shadow-2xl" style={{ backgroundColor: "#1e293b", border: "1px solid #334155" }}>
           {children}
         </div>
-        <p className="text-center text-xs mt-6" style={{ color: "#475569" }}>
-          Restricted to authorised personnel only.
-        </p>
+        <p className="text-center text-xs mt-6" style={{ color: "#475569" }}>Restricted to authorised personnel only.</p>
       </div>
     </div>
   );

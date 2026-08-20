@@ -51,7 +51,6 @@ export default function EscrowPanel({ showToast, auditLog }) {
     const payout = selected.creator_payout || selected.total_amount;
     const { data, error } = await supabase.functions.invoke("admin-collab-release", {
       body: { collab_id: selected.id, note: releaseNote || "Admin manual release" },
-      headers: { "X-Admin-Key": import.meta.env.VITE_ADMIN_API_KEY || "" },
     });
     if (error || data?.error) {
       showToast(data?.error || "Release failed — check Rubies wallet setup", "error");
@@ -95,7 +94,6 @@ export default function EscrowPanel({ showToast, auditLog }) {
           skip_collab_update: true,
           note:               `Admin split ${splitPct}/${100 - splitPct}`,
         },
-        headers: { "X-Admin-Key": import.meta.env.VITE_ADMIN_API_KEY || "" },
       });
       if (error || data?.error) {
         showToast(data?.error || "Creator Rubies transfer failed — check wallet setup", "error");
