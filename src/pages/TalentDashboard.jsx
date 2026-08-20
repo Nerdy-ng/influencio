@@ -3831,11 +3831,14 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
   const [filter, setFilter] = useState('all')
   const [transactions, setTransactions] = useState([])
   const [txLoading, setTxLoading] = useState(true)
+  const [rubiesBalance, setRubiesBalance] = useState(null)
+  const [rubiesLoading, setRubiesLoading] = useState(true)
+  const [withdrawError, setWithdrawError] = useState('')
 
   useEffect(() => {
     ;(async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setTxLoading(false); return }
+      if (!user) { setTxLoading(false); setRubiesLoading(false); return }
       const { data } = await supabase
         .from('collabs')
         .select('id, creator_payout, status, payment_status, content_type, created_at, brand:profiles!brand_id(company_name, full_name)')
@@ -3844,6 +3847,11 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
         .order('created_at', { ascending: false })
       if (data) setTransactions(data.map(mapCollabToTx))
       setTxLoading(false)
+
+      // Load Rubies wallet balance
+      const { data: rb } = await supabase.functions.invoke('rubies-balance')
+      if (rb?.ok) setRubiesBalance(rb.balance)
+      setRubiesLoading(false)
     })()
   }, [])
 
@@ -3856,9 +3864,26 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
     setWithdrawStep('confirm')
   }
 
-  function confirmWithdraw() {
+  async function confirmWithdraw() {
     setProcessing(true)
-    setTimeout(() => { setProcessing(false); setWithdrawStep('success') }, 2000)
+    setWithdrawError('')
+    const { data, error } = await supabase.functions.invoke('rubies-payout', {
+      body: {
+        bankName:          withdrawForm.bank,
+        bankAccountNumber: withdrawForm.accountNumber,
+        amount:            Number(withdrawForm.amount),
+      },
+    })
+    if (error || data?.error) {
+      setWithdrawError(data?.error || 'Payout failed. Please check your bank details and try again.')
+      setProcessing(false)
+      return
+    }
+    // Refresh Rubies balance after payout
+    const { data: rb } = await supabase.functions.invoke('rubies-balance')
+    if (rb?.ok) setRubiesBalance(rb.balance)
+    setProcessing(false)
+    setWithdrawStep('success')
   }
 
   function resetWithdraw() {
@@ -3871,6 +3896,24 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
 
   return (
     <div className="space-y-5">
+
+      {/* Rubies Wallet Balance */}
+      <div className="rounded-2xl p-5 text-white" style={{ background: 'linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%)' }}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.6)' }}>Rubies Wallet Balance</p>
+            {rubiesLoading ? (
+              <div className="h-8 w-32 rounded-lg animate-pulse" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
+            ) : rubiesBalance !== null ? (
+              <p className="text-3xl font-black">₦{rubiesBalance.toLocaleString()}</p>
+            ) : (
+              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Complete KYC to activate wallet</p>
+            )}
+            <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Available to withdraw · Credited when escrow releases</p>
+          </div>
+          <Wallet className="w-8 h-8 opacity-30" />
+        </div>
+      </div>
 
       {/* Pipeline stage cards */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -3977,7 +4020,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
           </button>
         </div>
         <div className="flex flex-wrap gap-2 mt-4">
-          {['Bank Transfer', 'Paystack', 'Flutterwave', 'Opay'].map(m => (
+          {['Bank Transfer via Rubies', 'All Major Nigerian Banks'].map(m => (
             <span key={m} className="flex items-center gap-1.5 text-[11px] font-medium px-3 py-1 rounded-full"
               style={{ backgroundColor: `${purple}10`, color: darkPurple, border: `1px solid ${purple}25` }}>
               <CreditCard className="w-3 h-3" /> {m}
@@ -4156,8 +4199,13 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
                     ))}
                   </div>
                   <p className="text-xs text-brand-dark/40 text-center">Please confirm the details above are correct before proceeding.</p>
+                  {withdrawError && (
+                    <div className="rounded-xl px-4 py-3 text-xs font-medium text-red-700" style={{ backgroundColor: '#fee2e2', border: '1px solid #fecaca' }}>
+                      {withdrawError}
+                    </div>
+                  )}
                   <div className="flex gap-3">
-                    <button onClick={() => setWithdrawStep('form')}
+                    <button onClick={() => { setWithdrawStep('form'); setWithdrawError('') }}
                       className="flex-1 py-3 rounded-xl font-semibold text-sm text-brand-dark/60 border border-gray-200 hover:bg-gray-50 transition-colors">
                       Edit
                     </button>

@@ -8,7 +8,7 @@ import {
   TrendingUp, Activity, Check, ArrowUpRight, Eye, EyeOff, ShieldAlert, Pencil, Save, Globe,
   SlidersHorizontal, Star, Zap, BadgeCheck, RotateCcw, Info, ChevronUp, ChevronRight,
   BarChart2, HelpCircle, MessageSquare, Clock, Send, CreditCard, ToggleLeft, ToggleRight, Layers,
-  Scale, Sparkles, Smartphone, Tag, ListFilter, ClipboardList, GitBranch, Star as StarIcon,
+  Scale, Sparkles, Smartphone, Tag, ListFilter, ClipboardList, GitBranch, Star as StarIcon, Wallet,
 } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import AdminModerationDashboard from "../../components/AdminModerationDashboard";
@@ -36,6 +36,7 @@ import AIControlsPanel        from "../../components/admin/AIControlsPanel";
 import DiscoveryAlgorithmPanel from "../../components/admin/DiscoveryAlgorithmPanel";
 import PaymentConfigPanel     from "../../components/admin/PaymentConfigPanel";
 import PitchSettingsPanel     from "../../components/admin/PitchSettingsPanel";
+import RubiesPanel            from "../../components/admin/RubiesPanel";
 import CategoryManagementPanel from "../../components/admin/CategoryManagementPanel";
 import TrustSafetyPanel       from "../../components/admin/TrustSafetyPanel";
 import SupportCenterPanel     from "../../components/admin/SupportCenterPanel";
@@ -287,6 +288,7 @@ const NAV_ITEMS = [
   { id: "discovery",      label: "Discovery",     Icon: SlidersHorizontal },
   { id: "pay-config",     label: "Pay Config",    Icon: CreditCard },
   { id: "pitch-settings", label: "Pitch Config",  Icon: Send },
+  { id: "rubies",         label: "Rubies",        Icon: Wallet },
   { id: "categories",     label: "Categories",    Icon: Tag },
   { id: "trust-safety",   label: "Trust & Safety",Icon: ShieldAlert },
   { id: "support2",       label: "Support",       Icon: HelpCircle },
@@ -3222,6 +3224,7 @@ export default function AdminPanel() {
     discovery:        () => <DiscoveryAlgorithmPanel showToast={showToast} auditLog={auditLog} />,
     "pay-config":     () => <PaymentConfigPanel showToast={showToast} auditLog={auditLog} />,
     "pitch-settings": () => <PitchSettingsPanel showToast={showToast} auditLog={auditLog} />,
+    rubies:           () => <RubiesPanel showToast={showToast} auditLog={auditLog} />,
     categories:       () => <CategoryManagementPanel showToast={showToast} auditLog={auditLog} />,
     "trust-safety":   () => <TrustSafetyPanel showToast={showToast} auditLog={auditLog} />,
     support2:         () => <SupportCenterPanel showToast={showToast} auditLog={auditLog} />,

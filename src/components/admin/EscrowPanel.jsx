@@ -48,12 +48,17 @@ export default function EscrowPanel({ showToast, auditLog }) {
   async function handleRelease() {
     if (!selected) return;
     setBusy(true);
-    await supabase.from("collabs").update({ payment_status: "released", released_at: new Date().toISOString(), status: "completed", admin_note: releaseNote || undefined }).eq("id", selected.id);
-    const { data: p } = await supabase.from("profiles").select("wallet_balance").eq("id", selected.creator_id).single();
     const payout = selected.creator_payout || selected.total_amount;
-    saveProfile(selected.creator_id, { wallet_balance: (p?.wallet_balance || 0) + Number(payout) });
+    const { data, error } = await supabase.functions.invoke("admin-collab-release", {
+      body: { collab_id: selected.id, note: releaseNote || "Admin manual release" },
+      headers: { "X-Admin-Key": import.meta.env.VITE_ADMIN_API_KEY || "" },
+    });
+    if (error || data?.error) {
+      showToast(data?.error || "Release failed — check Rubies wallet setup", "error");
+      setBusy(false); return;
+    }
     auditLog?.("escrow_release", "collab", selected.id, `${selected.brandName} × ${selected.creatorName}`, { payout, note: releaseNote });
-    showToast(`${fmtMoney(payout)} released to ${selected.creatorName}`);
+    showToast(`${fmtMoney(payout)} transferred to ${selected.creatorName}'s Rubies wallet`);
     setReleaseModal(null); setReleaseNote("");
     await load(); setBusy(false);
   }
@@ -73,18 +78,32 @@ export default function EscrowPanel({ showToast, auditLog }) {
   async function handleSplit() {
     if (!selected) return;
     setBusy(true);
-    const total = Number(selected.total_amount);
-    const brandShare = Math.round(total * (splitPct / 100));
+    const total       = Number(selected.total_amount);
+    const brandShare  = Math.round(total * (splitPct / 100));
     const creatorShare = total - brandShare;
+
+    // Refund brand's share to their Supabase wallet_balance (brands use virtual balance)
+    const { data: bp } = await supabase.from("profiles").select("wallet_balance").eq("id", selected.brand_id).single();
+    await saveProfile(selected.brand_id, { wallet_balance: (bp?.wallet_balance || 0) + brandShare });
+
+    // Transfer creator's share from Rubies escrow to their Rubies wallet
+    if (creatorShare > 0) {
+      const { data, error } = await supabase.functions.invoke("admin-collab-release", {
+        body: {
+          collab_id:          selected.id,
+          payout_override:    creatorShare,
+          skip_collab_update: true,
+          note:               `Admin split ${splitPct}/${100 - splitPct}`,
+        },
+        headers: { "X-Admin-Key": import.meta.env.VITE_ADMIN_API_KEY || "" },
+      });
+      if (error || data?.error) {
+        showToast(data?.error || "Creator Rubies transfer failed — check wallet setup", "error");
+        setBusy(false); return;
+      }
+    }
+
     await supabase.from("collabs").update({ payment_status: "split", split_at: new Date().toISOString(), status: "completed" }).eq("id", selected.id);
-    const [{ data: bp }, { data: cp }] = await Promise.all([
-      supabase.from("profiles").select("wallet_balance").eq("id", selected.brand_id).single(),
-      supabase.from("profiles").select("wallet_balance").eq("id", selected.creator_id).single(),
-    ]);
-    await Promise.all([
-      saveProfile(selected.brand_id, { wallet_balance: (bp?.wallet_balance || 0) + brandShare   }),
-      saveProfile(selected.creator_id, { wallet_balance: (cp?.wallet_balance || 0) + creatorShare }),
-    ]);
     auditLog?.("escrow_split", "collab", selected.id, `${selected.brandName} × ${selected.creatorName}`, { brandShare, creatorShare, pct: splitPct });
     showToast(`Split: ${fmtMoney(brandShare)} to brand · ${fmtMoney(creatorShare)} to creator`);
     setSplitModal(false);

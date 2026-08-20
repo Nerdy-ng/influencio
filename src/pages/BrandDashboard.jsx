@@ -1736,16 +1736,26 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
 // ── Brand Wallet Tab ─────────────────────────────────────────────────────────
 
 const FUND_METHODS = [
-  { id: 'card',  label: 'Debit / Credit Card', icon: CreditCard,  desc: 'Instant via Paystack' },
+  { id: 'card',  label: 'Debit / Credit Card', icon: CreditCard,  desc: 'Instant via Interswitch' },
   { id: 'bank',  label: 'Bank Transfer',        icon: Building2,   desc: 'Transfer to virtual account' },
 ]
+
+function loadInterswitchScript(cb) {
+  if (window.PaymentEngine) { cb(); return }
+  const existing = document.getElementById('interswitch-js')
+  if (existing) { existing.addEventListener('load', cb); return }
+  const s = document.createElement('script')
+  s.id  = 'interswitch-js'
+  s.src = 'https://newwebpay.interswitchng.com/collection/w/pay/js/pay.js'
+  s.onload = cb
+  document.head.appendChild(s)
+}
 
 const QUICK_AMOUNTS = [20000, 50000, 100000, 200000]
 
 function WalletTab() {
   const [balance,  setBalance]  = useState(0)
   const [userId,   setUserId]   = useState(null)
-  const [email,    setEmail]    = useState('')
   const [loading,  setLoading]  = useState(true)
   const [amount,   setAmount]   = useState('')
   const [method,   setMethod]   = useState('card')
@@ -1768,17 +1778,10 @@ function WalletTab() {
   }
 
   useEffect(() => {
-    if (!document.getElementById('paystack-js')) {
-      const s = document.createElement('script')
-      s.id = 'paystack-js'
-      s.src = 'https://js.paystack.co/v1/inline.js'
-      document.head.appendChild(s)
-    }
     ;(async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
       setUserId(user.id)
-      setEmail(user.email || '')
       await reload(user.id)
       setLoading(false)
     })()
@@ -1790,29 +1793,36 @@ function WalletTab() {
     setFunding(true)
 
     if (method === 'card') {
-      const pk = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY
-      if (!pk || !window.PaystackPop) {
-        alert('Paystack public key not configured. Add VITE_PAYSTACK_PUBLIC_KEY to your .env file.')
+      const { data, error } = await supabase.functions.invoke('rubies-fund-wallet', {
+        body: { amount: amt, wantsLink: false },
+      })
+      if (error || !data?.ok) {
+        alert(data?.error || 'Failed to initiate payment. Please try again.')
         setFunding(false); return
       }
-      const handler = window.PaystackPop.setup({
-        key: pk,
-        email,
-        amount: amt * 100,
-        currency: 'NGN',
-        metadata: { purpose: 'wallet_topup', user_id: userId },
-        callback: async () => {
-          const newBalance = balance + amt
-          await saveProfile(userId, { wallet_balance: newBalance })
-          setBalance(newBalance)
-          setAmount('')
-          setSuccess(true)
-          setTimeout(() => setSuccess(false), 4000)
-          setFunding(false)
-        },
-        onClose: () => setFunding(false),
+      loadInterswitchScript(() => {
+        if (!window.PaymentEngine) {
+          alert('Payment widget failed to load. Please refresh and try again.')
+          setFunding(false); return
+        }
+        window.PaymentEngine.init({
+          ...data.inline,
+          onSuccess: async () => {
+            setAmount('')
+            setSuccess(true)
+            setTimeout(() => setSuccess(false), 5000)
+            setFunding(false)
+            // Webhook credits the wallet; poll DB for updated balance
+            await new Promise(r => setTimeout(r, 3000))
+            if (userId) await reload(userId)
+          },
+          onError: () => {
+            alert('Payment failed. No charge was made.')
+            setFunding(false)
+          },
+          onClose: () => setFunding(false),
+        })
       })
-      handler.openIframe()
     } else {
       setFunding(false)
       alert('Bank transfer: Coming soon. Wallet will be credited after transfer confirms.')
@@ -1930,7 +1940,7 @@ function WalletTab() {
         </button>
 
         <p className="text-xs text-gray-400 text-center">
-          Minimum ₦20,000 · Funds appear instantly on card · Escrow protects every collab payment
+          Minimum ₦20,000 · Card payments processed via Interswitch · Wallet credited after confirmation
         </p>
       </div>
 
