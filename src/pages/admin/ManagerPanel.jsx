@@ -155,13 +155,19 @@ export default function ManagerPanel() {
   const pendingRequests = staffRequests.filter((r) => r.status !== "approved" && r.status !== "rejected" && r.status !== "escalated").length;
 
   useEffect(() => {
-    const role = localStorage.getItem("brandiór_admin_role");
-    const user = localStorage.getItem("brandiór_admin_user");
-    if (role !== "manager") {
-      navigate("/admin/login");
-      return;
+    async function verifySession() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { navigate("/admin/login"); return; }
+      const { data: adminRow } = await supabase
+        .from("admin_users").select("role, name").eq("email", user.email).single();
+      if (!adminRow || !["admin", "manager"].includes(adminRow.role?.toLowerCase().trim())) {
+        await supabase.auth.signOut();
+        navigate("/admin/login");
+        return;
+      }
+      setManagerUser({ email: user.email, name: adminRow.name });
     }
-    if (user) setManagerUser(JSON.parse(user));
+    verifySession();
 
     async function loadData() {
       const mkAvatar = name => (name || 'U').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()
@@ -205,7 +211,8 @@ export default function ManagerPanel() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     localStorage.removeItem("brandiór_admin_user");
     localStorage.removeItem("brandiór_admin_role");
     navigate("/admin/login");

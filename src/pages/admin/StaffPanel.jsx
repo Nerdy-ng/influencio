@@ -180,13 +180,19 @@ export default function StaffPanel() {
   const openTickets = tickets.filter((t) => t.status === "open").length;
 
   useEffect(() => {
-    const role = localStorage.getItem("brandiór_admin_role");
-    const user = localStorage.getItem("brandiór_admin_user");
-    if (role !== "staff") {
-      navigate("/admin/login");
-      return;
+    async function verifySession() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { navigate("/admin/login"); return; }
+      const { data: adminRow } = await supabase
+        .from("admin_users").select("role, name").eq("email", user.email).single();
+      if (!adminRow || !["admin", "manager", "staff"].includes(adminRow.role?.toLowerCase().trim())) {
+        await supabase.auth.signOut();
+        navigate("/admin/login");
+        return;
+      }
+      setStaffUser({ email: user.email, name: adminRow.name });
     }
-    if (user) setStaffUser(JSON.parse(user));
+    verifySession();
   }, [navigate]);
 
   const showToast = (message, type = "success") => {
@@ -194,7 +200,8 @@ export default function StaffPanel() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     localStorage.removeItem("brandiór_admin_user");
     localStorage.removeItem("brandiór_admin_role");
     navigate("/admin/login");

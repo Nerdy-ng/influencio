@@ -19,6 +19,7 @@ import AuditLogPanel from "../../components/admin/AuditLogPanel";
 import UserDetailModal from "../../components/admin/UserDetailModal";
 import ReferralTrackingPanel from "../../components/admin/ReferralTrackingPanel";
 import RateCardModerationPanel from "../../components/admin/RateCardModerationPanel";
+import BadgeManagementPanel from "../../components/admin/BadgeManagementPanel";
 import CollaborationPanel     from "../../components/admin/CollaborationPanel";
 import MessagingModerationPanel from "../../components/admin/MessagingModerationPanel";
 import DisputeCenterPanel     from "../../components/admin/DisputeCenterPanel";
@@ -269,6 +270,7 @@ const NAV_ITEMS = [
   { id: "overview",  label: "Overview",   Icon: LayoutDashboard },
   { id: "analytics", label: "Analytics",  Icon: BarChart2 },
   { id: "users",     label: "Users",      Icon: Users },
+  { id: "badges",    label: "Badges",     Icon: BadgeCheck },
   { id: "rankings",  label: "Rankings",   Icon: SlidersHorizontal },
   { id: "jobs",           label: "Collabs",       Icon: Briefcase },
   { id: "pitches",        label: "Pitches",       Icon: Send },
@@ -310,15 +312,15 @@ const NAV_ITEMS = [
 const NAV_GROUPS = [
   { items: ["overview", "analytics"] },
   { divider: true },
-  { items: ["users", "rankings", "jobs", "pitches", "messaging"] },
+  { items: ["users", "badges", "rankings", "jobs", "pitches", "messaging"] },
   { divider: true },
-  { items: ["wallets", "withdrawals", "escrow", "financials2", "rubies", "pay-config", "pitch-settings"] },
+  { items: ["wallets", "withdrawals", "escrow", "financials2", "rubies", "pay-config", "pitch-settings", "payments"] },
   { divider: true },
   { items: ["disputes2", "reviews", "ai-police", "trust-safety", "marketplace", "referrals2"] },
   { divider: true },
   { items: ["notifications2", "cms2", "push", "ai-controls", "discovery", "categories", "support2", "rate-cards"] },
   { divider: true },
-  { items: ["team", "approvals", "content", "features", "legal", "app-config", "system", "analytics2", "audit"] },
+  { items: ["team", "approvals", "content", "features", "legal", "app-config", "system", "analytics2", "audit", "settings"] },
 ];
 
 // ─── DEFAULT LEGAL CONTENT ────────────────────────────────────────────────────
@@ -413,6 +415,8 @@ export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState("overview");
   const [adminUser, setAdminUser] = useState(null);
   const [overviewFilter, setOverviewFilter] = useState("all");
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const [cmdQuery, setCmdQuery] = useState("");
   const [toast, setToast] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);
   const [viewUser, setViewUser] = useState(null);
@@ -482,6 +486,15 @@ export default function AdminPanel() {
   const DEFAULT_REFERRAL_CONFIG = { creator_bonus: 2500, brand_bonus: 5000, hold_days: 30 }
   const [referralConfig, setReferralConfig] = useState(DEFAULT_REFERRAL_CONFIG)
   const [referralSaved, setReferralSaved] = useState(false)
+
+  useEffect(() => {
+    function onKey(e) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setCmdOpen(v => !v); setCmdQuery(""); }
+      if (e.key === 'Escape') setCmdOpen(false);
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   useEffect(() => {
     supabase.from('tier_config').select('config').eq('id', 'brand_tiers').single()
@@ -1282,13 +1295,35 @@ export default function AdminPanel() {
 
     const statsRow = overviewFilter === "creator" ? creatorStats : overviewFilter === "brand" ? brandStats : overviewFilter === "platform" ? platformStats : allStats
 
-    const flowItems = [
+    const allFlowItems = [
       { label: "Creators",       sub: "Talent building the future",    value: fmtNum(realStats.creatorCount),    color: "#7c3aed", bg: "#f3f0ff", icon: Users },
       { label: "Brands",         sub: "Businesses creating impact",    value: fmtNum(realStats.brandCount),      color: "#f97316", bg: "#fff7ed", icon: Briefcase },
       { label: "Campaigns",      sub: "Active opportunities",          value: fmtNum(realStats.activeCollabs),   color: "#0ea5e9", bg: "#e0f2fe", icon: Activity },
       { label: "Collaborations", sub: "Creator-brand matches",         value: fmtNum(realStats.openCollabs),     color: "#10b981", bg: "#ecfdf5", icon: Layers },
       { label: "Payments",       sub: "Secure & transparent",          value: fmtMoney(realStats.totalGMV),      color: "#6366f1", bg: "#eef2ff", icon: CreditCard },
     ]
+    const creatorFlowItems = [
+      { label: "Active Creators",  sub: "On the platform",         value: fmtNum(realStats.creatorCount),       color: "#7c3aed", bg: "#f3f0ff", icon: Users },
+      { label: "Verified",         sub: "ID & portfolio confirmed", value: fmtNum(realStats.verifiedCreators),  color: "#10b981", bg: "#ecfdf5", icon: BadgeCheck },
+      { label: "Pitches Today",    sub: "Applications sent",        value: fmtNum(realStats.pitchesToday),       color: "#0ea5e9", bg: "#e0f2fe", icon: Send },
+      { label: "Pending Verify",   sub: "Awaiting review",          value: fmtNum(realStats.pendingVerifications), color: "#f97316", bg: "#fff7ed", icon: Clock },
+      { label: "Wallet Balance",   sub: "Across all creators",      value: fmtMoney(realStats.walletBalances),  color: "#6366f1", bg: "#eef2ff", icon: Wallet },
+    ]
+    const brandFlowItems = [
+      { label: "Active Brands",    sub: "On the platform",          value: fmtNum(realStats.brandCount),        color: "#f97316", bg: "#fff7ed", icon: Briefcase },
+      { label: "Verified Brands",  sub: "Identity confirmed",       value: fmtNum(realStats.verifiedBrands),   color: "#10b981", bg: "#ecfdf5", icon: BadgeCheck },
+      { label: "Total GMV",        sub: "Brand spend processed",    value: fmtMoney(realStats.totalGMV),        color: "#16a34a", bg: "#dcfce7", icon: TrendingUp },
+      { label: "In Escrow",        sub: "Locked for active collabs",value: fmtMoney(realStats.escrowBalance),  color: "#6366f1", bg: "#eef2ff", icon: Shield },
+      { label: "Revenue",          sub: "Platform commission",      value: fmtMoney(realStats.brandiorRevenue), color: "#4f46e5", bg: "#eef2ff", icon: DollarSign },
+    ]
+    const platformFlowItems = [
+      { label: "Total Users",      sub: "All registered accounts",  value: fmtNum(realStats.userCount),         color: "#7c3aed", bg: "#f3f0ff", icon: Users },
+      { label: "Completed Collabs",sub: "Finished campaigns",       value: fmtNum(realStats.completedCollabs),  color: "#10b981", bg: "#ecfdf5", icon: CheckCircle },
+      { label: "Pending Disputes", sub: "Needs resolution",         value: fmtNum(realStats.pendingDisputes),   color: "#ef4444", bg: "#fee2e2", icon: Scale },
+      { label: "Platform Revenue", sub: "Total commission earned",  value: fmtMoney(realStats.brandiorRevenue), color: "#4f46e5", bg: "#eef2ff", icon: TrendingUp },
+      { label: "Daily Signups",    sub: "New users today",          value: fmtNum(realStats.dailySignups),      color: "#0ea5e9", bg: "#e0f2fe", icon: Users },
+    ]
+    const flowItems = overviewFilter === "creator" ? creatorFlowItems : overviewFilter === "brand" ? brandFlowItems : overviewFilter === "platform" ? platformFlowItems : allFlowItems
 
     const systemAlerts = [
       { label: "Pending Verifications", value: realStats.pendingVerifications ?? 0, color: "#f97316", Icon: BadgeCheck, tab: "users" },
@@ -3415,6 +3450,7 @@ export default function AdminPanel() {
     overview:         renderOverview,
     analytics:        renderAnalytics,
     users:            renderUsers,
+    badges:           () => <BadgeManagementPanel showToast={showToast} />,
     jobs:             () => <CollaborationPanel showToast={showToast} auditLog={auditLog} />,
     pitches:          () => <PitchesPanel showToast={showToast} auditLog={auditLog} />,
     messaging:        () => <MessagingModerationPanel showToast={showToast} auditLog={auditLog} />,
@@ -3584,11 +3620,15 @@ export default function AdminPanel() {
           {/* Right controls */}
           <div className="flex items-center gap-3 flex-shrink-0">
             {/* Search */}
-            <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: "#f3f4f6", border: "1px solid #e5e7eb" }}>
+            <button onClick={() => { setCmdOpen(true); setCmdQuery(""); }}
+              className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl transition-all"
+              style={{ backgroundColor: "#f3f4f6", border: "1px solid #e5e7eb", cursor: "pointer" }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = "#e9ecef"}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = "#f3f4f6"}>
               <Search style={{ width: 14, height: 14, color: "#9ca3af" }} />
               <span style={{ fontSize: 13, color: "#9ca3af" }}>Search anything…</span>
               <span style={{ fontSize: 11, color: "#d1d5db", backgroundColor: "#e5e7eb", borderRadius: 4, padding: "1px 5px", fontWeight: 700 }}>⌘K</span>
-            </div>
+            </button>
             {/* Notifications */}
             <button style={{ position: "relative", width: 36, height: 36, borderRadius: 10, border: "1px solid #e5e7eb", backgroundColor: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
               onClick={() => setActiveTab("notifications2")}>
@@ -3634,6 +3674,69 @@ export default function AdminPanel() {
           onConfirm={confirmModal.onConfirm}
           onCancel={() => setConfirmModal(null)}
         />
+      )}
+
+      {/* ── Command Palette ── */}
+      {cmdOpen && (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 9999, backgroundColor: "rgba(0,0,0,0.55)", display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 120 }}
+          onClick={() => setCmdOpen(false)}
+        >
+          <div
+            style={{ width: 560, backgroundColor: "#fff", borderRadius: 16, boxShadow: "0 25px 60px rgba(0,0,0,0.25)", overflow: "hidden" }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Input */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 18px", borderBottom: "1px solid #f3f4f6" }}>
+              <Search style={{ width: 18, height: 18, color: "#9ca3af", flexShrink: 0 }} />
+              <input
+                autoFocus
+                value={cmdQuery}
+                onChange={e => setCmdQuery(e.target.value)}
+                placeholder="Search panels…"
+                style={{ flex: 1, border: "none", outline: "none", fontSize: 15, color: "#111827", background: "transparent" }}
+              />
+              {cmdQuery && (
+                <button onClick={() => setCmdQuery("")} style={{ background: "none", border: "none", cursor: "pointer", color: "#9ca3af" }}>
+                  <X style={{ width: 14, height: 14 }} />
+                </button>
+              )}
+              <span style={{ fontSize: 11, color: "#d1d5db", backgroundColor: "#f3f4f6", borderRadius: 4, padding: "2px 6px", fontWeight: 700, flexShrink: 0 }}>ESC</span>
+            </div>
+            {/* Results */}
+            <div style={{ maxHeight: 400, overflowY: "auto", padding: "8px 0" }}>
+              {(() => {
+                const q = cmdQuery.toLowerCase().trim();
+                const results = NAV_ITEMS.filter(item => item.label.toLowerCase().includes(q) || item.id.toLowerCase().includes(q));
+                if (results.length === 0) return (
+                  <p style={{ fontSize: 13, color: "#9ca3af", textAlign: "center", padding: "32px 0" }}>No panels match "{cmdQuery}"</p>
+                );
+                return results.map(({ id, label, Icon }) => (
+                  <button key={id}
+                    onClick={() => { setActiveTab(id); setCmdOpen(false); setCmdQuery(""); }}
+                    style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "10px 18px", border: "none", background: "transparent", cursor: "pointer", textAlign: "left", transition: "background 0.1s" }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = "#f9fafb"}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}>
+                    <div style={{ width: 32, height: 32, borderRadius: 9, backgroundColor: "#f3f0ff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Icon style={{ width: 15, height: 15, color: "#7c3aed" }} />
+                    </div>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{label}</span>
+                    <span style={{ fontSize: 11, color: "#9ca3af", marginLeft: "auto" }}>Go to panel →</span>
+                  </button>
+                ));
+              })()}
+            </div>
+            {/* Footer hint */}
+            <div style={{ padding: "10px 18px", borderTop: "1px solid #f3f4f6", display: "flex", gap: 16 }}>
+              {[["↑↓", "navigate"], ["↵", "open"], ["esc", "close"]].map(([key, desc]) => (
+                <span key={key} style={{ fontSize: 11, color: "#9ca3af", display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ backgroundColor: "#f3f4f6", borderRadius: 4, padding: "1px 5px", fontWeight: 700, color: "#6b7280" }}>{key}</span>
+                  {desc}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
 
       {addTeamModal && (
