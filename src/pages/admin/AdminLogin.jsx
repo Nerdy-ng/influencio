@@ -166,6 +166,7 @@ export default function AdminLogin() {
           We sent a 6-digit code to
         </p>
         <p className="font-semibold text-white text-sm mt-1">{email}</p>
+        <p className="text-xs mt-3" style={{ color: "#475569" }}>Code expires in 20 minutes. Do not share it.</p>
       </div>
 
       {error && <ErrorBox message={error} />}
