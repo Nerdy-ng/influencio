@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { Send, Users, CheckCircle, AlertTriangle, Bell, Clock, RotateCcw, Briefcase, User } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
+const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-push`;
+const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
 const TARGETS = [
   { id: "all",     label: "Everyone",      desc: "All users with push enabled",   Icon: Users },
   { id: "brand",   label: "Brands only",   desc: "All brand accounts",            Icon: Briefcase },
@@ -95,15 +98,23 @@ export default function PushNotificationPanel({ showToast, auditLog }) {
         profiles.map(async (p) => {
           const name = p.full_name || p.company_name || p.id;
           try {
-            const { data: fnData, error } = await supabase.functions.invoke("send-push", {
-              body: { token: p.push_token, title: title.trim(), body: body.trim(), data: {} },
+            const res = await fetch(FN_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "apikey": ANON_KEY,
+              },
+              body: JSON.stringify({ token: p.push_token, title: title.trim(), body: body.trim(), data: {} }),
             });
 
-            if (error) {
-              errorMessages.push(`${name}: ${error.message}`);
+            if (!res.ok) {
+              const txt = await res.text().catch(() => res.status.toString());
+              errorMessages.push(`${name}: HTTP ${res.status} — ${txt}`);
               errors++;
               return;
             }
+
+            const fnData = await res.json().catch(() => ({}));
 
             // Expo reports token-level errors inside the response body
             const expoStatus = fnData?.data?.[0]?.status ?? fnData?.status;
