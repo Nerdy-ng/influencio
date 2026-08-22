@@ -3555,22 +3555,20 @@ export default function AdminPanel() {
         </nav>
 
         {/* Bottom */}
-        <div className="flex flex-col items-center gap-2 py-4 border-t" style={{ borderColor: "#161b22" }}>
-          <button
-            title={adminUser.name}
-            style={{ width: 34, height: 34, borderRadius: "50%", backgroundColor: "#7c3aed", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div className="flex flex-col items-center gap-3 py-4 border-t" style={{ borderColor: "#161b22" }}>
+          <div style={{ width: 34, height: 34, borderRadius: "50%", backgroundColor: "#7c3aed", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} title={adminUser.name}>
             <span style={{ fontSize: 12, fontWeight: 800, color: "#fff" }}>
               {(adminUser.name || "SA").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
             </span>
-          </button>
+          </div>
           <button
-            title="Logout"
             onClick={handleLogout}
-            style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#6e7681" }}
+            style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, width: 52, padding: "6px 4px", borderRadius: 10, backgroundColor: "transparent", border: "none", cursor: "pointer", color: "#6e7681" }}
             onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#21262d"; e.currentTarget.style.color = "#f87171"; }}
             onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#6e7681"; }}
           >
             <LogOut style={{ width: 16, height: 16 }} />
+            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.05em" }}>LOGOUT</span>
           </button>
         </div>
       </aside>
