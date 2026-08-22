@@ -11,7 +11,7 @@ const ROLE_ROUTES = {
 export default function AdminLogin() {
   const [step, setStep]       = useState("email"); // email | code | checking | error
   const [email, setEmail]     = useState("");
-  const [code, setCode]       = useState(["", "", "", "", "", ""]);
+  const [code, setCode]       = useState(["", "", "", "", "", "", "", ""]);
   const [error, setError]     = useState("");
   const [loading, setLoading] = useState(false);
   const inputRefs             = useRef([]);
@@ -74,7 +74,7 @@ export default function AdminLogin() {
   async function handleVerifyCode(e) {
     e?.preventDefault();
     const token = code.join("").trim();
-    if (token.length !== 6) return;
+    if (token.length !== 8) return;
 
     setError("");
     setLoading(true);
@@ -87,7 +87,7 @@ export default function AdminLogin() {
 
     if (verifyErr || !data?.user) {
       setError("Incorrect or expired code. Check your email and try again.");
-      setCode(["", "", "", "", "", ""]);
+      setCode(["", "", "", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
       setLoading(false);
       return;
@@ -101,11 +101,11 @@ export default function AdminLogin() {
     const next  = [...code];
     next[i]     = digit;
     setCode(next);
-    if (digit && i < 5) inputRefs.current[i + 1]?.focus();
+    if (digit && i < 7) inputRefs.current[i + 1]?.focus();
     // Auto-submit when last digit is filled
-    if (digit && i === 5) {
+    if (digit && i === 7) {
       const full = next.join("");
-      if (full.length === 6) {
+      if (full.length === 8) {
         setTimeout(() => handleVerifyCode(), 80);
       }
     }
@@ -119,15 +119,15 @@ export default function AdminLogin() {
   }
 
   function onDigitPaste(e) {
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 8);
     if (!pasted) return;
     e.preventDefault();
-    const next = ["", "", "", "", "", ""];
+    const next = ["", "", "", "", "", "", "", ""];
     for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
     setCode(next);
-    const focusIdx = Math.min(pasted.length, 5);
+    const focusIdx = Math.min(pasted.length, 7);
     inputRefs.current[focusIdx]?.focus();
-    if (pasted.length === 6) setTimeout(() => handleVerifyCode(), 80);
+    if (pasted.length === 8) setTimeout(() => handleVerifyCode(), 80);
   }
 
   if (step === "checking") return (
@@ -159,7 +159,7 @@ export default function AdminLogin() {
         </div>
         <h2 className="text-xl font-bold text-white mb-1">Enter the code</h2>
         <p className="text-sm" style={{ color: "#94a3b8" }}>
-          We sent a 6-digit code to
+          We sent an 8-digit code to
         </p>
         <p className="font-semibold text-white text-sm mt-1">{email}</p>
         <p className="text-xs mt-3" style={{ color: "#475569" }}>Code expires in 20 minutes. Do not share it.</p>
@@ -168,8 +168,8 @@ export default function AdminLogin() {
       {error && <ErrorBox message={error} />}
 
       <form onSubmit={handleVerifyCode} className="space-y-6">
-        {/* 6-box code input */}
-        <div className="flex justify-center gap-3">
+        {/* 8-box code input */}
+        <div className="flex justify-center gap-2">
           {code.map((digit, i) => (
             <input
               key={i}
@@ -182,8 +182,8 @@ export default function AdminLogin() {
               onKeyDown={e => onDigitKeyDown(i, e)}
               onPaste={i === 0 ? onDigitPaste : undefined}
               style={{
-                width: 48, height: 56, textAlign: "center",
-                fontSize: 22, fontWeight: 800, letterSpacing: 0,
+                width: 42, height: 52, textAlign: "center",
+                fontSize: 20, fontWeight: 800, letterSpacing: 0,
                 backgroundColor: "#0f172a",
                 border: `2px solid ${digit ? "#4f46e5" : "#334155"}`,
                 borderRadius: 10, color: "#f1f5f9",
@@ -196,15 +196,15 @@ export default function AdminLogin() {
           ))}
         </div>
 
-        <button type="submit" disabled={loading || code.join("").length < 6}
+        <button type="submit" disabled={loading || code.join("").length < 8}
           className="w-full py-2.5 rounded-lg text-sm font-semibold text-white flex items-center justify-center gap-2"
-          style={{ backgroundColor: "#4f46e5", opacity: (loading || code.join("").length < 6) ? 0.5 : 1 }}>
+          style={{ backgroundColor: "#4f46e5", opacity: (loading || code.join("").length < 8) ? 0.5 : 1 }}>
           {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Verifying…</> : "Verify Code"}
         </button>
       </form>
 
       <div className="flex items-center justify-between mt-5">
-        <button onClick={() => { setStep("email"); setCode(["","","","","",""]); setError(""); }}
+        <button onClick={() => { setStep("email"); setCode(["","","","","","","",""]); setError(""); }}
           className="text-xs" style={{ color: "#64748b", background: "none", border: "none", cursor: "pointer" }}>
           ← Use a different email
         </button>
