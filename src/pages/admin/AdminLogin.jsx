@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Shield, Mail, AlertCircle, Loader2, CheckCircle, LogOut } from "lucide-react";
+import { Shield, Mail, AlertCircle, Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
 const ROLE_ROUTES = {
@@ -9,36 +9,23 @@ const ROLE_ROUTES = {
 };
 
 export default function AdminLogin() {
-  const [step, setStep]           = useState("email"); // email | code | checking | error | resume
-  const [email, setEmail]         = useState("");
-  const [code, setCode]           = useState(["", "", "", "", "", ""]);
-  const [error, setError]         = useState("");
-  const [loading, setLoading]     = useState(false);
-  const [resumeUser, setResumeUser] = useState(null);
-  const inputRefs                 = useRef([]);
+  const [step, setStep]       = useState("email"); // email | code | checking | error
+  const [email, setEmail]     = useState("");
+  const [code, setCode]       = useState(["", "", "", "", "", ""]);
+  const [error, setError]     = useState("");
+  const [loading, setLoading] = useState(false);
+  const inputRefs             = useRef([]);
 
-  // If there's already an active admin session, offer to resume rather than silently redirect
-  useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session?.user) return;
-      const { data: adminRow } = await supabase
-        .from("admin_users").select("role, name").eq("email", session.user.email).single();
-      if (adminRow && ROLE_ROUTES[adminRow.role?.toLowerCase().trim()]) {
-        setResumeUser({ email: session.user.email, name: adminRow.name, role: adminRow.role });
-        setStep("resume");
-      }
-    });
-  }, []);
+  // Always clear any existing session when the login page loads
+  useEffect(() => { supabase.auth.signOut(); }, []);
 
   async function handleAuthenticatedUser(user) {
     setStep("checking");
 
-    const userEmail = user.email ?? resumeUser?.email;
-
     const { data: adminRow } = await supabase
       .from("admin_users")
       .select("role, name")
-      .eq("email", userEmail)
+      .eq("email", user.email)
       .single();
 
     if (!adminRow) {
@@ -58,7 +45,7 @@ export default function AdminLogin() {
       return;
     }
 
-    localStorage.setItem("brandiór_admin_user", JSON.stringify({ email: userEmail, name: adminRow.name }));
+    localStorage.setItem("brandiór_admin_user", JSON.stringify({ email: user.email, name: adminRow.name }));
     localStorage.setItem("brandiór_admin_role", role);
     window.location.href = route;
   }
@@ -142,34 +129,6 @@ export default function AdminLogin() {
     inputRefs.current[focusIdx]?.focus();
     if (pasted.length === 6) setTimeout(() => handleVerifyCode(), 80);
   }
-
-  if (step === "resume") return (
-    <Screen>
-      <div className="text-center mb-6">
-        <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: "#4f46e5" }}>
-          <span style={{ fontSize: 20, fontWeight: 900, color: "#fff" }}>
-            {(resumeUser?.name || "SA").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
-          </span>
-        </div>
-        <h2 className="text-xl font-bold text-white mb-1">Already signed in</h2>
-        <p className="text-sm" style={{ color: "#94a3b8" }}>You have an active session as</p>
-        <p className="font-semibold text-white text-sm mt-1">{resumeUser?.email}</p>
-        <p className="text-xs mt-1 px-2 py-0.5 rounded-full inline-block capitalize" style={{ backgroundColor: "#1e3a5f", color: "#60a5fa" }}>{resumeUser?.role}</p>
-      </div>
-      <button
-        onClick={() => handleAuthenticatedUser({ email: resumeUser.email })}
-        className="w-full py-2.5 rounded-lg text-sm font-semibold text-white flex items-center justify-center gap-2 mb-3"
-        style={{ backgroundColor: "#4f46e5" }}>
-        Continue to Admin Panel
-      </button>
-      <button
-        onClick={async () => { await supabase.auth.signOut(); setStep("email"); setResumeUser(null); }}
-        className="w-full py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"
-        style={{ backgroundColor: "transparent", border: "1px solid #334155", color: "#94a3b8" }}>
-        <LogOut style={{ width: 14, height: 14 }} /> Sign out and use a different account
-      </button>
-    </Screen>
-  );
 
   if (step === "checking") return (
     <Screen>
