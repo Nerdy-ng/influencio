@@ -4,12 +4,32 @@
     <meta charset="UTF-8" />
 <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Influencio — Where Creators & Brands Grow Together</title>
+    <title>Brandior — Where Creators & Brands Close Deals</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="/assets/index-BXBx_4Wd.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-Up-CRTIt.css">
+  <!-- Redirect recovery links to /reset-password before React or Supabase loads -->
+  <script>
+    (function () {
+      var search = window.location.search
+      var hash   = window.location.hash
+      var isRecovery = search.indexOf('code=') !== -1 ||
+                       hash.indexOf('type=recovery') !== -1
+      if (isRecovery && window.location.pathname !== '/reset-password') {
+        window.location.replace('/reset-password' + search + hash)
+      }
+    })()
+  </script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-QS84PCD2BH"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-QS84PCD2BH');
+  </script>
+    <script type="module" crossorigin src="/assets/index-Bci91raX.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BmZlfe27.css">
   </head>
   <body>
     <div id="root"></div>
