@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
-import { ArrowUpCircle, RotateCcw, Search, CheckCircle, XCircle, Clock, Info } from "lucide-react";
+import { ArrowUpCircle, RotateCcw, Search, CheckCircle, XCircle, Clock, Info, AlertTriangle } from "lucide-react";
 
 const fmtMoney = (n) => `₦${Number(n || 0).toLocaleString()}`;
 const fmtDate  = (d) => d ? new Date(d).toLocaleDateString("en", { day: "numeric", month: "short", year: "numeric" }) : "—";
@@ -20,11 +20,15 @@ const FILTERS = [
 ];
 
 export default function WithdrawalPanel({ showToast, auditLog }) {
-  const [payouts, setPayouts]   = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [filter, setFilter]     = useState("all");
-  const [search, setSearch]     = useState("");
-  const [loading, setLoading]   = useState(true);
+  const [payouts, setPayouts]         = useState([]);
+  const [selected, setSelected]       = useState(null);
+  const [filter, setFilter]           = useState("all");
+  const [search, setSearch]           = useState("");
+  const [loading, setLoading]         = useState(true);
+  const [busy, setBusy]               = useState(false);
+  const [actionModal, setActionModal] = useState(null); // "complete" | "fail"
+  const [refundWallet, setRefundWallet] = useState(true);
+  const [adminNote, setAdminNote]     = useState("");
 
   async function load() {
     setLoading(true);
@@ -55,6 +59,48 @@ export default function WithdrawalPanel({ showToast, auditLog }) {
   }
 
   useEffect(() => { load(); }, []);
+
+  async function handleMarkComplete() {
+    if (!selected) return;
+    setBusy(true);
+    const { error } = await supabase.from("rubies_transactions")
+      .update({ status: "completed", note: adminNote || selected.note || "Marked completed by admin" })
+      .eq("id", selected.id);
+    if (error) { showToast("Update failed: " + error.message, "error"); setBusy(false); return; }
+    auditLog?.("payout_mark_complete", "rubies_transaction", selected.id, selected.creatorName, { amount: selected.amount });
+    showToast(`Payout marked as completed for ${selected.creatorName}`);
+    setActionModal(null); setAdminNote("");
+    setSelected(prev => ({ ...prev, status: "completed" }));
+    await load(); setBusy(false);
+  }
+
+  async function handleMarkFailed() {
+    if (!selected) return;
+    setBusy(true);
+    const { error } = await supabase.from("rubies_transactions")
+      .update({ status: "failed", note: adminNote || "Marked failed by admin" })
+      .eq("id", selected.id);
+    if (error) { showToast("Update failed: " + error.message, "error"); setBusy(false); return; }
+
+    if (refundWallet) {
+      const { data: p } = await supabase.from("profiles").select("wallet_balance").eq("id", selected.user_id).single();
+      await supabase.from("profiles")
+        .update({ wallet_balance: (p?.wallet_balance || 0) + Number(selected.amount) })
+        .eq("id", selected.user_id);
+      await supabase.from("wallet_transactions").insert({
+        user_id: selected.user_id,
+        type:    "admin_credit",
+        amount:  Number(selected.amount),
+        note:    "Payout failed — funds returned by admin",
+      }).catch(() => {});
+    }
+
+    auditLog?.("payout_mark_failed", "rubies_transaction", selected.id, selected.creatorName, { amount: selected.amount, refunded: refundWallet });
+    showToast(`Payout marked as failed${refundWallet ? " · funds returned to wallet" : ""}`);
+    setActionModal(null); setAdminNote(""); setRefundWallet(true);
+    setSelected(prev => ({ ...prev, status: "failed" }));
+    await load(); setBusy(false);
+  }
 
   const filtered = payouts.filter(r => {
     const t = search.toLowerCase();
@@ -151,7 +197,7 @@ export default function WithdrawalPanel({ showToast, auditLog }) {
         {selected ? (
           <div className="flex-1 rounded-2xl bg-white overflow-hidden flex flex-col" style={{ border: "1px solid #e2e8f0" }}>
             <div className="px-5 py-4 border-b border-gray-100 flex-shrink-0">
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between mb-3">
                 <div>
                   <h3 className="font-bold text-gray-900">{selected.creatorName}</h3>
                   <p className="text-xs text-gray-400">{fmtDate(selected.created_at)}</p>
@@ -164,6 +210,18 @@ export default function WithdrawalPanel({ showToast, auditLog }) {
                   })()}
                 </div>
               </div>
+              {selected.status === "pending" && (
+                <div className="flex gap-2">
+                  <button onClick={() => setActionModal("complete")}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-green-50 text-green-700 border border-green-200">
+                    <CheckCircle className="w-3 h-3" /> Mark Completed
+                  </button>
+                  <button onClick={() => { setRefundWallet(true); setActionModal("fail"); }}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-red-50 text-red-700 border border-red-200">
+                    <XCircle className="w-3 h-3" /> Mark Failed
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="flex-1 overflow-y-auto p-5 space-y-4">
@@ -185,6 +243,26 @@ export default function WithdrawalPanel({ showToast, auditLog }) {
                   ))}
                 </div>
               </div>
+
+              {selected.profile?.payout_accounts && (
+                <div>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Creator Bank Account</p>
+                  <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                    {(() => {
+                      const acct = typeof selected.profile.payout_accounts === "string"
+                        ? JSON.parse(selected.profile.payout_accounts)
+                        : selected.profile.payout_accounts;
+                      const entries = Array.isArray(acct) ? acct[0] : acct;
+                      return Object.entries(entries || {}).map(([k, v]) => (
+                        <div key={k} className="flex items-start justify-between">
+                          <p className="text-xs text-gray-500 flex-shrink-0 w-28 capitalize">{k.replace(/_/g, " ")}</p>
+                          <p className="text-xs font-semibold text-gray-800 text-right break-all">{String(v)}</p>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              )}
 
               {selected.status === "failed" && (
                 <div className="rounded-xl p-4 border" style={{ backgroundColor: "#fff7ed", borderColor: "#fed7aa" }}>
@@ -210,6 +288,67 @@ export default function WithdrawalPanel({ showToast, auditLog }) {
           </div>
         )}
       </div>
+
+      {/* Mark Completed modal */}
+      {actionModal === "complete" && selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              </div>
+              <h3 className="font-bold text-gray-900">Mark as Completed</h3>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Confirm that {fmtMoney(selected.amount)} was successfully transferred to {selected.creatorName}. This updates the record only — no funds move.
+            </p>
+            <input value={adminNote} onChange={e => setAdminNote(stripInjection(e.target.value))}
+              placeholder="Admin note (optional)…"
+              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-indigo-400 mb-4" />
+            <div className="flex gap-3">
+              <button onClick={() => { setActionModal(null); setAdminNote(""); }}
+                className="flex-1 py-2.5 rounded-xl border text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+              <button onClick={handleMarkComplete} disabled={busy}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white bg-green-600 disabled:opacity-50">
+                {busy ? "Saving…" : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mark Failed modal */}
+      {actionModal === "fail" && selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </div>
+              <h3 className="font-bold text-gray-900">Mark as Failed</h3>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Mark this {fmtMoney(selected.amount)} payout for {selected.creatorName} as failed.
+            </p>
+            <input value={adminNote} onChange={e => setAdminNote(stripInjection(e.target.value))}
+              placeholder="Reason for failure (optional)…"
+              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-indigo-400 mb-3" />
+            <label className="flex items-center gap-2 mb-4 cursor-pointer">
+              <input type="checkbox" checked={refundWallet} onChange={e => setRefundWallet(e.target.checked)}
+                className="w-4 h-4 accent-indigo-600" />
+              <span className="text-sm text-gray-700">Return {fmtMoney(selected.amount)} to creator's wallet</span>
+            </label>
+            <div className="flex gap-3">
+              <button onClick={() => { setActionModal(null); setAdminNote(""); setRefundWallet(true); }}
+                className="flex-1 py-2.5 rounded-xl border text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+              <button onClick={handleMarkFailed} disabled={busy}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white bg-red-600 disabled:opacity-50">
+                {busy ? "Saving…" : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

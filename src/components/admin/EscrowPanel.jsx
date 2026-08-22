@@ -48,16 +48,43 @@ export default function EscrowPanel({ showToast, auditLog }) {
   async function handleRelease() {
     if (!selected) return;
     setBusy(true);
-    const payout = selected.creator_payout || selected.total_amount;
-    const { data, error } = await supabase.functions.invoke("admin-collab-release", {
-      body: { collab_id: selected.id, note: releaseNote || "Admin manual release" },
-    });
-    if (error || data?.error) {
-      showToast(data?.error || "Release failed — check Rubies wallet setup", "error");
-      setBusy(false); return;
-    }
+    const payout = Number(selected.creator_payout || selected.total_amount);
+
+    const { data: creator, error: fetchErr } = await supabase
+      .from("profiles").select("wallet_balance").eq("id", selected.creator_id).single();
+    if (fetchErr) { showToast("Could not fetch creator wallet", "error"); setBusy(false); return; }
+
+    const { error: updateErr } = await supabase.from("collabs").update({
+      payment_status: "released",
+      released_at:    new Date().toISOString(),
+      status:         "completed",
+      admin_note:     releaseNote || "Admin manual release",
+    }).eq("id", selected.id);
+    if (updateErr) { showToast("Failed to update collab: " + updateErr.message, "error"); setBusy(false); return; }
+
+    await supabase.from("profiles")
+      .update({ wallet_balance: (creator?.wallet_balance || 0) + payout })
+      .eq("id", selected.creator_id);
+
+    await Promise.all([
+      supabase.from("rubies_transactions").insert({
+        user_id:    selected.creator_id,
+        type:       "escrow_release",
+        amount:     payout,
+        status:     "completed",
+        note:       releaseNote || "Admin manual release",
+        reference:  selected.id,
+      }).catch(() => {}),
+      supabase.from("wallet_transactions").insert({
+        user_id: selected.creator_id,
+        type:    "escrow_release",
+        amount:  payout,
+        note:    `Escrow released by admin: collab ${selected.id?.slice(0, 8)}`,
+      }).catch(() => {}),
+    ]);
+
     auditLog?.("escrow_release", "collab", selected.id, `${selected.brandName} × ${selected.creatorName}`, { payout, note: releaseNote });
-    showToast(`${fmtMoney(payout)} transferred to ${selected.creatorName}'s Rubies wallet`);
+    showToast(`${fmtMoney(payout)} added to ${selected.creatorName}'s wallet`);
     setReleaseModal(null); setReleaseNote("");
     await load(); setBusy(false);
   }
@@ -85,20 +112,30 @@ export default function EscrowPanel({ showToast, auditLog }) {
     const { data: bp } = await supabase.from("profiles").select("wallet_balance").eq("id", selected.brand_id).single();
     await saveProfile(selected.brand_id, { wallet_balance: (bp?.wallet_balance || 0) + brandShare });
 
-    // Transfer creator's share from Rubies escrow to their Rubies wallet
+    // Credit creator's share to their in-app wallet
     if (creatorShare > 0) {
-      const { data, error } = await supabase.functions.invoke("admin-collab-release", {
-        body: {
-          collab_id:          selected.id,
-          payout_override:    creatorShare,
-          skip_collab_update: true,
-          note:               `Admin split ${splitPct}/${100 - splitPct}`,
-        },
-      });
-      if (error || data?.error) {
-        showToast(data?.error || "Creator Rubies transfer failed — check wallet setup", "error");
+      const { data: cp } = await supabase.from("profiles").select("wallet_balance").eq("id", selected.creator_id).single();
+      const { error: creatorErr } = await supabase.from("profiles")
+        .update({ wallet_balance: (cp?.wallet_balance || 0) + creatorShare })
+        .eq("id", selected.creator_id);
+      if (creatorErr) {
+        showToast("Creator wallet update failed: " + creatorErr.message, "error");
         setBusy(false); return;
       }
+      await supabase.from("rubies_transactions").insert({
+        user_id:   selected.creator_id,
+        type:      "escrow_release",
+        amount:    creatorShare,
+        status:    "completed",
+        note:      `Admin split ${splitPct}/${100 - splitPct}`,
+        reference: selected.id,
+      }).catch(() => {});
+      await supabase.from("wallet_transactions").insert({
+        user_id: selected.creator_id,
+        type:    "escrow_release",
+        amount:  creatorShare,
+        note:    `Admin split ${splitPct}/${100 - splitPct}`,
+      }).catch(() => {});
     }
 
     await supabase.from("collabs").update({ payment_status: "split", split_at: new Date().toISOString(), status: "completed" }).eq("id", selected.id);
