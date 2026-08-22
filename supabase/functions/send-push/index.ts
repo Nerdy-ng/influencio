@@ -14,7 +14,8 @@ serve(async (req) => {
   }
 
   try {
-    const { token, title, body, data } = await req.json()
+    const text = await req.text()
+    const { token, title, body, data } = JSON.parse(text)
 
     if (!token || !title || !body) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {

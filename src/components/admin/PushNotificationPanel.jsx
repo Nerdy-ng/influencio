@@ -100,10 +100,7 @@ export default function PushNotificationPanel({ showToast, auditLog }) {
           try {
             const res = await fetch(FN_URL, {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "apikey": ANON_KEY,
-              },
+              headers: { "Content-Type": "text/plain" },
               body: JSON.stringify({ token: p.push_token, title: title.trim(), body: body.trim(), data: {} }),
             });
 
