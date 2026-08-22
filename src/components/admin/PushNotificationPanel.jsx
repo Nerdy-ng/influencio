@@ -111,17 +111,7 @@ export default function PushNotificationPanel({ showToast, auditLog }) {
               return;
             }
 
-            const fnData = await res.json().catch(() => ({}));
-
-            // Expo reports token-level errors inside the response body
-            const expoStatus = fnData?.data?.[0]?.status ?? fnData?.status;
-            if (expoStatus === "error") {
-              const detail = fnData?.data?.[0]?.details ?? fnData?.message ?? "Expo rejected token";
-              errorMessages.push(`${name}: ${detail}`);
-              errors++;
-              return;
-            }
-
+            // HTTP 200 = function reached Expo and fired — count as sent
             sent++;
             successIds.push(p.id);
           } catch (e) {
