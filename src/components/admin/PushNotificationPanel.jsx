@@ -2,8 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { Send, Users, CheckCircle, AlertTriangle, Bell, Clock, RotateCcw, Briefcase, User } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
-const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-push`;
-const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 const TARGETS = [
   { id: "all",     label: "Everyone",      desc: "All users with push enabled",   Icon: Users },
@@ -90,52 +88,34 @@ export default function PushNotificationPanel({ showToast, auditLog }) {
         return;
       }
 
-      let sent = 0, errors = 0;
-      const errorMessages = [];
-      const successIds = [];
+      const tokens = profiles.map(p => p.push_token);
 
-      await Promise.all(
-        profiles.map(async (p) => {
-          const name = p.full_name || p.company_name || p.id;
-          try {
-            const res = await fetch(FN_URL, {
-              method: "POST",
-              headers: { "Content-Type": "text/plain" },
-              body: JSON.stringify({ token: p.push_token, title: title.trim(), body: body.trim(), data: {} }),
-            });
+      const { data: sentCount, error: rpcError } = await supabase.rpc("admin_send_push", {
+        p_tokens: tokens,
+        p_title:  title.trim(),
+        p_body:   body.trim(),
+      });
 
-            if (!res.ok) {
-              const txt = await res.text().catch(() => res.status.toString());
-              errorMessages.push(`${name}: HTTP ${res.status} — ${txt}`);
-              errors++;
-              return;
-            }
-
-            // HTTP 200 = function reached Expo and fired — count as sent
-            sent++;
-            successIds.push(p.id);
-          } catch (e) {
-            errorMessages.push(`${name}: ${e?.message ?? "Unknown error"}`);
-            errors++;
-          }
-        })
-      );
-
-      // Batch insert in-app notifications for everyone who received the push
-      if (successIds.length > 0) {
-        await supabase.from("notifications").insert(
-          successIds.map((uid) => ({
-            user_id: uid,
-            title:   title.trim(),
-            body:    body.trim(),
-            type:    "admin",
-            data:    {},
-          }))
-        );
+      if (rpcError) {
+        setResult({ sent: 0, skipped: 0, errors: profiles.length, errorMessages: [rpcError.message] });
+        setSending(false);
+        return;
       }
 
-      const skipped = profiles.length - sent - errors;
-      setResult({ sent, skipped, errors, errorMessages });
+      const sent = sentCount ?? profiles.length;
+
+      // Batch insert in-app notifications
+      await supabase.from("notifications").insert(
+        profiles.map(p => ({
+          user_id: p.id,
+          title:   title.trim(),
+          body:    body.trim(),
+          type:    "admin",
+          data:    {},
+        }))
+      );
+
+      setResult({ sent, skipped: 0, errors: 0, errorMessages: [] });
 
       if (sent > 0) {
         auditLog?.("send_push", "notification", null, `"${title.trim()}" → ${sent} users`, { target, sent });
