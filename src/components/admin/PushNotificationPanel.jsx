@@ -87,16 +87,28 @@ export default function PushNotificationPanel({ showToast, auditLog }) {
       }
 
       let sent = 0, skipped = 0, errors = 0;
+      const errorMessages = [];
 
       await Promise.all(
         profiles.map(async (p) => {
           try {
-            const { error } = await supabase.functions.invoke("send-push", {
+            const { data: fnData, error } = await supabase.functions.invoke("send-push", {
               body: { token: p.push_token, title: title.trim(), body: body.trim(), data: {} },
             });
-            if (error) { errors++; return; }
+            if (error) {
+              errorMessages.push(`${p.full_name ?? p.id}: ${error.message}`);
+              errors++;
+              return;
+            }
+            // Expo returns { data: { status: "error", details: [...] } } on token failures
+            const expoStatus = fnData?.data?.[0]?.status ?? fnData?.status;
+            if (expoStatus === "error") {
+              const detail = fnData?.data?.[0]?.details ?? fnData?.message ?? "Expo rejected token";
+              errorMessages.push(`${p.full_name ?? p.id}: ${detail}`);
+              errors++;
+              return;
+            }
 
-            // persist to notifications table so the user sees it in-app too
             await supabase.from("notifications").insert({
               user_id: p.id,
               title:   title.trim(),
@@ -106,14 +118,15 @@ export default function PushNotificationPanel({ showToast, auditLog }) {
             });
 
             sent++;
-          } catch {
+          } catch (e) {
+            errorMessages.push(`${p.full_name ?? p.id}: ${e?.message ?? "Unknown"}`);
             errors++;
           }
         })
       );
 
       skipped = profiles.length - sent - errors;
-      setResult({ sent, skipped, errors });
+      setResult({ sent, skipped, errors, errorMessages });
       if (sent > 0) {
         auditLog?.("send_push", "notification", null, `"${title.trim()}" → ${sent} users`, { target, sent });
         setTitle("");
@@ -274,7 +287,13 @@ export default function PushNotificationPanel({ showToast, auditLog }) {
                   <p className="font-bold text-gray-800">
                     {result.sent} sent · {result.skipped} skipped · {result.errors} failed
                   </p>
-                  {result.errors > 0 && <p className="text-gray-500 mt-1">Some tokens may be expired or invalid.</p>}
+                  {result.errorMessages?.length > 0 && (
+                    <ul className="mt-2 space-y-1">
+                      {result.errorMessages.map((m, i) => (
+                        <li key={i} className="text-xs text-red-600 font-mono break-all">{m}</li>
+                      ))}
+                    </ul>
+                  )}
                 </>}
           </div>
         </div>
