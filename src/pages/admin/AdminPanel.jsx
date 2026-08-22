@@ -417,6 +417,7 @@ export default function AdminPanel() {
   const [overviewFilter, setOverviewFilter] = useState("all");
   const [cmdOpen, setCmdOpen] = useState(false);
   const [cmdQuery, setCmdQuery] = useState("");
+  const [sidebarHovered, setSidebarHovered] = useState(false);
   const [toast, setToast] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);
   const [viewUser, setViewUser] = useState(null);
@@ -3501,17 +3502,36 @@ export default function AdminPanel() {
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: "#f0f2f5" }}>
       {/* ── Sidebar ── */}
-      <aside className="flex-shrink-0 flex flex-col" style={{ width: 72, backgroundColor: "#0d1117", minHeight: "100vh", position: "sticky", top: 0, height: "100vh" }}>
-        {/* Logo mark */}
-        <div className="flex items-center justify-center py-4 border-b" style={{ borderColor: "#161b22" }}>
-          <img src="/Brandiör-2.png" alt="Brandior" style={{ width: 34, height: 34, objectFit: "contain" }} />
+      <aside
+        className="flex-shrink-0 flex flex-col"
+        onMouseEnter={() => setSidebarHovered(true)}
+        onMouseLeave={() => setSidebarHovered(false)}
+        style={{
+          width: sidebarHovered ? 200 : 72,
+          backgroundColor: "#0d1117",
+          minHeight: "100vh", position: "sticky", top: 0, height: "100vh",
+          transition: "width 0.22s cubic-bezier(0.4,0,0.2,1)",
+          overflow: "hidden",
+          zIndex: 40,
+        }}
+      >
+        {/* Logo */}
+        <div className="flex items-center py-4 border-b" style={{ borderColor: "#161b22", paddingLeft: 19, gap: 10, minHeight: 64 }}>
+          <img src="/Brandiör-2.png" alt="Brandior" style={{ width: 34, height: 34, objectFit: "contain", flexShrink: 0 }} />
+          <span style={{
+            fontSize: 15, fontWeight: 900, color: "#fff", whiteSpace: "nowrap",
+            opacity: sidebarHovered ? 1 : 0,
+            transform: sidebarHovered ? "translateX(0)" : "translateX(-8px)",
+            transition: "opacity 0.18s ease, transform 0.18s ease",
+            letterSpacing: "-0.02em",
+          }}>Brandior</span>
         </div>
 
         {/* Nav icons */}
-        <nav className="flex-1 overflow-y-auto py-3 flex flex-col items-center gap-0.5" style={{ scrollbarWidth: "none" }}>
+        <nav className="flex-1 overflow-y-auto py-3 flex flex-col gap-0.5" style={{ scrollbarWidth: "none", alignItems: "stretch" }}>
           {NAV_GROUPS.map((group, gi) => {
             if (group.divider) return (
-              <div key={`div-${gi}`} style={{ width: 32, height: 1, backgroundColor: "#21262d", margin: "6px 0", flexShrink: 0 }} />
+              <div key={`div-${gi}`} style={{ height: 1, backgroundColor: "#21262d", margin: "6px 12px", flexShrink: 0 }} />
             );
             return group.items.map(id => {
               const item = navItemMap[id];
@@ -3525,28 +3545,45 @@ export default function AdminPanel() {
               return (
                 <button
                   key={id}
-                  title={label}
                   onClick={() => { setActiveTab(id); if (id === 'financials') loadFinancials(); }}
                   style={{
-                    width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-                    display: "flex", alignItems: "center", justifyContent: "center",
+                    height: 40, borderRadius: 10, flexShrink: 0,
+                    display: "flex", alignItems: "center",
+                    paddingLeft: 15, paddingRight: 8, gap: 10,
+                    margin: "0 8px",
                     backgroundColor: active ? "#7c3aed" : "transparent",
                     color: active ? "#fff" : "#6e7681",
                     position: "relative",
                     transition: "background-color 0.15s, color 0.15s",
                     border: "none", cursor: "pointer",
+                    whiteSpace: "nowrap", overflow: "hidden",
                   }}
                   onMouseEnter={e => { if (!active) { e.currentTarget.style.backgroundColor = "#21262d"; e.currentTarget.style.color = "#c9d1d9"; } }}
                   onMouseLeave={e => { if (!active) { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#6e7681"; } }}
                 >
-                  <Icon style={{ width: 18, height: 18 }} />
+                  <Icon style={{ width: 17, height: 17, flexShrink: 0 }} />
+                  <span style={{
+                    fontSize: 13, fontWeight: 600,
+                    opacity: sidebarHovered ? 1 : 0,
+                    transition: "opacity 0.15s ease",
+                  }}>{label}</span>
                   {badge && badgeCount > 0 && (
                     <span style={{
-                      position: "absolute", top: 6, right: 6,
-                      width: 8, height: 8, borderRadius: "50%",
+                      position: "absolute",
+                      top: sidebarHovered ? "50%" : 6,
+                      right: sidebarHovered ? 10 : 6,
+                      transform: sidebarHovered ? "translateY(-50%)" : "none",
+                      width: sidebarHovered ? "auto" : 8,
+                      height: sidebarHovered ? 18 : 8,
+                      minWidth: sidebarHovered ? 18 : 8,
+                      borderRadius: sidebarHovered ? 9 : "50%",
                       backgroundColor: badgeColor || "#ef4444",
                       border: "1.5px solid #0d1117",
-                    }} />
+                      fontSize: 10, fontWeight: 800, color: "#fff",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      padding: sidebarHovered ? "0 4px" : 0,
+                      transition: "all 0.15s ease",
+                    }}>{sidebarHovered ? badgeCount : ""}</span>
                   )}
                 </button>
               );
@@ -3555,20 +3592,28 @@ export default function AdminPanel() {
         </nav>
 
         {/* Bottom */}
-        <div className="flex flex-col items-center gap-3 py-4 border-t" style={{ borderColor: "#161b22" }}>
-          <div style={{ width: 34, height: 34, borderRadius: "50%", backgroundColor: "#7c3aed", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} title={adminUser.name}>
-            <span style={{ fontSize: 12, fontWeight: 800, color: "#fff" }}>
-              {(adminUser.name || "SA").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
-            </span>
+        <div className="flex flex-col gap-1 py-4 border-t" style={{ borderColor: "#161b22", padding: "12px 8px" }}>
+          {/* User row */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 7px", borderRadius: 10, overflow: "hidden" }}>
+            <div style={{ width: 30, height: 30, borderRadius: "50%", backgroundColor: "#7c3aed", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: "#fff" }}>
+                {(adminUser.name || "SA").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
+              </span>
+            </div>
+            <div style={{ opacity: sidebarHovered ? 1 : 0, transition: "opacity 0.15s ease", overflow: "hidden" }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: "#c9d1d9", whiteSpace: "nowrap", lineHeight: 1.2 }}>{adminUser.name}</p>
+              <p style={{ fontSize: 10, color: "#6e7681", whiteSpace: "nowrap" }}>Super Admin</p>
+            </div>
           </div>
+          {/* Logout */}
           <button
             onClick={handleLogout}
-            style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, width: 52, padding: "6px 4px", borderRadius: 10, backgroundColor: "transparent", border: "none", cursor: "pointer", color: "#6e7681" }}
+            style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 7px", borderRadius: 10, backgroundColor: "transparent", border: "none", cursor: "pointer", color: "#6e7681", overflow: "hidden" }}
             onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#21262d"; e.currentTarget.style.color = "#f87171"; }}
             onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#6e7681"; }}
           >
-            <LogOut style={{ width: 16, height: 16 }} />
-            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.05em" }}>LOGOUT</span>
+            <LogOut style={{ width: 16, height: 16, flexShrink: 0 }} />
+            <span style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", opacity: sidebarHovered ? 1 : 0, transition: "opacity 0.15s ease" }}>Logout</span>
           </button>
         </div>
       </aside>
