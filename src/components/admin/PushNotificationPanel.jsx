@@ -1,32 +1,34 @@
 import { useState, useEffect, useCallback } from "react";
-import { Send, Users, CheckCircle, AlertTriangle, Bell, Clock, RotateCcw } from "lucide-react";
+import { Send, Users, CheckCircle, AlertTriangle, Bell, Clock, RotateCcw, Briefcase, User } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
+const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
+
 const TARGETS = [
-  { id: "all",      label: "Everyone",      desc: "All users with push enabled" },
-  { id: "brand",    label: "Brands only",   desc: "All brand accounts" },
-  { id: "creator",  label: "Creators only", desc: "All creator / talent accounts" },
-  { id: "user",     label: "Specific user", desc: "Send to one person by email" },
+  { id: "all",     label: "Everyone",      desc: "All users with push enabled",         Icon: Users },
+  { id: "brand",   label: "Brands only",   desc: "All brand accounts",                  Icon: Briefcase },
+  { id: "creator", label: "Creators only", desc: "All creator / talent accounts",       Icon: Users },
+  { id: "user",    label: "Specific user", desc: "Send to one person by email",         Icon: User },
 ];
 
 function timeAgo(iso) {
   const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (s < 60) return "just now";
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 60)    return "just now";
+  if (s < 3600)  return `${Math.floor(s / 60)}m ago`;
   if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
   return `${Math.floor(s / 86400)}d ago`;
 }
 
 export default function PushNotificationPanel({ showToast, auditLog }) {
-  const [target,    setTarget]    = useState("all");
-  const [email,     setEmail]     = useState("");
-  const [title,     setTitle]     = useState("");
-  const [body,      setBody]      = useState("");
-  const [sending,   setSending]   = useState(false);
-  const [result,    setResult]    = useState(null);
-  const [history,   setHistory]   = useState([]);
+  const [target,      setTarget]      = useState("all");
+  const [email,       setEmail]       = useState("");
+  const [title,       setTitle]       = useState("");
+  const [body,        setBody]        = useState("");
+  const [sending,     setSending]     = useState(false);
+  const [result,      setResult]      = useState(null);
+  const [history,     setHistory]     = useState([]);
   const [histLoading, setHistLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("compose");
+  const [activeTab,   setActiveTab]   = useState("compose");
 
   const loadHistory = useCallback(async () => {
     setHistLoading(true);
@@ -42,10 +44,10 @@ export default function PushNotificationPanel({ showToast, auditLog }) {
 
   useEffect(() => { loadHistory(); }, [loadHistory]);
 
-  async function fetchTokens() {
+  async function fetchProfiles() {
     let query = supabase
       .from("profiles")
-      .select("id, full_name, push_token, role")
+      .select("id, full_name, company_name, push_token, role")
       .not("push_token", "is", null);
 
     if (target === "brand") {
@@ -55,7 +57,7 @@ export default function PushNotificationPanel({ showToast, auditLog }) {
     } else if (target === "user") {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("id, full_name, push_token, role")
+        .select("id, full_name, company_name, push_token, role")
         .ilike("email", email.trim())
         .not("push_token", "is", null)
         .single();
@@ -80,53 +82,75 @@ export default function PushNotificationPanel({ showToast, auditLog }) {
     setResult(null);
 
     try {
-      const profiles = await fetchTokens();
+      const profiles = await fetchProfiles();
       if (profiles.length === 0) {
-        setResult({ sent: 0, skipped: 0, errors: 0, note: "No users found with push tokens." });
+        setResult({ sent: 0, skipped: 0, errors: 0, errorMessages: [], note: "No users found with push tokens." });
+        setSending(false);
         return;
       }
 
-      let sent = 0, skipped = 0, errors = 0;
+      // Batch-send to Expo push API directly — no Edge Function relay needed
+      const messages = profiles.map((p) => ({
+        to:       p.push_token,
+        title:    title.trim(),
+        body:     body.trim(),
+        sound:    "default",
+        priority: "high",
+        data:     {},
+      }));
+
+      let expoResults = [];
+      try {
+        const res = await fetch(EXPO_PUSH_URL, {
+          method: "POST",
+          headers: {
+            "Accept":       "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(messages),
+        });
+        const json = await res.json();
+        // Expo returns { data: [...] } for batch requests
+        expoResults = Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : []);
+      } catch (fetchErr) {
+        setResult({ sent: 0, skipped: 0, errors: profiles.length, errorMessages: [`Expo API unreachable: ${fetchErr.message}`] });
+        setSending(false);
+        return;
+      }
+
+      let sent = 0, errors = 0;
       const errorMessages = [];
+      const successIds = [];
 
-      await Promise.all(
-        profiles.map(async (p) => {
-          try {
-            const { data: fnData, error } = await supabase.functions.invoke("send-push", {
-              body: { token: p.push_token, title: title.trim(), body: body.trim(), data: {} },
-            });
-            if (error) {
-              errorMessages.push(`${p.full_name ?? p.id}: ${error.message}`);
-              errors++;
-              return;
-            }
-            // Expo returns { data: { status: "error", details: [...] } } on token failures
-            const expoStatus = fnData?.data?.[0]?.status ?? fnData?.status;
-            if (expoStatus === "error") {
-              const detail = fnData?.data?.[0]?.details ?? fnData?.message ?? "Expo rejected token";
-              errorMessages.push(`${p.full_name ?? p.id}: ${detail}`);
-              errors++;
-              return;
-            }
+      profiles.forEach((p, i) => {
+        const name = p.full_name || p.company_name || p.id;
+        const expoRes = expoResults[i];
+        if (!expoRes || expoRes.status === "error") {
+          const detail = expoRes?.message ?? "No response from Expo";
+          errorMessages.push(`${name}: ${detail}`);
+          errors++;
+        } else {
+          sent++;
+          successIds.push(p.id);
+        }
+      });
 
-            await supabase.from("notifications").insert({
-              user_id: p.id,
-              title:   title.trim(),
-              body:    body.trim(),
-              type:    "admin",
-              data:    {},
-            });
+      // Persist notifications for successful sends
+      if (successIds.length > 0) {
+        await supabase.from("notifications").insert(
+          successIds.map((uid) => ({
+            user_id: uid,
+            title:   title.trim(),
+            body:    body.trim(),
+            type:    "admin",
+            data:    {},
+          }))
+        );
+      }
 
-            sent++;
-          } catch (e) {
-            errorMessages.push(`${p.full_name ?? p.id}: ${e?.message ?? "Unknown"}`);
-            errors++;
-          }
-        })
-      );
-
-      skipped = profiles.length - sent - errors;
+      const skipped = profiles.length - sent - errors;
       setResult({ sent, skipped, errors, errorMessages });
+
       if (sent > 0) {
         auditLog?.("send_push", "notification", null, `"${title.trim()}" → ${sent} users`, { target, sent });
         setTitle("");
@@ -135,7 +159,7 @@ export default function PushNotificationPanel({ showToast, auditLog }) {
         loadHistory();
       }
     } catch (err) {
-      showToast?.("Failed to send: " + (err.message ?? "Unknown error"));
+      showToast?.("Unexpected error: " + (err.message ?? "Unknown"));
     } finally {
       setSending(false);
     }
@@ -169,7 +193,6 @@ export default function PushNotificationPanel({ showToast, auditLog }) {
             <div className="py-12 text-center text-sm text-gray-400">No notifications sent yet.</div>
           ) : (
             <div className="space-y-2">
-              {/* Group by title+body (dedupe broadcast) */}
               {Object.values(
                 history.reduce((acc, n) => {
                   const key = `${n.title}||${n.body}||${n.created_at?.slice(0, 16)}`;
@@ -197,122 +220,113 @@ export default function PushNotificationPanel({ showToast, auditLog }) {
       ) : (
       <div className="space-y-6">
 
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#7c3aed18" }}>
-          <Bell className="w-5 h-5" style={{ color: "#7c3aed" }} />
-        </div>
-        <div>
-          <h2 className="text-lg font-extrabold text-gray-900">Push Notifications</h2>
-          <p className="text-sm text-gray-500">Send a real-time push to your users</p>
-        </div>
-      </div>
-
-      {/* Target */}
-      <div>
-        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Send to</label>
-        <div className="grid grid-cols-2 gap-3">
-          {TARGETS.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => { setTarget(t.id); setResult(null); }}
-              className="flex flex-col items-start p-3 rounded-xl border-2 text-left transition-all"
-              style={{
-                borderColor: target === t.id ? "#7c3aed" : "#e5e7eb",
-                backgroundColor: target === t.id ? "#7c3aed08" : "#fff",
-              }}>
-              <span className="text-sm font-bold" style={{ color: target === t.id ? "#7c3aed" : "#111827" }}>{t.label}</span>
-              <span className="text-xs text-gray-400 mt-0.5">{t.desc}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Specific user email */}
-      {target === "user" && (
-        <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">User email</label>
-          <input
-            type="email"
-            placeholder="user@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2"
-            style={{ borderColor: "#e5e7eb", focusRingColor: "#7c3aed" }}
-          />
-        </div>
-      )}
-
-      {/* Title */}
-      <div>
-        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Title</label>
-        <input
-          type="text"
-          placeholder="e.g. New feature alert 🎉"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          maxLength={65}
-          className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none"
-          style={{ borderColor: "#e5e7eb" }}
-        />
-        <p className="text-xs text-gray-400 mt-1 text-right">{title.length}/65</p>
-      </div>
-
-      {/* Body */}
-      <div>
-        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Message</label>
-        <textarea
-          placeholder="What do you want to tell your users?"
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          rows={4}
-          maxLength={240}
-          className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none resize-none"
-          style={{ borderColor: "#e5e7eb" }}
-        />
-        <p className="text-xs text-gray-400 mt-1 text-right">{body.length}/240</p>
-      </div>
-
-      {/* Result */}
-      {result && (
-        <div className="flex items-start gap-3 p-4 rounded-xl border"
-          style={{ backgroundColor: result.errors > 0 && result.sent === 0 ? "#fef2f2" : "#f0fdf4", borderColor: result.errors > 0 && result.sent === 0 ? "#fecaca" : "#bbf7d0" }}>
-          {result.sent > 0
-            ? <CheckCircle className="w-5 h-5 mt-0.5 text-green-500 shrink-0" />
-            : <AlertTriangle className="w-5 h-5 mt-0.5 text-red-400 shrink-0" />}
-          <div className="text-sm">
-            {result.note
-              ? <p className="font-semibold text-gray-600">{result.note}</p>
-              : <>
-                  <p className="font-bold text-gray-800">
-                    {result.sent} sent · {result.skipped} skipped · {result.errors} failed
-                  </p>
-                  {result.errorMessages?.length > 0 && (
-                    <ul className="mt-2 space-y-1">
-                      {result.errorMessages.map((m, i) => (
-                        <li key={i} className="text-xs text-red-600 font-mono break-all">{m}</li>
-                      ))}
-                    </ul>
-                  )}
-                </>}
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#7c3aed18" }}>
+            <Bell className="w-5 h-5" style={{ color: "#7c3aed" }} />
+          </div>
+          <div>
+            <h2 className="text-lg font-extrabold text-gray-900">Push Notifications</h2>
+            <p className="text-sm text-gray-500">Send a real-time push to your users</p>
           </div>
         </div>
-      )}
 
-      {/* Send button */}
-      <button
-        onClick={handleSend}
-        disabled={sending || !title.trim() || !body.trim()}
-        className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50"
-        style={{ backgroundColor: "#7c3aed" }}>
-        {sending
-          ? <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Sending…</>
-          : <><Send className="w-4 h-4" /> Send Notification</>}
-      </button>
+        {/* Target */}
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Send to</label>
+          <div className="grid grid-cols-2 gap-3">
+            {TARGETS.map((t) => (
+              <button key={t.id} onClick={() => { setTarget(t.id); setResult(null); }}
+                className="flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all"
+                style={{
+                  borderColor:     target === t.id ? "#7c3aed" : "#e5e7eb",
+                  backgroundColor: target === t.id ? "#7c3aed08" : "#fff",
+                }}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: target === t.id ? "#7c3aed20" : "#f3f4f6" }}>
+                  <t.Icon className="w-4 h-4" style={{ color: target === t.id ? "#7c3aed" : "#9ca3af" }} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold" style={{ color: target === t.id ? "#7c3aed" : "#111827" }}>{t.label}</p>
+                  <p className="text-xs text-gray-400">{t.desc}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Specific user email */}
+        {target === "user" && (
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">User email</label>
+            <input type="email" placeholder="user@example.com" value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none"
+              style={{ borderColor: "#e5e7eb" }} />
+          </div>
+        )}
+
+        {/* Title */}
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Title</label>
+          <input type="text" placeholder="e.g. New feature alert 🎉" value={title}
+            onChange={(e) => setTitle(e.target.value)} maxLength={65}
+            className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none"
+            style={{ borderColor: "#e5e7eb" }} />
+          <p className="text-xs text-gray-400 mt-1 text-right">{title.length}/65</p>
+        </div>
+
+        {/* Body */}
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Message</label>
+          <textarea placeholder="What do you want to tell your users?" value={body}
+            onChange={(e) => setBody(e.target.value)} rows={4} maxLength={240}
+            className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none resize-none"
+            style={{ borderColor: "#e5e7eb" }} />
+          <p className="text-xs text-gray-400 mt-1 text-right">{body.length}/240</p>
+        </div>
+
+        {/* Result */}
+        {result && (
+          <div className="p-4 rounded-xl border"
+            style={{
+              backgroundColor: result.errors > 0 && result.sent === 0 ? "#fef2f2" : result.sent > 0 ? "#f0fdf4" : "#fffbeb",
+              borderColor:     result.errors > 0 && result.sent === 0 ? "#fecaca" : result.sent > 0 ? "#bbf7d0" : "#fde68a",
+            }}>
+            <div className="flex items-start gap-3">
+              {result.sent > 0
+                ? <CheckCircle className="w-5 h-5 mt-0.5 text-green-500 shrink-0" />
+                : <AlertTriangle className="w-5 h-5 mt-0.5 text-red-400 shrink-0" />}
+              <div className="flex-1 text-sm">
+                {result.note
+                  ? <p className="font-semibold text-gray-600">{result.note}</p>
+                  : <p className="font-bold text-gray-800">
+                      {result.sent} sent · {result.skipped} skipped · {result.errors} failed
+                    </p>
+                }
+                {result.errorMessages?.length > 0 && (
+                  <ul className="mt-2 space-y-1">
+                    {result.errorMessages.map((m, i) => (
+                      <li key={i} className="text-xs text-red-600 font-mono break-all">{m}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Send button */}
+        <button onClick={handleSend} disabled={sending || !title.trim() || !body.trim()}
+          className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50"
+          style={{ backgroundColor: "#7c3aed" }}>
+          {sending
+            ? <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Sending…</>
+            : <><Send className="w-4 h-4" /> Send Notification</>}
+        </button>
 
       </div>
       )}
-
     </div>
   );
 }
