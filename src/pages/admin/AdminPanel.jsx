@@ -9,6 +9,7 @@ import {
   SlidersHorizontal, Star, Zap, BadgeCheck, RotateCcw, Info, ChevronUp, ChevronRight,
   BarChart2, HelpCircle, MessageSquare, Clock, Send, CreditCard, ToggleLeft, ToggleRight, Layers,
   Scale, Sparkles, Smartphone, Tag, ListFilter, ClipboardList, GitBranch, Star as StarIcon, Wallet,
+  Moon, Sun,
 } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import AdminModerationDashboard from "../../components/AdminModerationDashboard";
@@ -418,6 +419,7 @@ export default function AdminPanel() {
   const [cmdOpen, setCmdOpen] = useState(false);
   const [cmdQuery, setCmdQuery] = useState("");
   const [sidebarHovered, setSidebarHovered] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('admin_theme') === 'dark');
   const [toast, setToast] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);
   const [viewUser, setViewUser] = useState(null);
@@ -496,6 +498,8 @@ export default function AdminPanel() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+
+  useEffect(() => { localStorage.setItem('admin_theme', darkMode ? 'dark' : 'light'); }, [darkMode]);
 
   useEffect(() => {
     supabase.from('tier_config').select('config').eq('id', 'brand_tiers').single()
@@ -1354,14 +1358,14 @@ export default function AdminPanel() {
         {/* ── Top stat strip ── */}
         <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(6, 1fr)" }}>
           {statsRow.map(({ label, value, icon: Icon, color, bg }) => (
-            <div key={label} className="rounded-2xl p-4" style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb" }}>
+            <div key={label} className="rounded-2xl p-4" style={{ backgroundColor: T.card, border: `1px solid ${T.cardBd}` }}>
               <div className="flex items-center gap-2 mb-3">
                 <div style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <Icon style={{ width: 15, height: 15, color }} />
                 </div>
-                <p style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", lineHeight: 1.2 }}>{label}</p>
+                <p style={{ fontSize: 11, fontWeight: 700, color: T.textMuted, lineHeight: 1.2 }}>{label}</p>
               </div>
-              <p style={{ fontSize: 22, fontWeight: 900, color: "#111827", lineHeight: 1 }} className="tabular-nums">{value}</p>
+              <p style={{ fontSize: 22, fontWeight: 900, color: T.text, lineHeight: 1 }} className="tabular-nums">{value}</p>
               <p style={{ fontSize: 11, color: "#10b981", marginTop: 4, fontWeight: 600 }}>↑ 100% vs last 30 days</p>
             </div>
           ))}
@@ -1370,24 +1374,24 @@ export default function AdminPanel() {
         {/* ── Three column layout ── */}
         <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1.6fr 1fr" }}>
           {/* ── Ecosystem Flow ── */}
-          <div className="rounded-2xl p-5" style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb" }}>
-            <p style={{ fontSize: 14, fontWeight: 800, color: "#111827", marginBottom: 16 }}>Ecosystem Flow</p>
+          <div className="rounded-2xl p-5" style={{ backgroundColor: T.card, border: `1px solid ${T.cardBd}` }}>
+            <p style={{ fontSize: 14, fontWeight: 800, color: T.text, marginBottom: 16 }}>Ecosystem Flow</p>
             <div className="space-y-1">
               {flowItems.map(({ label, sub, value, color, bg, icon: Icon }, i) => (
                 <div key={label}>
-                  <div className="flex items-center gap-3 py-2.5 rounded-xl px-2" style={{ backgroundColor: "#fafafa" }}>
+                  <div className="flex items-center gap-3 py-2.5 rounded-xl px-2" style={{ backgroundColor: T.hover }}>
                     <div style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <Icon style={{ width: 16, height: 16, color }} />
                     </div>
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>{label}</p>
-                      <p style={{ fontSize: 11, color: "#9ca3af" }}>{sub}</p>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: T.text }}>{label}</p>
+                      <p style={{ fontSize: 11, color: T.textMuted }}>{sub}</p>
                     </div>
                     <p style={{ fontSize: 14, fontWeight: 800, color, flexShrink: 0 }}>{value}</p>
                   </div>
                   {i < flowItems.length - 1 && (
                     <div className="flex justify-center my-0.5">
-                      <div style={{ width: 1.5, height: 14, backgroundColor: "#e5e7eb" }} />
+                      <div style={{ width: 1.5, height: 14, backgroundColor: T.cardBd }} />
                     </div>
                   )}
                 </div>
@@ -1396,18 +1400,14 @@ export default function AdminPanel() {
           </div>
 
           {/* ── Marketplace Overview ── */}
-          <div className="rounded-2xl p-5" style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb" }}>
-            <p style={{ fontSize: 14, fontWeight: 800, color: "#111827", marginBottom: 12 }}>Marketplace Overview</p>
-            {/* Circular visual */}
+          <div className="rounded-2xl p-5" style={{ backgroundColor: T.card, border: `1px solid ${T.cardBd}` }}>
+            <p style={{ fontSize: 14, fontWeight: 800, color: T.text, marginBottom: 12 }}>Marketplace Overview</p>
             <div style={{ position: "relative", height: 220, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {/* Outer ring */}
-              <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", border: "1.5px dashed #e5e7eb" }} />
-              <div style={{ position: "absolute", width: 140, height: 140, borderRadius: "50%", border: "1px dashed #f3f4f6" }} />
-              {/* Center logo */}
-              <div style={{ width: 60, height: 60, borderRadius: "50%", backgroundColor: "#fff", border: "2px solid #e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2, boxShadow: "0 4px 16px rgba(0,0,0,0.06)" }}>
+              <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", border: `1.5px dashed ${T.cardBd}` }} />
+              <div style={{ position: "absolute", width: 140, height: 140, borderRadius: "50%", border: `1px dashed ${T.divider}` }} />
+              <div style={{ width: 60, height: 60, borderRadius: "50%", backgroundColor: T.card, border: `2px solid ${T.cardBd}`, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2, boxShadow: "0 4px 16px rgba(0,0,0,0.06)" }}>
                 <img src="/Brandiör-2.png" style={{ width: 36, height: 36, objectFit: "contain" }} alt="" />
               </div>
-              {/* Orbit nodes */}
               {[
                 { label: fmtNum(realStats.creatorCount),  sub: "Creators",       color: "#7c3aed", Icon: Users,      angle: -90 },
                 { label: fmtNum(realStats.brandCount),    sub: "Brands",         color: "#f97316", Icon: Briefcase,  angle: 30 },
@@ -1424,23 +1424,21 @@ export default function AdminPanel() {
                     <div style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: color + "18", display: "flex", alignItems: "center", justifyContent: "center", border: `1.5px solid ${color}30` }}>
                       <Icon style={{ width: 16, height: 16, color }} />
                     </div>
-                    <p style={{ fontSize: 11, fontWeight: 800, color: "#111827", textAlign: "center", whiteSpace: "nowrap" }}>{label}</p>
-                    <p style={{ fontSize: 10, color: "#9ca3af", textAlign: "center" }}>{sub}</p>
+                    <p style={{ fontSize: 11, fontWeight: 800, color: T.text, textAlign: "center", whiteSpace: "nowrap" }}>{label}</p>
+                    <p style={{ fontSize: 10, color: T.textMuted, textAlign: "center" }}>{sub}</p>
                   </div>
                 )
               })}
             </div>
-
-            {/* Bottom stats */}
             <div className="grid grid-cols-3 gap-3 mt-2">
               {[
-                { label: "Active Collabs",   value: fmtNum(realStats.openCollabs), color: "#7c3aed" },
-                { label: "Pending Approvals",value: fmtNum(pendingCount),          color: "#f97316" },
-                { label: "Completed",        value: fmtNum(realStats.completedCollabs), color: "#10b981" },
+                { label: "Active Collabs",    value: fmtNum(realStats.openCollabs),       color: "#7c3aed" },
+                { label: "Pending Approvals", value: fmtNum(pendingCount),                color: "#f97316" },
+                { label: "Completed",         value: fmtNum(realStats.completedCollabs),  color: "#10b981" },
               ].map(({ label, value, color }) => (
-                <div key={label} className="rounded-xl p-3 text-center" style={{ backgroundColor: "#f9fafb" }}>
+                <div key={label} className="rounded-xl p-3 text-center" style={{ backgroundColor: T.row }}>
                   <p style={{ fontSize: 16, fontWeight: 900, color }} className="tabular-nums">{value}</p>
-                  <p style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>{label}</p>
+                  <p style={{ fontSize: 10, color: T.textMuted, marginTop: 2 }}>{label}</p>
                 </div>
               ))}
             </div>
@@ -1449,29 +1447,29 @@ export default function AdminPanel() {
           {/* ── Right column: Alerts + Activity ── */}
           <div className="space-y-4">
             {/* System Alerts */}
-            <div className="rounded-2xl p-5" style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb" }}>
+            <div className="rounded-2xl p-5" style={{ backgroundColor: T.card, border: `1px solid ${T.cardBd}` }}>
               <div className="flex items-center justify-between mb-4">
-                <p style={{ fontSize: 14, fontWeight: 800, color: "#111827" }}>System Alerts</p>
+                <p style={{ fontSize: 14, fontWeight: 800, color: T.text }}>System Alerts</p>
                 <button onClick={() => setActiveTab("audit")} style={{ fontSize: 11, color: "#7c3aed", fontWeight: 700, background: "none", border: "none", cursor: "pointer" }}>View all</button>
               </div>
               <div className="space-y-2">
                 {systemAlerts.map(({ label, value, color, Icon, tab }) => (
                   <button key={label} onClick={() => setActiveTab(tab)}
                     className="w-full flex items-center justify-between p-2.5 rounded-xl transition-all"
-                    style={{ backgroundColor: "#fafafa", border: "1px solid #f3f4f6", cursor: "pointer" }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = "#f3f4f6"}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = "#fafafa"}>
+                    style={{ backgroundColor: T.hover, border: `1px solid ${T.cardBd}`, cursor: "pointer" }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = T.hoverBd}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = T.hover}>
                     <div className="flex items-center gap-2.5">
                       <div style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: color + "15", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <Icon style={{ width: 13, height: 13, color }} />
                       </div>
-                      <p style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{label}</p>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: T.textSub }}>{label}</p>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span style={{ fontSize: 13, fontWeight: 800, color: typeof value === "string" ? "#111827" : (value > 0 ? color : "#10b981") }} className="tabular-nums">
+                      <span style={{ fontSize: 13, fontWeight: 800, color: typeof value === "string" ? T.text : (value > 0 ? color : "#10b981") }} className="tabular-nums">
                         {typeof value === "string" ? value : (value > 0 ? value : 0)}
                       </span>
-                      <ChevronRight style={{ width: 12, height: 12, color: "#d1d5db" }} />
+                      <ChevronRight style={{ width: 12, height: 12, color: T.textMuted }} />
                     </div>
                   </button>
                 ))}
@@ -1479,14 +1477,14 @@ export default function AdminPanel() {
             </div>
 
             {/* Live Activity */}
-            <div className="rounded-2xl p-5" style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb" }}>
+            <div className="rounded-2xl p-5" style={{ backgroundColor: T.card, border: `1px solid ${T.cardBd}` }}>
               <div className="flex items-center justify-between mb-4">
-                <p style={{ fontSize: 14, fontWeight: 800, color: "#111827" }}>Live Activity</p>
+                <p style={{ fontSize: 14, fontWeight: 800, color: T.text }}>Live Activity</p>
                 <button onClick={() => setActiveTab("audit")} style={{ fontSize: 11, color: "#7c3aed", fontWeight: 700, background: "none", border: "none", cursor: "pointer" }}>View all</button>
               </div>
               <div className="space-y-2.5">
                 {activityFeed.length === 0 ? (
-                  <p style={{ fontSize: 12, color: "#9ca3af" }}>No recent activity</p>
+                  <p style={{ fontSize: 12, color: T.textMuted }}>No recent activity</p>
                 ) : activityFeed.slice(0, 6).map((a) => {
                   const dotColor = a.type === "flag" ? "#ef4444" : a.type === "approve" ? "#10b981" : "#7c3aed"
                   const icons = { flag: ShieldAlert, approve: CheckCircle, signup: Users, collab: Layers, pitch: Send, wallet: Wallet }
@@ -1497,8 +1495,8 @@ export default function AdminPanel() {
                         <AIcon style={{ width: 12, height: 12, color: dotColor }} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: 12, color: "#374151", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.text}</p>
-                        <p style={{ fontSize: 10, color: "#9ca3af" }}>{a.time}</p>
+                        <p style={{ fontSize: 12, color: T.textSub, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.text}</p>
+                        <p style={{ fontSize: 10, color: T.textMuted }}>{a.time}</p>
                       </div>
                     </div>
                   )
@@ -1508,9 +1506,9 @@ export default function AdminPanel() {
           </div>
         </div>
 
-        {/* ── Financial Overview + Quick Actions ── */}
-        <div className="rounded-2xl p-5" style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb" }}>
-          <p style={{ fontSize: 14, fontWeight: 800, color: "#111827", marginBottom: 16 }}>Financial Overview</p>
+        {/* ── Financial Overview ── */}
+        <div className="rounded-2xl p-5" style={{ backgroundColor: T.card, border: `1px solid ${T.cardBd}` }}>
+          <p style={{ fontSize: 14, fontWeight: 800, color: T.text, marginBottom: 16 }}>Financial Overview</p>
           <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr 1fr 1fr 1.2fr" }}>
             {[
               { label: "Total GMV",           value: fmtMoney(realStats.totalGMV),           color: "#7c3aed" },
@@ -1518,15 +1516,14 @@ export default function AdminPanel() {
               { label: "Escrow Balance",       value: fmtMoney(realStats.escrowBalance),      color: "#6366f1" },
               { label: "Pending Withdrawals",  value: fmtMoney(realStats.pendingWithdrawals), color: "#f97316" },
             ].map(({ label, value, color }) => (
-              <div key={label} className="rounded-xl p-4" style={{ backgroundColor: "#f9fafb" }}>
-                <p style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600, marginBottom: 6 }}>{label}</p>
+              <div key={label} className="rounded-xl p-4" style={{ backgroundColor: T.row }}>
+                <p style={{ fontSize: 11, color: T.textMuted, fontWeight: 600, marginBottom: 6 }}>{label}</p>
                 <p style={{ fontSize: 18, fontWeight: 900, color }} className="tabular-nums">{value}</p>
-                <p style={{ fontSize: 10, color: "#d1d5db", marginTop: 4 }}>—</p>
+                <p style={{ fontSize: 10, color: T.textMuted, marginTop: 4 }}>—</p>
               </div>
             ))}
-            {/* Money Flow */}
-            <div className="rounded-xl p-4" style={{ backgroundColor: "#f9fafb" }}>
-              <p style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600, marginBottom: 12 }}>Money Flow</p>
+            <div className="rounded-xl p-4" style={{ backgroundColor: T.row }}>
+              <p style={{ fontSize: 11, color: T.textMuted, fontWeight: 600, marginBottom: 12 }}>Money Flow</p>
               <div className="flex items-center gap-1">
                 {moneyFlow.map(({ label, Icon, color }, i) => (
                   <div key={label} className="flex items-center gap-1">
@@ -1534,9 +1531,9 @@ export default function AdminPanel() {
                       <div style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: color + "18", display: "flex", alignItems: "center", justifyContent: "center" }}>
                         <Icon style={{ width: 12, height: 12, color }} />
                       </div>
-                      <p style={{ fontSize: 9, color: "#9ca3af", textAlign: "center", lineHeight: 1.2, maxWidth: 36 }}>{label}</p>
+                      <p style={{ fontSize: 9, color: T.textMuted, textAlign: "center", lineHeight: 1.2, maxWidth: 36 }}>{label}</p>
                     </div>
-                    {i < moneyFlow.length - 1 && <ArrowUpRight style={{ width: 10, height: 10, color: "#d1d5db", transform: "rotate(0deg)", flexShrink: 0 }} />}
+                    {i < moneyFlow.length - 1 && <ArrowUpRight style={{ width: 10, height: 10, color: T.textMuted, flexShrink: 0 }} />}
                   </div>
                 ))}
               </div>
@@ -1545,19 +1542,19 @@ export default function AdminPanel() {
         </div>
 
         {/* ── Quick Actions ── */}
-        <div className="rounded-2xl p-5" style={{ backgroundColor: "#fff", border: "1px solid #e5e7eb" }}>
-          <p style={{ fontSize: 14, fontWeight: 800, color: "#111827", marginBottom: 14 }}>Quick Actions</p>
+        <div className="rounded-2xl p-5" style={{ backgroundColor: T.card, border: `1px solid ${T.cardBd}` }}>
+          <p style={{ fontSize: 14, fontWeight: 800, color: T.text, marginBottom: 14 }}>Quick Actions</p>
           <div className="flex gap-3 flex-wrap">
             {quickActions.map(({ label, Icon, color, tab }) => (
               <button key={label} onClick={() => setActiveTab(tab)}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all"
-                style={{ backgroundColor: "#f9fafb", border: "1px solid #e5e7eb", cursor: "pointer" }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = color + "10"; e.currentTarget.style.borderColor = color + "40"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#f9fafb"; e.currentTarget.style.borderColor = "#e5e7eb"; }}>
+                style={{ backgroundColor: T.row, border: `1px solid ${T.cardBd}`, cursor: "pointer" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = color + "15"; e.currentTarget.style.borderColor = color + "50"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = T.row; e.currentTarget.style.borderColor = T.cardBd; }}>
                 <div style={{ width: 26, height: 26, borderRadius: 7, backgroundColor: color + "18", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <Icon style={{ width: 12, height: 12, color }} />
                 </div>
-                <span style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>{label}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: T.textSub }}>{label}</span>
               </button>
             ))}
           </div>
@@ -3499,8 +3496,24 @@ export default function AdminPanel() {
   const navItemMap = Object.fromEntries(NAV_ITEMS.map(n => [n.id, n]));
   const totalAlerts = (modStats.pending || 0) + (pendingCount || 0) + (openDisputeCount || 0);
 
+  const T = darkMode ? {
+    bg:         '#0f1117', header:    '#161b22', headerBd: '#21262d',
+    card:       '#1c2333', cardBd:    '#30363d', row:      '#161b22',
+    hover:      '#21262d', hoverBd:   '#30363d',
+    text:       '#e6edf3', textSub:   '#8b949e', textMuted: '#6e7681',
+    input:      '#0d1117', inputBd:   '#30363d', divider:  '#21262d',
+    tabActive:  '#7c3aed', tabBg:     '#21262d',
+  } : {
+    bg:         '#f0f2f5', header:    '#ffffff', headerBd: '#e5e7eb',
+    card:       '#ffffff', cardBd:    '#e5e7eb', row:      '#f9fafb',
+    hover:      '#f9fafb', hoverBd:   '#e5e7eb',
+    text:       '#111827', textSub:   '#6b7280', textMuted: '#9ca3af',
+    input:      '#f9fafb', inputBd:   '#e5e7eb', divider:  '#f3f4f6',
+    tabActive:  '#0d1117', tabBg:     '#f3f4f6',
+  };
+
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: "#f0f2f5" }}>
+    <div className="flex min-h-screen" style={{ backgroundColor: T.bg }}>
       {/* ── Sidebar ── */}
       <aside
         className="flex-shrink-0 flex flex-col"
@@ -3621,12 +3634,12 @@ export default function AdminPanel() {
       {/* ── Main Content ── */}
       <main className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="flex-shrink-0 flex items-center gap-4 px-6" style={{ backgroundColor: "#fff", borderBottom: "1px solid #e5e7eb", height: 64 }}>
+        <header className="flex-shrink-0 flex items-center gap-4 px-6" style={{ backgroundColor: T.header, borderBottom: `1px solid ${T.headerBd}`, height: 64 }}>
           {/* Title */}
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-black text-gray-900" style={{ fontSize: 17 }}>
+                <h1 className="font-black" style={{ fontSize: 17, color: T.text }}>
                   {activeTab === "overview" ? "Command Center" : NAV_ITEMS.find(n => n.id === activeTab)?.label}
                 </h1>
                 {activeTab === "overview" && (
@@ -3636,13 +3649,13 @@ export default function AdminPanel() {
                   </span>
                 )}
               </div>
-              <p className="text-xs font-medium" style={{ color: "#9ca3af" }}>Real-time overview of the Brandior ecosystem</p>
+              <p className="text-xs font-medium" style={{ color: T.textMuted }}>Real-time overview of the Brandior ecosystem</p>
             </div>
           </div>
 
           {/* Filter tabs — overview only */}
           {activeTab === "overview" && (
-            <div className="flex items-center gap-1 rounded-xl p-1" style={{ backgroundColor: "#f3f4f6" }}>
+            <div className="flex items-center gap-1 rounded-xl p-1" style={{ backgroundColor: T.tabBg }}>
               {[
                 { key: "all",      label: "ALL" },
                 { key: "creator",  label: "CREATOR" },
@@ -3652,8 +3665,8 @@ export default function AdminPanel() {
                 <button key={f.key} onClick={() => setOverviewFilter(f.key)}
                   className="px-3 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all"
                   style={overviewFilter === f.key
-                    ? { backgroundColor: "#0d1117", color: "#fff" }
-                    : { backgroundColor: "transparent", color: "#6b7280" }}>
+                    ? { backgroundColor: T.tabActive, color: "#fff" }
+                    : { backgroundColor: "transparent", color: T.textSub }}>
                   {f.label}
                 </button>
               ))}
@@ -3672,10 +3685,19 @@ export default function AdminPanel() {
               <span style={{ fontSize: 13, color: "#9ca3af" }}>Search anything…</span>
               <span style={{ fontSize: 11, color: "#d1d5db", backgroundColor: "#e5e7eb", borderRadius: 4, padding: "1px 5px", fontWeight: 700 }}>⌘K</span>
             </button>
+            {/* Dark mode toggle */}
+            <button
+              onClick={() => setDarkMode(v => !v)}
+              title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+              style={{ width: 36, height: 36, borderRadius: 10, border: `1px solid ${T.headerBd}`, backgroundColor: T.hover, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: T.textSub, transition: "all 0.15s" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "#7c3aed"; e.currentTarget.style.color = "#7c3aed"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = T.headerBd; e.currentTarget.style.color = T.textSub; }}>
+              {darkMode ? <Sun style={{ width: 15, height: 15 }} /> : <Moon style={{ width: 15, height: 15 }} />}
+            </button>
             {/* Notifications */}
-            <button style={{ position: "relative", width: 36, height: 36, borderRadius: 10, border: "1px solid #e5e7eb", backgroundColor: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+            <button style={{ position: "relative", width: 36, height: 36, borderRadius: 10, border: `1px solid ${T.headerBd}`, backgroundColor: T.header, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
               onClick={() => setActiveTab("notifications2")}>
-              <Bell style={{ width: 16, height: 16, color: "#6b7280" }} />
+              <Bell style={{ width: 16, height: 16, color: T.textSub }} />
               {totalAlerts > 0 && (
                 <span style={{
                   position: "absolute", top: -4, right: -4,
@@ -3695,10 +3717,10 @@ export default function AdminPanel() {
                 </span>
               </div>
               <div className="hidden lg:block">
-                <p className="text-sm font-semibold text-gray-900 leading-none">{adminUser.name}</p>
-                <p className="text-xs" style={{ color: "#9ca3af" }}>Super Admin</p>
+                <p className="text-sm font-semibold leading-none" style={{ color: T.text }}>{adminUser.name}</p>
+                <p className="text-xs" style={{ color: T.textMuted }}>Super Admin</p>
               </div>
-              <ChevronDown style={{ width: 14, height: 14, color: "#9ca3af" }} />
+              <ChevronDown style={{ width: 14, height: 14, color: T.textMuted }} />
             </div>
           </div>
         </header>
