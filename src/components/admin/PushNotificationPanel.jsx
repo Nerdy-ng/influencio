@@ -2,13 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import { Send, Users, CheckCircle, AlertTriangle, Bell, Clock, RotateCcw, Briefcase, User } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
-const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
-
 const TARGETS = [
-  { id: "all",     label: "Everyone",      desc: "All users with push enabled",         Icon: Users },
-  { id: "brand",   label: "Brands only",   desc: "All brand accounts",                  Icon: Briefcase },
-  { id: "creator", label: "Creators only", desc: "All creator / talent accounts",       Icon: Users },
-  { id: "user",    label: "Specific user", desc: "Send to one person by email",         Icon: User },
+  { id: "all",     label: "Everyone",      desc: "All users with push enabled",   Icon: Users },
+  { id: "brand",   label: "Brands only",   desc: "All brand accounts",            Icon: Briefcase },
+  { id: "creator", label: "Creators only", desc: "All creator / talent accounts", Icon: Users },
+  { id: "user",    label: "Specific user", desc: "Send to one person by email",   Icon: User },
 ];
 
 function timeAgo(iso) {
@@ -89,53 +87,43 @@ export default function PushNotificationPanel({ showToast, auditLog }) {
         return;
       }
 
-      // Batch-send to Expo push API directly — no Edge Function relay needed
-      const messages = profiles.map((p) => ({
-        to:       p.push_token,
-        title:    title.trim(),
-        body:     body.trim(),
-        sound:    "default",
-        priority: "high",
-        data:     {},
-      }));
-
-      let expoResults = [];
-      try {
-        const res = await fetch(EXPO_PUSH_URL, {
-          method: "POST",
-          headers: {
-            "Accept":       "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(messages),
-        });
-        const json = await res.json();
-        // Expo returns { data: [...] } for batch requests
-        expoResults = Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : []);
-      } catch (fetchErr) {
-        setResult({ sent: 0, skipped: 0, errors: profiles.length, errorMessages: [`Expo API unreachable: ${fetchErr.message}`] });
-        setSending(false);
-        return;
-      }
-
       let sent = 0, errors = 0;
       const errorMessages = [];
       const successIds = [];
 
-      profiles.forEach((p, i) => {
-        const name = p.full_name || p.company_name || p.id;
-        const expoRes = expoResults[i];
-        if (!expoRes || expoRes.status === "error") {
-          const detail = expoRes?.message ?? "No response from Expo";
-          errorMessages.push(`${name}: ${detail}`);
-          errors++;
-        } else {
-          sent++;
-          successIds.push(p.id);
-        }
-      });
+      await Promise.all(
+        profiles.map(async (p) => {
+          const name = p.full_name || p.company_name || p.id;
+          try {
+            const { data: fnData, error } = await supabase.functions.invoke("send-push", {
+              body: { token: p.push_token, title: title.trim(), body: body.trim(), data: {} },
+            });
 
-      // Persist notifications for successful sends
+            if (error) {
+              errorMessages.push(`${name}: ${error.message}`);
+              errors++;
+              return;
+            }
+
+            // Expo reports token-level errors inside the response body
+            const expoStatus = fnData?.data?.[0]?.status ?? fnData?.status;
+            if (expoStatus === "error") {
+              const detail = fnData?.data?.[0]?.details ?? fnData?.message ?? "Expo rejected token";
+              errorMessages.push(`${name}: ${detail}`);
+              errors++;
+              return;
+            }
+
+            sent++;
+            successIds.push(p.id);
+          } catch (e) {
+            errorMessages.push(`${name}: ${e?.message ?? "Unknown error"}`);
+            errors++;
+          }
+        })
+      );
+
+      // Batch insert in-app notifications for everyone who received the push
       if (successIds.length > 0) {
         await supabase.from("notifications").insert(
           successIds.map((uid) => ({
