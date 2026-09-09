@@ -48,14 +48,14 @@ export default function Landing() {
         <meta name="description" content="A marketplace built for the African creative economy — connecting brands with talented creators, effortlessly." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
       </Helmet>
 
       <style>{`
         .cs-body {
           background: #0e0020;
           color: #F0EBF8;
-          font-family: 'DM Sans', system-ui, sans-serif;
+          font-family: 'Inter', system-ui, sans-serif;
           min-height: 100vh;
           display: flex;
           flex-direction: column;
@@ -90,7 +90,7 @@ export default function Landing() {
           to   { opacity: 1; transform: translateY(0); }
         }
         .cs-wordmark {
-          font-family: 'Syne', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-weight: 800;
           font-size: 1.125rem;
           letter-spacing: 0.12em;
@@ -117,13 +117,14 @@ export default function Landing() {
           margin-bottom: 20px;
         }
         .cs-h1 {
-          font-family: 'Syne', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-weight: 800;
-          font-size: clamp(1.75rem, 3.5vw, 2.75rem);
-          line-height: 1.1;
+          font-size: 2.25rem;
+          line-height: 1.15;
           text-align: center;
           color: #F0EBF8;
           margin-bottom: 16px;
+          max-width: 560px;
         }
         .cs-sub {
           font-size: 1rem;
@@ -148,9 +149,9 @@ export default function Landing() {
           min-width: 80px;
         }
         .cs-digit {
-          font-family: 'Syne', sans-serif;
-          font-weight: 700;
-          font-size: clamp(3rem, 10vw, 5rem);
+          font-family: 'Inter', sans-serif;
+          font-weight: 800;
+          font-size: clamp(2.5rem, 8vw, 4.5rem);
           line-height: 1;
           color: #F4A942;
           font-variant-numeric: tabular-nums;
@@ -164,8 +165,8 @@ export default function Landing() {
           color: #7a6a90;
         }
         .cs-sep {
-          font-family: 'Syne', sans-serif;
-          font-size: clamp(2.5rem, 8vw, 4rem);
+          font-family: 'Inter', sans-serif;
+          font-size: clamp(2rem, 6vw, 3.5rem);
           color: rgba(124,58,237,0.18);
           line-height: 1;
           margin-top: 4px;
@@ -215,7 +216,7 @@ export default function Landing() {
           border: none;
           border-radius: 10px;
           padding: 13px 22px;
-          font-family: 'Syne', sans-serif;
+          font-family: 'Inter', sans-serif;
           font-weight: 700;
           font-size: 0.875rem;
           cursor: pointer;
