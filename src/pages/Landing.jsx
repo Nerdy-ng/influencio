@@ -267,7 +267,6 @@ export default function Landing() {
 
           <h1 className="cs-h1">Something big is<br />coming to Nigeria.</h1>
 
-          <p className="cs-sub">Brandior connects Nigerian brands with the best content creators. Drop your email — we'll tell you the moment we go live.</p>
 
           <div className="cs-countdown">
             <div className="cs-unit">
