@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
+import { supabase } from '../lib/supabase'
 
 const TARGET = new Date('2026-10-09T00:00:00').getTime()
 
@@ -24,21 +25,30 @@ export default function Landing() {
     return () => clearInterval(id)
   }, [])
 
-  function handleNotify(e) {
-    e.preventDefault()
-    const form  = e.currentTarget
-    const input = form.querySelector('input[type="email"]')
-    const btn   = form.querySelector('button')
-    const msg   = document.getElementById('success-msg')
-    if (!input.value.trim() || !input.value.includes('@')) {
-      input.focus()
-      input.style.borderColor = '#ef4444'
-      setTimeout(() => { input.style.borderColor = '' }, 1200)
+  const [email,     setEmail]     = useState('')
+  const [submitted, setSubmitted] = useState(false)
+  const [loading,   setLoading]   = useState(null) // 'brand' | 'creator' | null
+  const [error,     setError]     = useState('')
+
+  async function handleNotify(role) {
+    const trimmed = email.trim()
+    if (!trimmed || !trimmed.includes('@')) {
+      setError('Please enter a valid email address.')
       return
     }
-    if (btn)   { btn.textContent = 'Done!'; btn.disabled = true; btn.style.opacity = '0.6' }
-    if (input) { input.style.display = 'none' }
-    if (msg)   { msg.style.display = 'block' }
+    setError('')
+    setLoading(role)
+    try {
+      const { error: dbErr } = await supabase
+        .from('waitlist')
+        .insert({ email: trimmed, role })
+      if (dbErr && dbErr.code !== '23505') throw dbErr // ignore duplicate
+      setSubmitted(true)
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setLoading(null)
+    }
   }
 
   return (
@@ -192,7 +202,6 @@ export default function Landing() {
         }
         .cs-form-row {
           display: flex;
-          gap: 10px;
           width: 100%;
           max-width: 420px;
         }
@@ -225,6 +234,25 @@ export default function Landing() {
         }
         .cs-btn:hover { opacity: 0.88; }
         .cs-btn:active { transform: scale(0.97); }
+        .cs-btn-row {
+          display: flex;
+          gap: 12px;
+          width: 100%;
+          max-width: 420px;
+        }
+        .cs-btn-brand {
+          flex: 1;
+          background: #7c3aed;
+          color: #fff;
+        }
+        .cs-btn-brand:hover { opacity: 0.88; }
+        .cs-btn-creator {
+          flex: 1;
+          background: #F4A942;
+          color: #0e0020;
+        }
+        .cs-btn-creator:hover { opacity: 0.88; }
+        .cs-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .cs-success {
           display: none;
           font-size: 0.875rem;
@@ -294,12 +322,32 @@ export default function Landing() {
           <div className="cs-divider"></div>
 
           <div className="cs-form-wrap">
-            <p className="cs-form-label">Be the first to know when we launch.</p>
-            <form className="cs-form-row" onSubmit={handleNotify}>
-              <input type="email" className="cs-input" placeholder="your@email.com" autoComplete="email" />
-              <button type="submit" className="cs-btn">Notify me</button>
-            </form>
-            <p className="cs-success" id="success-msg">You're on the list. We'll be in touch!</p>
+            {submitted ? (
+              <p className="cs-success" style={{display:'block'}}>You're on the list! We'll let you know the moment we launch.</p>
+            ) : (
+              <>
+                <p className="cs-form-label">Be the first to know when we launch.</p>
+                <div className="cs-form-row">
+                  <input
+                    type="email"
+                    className="cs-input"
+                    placeholder="your@email.com"
+                    autoComplete="email"
+                    value={email}
+                    onChange={e => { setEmail(e.target.value); setError('') }}
+                  />
+                </div>
+                <div className="cs-btn-row">
+                  <button className="cs-btn cs-btn-brand" onClick={() => handleNotify('brand')} disabled={!!loading}>
+                    {loading === 'brand' ? '...' : "I'm a Brand"}
+                  </button>
+                  <button className="cs-btn cs-btn-creator" onClick={() => handleNotify('creator')} disabled={!!loading}>
+                    {loading === 'creator' ? '...' : "I'm a Creator"}
+                  </button>
+                </div>
+                {error && <p style={{fontSize:'0.8125rem', color:'#ef4444', textAlign:'center'}}>{error}</p>}
+              </>
+            )}
           </div>
 
           <div className="cs-footer">
