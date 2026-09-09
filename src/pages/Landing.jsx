@@ -119,7 +119,7 @@ export default function Landing() {
         .cs-h1 {
           font-family: 'Syne', sans-serif;
           font-weight: 800;
-          font-size: clamp(2rem, 6vw, 3.25rem);
+          font-size: clamp(1.75rem, 3.5vw, 2.75rem);
           line-height: 1.1;
           text-align: center;
           color: #F0EBF8;
@@ -265,7 +265,7 @@ export default function Landing() {
 
           <p className="cs-eyebrow">Coming Soon</p>
 
-          <h1 className="cs-h1">Something big is<br />coming to Nigeria.</h1>
+          <h1 className="cs-h1">Something big is coming to Nigeria.</h1>
 
 
           <div className="cs-countdown">
