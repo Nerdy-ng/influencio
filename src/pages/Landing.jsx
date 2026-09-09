@@ -259,7 +259,7 @@ export default function Landing() {
       <div className="cs-body">
         <div className="cs-page">
           <div className="cs-wordmark">
-            <span className="cs-dot"></span>
+            <img src="/logo.png" alt="Brandior logo" style={{width:'32px',height:'32px',objectFit:'contain'}} />
             Brandior
           </div>
 
