@@ -8,6 +8,7 @@ import TalentShowcase from '../components/TalentShowcase'
 import Testimonials from '../components/Testimonials'
 import Pricing from '../components/Pricing'
 import PlatformPreview from '../components/PlatformPreview'
+import AppShowcase from '../components/AppShowcase'
 import CTA from '../components/CTA'
 import Footer from '../components/Footer'
 
@@ -32,6 +33,7 @@ export default function Landing() {
       <Features />
       <Testimonials />
       <PlatformPreview />
+      <AppShowcase />
       <Pricing />
       <CTA />
       <Footer />

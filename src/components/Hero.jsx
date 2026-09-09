@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Users } from 'lucide-react'
 import { getSetting } from '../lib/siteSettings'
+import { GooglePlayBadge, AppStoreBadge } from './AppShowcase'
 
 const gold = '#D4AF37'
 const pink = '#FF6B9D'
@@ -89,6 +90,15 @@ export default function Hero() {
               <Users className="w-4 h-4" />
               {isLoggedIn ? 'Talent Dashboard' : 'Earn as a Talent'}
             </Link>
+          </div>
+
+          {/* 3b — App download badges */}
+          <div className="flex flex-col items-center gap-3 pt-1">
+            <p className="text-white/25 text-xs uppercase tracking-widest">Also available on mobile</p>
+            <div className="flex gap-3 flex-wrap justify-center">
+              <GooglePlayBadge size="sm" />
+              <AppStoreBadge size="sm" />
+            </div>
           </div>
 
           {/* 4 — Social platforms */}

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight, Zap, Building2 } from 'lucide-react'
+import { GooglePlayBadge, AppStoreBadge } from './AppShowcase'
 
 const pink = '#FF6B9D'
 
@@ -58,13 +59,22 @@ export default function CTA() {
         </div>
 
         {/* trust bullets */}
-        <div className="flex items-center justify-center gap-6 flex-wrap">
+        <div className="flex items-center justify-center gap-6 flex-wrap mb-12">
           {['No setup fees', 'Free to join', 'Escrow protected', '24/7 Support'].map(item => (
             <span key={item} className="flex items-center gap-1.5 text-white/30 text-sm">
               <span className="w-1 h-1 rounded-full inline-block" style={{ backgroundColor: pink }} />
               {item}
             </span>
           ))}
+        </div>
+
+        {/* app download badges */}
+        <div className="flex flex-col items-center gap-4 pt-10 border-t border-white/5">
+          <p className="text-white/25 text-xs uppercase tracking-widest">Take Brandior everywhere</p>
+          <div className="flex gap-3 flex-wrap justify-center">
+            <GooglePlayBadge />
+            <AppStoreBadge />
+          </div>
         </div>
       </div>
     </section>
