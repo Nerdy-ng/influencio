@@ -457,6 +457,11 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
     ))
 
     const otherUnread = userType === 'brand' ? 'unread_talent' : 'unread_brand'
+    const recipientId = userType === 'brand' ? activeConv?.talentId : activeConv?.brandId
+    const senderName  = userType === 'brand'
+      ? (activeConv?.brandName || 'A brand')
+      : (activeConv?.talentName || 'A creator')
+
     await Promise.all([
       supabase.from('messages').insert({
         conversation_id: activeConvId,
@@ -468,9 +473,30 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
       supabase.from('conversations').update({
         last_message: body,
         last_message_at: now,
-        [otherUnread]: supabase.rpc ? undefined : undefined, // bump handled by trigger or below
+        [otherUnread]: supabase.rpc ? undefined : undefined,
       }).eq('id', activeConvId),
     ])
+
+    // Email notification to recipient (fire-and-forget)
+    if (recipientId) {
+      supabase.from('profiles').select('email, full_name, username').eq('id', recipientId).single()
+        .then(({ data: recipient }) => {
+          if (!recipient?.email) return
+          supabase.functions.invoke('send-email', {
+            body: {
+              type: 'new_message',
+              to:   recipient.email,
+              data: {
+                recipientName: recipient.full_name || recipient.username || 'there',
+                senderName,
+                preview:      body.length > 120 ? body.slice(0, 120) + '…' : body,
+                dashboardUrl: 'https://app.brandior.africa/dashboard',
+              },
+            },
+          })
+        }).catch(() => {})
+    }
+
     setSending(false)
   }
 

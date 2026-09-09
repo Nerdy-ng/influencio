@@ -72,6 +72,26 @@ export default function CollabReviewPage() {
     setSubmitting(false)
     if (dbError) { setError(dbError.message); return }
 
+    // Notify creator of new brief
+    const { data: creatorProfile } = await supabase.from('profiles').select('email, full_name, username').eq('id', creatorId).single()
+    const { data: brandProfile }   = await supabase.from('profiles').select('full_name, company_name').eq('id', brandId).single()
+    if (creatorProfile?.email) {
+      supabase.functions.invoke('send-email', {
+        body: {
+          type: 'new_brief',
+          to:   creatorProfile.email,
+          data: {
+            creatorName:  creatorProfile.full_name || creatorProfile.username || 'Creator',
+            brandName:    brandProfile?.company_name || brandProfile?.full_name || 'A brand',
+            collabTitle:  brief?.productName || contentType || 'Collaboration',
+            budget:       `₦${Number(total ?? 0).toLocaleString()}`,
+            deadline:     brief?.deadline ? new Date(brief.deadline).toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' }) : 'TBD',
+            briefUrl:     'https://app.brandior.africa/dashboard',
+          },
+        },
+      }).catch(() => {})
+    }
+
     navigate('/brand-dashboard?tab=collabs', { state: { collabCreated: true } })
   }
 

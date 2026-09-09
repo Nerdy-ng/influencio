@@ -228,12 +228,14 @@ export default function SignupPage() {
           }),
         }, { onConflict: 'id' })
 
-        // Send welcome email
+        // Send onboarding email
         if (user.email) {
-          fetch('/api/send-welcome-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: user.email, name: profile.displayName || user.email, role }),
+          supabase.functions.invoke('send-email', {
+            body: {
+              type: role === 'talent' ? 'creator_onboarding' : 'brand_onboarding',
+              to:   user.email,
+              data: { name: profile.displayName || user.email },
+            },
           }).catch(() => {})
         }
       }
