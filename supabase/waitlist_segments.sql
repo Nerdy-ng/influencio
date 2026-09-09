@@ -1,13 +1,15 @@
 -- Run this in Supabase SQL Editor
 
 -- View: creator/talent waitlist only
-create or replace view waitlist_creators as
+create or replace view waitlist_creators
+  with (security_invoker = true) as
   select * from waitlist
   where role = 'creator'
   order by created_at desc;
 
 -- View: brand waitlist only
-create or replace view waitlist_brands as
+create or replace view waitlist_brands
+  with (security_invoker = true) as
   select * from waitlist
   where role = 'brand'
   order by created_at desc;
