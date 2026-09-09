@@ -13,6 +13,7 @@ const STARTED_WITH_RECOVERY = (
   new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery'
 )
 
+const ComingSoon      = lazy(() => import('./pages/ComingSoon'))
 const Landing         = lazy(() => import('./pages/Landing'))
 const TalentLanding   = lazy(() => import('./pages/TalentLanding'))
 const BrandLanding    = lazy(() => import('./pages/BrandLanding'))
@@ -204,7 +205,8 @@ export default function App() {
     <MaintenanceGate>
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        <Route path="/"             element={<PublicOnly><Landing /></PublicOnly>} />
+        <Route path="/"             element={<PublicOnly><ComingSoon /></PublicOnly>} />
+        <Route path="/preview"      element={<Landing />} />
         <Route path="/for-talents"  element={<PublicOnly><TalentLanding /></PublicOnly>} />
         <Route path="/for-brands"   element={<PublicOnly><BrandLanding /></PublicOnly>} />
         <Route path="/signup"         element={<PublicOnly><SignupPage /></PublicOnly>} />
