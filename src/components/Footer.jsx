@@ -26,10 +26,11 @@ const links = {
     { label: 'Pricing',           to: '/pricing'        },
   ],
   Company: [
-    { label: 'About Us',    to: '/about'   },
-    { label: 'Privacy',     to: '/privacy' },
-    { label: 'Terms',       to: '/terms'   },
-    { label: 'Cookies',     to: '/cookies' },
+    { label: 'About Us',       to: '/about'          },
+    { label: 'Privacy',        to: '/privacy'         },
+    { label: 'Terms',          to: '/terms'           },
+    { label: 'Cookies',        to: '/cookies'         },
+    { label: 'Acceptable Use', to: '/acceptable-use'  },
   ],
 }
 
@@ -112,9 +113,10 @@ export default function Footer() {
           <p className="text-white/20 text-sm">© {new Date().getFullYear()} {platformName} Inc. All rights reserved.</p>
           <div className="flex items-center gap-6">
             {[
-              { label: 'Privacy Policy',  to: '/privacy' },
-              { label: 'Terms of Service', to: '/terms'  },
-              { label: 'Cookie Policy',   to: '/cookies' },
+              { label: 'Privacy Policy',   to: '/privacy'         },
+              { label: 'Terms of Service', to: '/terms'           },
+              { label: 'Cookie Policy',    to: '/cookies'         },
+              { label: 'Acceptable Use',   to: '/acceptable-use'  },
             ].map(({ label, to }) => (
               <Link key={label} to={to} className="text-white/20 hover:text-white/50 text-xs transition-colors">{label}</Link>
             ))}

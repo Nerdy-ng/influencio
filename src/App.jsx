@@ -227,6 +227,7 @@ export default function App() {
         <Route path="/terms"                  element={<LegalPage />} />
         <Route path="/privacy"                element={<LegalPage />} />
         <Route path="/cookies"                element={<LegalPage />} />
+        <Route path="/acceptable-use"         element={<LegalPage />} />
         <Route path="/about"                  element={<AboutPage />} />
         <Route path="/contact"                element={<ContactPage />} />
         <Route path="/how-it-works"           element={<HowItWorksPage />} />

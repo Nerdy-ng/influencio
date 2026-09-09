@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Users } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { getSetting } from '../lib/siteSettings'
 import { GooglePlayBadge, AppStoreBadge } from './AppShowcase'
 
@@ -76,19 +76,12 @@ export default function Hero() {
             <span className="font-semibold" style={{ color: pink }}>ideas</span> to life.
           </p>
 
-          {/* 3 — Dual-path CTAs */}
+          {/* 3 — CTA */}
           <div className="flex flex-col sm:flex-row gap-3 pt-1 justify-center">
             <Link to={isLoggedIn ? '/marketplace' : '/signup'}
               className="group flex items-center justify-center gap-2 bg-white text-brand-dark font-bold px-7 py-4 rounded-full hover:bg-brand-sand transition-colors text-sm">
-              {isLoggedIn ? 'Go to Dashboard' : 'Grow Your Business'}
+              {isLoggedIn ? 'Go to Dashboard' : 'Get Started'}
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link to={isLoggedIn ? '/dashboard' : '/signup'}
-              className="group flex items-center justify-center gap-2 border border-white/15 text-white/70 font-semibold px-7 py-4 rounded-full transition-all text-sm"
-              onMouseEnter={e => { e.currentTarget.style.borderColor = gold; e.currentTarget.style.color = gold }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.color = '' }}>
-              <Users className="w-4 h-4" />
-              {isLoggedIn ? 'Talent Dashboard' : 'Earn as a Talent'}
             </Link>
           </div>
 
