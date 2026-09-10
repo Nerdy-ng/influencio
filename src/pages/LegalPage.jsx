@@ -121,7 +121,7 @@ The following defined terms apply throughout this Agreement. Defined terms may a
 
 12.2 If Brandior becomes aware of a transaction that breaches Clause 12.1, the infringing party shall pay Brandior Liquidated Damages equal to 20% of the value of the off-platform transaction, such amount representing a genuine pre-estimate of the Platform Fees lost. These Liquidated Damages are in addition to any other remedy available to Brandior.
 
-12.3 Where the value of the off-platform transaction cannot be determined, the Liquidated Damages shall be deemed to be ₦500,000 or twice the Platform Fee that would have been payable on a comparable Collab through the Platform, whichever is higher.
+12.3 Where the value of the off-platform transaction cannot be independently verified, Brandior shall determine the Liquidated Damages amount in its reasonable discretion, having regard to the nature and scope of the Collab, the Creator's published rate card, and the Platform Fees that would have been payable on a comparable Transaction through the Platform.
 
 ## 13. DISCLAIMER OF WARRANTIES
 
