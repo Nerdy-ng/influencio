@@ -66,11 +66,21 @@ export default function EscrowPanel({ showToast, auditLog }) {
   async function handleRefund() {
     if (!selected) return;
     setBusy(true);
-    await supabase.from("collabs").update({ payment_status: "refunded", refunded_at: new Date().toISOString(), status: "cancelled", admin_note: releaseNote || undefined }).eq("id", selected.id);
-    const { data: p } = await supabase.from("profiles").select("wallet_balance").eq("id", selected.brand_id).single();
-    saveProfile(selected.brand_id, { wallet_balance: (p?.wallet_balance || 0) + Number(selected.total_amount) });
-    auditLog?.("escrow_refund", "collab", selected.id, selected.brandName, { amount: selected.total_amount });
-    showToast(`${fmtMoney(selected.total_amount)} refunded to ${selected.brandName}`);
+    const { data, error } = await supabase.functions.invoke("admin-escrow-refund", {
+      body: { collab_id: selected.id, note: releaseNote || "Admin manual refund" },
+    });
+    if (error || data?.error) {
+      showToast(data?.error || error?.message || "Refund failed", "error");
+      setBusy(false); return;
+    }
+    auditLog?.("escrow_refund", "collab", selected.id, selected.brandName, {
+      amount: data?.refund_amount, mode: data?.transfer_mode,
+    });
+    if (data?.manual_action_needed) {
+      showToast(`Refund logged — no Rubies/bank account on file. Process ${fmtMoney(data?.refund_amount)} manually via Rubies dashboard.`, "warn");
+    } else {
+      showToast(`${fmtMoney(data?.refund_amount)} refunded to ${selected.brandName}`);
+    }
     setReleaseModal(null); setReleaseNote("");
     await load(); setBusy(false);
   }
