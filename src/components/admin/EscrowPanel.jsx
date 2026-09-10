@@ -48,43 +48,17 @@ export default function EscrowPanel({ showToast, auditLog }) {
   async function handleRelease() {
     if (!selected) return;
     setBusy(true);
-    const payout = Number(selected.creator_payout || selected.total_amount);
-
-    const { data: creator, error: fetchErr } = await supabase
-      .from("profiles").select("wallet_balance").eq("id", selected.creator_id).single();
-    if (fetchErr) { showToast("Could not fetch creator wallet", "error"); setBusy(false); return; }
-
-    const { error: updateErr } = await supabase.from("collabs").update({
-      payment_status: "released",
-      released_at:    new Date().toISOString(),
-      status:         "completed",
-      admin_note:     releaseNote || "Admin manual release",
-    }).eq("id", selected.id);
-    if (updateErr) { showToast("Failed to update collab: " + updateErr.message, "error"); setBusy(false); return; }
-
-    await supabase.from("profiles")
-      .update({ wallet_balance: (creator?.wallet_balance || 0) + payout })
-      .eq("id", selected.creator_id);
-
-    await Promise.all([
-      supabase.from("rubies_transactions").insert({
-        user_id:    selected.creator_id,
-        type:       "escrow_release",
-        amount:     payout,
-        status:     "completed",
-        note:       releaseNote || "Admin manual release",
-        reference:  selected.id,
-      }).catch(() => {}),
-      supabase.from("wallet_transactions").insert({
-        user_id: selected.creator_id,
-        type:    "escrow_release",
-        amount:  payout,
-        note:    `Escrow released by admin: collab ${selected.id?.slice(0, 8)}`,
-      }).catch(() => {}),
-    ]);
-
-    auditLog?.("escrow_release", "collab", selected.id, `${selected.brandName} × ${selected.creatorName}`, { payout, note: releaseNote });
-    showToast(`${fmtMoney(payout)} added to ${selected.creatorName}'s wallet`);
+    const { data, error } = await supabase.functions.invoke("admin-collab-release", {
+      body: { collab_id: selected.id, note: releaseNote || "Admin manual release" },
+    });
+    if (error || data?.error) {
+      showToast(data?.error || error?.message || "Release failed", "error");
+      setBusy(false); return;
+    }
+    auditLog?.("escrow_release", "collab", selected.id, `${selected.brandName} × ${selected.creatorName}`, {
+      payout: data?.payout_released, note: releaseNote,
+    });
+    showToast(`${fmtMoney(data?.payout_released ?? selected.creator_payout)} sent to ${selected.creatorName}`);
     setReleaseModal(null); setReleaseNote("");
     await load(); setBusy(false);
   }
@@ -104,41 +78,35 @@ export default function EscrowPanel({ showToast, auditLog }) {
   async function handleSplit() {
     if (!selected) return;
     setBusy(true);
-    const total       = Number(selected.total_amount);
-    const brandShare  = Math.round(total * (splitPct / 100));
+    const total        = Number(selected.total_amount);
+    const brandShare   = Math.round(total * (splitPct / 100));
     const creatorShare = total - brandShare;
 
-    // Refund brand's share to their Supabase wallet_balance (brands use virtual balance)
-    const { data: bp } = await supabase.from("profiles").select("wallet_balance").eq("id", selected.brand_id).single();
-    await saveProfile(selected.brand_id, { wallet_balance: (bp?.wallet_balance || 0) + brandShare });
-
-    // Credit creator's share to their in-app wallet
+    // Release creator's portion via Rubies internalTransfer
     if (creatorShare > 0) {
-      const { data: cp } = await supabase.from("profiles").select("wallet_balance").eq("id", selected.creator_id).single();
-      const { error: creatorErr } = await supabase.from("profiles")
-        .update({ wallet_balance: (cp?.wallet_balance || 0) + creatorShare })
-        .eq("id", selected.creator_id);
-      if (creatorErr) {
-        showToast("Creator wallet update failed: " + creatorErr.message, "error");
+      const { data, error } = await supabase.functions.invoke("admin-collab-release", {
+        body: {
+          collab_id:          selected.id,
+          payout_override:    creatorShare,
+          mark_as:            "split",
+          note:               `Admin split ${splitPct}/${100 - splitPct}`,
+          skip_collab_update: false,
+        },
+      });
+      if (error || data?.error) {
+        showToast(data?.error || error?.message || "Split failed", "error");
         setBusy(false); return;
       }
-      await supabase.from("rubies_transactions").insert({
-        user_id:   selected.creator_id,
-        type:      "escrow_release",
-        amount:    creatorShare,
-        status:    "completed",
-        note:      `Admin split ${splitPct}/${100 - splitPct}`,
-        reference: selected.id,
-      }).catch(() => {});
-      await supabase.from("wallet_transactions").insert({
-        user_id: selected.creator_id,
-        type:    "escrow_release",
-        amount:  creatorShare,
-        note:    `Admin split ${splitPct}/${100 - splitPct}`,
-      }).catch(() => {});
+    } else {
+      await supabase.from("collabs").update({ payment_status: "split", status: "completed" }).eq("id", selected.id);
     }
 
-    await supabase.from("collabs").update({ payment_status: "split", split_at: new Date().toISOString(), status: "completed" }).eq("id", selected.id);
+    // Brand's share — virtual wallet credit
+    if (brandShare > 0) {
+      const { data: bp } = await supabase.from("profiles").select("wallet_balance").eq("id", selected.brand_id).single();
+      await saveProfile(selected.brand_id, { wallet_balance: (bp?.wallet_balance || 0) + brandShare });
+    }
+
     auditLog?.("escrow_split", "collab", selected.id, `${selected.brandName} × ${selected.creatorName}`, { brandShare, creatorShare, pct: splitPct });
     showToast(`Split: ${fmtMoney(brandShare)} to brand · ${fmtMoney(creatorShare)} to creator`);
     setSplitModal(false);
