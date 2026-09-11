@@ -9,7 +9,7 @@ import {
   SlidersHorizontal, Star, Zap, BadgeCheck, RotateCcw, Info, ChevronUp, ChevronRight,
   BarChart2, HelpCircle, MessageSquare, Clock, Send, CreditCard, ToggleLeft, ToggleRight, Layers,
   Scale, Sparkles, Smartphone, Tag, ListFilter, ClipboardList, GitBranch, Star as StarIcon, Wallet,
-  Moon, Sun,
+  Moon, Sun, PanelLeftClose, PanelLeftOpen,
 } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import AdminModerationDashboard from "../../components/AdminModerationDashboard";
@@ -413,6 +413,8 @@ export default function AdminPanel() {
   const [cmdOpen, setCmdOpen] = useState(false);
   const [cmdQuery, setCmdQuery] = useState("");
   const [sidebarHovered, setSidebarHovered] = useState(false);
+  const [sidebarPinned, setSidebarPinned]   = useState(() => localStorage.getItem('brandior_sidebar_pinned') === 'true');
+  const sidebarOpen = sidebarPinned || sidebarHovered;
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('admin_theme') === 'dark');
   const [toast, setToast] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);
@@ -3151,10 +3153,10 @@ export default function AdminPanel() {
       {/* ── Sidebar ── */}
       <aside
         className="flex-shrink-0 flex flex-col"
-        onMouseEnter={() => setSidebarHovered(true)}
-        onMouseLeave={() => setSidebarHovered(false)}
+        onMouseEnter={() => !sidebarPinned && setSidebarHovered(true)}
+        onMouseLeave={() => !sidebarPinned && setSidebarHovered(false)}
         style={{
-          width: sidebarHovered ? 200 : 72,
+          width: sidebarOpen ? 200 : 72,
           backgroundColor: "#0d1117",
           minHeight: "100vh", position: "sticky", top: 0, height: "100vh",
           transition: "width 0.22s cubic-bezier(0.4,0,0.2,1)",
@@ -3163,15 +3165,37 @@ export default function AdminPanel() {
         }}
       >
         {/* Logo */}
-        <div className="flex items-center py-4 border-b" style={{ borderColor: "#161b22", paddingLeft: 19, gap: 10, minHeight: 64 }}>
+        <div className="flex items-center py-4 border-b" style={{ borderColor: "#161b22", paddingLeft: 19, gap: 10, minHeight: 64, position: "relative" }}>
           <img src="/Brandiör-2.png" alt="Brandior" style={{ width: 34, height: 34, objectFit: "contain", flexShrink: 0 }} />
           <span style={{
             fontSize: 15, fontWeight: 900, color: "#fff", whiteSpace: "nowrap",
-            opacity: sidebarHovered ? 1 : 0,
-            transform: sidebarHovered ? "translateX(0)" : "translateX(-8px)",
+            opacity: sidebarOpen ? 1 : 0,
+            transform: sidebarOpen ? "translateX(0)" : "translateX(-8px)",
             transition: "opacity 0.18s ease, transform 0.18s ease",
-            letterSpacing: "-0.02em",
+            letterSpacing: "-0.02em", flex: 1,
           }}>Brandior</span>
+          {/* Pin / unpin toggle — visible only when sidebar is open */}
+          <button
+            onClick={() => {
+              const next = !sidebarPinned;
+              setSidebarPinned(next);
+              localStorage.setItem('brandior_sidebar_pinned', next);
+              if (!next) setSidebarHovered(false);
+            }}
+            title={sidebarPinned ? "Unpin sidebar" : "Pin sidebar open"}
+            style={{
+              opacity: sidebarOpen ? 1 : 0,
+              transition: "opacity 0.15s ease",
+              background: "none", border: "none", cursor: "pointer",
+              color: sidebarPinned ? "#7c3aed" : "#6e7681",
+              padding: "4px 8px 4px 0", flexShrink: 0,
+            }}
+          >
+            {sidebarPinned
+              ? <PanelLeftClose style={{ width: 16, height: 16 }} />
+              : <PanelLeftOpen  style={{ width: 16, height: 16 }} />
+            }
+          </button>
         </div>
 
         {/* Nav icons */}
@@ -3189,7 +3213,7 @@ export default function AdminPanel() {
                   <span style={{
                     fontSize: 10, fontWeight: 800, letterSpacing: "0.08em",
                     color: "#6e7681", textTransform: "uppercase",
-                    opacity: sidebarHovered ? 1 : 0,
+                    opacity: sidebarOpen ? 1 : 0,
                     transition: "opacity 0.15s ease",
                     whiteSpace: "nowrap",
                   }}>{group.title}</span>
@@ -3225,26 +3249,26 @@ export default function AdminPanel() {
                   <Icon style={{ width: 17, height: 17, flexShrink: 0 }} />
                   <span style={{
                     fontSize: 13, fontWeight: 600,
-                    opacity: sidebarHovered ? 1 : 0,
+                    opacity: sidebarOpen ? 1 : 0,
                     transition: "opacity 0.15s ease",
                   }}>{label}</span>
                   {badge && badgeCount > 0 && (
                     <span style={{
                       position: "absolute",
-                      top: sidebarHovered ? "50%" : 6,
-                      right: sidebarHovered ? 10 : 6,
-                      transform: sidebarHovered ? "translateY(-50%)" : "none",
-                      width: sidebarHovered ? "auto" : 8,
-                      height: sidebarHovered ? 18 : 8,
-                      minWidth: sidebarHovered ? 18 : 8,
-                      borderRadius: sidebarHovered ? 9 : "50%",
+                      top: sidebarOpen ? "50%" : 6,
+                      right: sidebarOpen ? 10 : 6,
+                      transform: sidebarOpen ? "translateY(-50%)" : "none",
+                      width: sidebarOpen ? "auto" : 8,
+                      height: sidebarOpen ? 18 : 8,
+                      minWidth: sidebarOpen ? 18 : 8,
+                      borderRadius: sidebarOpen ? 9 : "50%",
                       backgroundColor: badgeColor || "#ef4444",
                       border: "1.5px solid #0d1117",
                       fontSize: 10, fontWeight: 800, color: "#fff",
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      padding: sidebarHovered ? "0 4px" : 0,
+                      padding: sidebarOpen ? "0 4px" : 0,
                       transition: "all 0.15s ease",
-                    }}>{sidebarHovered ? badgeCount : ""}</span>
+                    }}>{sidebarOpen ? badgeCount : ""}</span>
                   )}
                 </button>
               );
@@ -3263,7 +3287,7 @@ export default function AdminPanel() {
                 {(adminUser.name || "SA").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
               </span>
             </div>
-            <div style={{ opacity: sidebarHovered ? 1 : 0, transition: "opacity 0.15s ease", overflow: "hidden" }}>
+            <div style={{ opacity: sidebarOpen ? 1 : 0, transition: "opacity 0.15s ease", overflow: "hidden" }}>
               <p style={{ fontSize: 12, fontWeight: 700, color: "#c9d1d9", whiteSpace: "nowrap", lineHeight: 1.2 }}>{adminUser.name}</p>
               <p style={{ fontSize: 10, color: "#6e7681", whiteSpace: "nowrap" }}>Super Admin</p>
             </div>
@@ -3276,7 +3300,7 @@ export default function AdminPanel() {
             onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#6e7681"; }}
           >
             <LogOut style={{ width: 16, height: 16, flexShrink: 0 }} />
-            <span style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", opacity: sidebarHovered ? 1 : 0, transition: "opacity 0.15s ease" }}>Logout</span>
+            <span style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", opacity: sidebarOpen ? 1 : 0, transition: "opacity 0.15s ease" }}>Logout</span>
           </button>
         </div>
       </aside>
