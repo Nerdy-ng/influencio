@@ -63,7 +63,8 @@ export default function AdminLogin() {
     });
 
     if (otpErr) {
-      setError(`Could not send code: ${otpErr.message}`);
+      console.error("OTP error full object:", JSON.stringify(otpErr, null, 2));
+      setError(`Could not send code: ${otpErr.message} [status:${otpErr.status}]`);
       setLoading(false);
       return;
     }
