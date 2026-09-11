@@ -63,7 +63,7 @@ export default function AdminLogin() {
     });
 
     if (otpErr) {
-      setError("Could not send code. Please try again or contact support.");
+      setError(`Could not send code: ${otpErr.message}`);
       setLoading(false);
       return;
     }
