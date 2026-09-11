@@ -61,7 +61,7 @@ export default function AdminLogin() {
       email: email.trim().toLowerCase(),
       options: {
         shouldCreateUser: false,
-        emailRedirectTo: 'https://www.brandior.africa/admin/login',
+        emailRedirectTo: 'https://app.brandior.africa/admin/login',
       },
     });
 
