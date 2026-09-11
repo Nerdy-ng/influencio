@@ -2,6 +2,31 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { Bell, Send, RotateCcw, Clock, Users } from "lucide-react";
 
+const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
+
+async function deliverPush(audience, userId, title, body) {
+  let query = supabase.from("profiles").select("id, push_token, role").not("push_token", "is", null);
+  if (audience === "brand")   query = query.in("role", ["brand", "Brand"]);
+  if (audience === "creator") query = query.in("role", ["creator", "Talent", "talent"]);
+  if (audience === "individual" && userId) query = query.eq("id", userId);
+  const { data: profiles } = await query;
+  if (!profiles?.length) return 0;
+  const messages = profiles.map(p => ({ to: p.push_token, title, body, sound: "default" }));
+  let sent = 0;
+  for (let i = 0; i < messages.length; i += 100) {
+    try {
+      const res = await fetch(EXPO_PUSH_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(messages.slice(i, i + 100)),
+      });
+      const json = await res.json();
+      sent += (json.data ?? []).filter(r => r.status === "ok").length;
+    } catch {}
+  }
+  return sent;
+}
+
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\\`]/g, '');
 
 const AUDIENCE_OPTIONS = [
@@ -53,13 +78,9 @@ export default function NotificationsPanel({ showToast, auditLog }) {
       created_at: new Date().toISOString(),
     };
     await supabase.from("admin_notifications").insert(payload).catch(() => {});
-    // If not scheduled, trigger via edge function or direct insert
+    // Deliver immediately via Expo if not scheduled
     if (!scheduleAt) {
-      await fetch("/api/send-notification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      }).catch(() => {});
+      await deliverPush(audience, userId, stripInjection(title), stripInjection(body));
     }
     auditLog?.("send_notification", "notification", null, title, { audience, niche, city });
     showToast(scheduleAt ? `Notification scheduled for ${scheduleAt}` : "Notification sent!");

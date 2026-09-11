@@ -2,6 +2,33 @@ import { useState, useEffect, useCallback } from "react";
 import { Send, Users, CheckCircle, AlertTriangle, Bell, Clock, RotateCcw, Briefcase, User } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
+const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
+
+async function sendThroughExpo(tokens, title, body) {
+  const messages = tokens.map(to => ({ to, title, body, sound: "default" }));
+  let sent = 0, errors = 0;
+  const errorMessages = [];
+  for (let i = 0; i < messages.length; i += 100) {
+    const batch = messages.slice(i, i + 100);
+    try {
+      const res = await fetch(EXPO_PUSH_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(batch),
+      });
+      const json = await res.json();
+      (json.data ?? []).forEach(r => {
+        if (r.status === "ok") sent++;
+        else { errors++; if (r.message) errorMessages.push(r.message); }
+      });
+    } catch (err) {
+      errors += batch.length;
+      errorMessages.push(err.message);
+    }
+  }
+  return { sent, errors, errorMessages };
+}
+
 
 const TARGETS = [
   { id: "all",     label: "Everyone",      desc: "All users with push enabled",   Icon: Users },
@@ -90,21 +117,9 @@ export default function PushNotificationPanel({ showToast, auditLog }) {
 
       const tokens = profiles.map(p => p.push_token);
 
-      const { data: sentCount, error: rpcError } = await supabase.rpc("admin_send_push", {
-        p_tokens: tokens,
-        p_title:  title.trim(),
-        p_body:   body.trim(),
-      });
+      const { sent, errors, errorMessages } = await sendThroughExpo(tokens, title.trim(), body.trim());
 
-      if (rpcError) {
-        setResult({ sent: 0, skipped: 0, errors: profiles.length, errorMessages: [rpcError.message] });
-        setSending(false);
-        return;
-      }
-
-      const sent = sentCount ?? profiles.length;
-
-      // Batch insert in-app notifications
+      // In-app notifications (best-effort)
       await supabase.from("notifications").insert(
         profiles.map(p => ({
           user_id: p.id,
@@ -113,9 +128,9 @@ export default function PushNotificationPanel({ showToast, auditLog }) {
           type:    "admin",
           data:    {},
         }))
-      );
+      ).catch(() => {});
 
-      setResult({ sent, skipped: 0, errors: 0, errorMessages: [] });
+      setResult({ sent, skipped: 0, errors, errorMessages });
 
       if (sent > 0) {
         auditLog?.("send_push", "notification", null, `"${title.trim()}" → ${sent} users`, { target, sent });
