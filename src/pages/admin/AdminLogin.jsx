@@ -3,9 +3,11 @@ import { Shield, Mail, AlertCircle, Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
 const ROLE_ROUTES = {
-  admin:   "/admin",
-  manager: "/admin/manager",
-  staff:   "/admin/staff",
+  "super admin": "/admin",
+  superadmin:    "/admin",
+  admin:         "/admin",
+  manager:       "/admin/manager",
+  staff:         "/admin/staff",
 };
 
 export default function AdminLogin() {
