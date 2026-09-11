@@ -83,16 +83,9 @@ export default function WithdrawalPanel({ showToast, auditLog }) {
     if (error) { showToast("Update failed: " + error.message, "error"); setBusy(false); return; }
 
     if (refundWallet) {
-      const { data: p } = await supabase.from("profiles").select("wallet_balance").eq("id", selected.user_id).single();
-      await supabase.from("profiles")
-        .update({ wallet_balance: (p?.wallet_balance || 0) + Number(selected.amount) })
-        .eq("id", selected.user_id);
-      await supabase.from("wallet_transactions").insert({
-        user_id: selected.user_id,
-        type:    "admin_credit",
-        amount:  Number(selected.amount),
-        note:    "Payout failed — funds returned by admin",
-      }).catch(() => {});
+      await supabase.functions.invoke("admin-adjust-wallet", {
+        body: { action: "credit", user_id: selected.user_id, amount: Number(selected.amount), note: "Payout failed — funds returned by admin" }
+      });
     }
 
     auditLog?.("payout_mark_failed", "rubies_transaction", selected.id, selected.creatorName, { amount: selected.amount, refunded: refundWallet });

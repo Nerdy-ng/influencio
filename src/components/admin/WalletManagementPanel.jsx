@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { saveProfile } from "../../lib/profile";
 import { supabase } from "../../lib/supabase";
 import { Wallet, Search, RotateCcw, Plus, Minus, Snowflake, ArrowRightLeft } from "lucide-react";
 
@@ -39,17 +38,22 @@ export default function WalletManagementPanel({ showToast, auditLog }) {
     setTxLoading(false);
   }
 
+  async function callAdjust(payload) {
+    const { data, error } = await supabase.functions.invoke("admin-adjust-wallet", { body: payload });
+    if (error || !data?.ok) throw new Error(error?.message || data?.error || "Request failed");
+  }
+
   async function handleCredit() {
     if (!selected || !amount) return;
     setBusy(true);
     const n = Number(amount);
-    const { data: p } = await supabase.from("profiles").select("wallet_balance").eq("id", selected.id).single();
-    saveProfile(selected.id, { wallet_balance: (p?.wallet_balance || 0) + n });
-    await supabase.from("wallet_transactions").insert({ user_id: selected.id, type: "admin_credit", amount: n, note: note || "Admin credit", created_at: new Date().toISOString() }).catch(() => {});
-    auditLog?.("wallet_credit", "profile", selected.id, selected.displayName, { amount: n, note });
-    showToast(`${fmtMoney(n)} credited to ${selected.displayName}`);
-    setModal(null); setAmount(""); setNote("");
-    load(); loadTxHistory(selected.id);
+    try {
+      await callAdjust({ action: "credit", user_id: selected.id, amount: n, note: note || undefined });
+      auditLog?.("wallet_credit", "profile", selected.id, selected.displayName, { amount: n, note });
+      showToast(`${fmtMoney(n)} credited to ${selected.displayName}`);
+      setModal(null); setAmount(""); setNote("");
+      load(); loadTxHistory(selected.id);
+    } catch (e) { showToast("Credit failed", "error"); }
     setBusy(false);
   }
 
@@ -57,28 +61,25 @@ export default function WalletManagementPanel({ showToast, auditLog }) {
     if (!selected || !amount) return;
     setBusy(true);
     const n = Number(amount);
-    const { data: p } = await supabase.from("profiles").select("wallet_balance").eq("id", selected.id).single();
-    const current = p?.wallet_balance || 0;
-    if (n > current) { showToast("Insufficient balance", "error"); setBusy(false); return; }
-    saveProfile(selected.id, { wallet_balance: current - n });
-    await supabase.from("wallet_transactions").insert({ user_id: selected.id, type: "admin_debit", amount: -n, note: note || "Admin debit", created_at: new Date().toISOString() }).catch(() => {});
-    auditLog?.("wallet_debit", "profile", selected.id, selected.displayName, { amount: n, note });
-    showToast(`${fmtMoney(n)} debited from ${selected.displayName}`);
-    setModal(null); setAmount(""); setNote("");
-    load(); loadTxHistory(selected.id);
+    try {
+      await callAdjust({ action: "debit", user_id: selected.id, amount: n, note: note || undefined });
+      auditLog?.("wallet_debit", "profile", selected.id, selected.displayName, { amount: n, note });
+      showToast(`${fmtMoney(n)} debited from ${selected.displayName}`);
+      setModal(null); setAmount(""); setNote("");
+      load(); loadTxHistory(selected.id);
+    } catch (e) { showToast(e.message === "Insufficient balance" ? "Insufficient balance" : "Debit failed", "error"); }
     setBusy(false);
   }
 
   async function handleFreeze() {
     if (!selected) return;
     setBusy(true);
-    const { data: p } = await supabase.from("profiles").select("restrictions").eq("id", selected.id).single();
-    const r = p?.restrictions || {};
-    r.wallet = !selected.frozen;
-    saveProfile(selected.id, { restrictions: r });
-    auditLog?.(selected.frozen ? "wallet_unfreeze" : "wallet_freeze", "profile", selected.id, selected.displayName);
-    showToast(selected.frozen ? "Wallet unfrozen" : "Wallet frozen");
-    await load();
+    try {
+      await callAdjust({ action: selected.frozen ? "unfreeze" : "freeze", user_id: selected.id });
+      auditLog?.(selected.frozen ? "wallet_unfreeze" : "wallet_freeze", "profile", selected.id, selected.displayName);
+      showToast(selected.frozen ? "Wallet unfrozen" : "Wallet frozen");
+      await load();
+    } catch (e) { showToast("Action failed", "error"); }
     setBusy(false);
   }
 
@@ -86,18 +87,13 @@ export default function WalletManagementPanel({ showToast, auditLog }) {
     if (!selected || !amount || !transferTo.trim()) return;
     setBusy(true);
     const n = Number(amount);
-    // Debit from
-    const { data: fp } = await supabase.from("profiles").select("wallet_balance").eq("id", selected.id).single();
-    if (n > (fp?.wallet_balance || 0)) { showToast("Insufficient balance", "error"); setBusy(false); return; }
-    saveProfile(selected.id, { wallet_balance: (fp?.wallet_balance || 0) - n });
-    // Credit to — find by handle or id
-    const { data: tp } = await supabase.from("profiles").select("id, wallet_balance, full_name, company_name, handle").or(`id.eq.${transferTo},handle.eq.${transferTo}`).single().catch(() => ({ data: null }));
-    if (!tp) { showToast("Target user not found", "error"); setBusy(false); return; }
-    saveProfile(tp.id, { wallet_balance: (tp.wallet_balance || 0) + n });
-    auditLog?.("wallet_transfer", "profile", selected.id, selected.displayName, { amount: n, to: tp.id });
-    showToast(`${fmtMoney(n)} transferred to ${tp.company_name || tp.full_name || tp.handle}`);
-    setModal(null); setAmount(""); setTransferTo(""); setNote("");
-    load();
+    try {
+      await callAdjust({ action: "transfer", user_id: selected.id, amount: n, note: note || undefined, transfer_to: transferTo.trim() });
+      auditLog?.("wallet_transfer", "profile", selected.id, selected.displayName, { amount: n, to: transferTo });
+      showToast(`${fmtMoney(n)} transferred`);
+      setModal(null); setAmount(""); setTransferTo(""); setNote("");
+      load();
+    } catch (e) { showToast(e.message || "Transfer failed", "error"); }
     setBusy(false);
   }
 

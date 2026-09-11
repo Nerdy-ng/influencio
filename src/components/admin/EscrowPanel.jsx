@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { saveProfile } from "../../lib/profile";
 import { supabase } from "../../lib/supabase";
 import { Lock, RotateCcw, Search, Unlock, ArrowDownLeft, Split } from "lucide-react";
 
@@ -113,8 +112,9 @@ export default function EscrowPanel({ showToast, auditLog }) {
 
     // Brand's share — virtual wallet credit
     if (brandShare > 0) {
-      const { data: bp } = await supabase.from("profiles").select("wallet_balance").eq("id", selected.brand_id).single();
-      await saveProfile(selected.brand_id, { wallet_balance: (bp?.wallet_balance || 0) + brandShare });
+      await supabase.functions.invoke("admin-adjust-wallet", {
+        body: { action: "credit", user_id: selected.brand_id, amount: brandShare, note: "Escrow split — brand share" }
+      });
     }
 
     auditLog?.("escrow_split", "collab", selected.id, `${selected.brandName} × ${selected.creatorName}`, { brandShare, creatorShare, pct: splitPct });

@@ -982,11 +982,9 @@ export default function AdminPanel() {
   }
 
   async function releaseEscrow(item) {
-    const { data: creator } = await supabase.from('profiles').select('wallet_balance').eq('id', item.creator_id).single()
-    const newBal = (creator?.wallet_balance || 0) + (item.creator_payout || 0)
     await Promise.all([
       supabase.from('collabs').update({ payment_status: 'released' }).eq('id', item.fullId || item.id),
-      saveProfile(item.creator_id, { wallet_balance: newBal }),
+      supabase.functions.invoke('admin-adjust-wallet', { body: { action: 'credit', user_id: item.creator_id, amount: item.creator_payout || 0, note: 'Escrow release' } }),
     ])
     auditLog('release_escrow', 'collab', item.fullId || item.id, item.creatorName, { amount: item.creator_payout });
     showToast(`Released ₦${(item.creator_payout||0).toLocaleString()} to ${item.creatorName}`)
@@ -994,11 +992,9 @@ export default function AdminPanel() {
   }
 
   async function refundEscrow(item) {
-    const { data: brand } = await supabase.from('profiles').select('wallet_balance').eq('id', item.brand_id).single()
-    const newBal = (brand?.wallet_balance || 0) + (item.total_amount || 0)
     await Promise.all([
       supabase.from('collabs').update({ payment_status: 'refunded', status: 'cancelled' }).eq('id', item.fullId || item.id),
-      saveProfile(item.brand_id, { wallet_balance: newBal }),
+      supabase.functions.invoke('admin-adjust-wallet', { body: { action: 'credit', user_id: item.brand_id, amount: item.total_amount || 0, note: 'Escrow refund' } }),
     ])
     auditLog('refund_escrow', 'collab', item.fullId || item.id, item.brandName, { amount: item.total_amount });
     showToast(`Refunded ₦${(item.total_amount||0).toLocaleString()} to ${item.brandName}`)
@@ -1008,10 +1004,13 @@ export default function AdminPanel() {
   async function applyWalletAdjust() {
     if (!walletAdjust) return
     const { profile, delta, reason } = walletAdjust
-    const newBal = Math.max(0, (profile.wallet_balance || 0) + Number(delta))
-    await saveProfile(profile.id, { wallet_balance: newBal })
-    auditLog(Number(delta) >= 0 ? 'wallet_credit' : 'wallet_debit', 'user', profile.id, pName(profile), { delta: Number(delta), reason });
-    showToast(`Wallet for ${pName(profile)} adjusted to ₦${newBal.toLocaleString()} — ${reason || 'no reason given'}`)
+    const n = Number(delta)
+    const { error } = await supabase.functions.invoke('admin-adjust-wallet', {
+      body: { action: n >= 0 ? 'credit' : 'debit', user_id: profile.id, amount: Math.abs(n), note: reason || undefined }
+    })
+    if (error) { showToast('Adjustment failed', 'error'); return }
+    auditLog(n >= 0 ? 'wallet_credit' : 'wallet_debit', 'user', profile.id, pName(profile), { delta: n, reason });
+    showToast(`Wallet for ${pName(profile)} adjusted — ${reason || 'no reason given'}`)
     setWalletAdjust(null)
     loadFinancials()
   }
