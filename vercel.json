@@ -1,4 +1,12 @@
 {
+  "redirects": [
+    {
+      "source": "/admin/:path*",
+      "has": [{ "type": "host", "value": "www.brandior.africa" }],
+      "destination": "https://app.brandior.africa/admin/:path*",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
