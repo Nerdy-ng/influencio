@@ -55,13 +55,26 @@ export default function AdminLogin() {
     setError("");
     setLoading(true);
 
+    // Gate on admin_users first — only registered admins can receive a code
+    const { data: adminRow } = await supabase
+      .from("admin_users")
+      .select("email")
+      .eq("email", email.trim().toLowerCase())
+      .single();
+
+    if (!adminRow) {
+      setError("Could not send code. Make sure this email is registered as an admin.");
+      setLoading(false);
+      return;
+    }
+
     const { error: otpErr } = await supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
-      options: { shouldCreateUser: false },
+      options: { shouldCreateUser: true },
     });
 
     if (otpErr) {
-      setError("Could not send code. Make sure this email is registered as an admin.");
+      setError("Could not send code. Please try again or contact support.");
       setLoading(false);
       return;
     }
