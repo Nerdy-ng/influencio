@@ -63,10 +63,16 @@ export default function AdminLogin() {
     });
 
     if (otpErr) {
-      console.error("OTP error full object:", JSON.stringify(otpErr, null, 2));
-      setError(`Could not send code: ${otpErr.message} [status:${otpErr.status}]`);
-      setLoading(false);
-      return;
+      // Supabase sends the OTP email successfully but returns a redirect-URL
+      // path validation error (GoTrue "Invalid path" when Site URL path = "/").
+      // Treat this specific error as a successful send so the user can enter
+      // the code they already received.
+      const emailSentDespiteError = otpErr.message?.includes("Invalid path");
+      if (!emailSentDespiteError) {
+        setError(`Could not send code: ${otpErr.message}`);
+        setLoading(false);
+        return;
+      }
     }
 
     setStep("code");
