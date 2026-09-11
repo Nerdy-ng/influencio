@@ -59,10 +59,7 @@ export default function AdminLogin() {
 
     const { error: otpErr } = await supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
-      options: {
-        shouldCreateUser: false,
-        emailRedirectTo: 'https://app.brandior.africa/admin/login',
-      },
+      options: { shouldCreateUser: false },
     });
 
     if (otpErr) {
