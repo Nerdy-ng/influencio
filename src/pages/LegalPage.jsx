@@ -123,6 +123,32 @@ The following defined terms apply throughout this Agreement. Defined terms may a
 
 12.3 Where the value of the off-platform transaction cannot be independently verified, Brandior shall determine the Liquidated Damages amount in its reasonable discretion, having regard to the nature and scope of the Collab, the Creator's published rate card, and the Platform Fees that would have been payable on a comparable Transaction through the Platform.
 
+## 12A. PROHIBITED TECHNICAL CONDUCT
+
+12A.1 No User may, directly or indirectly, carry out or attempt any of the following acts against the Platform or any system through which the Platform operates:
+
+(a) Reverse-engineer, decompile, disassemble, or attempt to reconstruct the source code, underlying algorithms, or architecture of any component of the Platform, including the mobile application, web application, or API layer, in breach of the Copyright Act (Cap C28 LFN 2004) and the Cybercrimes (Prohibition, Prevention, etc.) Act 2015 (as amended);
+
+(b) Intercept, modify, replay, tamper with, or inject payloads into any network communication between the Platform's client applications and backend services, including but not limited to API requests, authentication tokens, payment parameters, transaction references, or pricing data;
+
+(c) Circumvent, disable, override, or otherwise interfere with any security control, rate-limiting mechanism, authentication requirement, cryptographic validation, or server-side enforcement logic implemented by the Platform;
+
+(d) Access the Platform's backend API, database endpoints, or edge functions by means other than the officially provided client applications, without Brandior's prior written authorisation;
+
+(e) Tamper with, falsify, or substitute any transaction parameter — including amounts, recipient identifiers, Collab references, payment status, or pricing data — whether by modifying client-side state, intercepting API traffic, manipulating JavaScript, or exploiting any perceived gap between client-side validation and server-side enforcement;
+
+(f) Use automated scripts, bots, proxy chains, or other technical means to mask your identity, automate Platform actions, or bypass geographic, session, or rate restrictions implemented by Brandior; or
+
+(g) Probe, scan, or test the Platform for security vulnerabilities without Brandior's prior written authorisation under a responsible disclosure programme.
+
+12A.2 The acts described in Clause 12A.1 are prohibited regardless of intent and whether or not technical harm results. An attempt to carry out any such act is treated with equal severity to a completed act.
+
+12A.3 Violations of this Clause constitute, and may be prosecuted as, criminal offences under: (a) the Cybercrimes (Prohibition, Prevention, etc.) Act 2015 (as amended), including without limitation Section 6 (unauthorised access to computer systems), Section 8 (computer-related fraud), and Section 14 (interception of electronic communications); (b) the Cybercrimes (Prohibition, Prevention, etc.) (Amendment) Act 2024; and (c) any other applicable Nigerian or international law. Brandior will report credible violations to the Nigeria Police Force, the Economic and Financial Crimes Commission (EFCC), the Office of the National Security Adviser, and any other relevant authority.
+
+12A.4 In addition to any criminal liability, a User who commits or attempts an act in breach of this Clause shall be liable to Brandior for: (a) all direct and indirect losses suffered by Brandior as a result of the breach, including without limitation lost revenue, cost of remediation, security audit costs, legal fees, and any regulatory penalties incurred; (b) aggravated damages where the conduct was deliberate, malicious, or carried out for commercial gain; and (c) injunctive relief without prior notice or demand where there is a real risk of continuing or repeated conduct.
+
+12A.5 Brandior reserves the right to immediately terminate the account of any User who breaches or is reasonably suspected of breaching this Clause, to preserve and disclose all relevant technical evidence — including network logs, API call records, and device identifiers — to law enforcement and regulatory authorities, and to pursue all available civil and criminal remedies without further notice.
+
 ## 13. DISCLAIMER OF WARRANTIES
 
 13.1 The Platform is provided "as is" and "as available". Brandior makes no representation or warranty, express or implied, that the Platform will be uninterrupted, error-free, secure, or free of harmful components.
