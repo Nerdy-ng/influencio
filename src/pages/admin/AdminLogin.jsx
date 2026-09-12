@@ -11,12 +11,19 @@ const ROLE_ROUTES = {
 };
 
 export default function AdminLogin() {
-  const [step, setStep]       = useState("email"); // email | code | checking | error
-  const [email, setEmail]     = useState("");
-  const [code, setCode]       = useState(["", "", "", "", "", ""]);
-  const [error, setError]     = useState("");
-  const [loading, setLoading] = useState(false);
-  const inputRefs             = useRef([]);
+  const [step, setStep]         = useState("email"); // email | code | checking | error
+  const [email, setEmail]       = useState("");
+  const [code, setCode]         = useState(["", "", "", "", "", ""]);
+  const [error, setError]       = useState("");
+  const [loading, setLoading]   = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const inputRefs               = useRef([]);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
 
   // Always clear any existing session when the login page loads
   useEffect(() => { supabase.auth.signOut(); }, []);
@@ -54,6 +61,7 @@ export default function AdminLogin() {
 
   async function handleSendCode(e) {
     e.preventDefault();
+    if (cooldown > 0) return;
     setError("");
     setLoading(true);
 
@@ -75,6 +83,7 @@ export default function AdminLogin() {
       }
     }
 
+    setCooldown(60);
     setStep("code");
     setLoading(false);
     setTimeout(() => inputRefs.current[0]?.focus(), 100);
@@ -217,9 +226,10 @@ export default function AdminLogin() {
           className="text-xs" style={{ color: "#64748b", background: "none", border: "none", cursor: "pointer" }}>
           ← Use a different email
         </button>
-        <button onClick={handleSendCode} disabled={loading}
-          className="text-xs" style={{ color: "#6366f1", background: "none", border: "none", cursor: "pointer" }}>
-          Resend code
+        <button onClick={handleSendCode} disabled={loading || cooldown > 0}
+          className="text-xs"
+          style={{ color: cooldown > 0 ? "#475569" : "#6366f1", background: "none", border: "none", cursor: cooldown > 0 ? "default" : "pointer" }}>
+          {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"}
         </button>
       </div>
     </Screen>
