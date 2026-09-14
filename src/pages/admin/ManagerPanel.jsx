@@ -317,12 +317,16 @@ export default function ManagerPanel() {
     }
   };
 
-  const handleJobAction = (jobId, action) => {
-    const statusMap = { approve: "active", reject: "flagged" };
-    if (statusMap[action]) {
-      setJobs((prev) => prev.map((j) => j.id === jobId ? { ...j, status: statusMap[action] } : j));
-      showToast(`Job ${action}d.`);
+  const handleJobAction = async (jobId, action) => {
+    const statusMap = { approve: "in_progress", reject: "cancelled" };
+    const newStatus = statusMap[action];
+    if (!newStatus) return;
+    const job = jobs.find(j => j.id === jobId);
+    setJobs((prev) => prev.map((j) => j.id === jobId ? { ...j, status: action === 'approve' ? 'active' : 'flagged' } : j));
+    if (job?.fullId) {
+      await supabase.from('collabs').update({ status: newStatus }).eq('id', job.fullId);
     }
+    showToast(`Collab ${action}d.`);
   };
 
   const handleSaveNote = (userId, note) => {

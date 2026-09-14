@@ -49,9 +49,6 @@ import { THEME_VARS, loadThemeFromDB, saveThemeToDB, resetThemeToDB, getThemeDef
 import { supabase } from "../../lib/supabase";
 import { saveProfile } from "../../lib/profile";
 
-// ─── MOCK DATA ────────────────────────────────────────────────────────────────
-
-
 // ─── RANKING ALGORITHM DATA ───────────────────────────────────────────────────
 
 const RANKING_TALENTS = [
@@ -118,44 +115,6 @@ function calcScore(talent, weights, rules) {
 
   return { score: Math.round(score * 1000) / 10, breakdown }
 }
-
-const MOCK_MANAGERS = [
-  { id: 1, name: "Jane Okonkwo", email: "jane@brandior.co", role: "Manager", status: "Active", lastLogin: "Today, 09:14 AM", avatar: "JO" },
-  { id: 2, name: "Chidi Eze", email: "chidi@brandior.co", role: "Manager", status: "Active", lastLogin: "Yesterday, 3:22 PM", avatar: "CE" },
-  { id: 3, name: "Fatima Bello", email: "fatima@brandior.co", role: "Manager", status: "Inactive", lastLogin: "Mar 10, 2025", avatar: "FB" },
-];
-
-const MOCK_STAFF = [
-  { id: 1, name: "Tunde Afolabi", email: "tunde@brandior.co", role: "Staff", status: "Active", lastLogin: "Today, 10:02 AM", avatar: "TA" },
-  { id: 2, name: "Blessing Eze", email: "blessing@brandior.co", role: "Staff", status: "Active", lastLogin: "Today, 08:45 AM", avatar: "BE" },
-  { id: 3, name: "Musa Garba", email: "musa@brandior.co", role: "Staff", status: "Inactive", lastLogin: "Mar 12, 2025", avatar: "MG" },
-  { id: 4, name: "Chinwe Obi", email: "chinwe@brandior.co", role: "Staff", status: "Active", lastLogin: "Yesterday, 5:10 PM", avatar: "CO" },
-  { id: 5, name: "Amaka Nze", email: "amaka@brandior.co", role: "Staff", status: "Active", lastLogin: "Today, 07:30 AM", avatar: "AN" },
-];
-
-const MOCK_APPROVALS = [
-  { id: 1, requester: "Jane Okonkwo", requesterRole: "Manager", type: "Verify Talent", description: "Adaeze Okafor completed verification requirements. Recommend full badge.", target: "Adaeze Okafor", timestamp: "2 hours ago", status: "pending" },
-  { id: 2, requester: "Tunde Afolabi", requesterRole: "Staff", type: "Suspend User", description: "User repeatedly posting misleading campaign info. Recommend temporary suspension.", target: "Biodun Alabi", timestamp: "4 hours ago", status: "pending" },
-  { id: 5, requester: "Fatima Bello", requesterRole: "Manager", type: "Process Refund", description: "Brand cancelled collab 48hrs after creator delivered. Partial refund requested.", target: "GTBank Marketing", timestamp: "2 days ago", status: "pending" },
-  { id: 6, requester: "Chinwe Obi", requesterRole: "Staff", type: "Suspend User", description: "Fake follower evidence submitted for this talent profile.", target: "Kemi Fashola", timestamp: "3 days ago", status: "pending" },
-];
-
-const MOCK_TRANSACTIONS = [
-  { id: "TXN001", talent: "Adaeze Okafor", brand: "Tecno Mobile", amount: "₦850,000", fee: "₦85,000", net: "₦765,000", date: "Mar 18, 2025", status: "completed" },
-  { id: "TXN002", talent: "Ngozi Adeyemi", brand: "Flutterwave", amount: "₦400,000", fee: "₦40,000", net: "₦360,000", date: "Mar 15, 2025", status: "pending" },
-  { id: "TXN003", talent: "Emeka Nwosu", brand: "Pepsi Nigeria", amount: "₦1,800,000", fee: "₦180,000", net: "₦1,620,000", date: "Mar 12, 2025", status: "completed" },
-  { id: "TXN004", talent: "Kemi Fashola", brand: "Zara Nigeria", amount: "₦600,000", fee: "₦60,000", net: "₦540,000", date: "Mar 10, 2025", status: "failed" },
-  { id: "TXN005", talent: "Biodun Alabi", brand: "GTBank Marketing", amount: "₦1,200,000", fee: "₦120,000", net: "₦1,080,000", date: "Mar 8, 2025", status: "pending" },
-];
-
-const ACTIVITY_FEED = [
-  { id: 1, text: "Manager Jane approved talent Adaeze Okafor for verification", time: "2 min ago", type: "approve" },
-  { id: 2, text: "Staff flagged job post from Tecno Mobile (J01) for review", time: "14 min ago", type: "flag" },
-  { id: 3, text: "New brand Zara Nigeria completed onboarding", time: "31 min ago", type: "new" },
-  { id: 4, text: "Campaign completed: Emeka Nwosu x Pepsi Nigeria", time: "1 hr ago", type: "complete" },
-  { id: 5, text: "Manager Chidi submitted refund request for GTBank", time: "2 hrs ago", type: "request" },
-  { id: 6, text: "Staff Blessing flagged user Biodun Alabi for fake followers", time: "4 hrs ago", type: "flag" },
-];
 
 // ─── HELPER COMPONENTS ────────────────────────────────────────────────────────
 
@@ -1411,7 +1370,7 @@ export default function AdminPanel() {
                 <p style={{ fontSize: 11, fontWeight: 700, color: T.textMuted, lineHeight: 1.2 }}>{label}</p>
               </div>
               <p style={{ fontSize: 22, fontWeight: 900, color: T.text, lineHeight: 1 }} className="tabular-nums">{value}</p>
-              <p style={{ fontSize: 11, color: "#10b981", marginTop: 4, fontWeight: 600 }}>↑ 100% vs last 30 days</p>
+              <p style={{ fontSize: 11, color: T.textMuted, marginTop: 4, fontWeight: 500 }}>Last 30 days</p>
             </div>
           ))}
         </div>
