@@ -4118,21 +4118,43 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
   async function confirmWithdraw() {
     setProcessing(true)
     setWithdrawError('')
-    const { data, error } = await supabase.functions.invoke('rubies-payout', {
-      body: {
-        bankName:          withdrawForm.bank,
-        bankAccountNumber: withdrawForm.accountNumber,
-        amount:            Number(withdrawForm.amount),
-      },
-    })
-    if (error || data?.error) {
-      setWithdrawError(data?.error || 'Payout failed. Please check your bank details and try again.')
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setWithdrawError('Session expired. Please log in again.'); setProcessing(false); return }
+
+    // Block if a pending request already exists
+    const { data: existing } = await supabase
+      .from('payout_requests')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('status', 'pending')
+      .maybeSingle()
+    if (existing) {
+      setWithdrawError('You already have a pending withdrawal request awaiting admin approval.')
       setProcessing(false)
       return
     }
-    // Refresh Rubies balance after payout
-    const { data: rb } = await supabase.functions.invoke('rubies-balance')
-    if (rb?.ok) setRubiesBalance(rb.balance)
+
+    const { data: prof } = await supabase
+      .from('profiles')
+      .select('full_name, handle')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    const { error } = await supabase.from('payout_requests').insert({
+      user_id:        user.id,
+      creator_name:   prof?.full_name || user.email || '',
+      creator_handle: prof?.handle   || '',
+      amount:         Number(withdrawForm.amount),
+      bank_name:      withdrawForm.bank,
+      account_number: withdrawForm.accountNumber,
+      account_name:   withdrawForm.accountName,
+      status:         'pending',
+    })
+    if (error) {
+      setWithdrawError('Failed to submit request. Please try again.')
+      setProcessing(false)
+      return
+    }
     setProcessing(false)
     setWithdrawStep('success')
   }
@@ -4473,12 +4495,13 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
 
               {withdrawStep === 'success' && (
                 <div className="text-center py-6">
-                  <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#22c55e18' }}>
-                    <CheckCircle className="w-8 h-8" style={{ color: '#22c55e' }} />
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#7c3aed18' }}>
+                    <Clock className="w-8 h-8" style={{ color: '#7c3aed' }} />
                   </div>
-                  <p className="font-black text-brand-dark text-lg mb-1">Withdrawal Submitted!</p>
-                  <p className="text-brand-dark/40 text-sm mb-1">₦{Number(withdrawForm.amount).toLocaleString()} will arrive in your account within 24 hours.</p>
-                  <p className="text-brand-dark/30 text-xs mb-6">{withdrawForm.bank} · {withdrawForm.accountNumber}</p>
+                  <p className="font-black text-brand-dark text-lg mb-1">Request Submitted!</p>
+                  <p className="text-brand-dark/60 text-sm mb-1">₦{Number(withdrawForm.amount).toLocaleString()} withdrawal is pending admin approval.</p>
+                  <p className="text-brand-dark/30 text-xs mb-1">{withdrawForm.bank} · {withdrawForm.accountNumber}</p>
+                  <p className="text-brand-dark/30 text-xs mb-6">You'll be notified once approved (1–2 business days).</p>
                   <button onClick={resetWithdraw}
                     className="px-6 py-2.5 rounded-full font-bold text-white text-sm"
                     style={{ backgroundColor: darkPurple }}>

@@ -44,6 +44,7 @@ import TrustSafetyPanel       from "../../components/admin/TrustSafetyPanel";
 import SupportCenterPanel     from "../../components/admin/SupportCenterPanel";
 import SystemSettingsPanel    from "../../components/admin/SystemSettingsPanel";
 import KYCReviewPanel         from "../../components/admin/KYCReviewPanel";
+import PayoutApprovalPanel    from "../../components/admin/PayoutApprovalPanel";
 import { LOGO_SLOTS, getLogo, uploadLogoFile, removeLogoFromDB } from "../../lib/brandSettings";
 import { getAllSettings, saveAllSettings, loadSettingsFromDB, getSetting, setSetting } from "../../lib/siteSettings";
 import { THEME_VARS, loadThemeFromDB, saveThemeToDB, resetThemeToDB, getThemeDefaults } from "../../lib/themeSettings";
@@ -239,6 +240,7 @@ const NAV_ITEMS = [
   { id: "disputes2",      label: "Disputes",      Icon: Scale, badge: true, badgeColor: "#ef4444" },
   { id: "wallets",        label: "Wallets",       Icon: CreditCard },
   { id: "withdrawals",    label: "Withdrawals",   Icon: ArrowUpRight },
+  { id: "payout-approvals", label: "Payout Queue", Icon: CheckCircle, badge: true, badgeColor: "#f59e0b" },
   { id: "escrow",         label: "Escrow",        Icon: DollarSign },
   { id: "financials2",    label: "Financials",    Icon: TrendingUp },
   { id: "reviews",        label: "Reviews",       Icon: StarIcon },
@@ -274,7 +276,7 @@ const NAV_ITEMS = [
 const NAV_GROUPS = [
   { title: "Dashboard", items: ["overview", "analytics"] },
   { title: "Community", items: ["users", "badges", "rankings", "jobs", "pitches", "messaging"] },
-  { title: "Finance",   items: ["wallets", "withdrawals", "escrow", "financials2", "rubies", "pay-config", "pitch-settings", "payments"] },
+  { title: "Finance",   items: ["wallets", "withdrawals", "payout-approvals", "escrow", "financials2", "rubies", "pay-config", "pitch-settings", "payments"] },
   { title: "Trust",     items: ["disputes2", "reviews", "ai-police", "trust-safety", "kyc", "marketplace", "referrals2"] },
   { title: "Platform",  items: ["notifications2", "cms2", "push", "ai-controls", "discovery", "categories", "support2", "rate-cards"] },
   { title: "Admin",     items: ["team", "approvals", "content", "features", "legal", "app-config", "system", "analytics2", "audit", "settings"] },
@@ -3185,7 +3187,8 @@ export default function AdminPanel() {
     messaging:        () => <MessagingModerationPanel showToast={showToast} auditLog={auditLog} />,
     disputes2:        () => <DisputeCenterPanel showToast={showToast} auditLog={auditLog} />,
     wallets:          () => <WalletManagementPanel showToast={showToast} auditLog={auditLog} />,
-    withdrawals:      () => <WithdrawalPanel showToast={showToast} auditLog={auditLog} />,
+    withdrawals:        () => <WithdrawalPanel showToast={showToast} auditLog={auditLog} />,
+    "payout-approvals": () => <PayoutApprovalPanel showToast={showToast} auditLog={auditLog} />,
     escrow:           () => <EscrowPanel showToast={showToast} auditLog={auditLog} />,
     financials2:      () => <FinancialReportingPanel showToast={showToast} auditLog={auditLog} />,
     reviews:          () => <ReviewsModerationPanel showToast={showToast} auditLog={auditLog} />,
