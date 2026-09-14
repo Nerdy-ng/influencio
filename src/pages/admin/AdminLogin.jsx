@@ -98,7 +98,7 @@ export default function AdminLogin() {
     const { data, error: verifyErr } = await supabase.auth.verifyOtp({
       email: email.trim().toLowerCase(),
       token,
-      type: "magiclink",
+      type: "email",
     });
 
     if (verifyErr || !data?.user) {
