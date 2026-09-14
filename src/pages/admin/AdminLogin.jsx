@@ -65,24 +65,14 @@ export default function AdminLogin() {
     setError("");
     setLoading(true);
 
-    const { error: otpErr } = await supabase.auth.signInWithOtp({
-      email: email.trim().toLowerCase(),
-      options: {
-        shouldCreateUser: false,
-      },
+    const { error: fnErr } = await supabase.functions.invoke('admin-send-otp', {
+      body: { email: email.trim().toLowerCase() },
     });
 
-    if (otpErr) {
-      // Supabase sends the OTP email successfully but returns a redirect-URL
-      // path validation error (GoTrue "Invalid path" when Site URL path = "/").
-      // Treat this specific error as a successful send so the user can enter
-      // the code they already received.
-      const emailSentDespiteError = otpErr.message?.includes("Invalid path");
-      if (!emailSentDespiteError) {
-        setError(`Could not send code: ${otpErr.message}`);
-        setLoading(false);
-        return;
-      }
+    if (fnErr) {
+      setError(`Could not send code: ${fnErr.message}`);
+      setLoading(false);
+      return;
     }
 
     setCooldown(60);
@@ -102,7 +92,7 @@ export default function AdminLogin() {
     const { data, error: verifyErr } = await supabase.auth.verifyOtp({
       email: email.trim().toLowerCase(),
       token,
-      type: "email",
+      type: "magiclink",
     });
 
     if (verifyErr || !data?.user) {
