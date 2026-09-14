@@ -409,6 +409,7 @@ export default function AdminPanel() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [adminUser, setAdminUser] = useState(null);
+  const [adminRole, setAdminRole] = useState("");
   const [overviewFilter, setOverviewFilter] = useState("all");
   const [cmdOpen, setCmdOpen] = useState(false);
   const [cmdQuery, setCmdQuery] = useState("");
@@ -422,6 +423,7 @@ export default function AdminPanel() {
 
   const [users, setUsers] = useState([]);
   const [newCountry, setNewCountry] = useState('');
+  const [adminsList, setAdminsList] = useState([]);
   const [managers, setManagers] = useState([]);
   const [staffList, setStaffList] = useState([]);
   const [approvals, setApprovals] = useState([]);
@@ -677,7 +679,7 @@ export default function AdminPanel() {
 
   // Modal state
   const [addTeamModal, setAddTeamModal] = useState(null); // 'manager' | 'staff'
-  const [newMember, setNewMember] = useState({ name: "", email: "" });
+  const [newMember, setNewMember] = useState({ name: "", email: "", role: "" });
   const [editUser, setEditUser] = useState(null);   // user object being edited
 
   const pendingCount = approvals.filter((a) => a.status === "pending").length;
@@ -704,17 +706,19 @@ export default function AdminPanel() {
   }, []);
 
   useEffect(() => {
-    async function verifySession() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { navigate("/admin/login"); return; }
-      const { data: adminRow } = await supabase
-        .from("admin_users").select("role, name").eq("email", user.email).single();
-      if (!adminRow || !["admin", "manager", "staff"].includes(adminRow.role?.toLowerCase().trim())) {
-        await supabase.auth.signOut();
-        navigate("/admin/login");
-        return;
-      }
-      setAdminUser({ email: user.email, name: adminRow.name });
+    function verifySession() {
+      const stored = localStorage.getItem('brandiór_admin_user');
+      const role   = localStorage.getItem('brandiór_admin_role');
+      if (!stored || !role) { navigate("/admin/login"); return; }
+      try {
+        const adminUser = JSON.parse(stored);
+        if (!adminUser?.email) { navigate("/admin/login"); return; }
+        if (!["admin", "super admin", "superadmin"].includes(role.toLowerCase().trim())) {
+          navigate("/admin/login"); return;
+        }
+        setAdminUser({ email: adminUser.email, name: adminUser.name || '' });
+        setAdminRole(role.toLowerCase().trim());
+      } catch { navigate("/admin/login"); }
     }
     verifySession();
   }, [navigate]);
@@ -860,8 +864,10 @@ export default function AdminPanel() {
       if (teamRows) {
         const mkAvatar = name => (name || 'U').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()
         const mkLastLogin = ts => ts ? new Date(ts).toLocaleString('en', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : 'Never'
-        setManagers(teamRows.filter(r => r.role === 'manager').map(r => ({ ...r, avatar: mkAvatar(r.name), lastLogin: mkLastLogin(r.last_login) })))
-        setStaffList(teamRows.filter(r => r.role === 'staff').map(r => ({ ...r, avatar: mkAvatar(r.name), lastLogin: mkLastLogin(r.last_login) })))
+        const mkMember = r => ({ ...r, avatar: mkAvatar(r.name), lastLogin: mkLastLogin(r.last_login) })
+        setAdminsList(teamRows.filter(r => ['admin','super admin','superadmin'].includes((r.role||'').toLowerCase())).map(mkMember))
+        setManagers(teamRows.filter(r => r.role === 'manager').map(mkMember))
+        setStaffList(teamRows.filter(r => r.role === 'staff').map(mkMember))
       }
 
       // Approvals queue
@@ -1212,22 +1218,33 @@ export default function AdminPanel() {
   };
 
   const handleAddTeamMember = async () => {
-    if (!newMember.name || !newMember.email) return;
-    const role = addTeamModal === "manager" ? "manager" : "staff"
+    if (!newMember.name || !newMember.email || !newMember.role) return;
+    const role = newMember.role;
     const { data: inserted, error } = await supabase.from('admin_users').insert({
-      name: newMember.name, email: newMember.email.trim().toLowerCase(), role, status: 'Active',
+      name: newMember.name.trim(), email: newMember.email.trim().toLowerCase(), role, status: 'Active',
     }).select().single()
     if (error) { showToast(error.message || 'Failed to add team member', 'error'); return; }
-    const member = {
-      ...inserted,
-      avatar: newMember.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2),
-      lastLogin: 'Never',
-    };
-    if (addTeamModal === "manager") setManagers((prev) => [...prev, member]);
-    else setStaffList((prev) => [...prev, member]);
+    const mkAvatar = name => (name || 'U').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()
+    const member = { ...inserted, avatar: mkAvatar(inserted.name), lastLogin: 'Never' };
+    if (['admin','super admin','superadmin'].includes(role.toLowerCase())) setAdminsList(p => [...p, member]);
+    else if (role === 'manager') setManagers(p => [...p, member]);
+    else setStaffList(p => [...p, member]);
     setAddTeamModal(null);
-    setNewMember({ name: "", email: "" });
-    showToast(`${addTeamModal === "manager" ? "Manager" : "Staff"} added successfully.`);
+    setNewMember({ name: "", email: "", role: "" });
+    auditLog?.('add_team_member', 'admin_users', inserted.id, inserted.name, { role });
+    showToast(`${inserted.name} added as ${role}.`);
+  };
+
+  const handleRemoveTeamMember = async (member) => {
+    if (!window.confirm(`Remove ${member.name} (${member.role}) from the team?`)) return;
+    const { error } = await supabase.from('admin_users').delete().eq('id', member.id);
+    if (error) { showToast(error.message || 'Failed to remove member', 'error'); return; }
+    const role = (member.role || '').toLowerCase();
+    if (['admin','super admin','superadmin'].includes(role)) setAdminsList(p => p.filter(m => m.id !== member.id));
+    else if (role === 'manager') setManagers(p => p.filter(m => m.id !== member.id));
+    else setStaffList(p => p.filter(m => m.id !== member.id));
+    auditLog?.('remove_team_member', 'admin_users', member.id, member.name, { role: member.role });
+    showToast(`${member.name} removed.`);
   };
 
   const filteredUsers = users.filter((u) => {
@@ -1818,36 +1835,69 @@ export default function AdminPanel() {
     );
   };
 
+  const isSuperAdmin = ["super admin","superadmin"].includes(adminRole);
+
+  const TeamRow = ({ member, accentCol }) => (
+    <div className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors">
+      <div className="flex items-center gap-3">
+        <Avatar initials={member.avatar} size="sm" color={accentCol} />
+        <div>
+          <p className="font-medium text-gray-900 text-sm">{member.name}</p>
+          <p className="text-xs text-gray-400">{member.email}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <StatusBadge status={member.status} />
+        <p className="text-xs text-gray-400 hidden sm:block">Last: {member.lastLogin}</p>
+        {isSuperAdmin && (
+          <button
+            onClick={() => handleRemoveTeamMember(member)}
+            className="px-2 py-1 text-xs rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
+            Remove
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
   const renderTeam = () => (
     <div className="space-y-6">
+      {/* Admins — super admin only */}
+      {isSuperAdmin && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <div>
+              <h3 className="font-semibold text-gray-900">Admins <span className="text-gray-400 text-sm font-normal ml-1">({adminsList.length})</span></h3>
+              <p className="text-xs text-gray-400 mt-0.5">Full platform access — add with care</p>
+            </div>
+            <button onClick={() => { setAddTeamModal("add"); setNewMember({ name:"", email:"", role:"admin" }); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-white" style={{ backgroundColor: "#7c3aed" }}>
+              <Plus className="w-4 h-4" /> Add Admin
+            </button>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {adminsList.length === 0
+              ? <p className="text-xs text-gray-400 text-center py-6">No admins found</p>
+              : adminsList.map(m => <TeamRow key={m.id} member={m} accentCol="#7c3aed" />)}
+          </div>
+        </div>
+      )}
+
       {/* Managers */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <h3 className="font-semibold text-gray-900">Managers <span className="text-gray-400 text-sm font-normal ml-1">({managers.length})</span></h3>
-          <button onClick={() => setAddTeamModal("manager")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-white" style={{ backgroundColor: "#4f46e5" }}>
-            <Plus className="w-4 h-4" /> Add Manager
-          </button>
+          {isSuperAdmin && (
+            <button onClick={() => { setAddTeamModal("add"); setNewMember({ name:"", email:"", role:"manager" }); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-white" style={{ backgroundColor: "#4f46e5" }}>
+              <Plus className="w-4 h-4" /> Add Manager
+            </button>
+          )}
         </div>
         <div className="divide-y divide-gray-50">
-          {managers.map((m) => (
-            <div key={m.id} className="flex items-center justify-between px-5 py-3">
-              <div className="flex items-center gap-3">
-                <Avatar initials={m.avatar} size="sm" color="#7c3aed" />
-                <div>
-                  <p className="font-medium text-gray-900 text-sm">{m.name}</p>
-                  <p className="text-xs text-gray-400">{m.email}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <StatusBadge status={m.status} />
-                <p className="text-xs text-gray-400 hidden sm:block">Last: {m.lastLogin}</p>
-                <div className="flex gap-1">
-                  <button className="px-2 py-1 text-xs rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Deactivate</button>
-                  <button className="px-2 py-1 text-xs rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Reset PW</button>
-                </div>
-              </div>
-            </div>
-          ))}
+          {managers.length === 0
+            ? <p className="text-xs text-gray-400 text-center py-6">No managers yet</p>
+            : managers.map(m => <TeamRow key={m.id} member={m} accentCol="#4f46e5" />)}
         </div>
       </div>
 
@@ -1855,30 +1905,17 @@ export default function AdminPanel() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <h3 className="font-semibold text-gray-900">Staff <span className="text-gray-400 text-sm font-normal ml-1">({staffList.length})</span></h3>
-          <button onClick={() => setAddTeamModal("staff")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-white" style={{ backgroundColor: "#0ea5e9" }}>
-            <Plus className="w-4 h-4" /> Add Staff
-          </button>
+          {isSuperAdmin && (
+            <button onClick={() => { setAddTeamModal("add"); setNewMember({ name:"", email:"", role:"staff" }); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-white" style={{ backgroundColor: "#0ea5e9" }}>
+              <Plus className="w-4 h-4" /> Add Staff
+            </button>
+          )}
         </div>
         <div className="divide-y divide-gray-50">
-          {staffList.map((s) => (
-            <div key={s.id} className="flex items-center justify-between px-5 py-3">
-              <div className="flex items-center gap-3">
-                <Avatar initials={s.avatar} size="sm" color="#0ea5e9" />
-                <div>
-                  <p className="font-medium text-gray-900 text-sm">{s.name}</p>
-                  <p className="text-xs text-gray-400">{s.email}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <StatusBadge status={s.status} />
-                <p className="text-xs text-gray-400 hidden sm:block">Last: {s.lastLogin}</p>
-                <div className="flex gap-1">
-                  <button className="px-2 py-1 text-xs rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Deactivate</button>
-                  <button className="px-2 py-1 text-xs rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Reset PW</button>
-                </div>
-              </div>
-            </div>
-          ))}
+          {staffList.length === 0
+            ? <p className="text-xs text-gray-400 text-center py-6">No staff yet</p>
+            : staffList.map(s => <TeamRow key={s.id} member={s} accentCol="#0ea5e9" />)}
         </div>
       </div>
     </div>
@@ -3477,8 +3514,8 @@ export default function AdminPanel() {
         </div>
       )}
 
-      {addTeamModal && (
-        <Modal title={`Add ${addTeamModal === "manager" ? "Manager" : "Staff Member"}`} onClose={() => setAddTeamModal(null)}>
+      {addTeamModal === "add" && (
+        <Modal title="Add Team Member" onClose={() => { setAddTeamModal(null); setNewMember({ name:"", email:"", role:"" }); }}>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
@@ -3500,9 +3537,27 @@ export default function AdminPanel() {
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Role</label>
+              <select
+                value={newMember.role}
+                onChange={(e) => setNewMember((m) => ({ ...m, role: e.target.value }))}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400 bg-white">
+                {isSuperAdmin && <option value="admin">Admin — full access</option>}
+                <option value="manager">Manager</option>
+                <option value="staff">Staff</option>
+              </select>
+            </div>
+            {newMember.role === 'admin' && (
+              <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+                Admins have full platform access. Only add trusted team members.
+              </p>
+            )}
             <div className="flex gap-3 pt-2">
-              <button onClick={() => setAddTeamModal(null)} className="flex-1 py-2.5 rounded-lg border text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-              <button onClick={handleAddTeamMember} className="flex-1 py-2.5 rounded-lg text-sm font-medium text-white" style={{ backgroundColor: "#4f46e5" }}>Add Member</button>
+              <button onClick={() => { setAddTeamModal(null); setNewMember({ name:"", email:"", role:"" }); }}
+                className="flex-1 py-2.5 rounded-lg border text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+              <button onClick={handleAddTeamMember} disabled={!newMember.name || !newMember.email || !newMember.role}
+                className="flex-1 py-2.5 rounded-lg text-sm font-medium text-white disabled:opacity-40" style={{ backgroundColor: "#4f46e5" }}>Add Member</button>
             </div>
           </div>
         </Modal>
