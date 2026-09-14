@@ -96,6 +96,17 @@ function PrivateRoute({ children, isRecoverySession }) {
   return children
 }
 
+function RootRoute() {
+  const isAppDomain = window.location.hostname === 'app.brandior.africa'
+  if (!isAppDomain) return <PublicOnly><ComingSoon /></PublicOnly>
+  const user = localStorage.getItem('brandiór_user')
+  if (user) {
+    const role = localStorage.getItem('brandiór_role')
+    return <Navigate to={role === 'talent' ? '/dashboard' : '/brand-dashboard'} replace />
+  }
+  return <Navigate to="/marketplace" replace />
+}
+
 const PUBLIC_PATHS = ['/', '/for-talents', '/for-brands', '/signup', '/login']
 const ADMIN_PATHS = ['/admin', '/admin/login', '/admin/manager', '/admin/staff']
 
@@ -205,7 +216,7 @@ export default function App() {
     <MaintenanceGate>
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        <Route path="/"             element={<PublicOnly><ComingSoon /></PublicOnly>} />
+        <Route path="/"             element={<RootRoute />} />
         <Route path="/preview"      element={<Landing />} />
         <Route path="/for-talents"  element={<PublicOnly><TalentLanding /></PublicOnly>} />
         <Route path="/for-brands"   element={<PublicOnly><BrandLanding /></PublicOnly>} />

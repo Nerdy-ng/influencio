@@ -1,4 +1,12 @@
 {
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Referrer-Policy", "value": "no-referrer" }
+      ]
+    }
+  ],
   "redirects": [
     {
       "source": "/admin/:path*",
