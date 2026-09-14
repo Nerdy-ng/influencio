@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { validateAdminSession, clearAdminSession, callAdminFn, getAdminToken } from "../../lib/adminAuth";
+import { validateAdminSession, clearAdminSession, callAdminFn, getAdminToken, registerAdminSession, logSecurityEvent } from "../../lib/adminAuth";
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\\`]/g, '');
 import {
   LayoutDashboard, Users, Briefcase, Shield, Bell,
@@ -10,7 +10,7 @@ import {
   SlidersHorizontal, Star, Zap, BadgeCheck, RotateCcw, Info, ChevronUp, ChevronRight,
   BarChart2, HelpCircle, MessageSquare, Clock, Send, CreditCard, ToggleLeft, ToggleRight, Layers,
   Scale, Sparkles, Smartphone, Tag, ListFilter, ClipboardList, GitBranch, Star as StarIcon, Wallet,
-  Moon, Sun, PanelLeftClose, PanelLeftOpen, Mail,
+  Moon, Sun, PanelLeftClose, PanelLeftOpen, Mail, Megaphone, Ticket, TrendingDown, Timer, Download, ShieldCheck, Percent,
 } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import AdminModerationDashboard from "../../components/AdminModerationDashboard";
@@ -45,7 +45,20 @@ import SupportCenterPanel     from "../../components/admin/SupportCenterPanel";
 import SystemSettingsPanel    from "../../components/admin/SystemSettingsPanel";
 import KYCReviewPanel         from "../../components/admin/KYCReviewPanel";
 import PayoutApprovalPanel    from "../../components/admin/PayoutApprovalPanel";
-import EmailDeliveryLogPanel  from "../../components/admin/EmailDeliveryLogPanel";
+import EmailDeliveryLogPanel    from "../../components/admin/EmailDeliveryLogPanel";
+import FraudDetectionPanel      from "../../components/admin/FraudDetectionPanel";
+import AnnouncementBannerPanel  from "../../components/admin/AnnouncementBannerPanel";
+import PromoCouponPanel         from "../../components/admin/PromoCouponPanel";
+import OnboardingFunnelPanel    from "../../components/admin/OnboardingFunnelPanel";
+import CreatorEarningsPanel     from "../../components/admin/CreatorEarningsPanel";
+import SLATrackerPanel          from "../../components/admin/SLATrackerPanel";
+import DataExportPanel          from "../../components/admin/DataExportPanel";
+import AdminSecurityPanel       from "../../components/admin/AdminSecurityPanel";
+import AdminRolesPanel          from "../../components/admin/AdminRolesPanel";
+import RefundWorkflowPanel      from "../../components/admin/RefundWorkflowPanel";
+import SystemHealthPanel        from "../../components/admin/SystemHealthPanel";
+import CommissionPanel          from "../../components/admin/CommissionPanel";
+import EmailNotificationsPanel  from "../../components/admin/EmailNotificationsPanel";
 import { LOGO_SLOTS, getLogo, uploadLogoFile, removeLogoFromDB } from "../../lib/brandSettings";
 import { getAllSettings, saveAllSettings, loadSettingsFromDB, getSetting, setSetting } from "../../lib/siteSettings";
 import { THEME_VARS, loadThemeFromDB, saveThemeToDB, resetThemeToDB, getThemeDefaults } from "../../lib/themeSettings";
@@ -231,7 +244,11 @@ function Modal({ title, onClose, children }) {
 
 const NAV_ITEMS = [
   { id: "overview",  label: "Overview",   Icon: LayoutDashboard },
-  { id: "analytics", label: "Analytics",  Icon: BarChart2 },
+  { id: "analytics",  label: "Analytics",   Icon: BarChart2 },
+  { id: "funnel",     label: "Funnel",      Icon: TrendingDown },
+  { id: "earnings",   label: "Earnings",    Icon: DollarSign },
+  { id: "sla",        label: "SLA Tracker", Icon: Timer },
+  { id: "exports",    label: "Exports",     Icon: Download },
   { id: "users",     label: "Users",      Icon: Users },
   { id: "badges",    label: "Badges",     Icon: BadgeCheck },
   { id: "rankings",  label: "Rankings",   Icon: SlidersHorizontal },
@@ -247,6 +264,8 @@ const NAV_ITEMS = [
   { id: "reviews",        label: "Reviews",       Icon: StarIcon },
   { id: "marketplace",    label: "Marketplace",   Icon: Layers },
   { id: "referrals2",     label: "Referrals",     Icon: GitBranch },
+  { id: "announcements",  label: "Banners",        Icon: Megaphone },
+  { id: "promo-codes",    label: "Promo Codes",    Icon: Ticket },
   { id: "notifications2", label: "Notify",        Icon: Bell },
   { id: "cms2",           label: "CMS",           Icon: Globe },
   { id: "analytics2",     label: "Analytics",     Icon: BarChart2 },
@@ -258,8 +277,10 @@ const NAV_ITEMS = [
   { id: "categories",     label: "Categories",    Icon: Tag },
   { id: "trust-safety",   label: "Trust & Safety",Icon: ShieldAlert },
   { id: "kyc",            label: "KYC",           Icon: BadgeCheck, badge: true, badgeColor: "#f59e0b" },
+  { id: "fraud",          label: "Fraud Detection", Icon: ShieldAlert },
   { id: "support2",       label: "Support",       Icon: HelpCircle },
   { id: "email-log",      label: "Email Log",     Icon: Mail },
+  { id: "email-notifs",   label: "Email Alerts",  Icon: Mail },
   { id: "system",         label: "System",        Icon: Settings },
   { id: "team",           label: "Team",          Icon: Shield },
   { id: "approvals",      label: "Approvals",     Icon: Bell, badge: true },
@@ -272,16 +293,21 @@ const NAV_ITEMS = [
   { id: "push",           label: "Push",          Icon: Send },
   { id: "rate-cards",     label: "Rate Cards",    Icon: StarIcon },
   { id: "audit",          label: "Audit Log",     Icon: ClipboardList },
+  { id: "security",       label: "Security",      Icon: Shield },
+  { id: "roles",          label: "Roles",         Icon: ShieldCheck },
+  { id: "refunds",        label: "Refunds",       Icon: RotateCcw },
+  { id: "health",         label: "System Health", Icon: Activity },
+  { id: "commission",     label: "Commission",    Icon: Percent },
   { id: "settings",       label: "Settings",      Icon: Settings },
 ];
 
 const NAV_GROUPS = [
-  { title: "Dashboard", items: ["overview", "analytics"] },
+  { title: "Dashboard", items: ["overview", "analytics", "funnel", "earnings", "sla", "exports", "health"] },
   { title: "Community", items: ["users", "badges", "rankings", "jobs", "pitches", "messaging"] },
-  { title: "Finance",   items: ["wallets", "withdrawals", "payout-approvals", "escrow", "financials2", "rubies", "pay-config", "pitch-settings", "payments"] },
-  { title: "Trust",     items: ["disputes2", "reviews", "ai-police", "trust-safety", "kyc", "marketplace", "referrals2"] },
-  { title: "Platform",  items: ["notifications2", "cms2", "push", "ai-controls", "discovery", "categories", "support2", "rate-cards", "email-log"] },
-  { title: "Admin",     items: ["team", "approvals", "content", "features", "legal", "app-config", "system", "analytics2", "audit", "settings"] },
+  { title: "Finance",   items: ["wallets", "withdrawals", "payout-approvals", "escrow", "financials2", "rubies", "pay-config", "pitch-settings", "payments", "refunds", "commission"] },
+  { title: "Trust",     items: ["disputes2", "reviews", "ai-police", "trust-safety", "kyc", "fraud", "marketplace", "referrals2"] },
+  { title: "Platform",  items: ["announcements", "promo-codes", "notifications2", "cms2", "push", "ai-controls", "discovery", "categories", "support2", "rate-cards", "email-log", "email-notifs"] },
+  { title: "Admin",     items: ["team", "approvals", "content", "features", "legal", "app-config", "system", "analytics2", "audit", "security", "roles", "settings"] },
 ];
 
 // ─── DEFAULT LEGAL CONTENT ────────────────────────────────────────────────────
@@ -678,12 +704,16 @@ export default function AdminPanel() {
       if (!session) { clearAdminSession(); navigate("/admin/login"); return; }
       const role = session.role.toLowerCase().trim();
       if (!["admin", "super admin", "superadmin"].includes(role)) {
-        clearAdminSession(); navigate("/admin/login"); return;
+        clearAdminSession({ email: session.email, name: session.name, role: session.role }); navigate("/admin/login"); return;
       }
       setAdminUser({ email: session.email, name: session.name || '' });
       setAdminRole(role);
       localStorage.setItem('brandiór_admin_user', JSON.stringify({ email: session.email, name: session.name }));
       localStorage.setItem('brandiór_admin_role', session.role);
+      // Register session in DB (first load only — no-op if session_id already set)
+      if (!localStorage.getItem('brandiór_admin_session_id')) {
+        registerAdminSession({ email: session.email, name: session.name, role: session.role });
+      }
     }
     verifySession();
   }, [navigate]);
@@ -1063,7 +1093,7 @@ export default function AdminPanel() {
   const handleLogout = async () => {
     const token = getAdminToken();
     if (token) callAdminFn('admin-revoke-session', { token, selfRevoke: true }).catch(() => {});
-    clearAdminSession();
+    await clearAdminSession(adminUser);
     navigate("/admin/login");
   };
 
@@ -3196,9 +3226,15 @@ export default function AdminPanel() {
     reviews:          () => <ReviewsModerationPanel showToast={showToast} auditLog={auditLog} />,
     marketplace:      () => <MarketplaceModerationPanel showToast={showToast} auditLog={auditLog} />,
     referrals2:       () => <ReferralManagementPanel showToast={showToast} auditLog={auditLog} />,
+    announcements:    () => <AnnouncementBannerPanel showToast={showToast} auditLog={auditLog} />,
+    "promo-codes":    () => <PromoCouponPanel showToast={showToast} auditLog={auditLog} />,
     notifications2:   () => <NotificationsPanel showToast={showToast} auditLog={auditLog} />,
     cms2:             () => <CMSPanel showToast={showToast} auditLog={auditLog} />,
     analytics2:       () => <AnalyticsPanel />,
+    funnel:           () => <OnboardingFunnelPanel showToast={showToast} />,
+    earnings:         () => <CreatorEarningsPanel showToast={showToast} />,
+    sla:              () => <SLATrackerPanel showToast={showToast} setActiveTab={setActiveTab} />,
+    exports:          () => <DataExportPanel showToast={showToast} auditLog={auditLog} />,
     "ai-controls":    () => <AIControlsPanel showToast={showToast} auditLog={auditLog} />,
     discovery:        () => <DiscoveryAlgorithmPanel showToast={showToast} auditLog={auditLog} />,
     "pay-config":     () => <PaymentConfigPanel showToast={showToast} auditLog={auditLog} />,
@@ -3207,8 +3243,10 @@ export default function AdminPanel() {
     categories:       () => <CategoryManagementPanel showToast={showToast} auditLog={auditLog} />,
     "trust-safety":   () => <TrustSafetyPanel showToast={showToast} auditLog={auditLog} />,
     kyc:              () => <KYCReviewPanel showToast={showToast} auditLog={auditLog} />,
+    fraud:            () => <FraudDetectionPanel showToast={showToast} auditLog={auditLog} />,
     support2:         () => <SupportCenterPanel showToast={showToast} auditLog={auditLog} />,
     "email-log":      () => <EmailDeliveryLogPanel showToast={showToast} />,
+    "email-notifs":   () => <EmailNotificationsPanel showToast={showToast} auditLog={auditLog} />,
     system:           () => <SystemSettingsPanel showToast={showToast} auditLog={auditLog} />,
     team:             renderTeam,
     approvals:        renderApprovals,
@@ -3223,6 +3261,11 @@ export default function AdminPanel() {
     push:             renderPush,
     audit:            renderAudit,
     "rate-cards":     renderRateCards,
+    security:         () => <AdminSecurityPanel showToast={showToast} auditLog={auditLog} />,
+    roles:            () => <AdminRolesPanel showToast={showToast} auditLog={auditLog} />,
+    refunds:          () => <RefundWorkflowPanel showToast={showToast} auditLog={auditLog} />,
+    health:           () => <SystemHealthPanel showToast={showToast} />,
+    commission:       () => <CommissionPanel showToast={showToast} auditLog={auditLog} />,
   };
 
   if (!adminUser) return null;
