@@ -1914,6 +1914,32 @@ function SecurityCard() {
   )
 }
 
+function KYCUploadSlot({ label, file, onChange }) {
+  const inputRef = useRef(null)
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-brand-dark/50 uppercase tracking-widest mb-1.5">{label}</label>
+      <button onClick={() => inputRef.current?.click()}
+        className="w-full h-28 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-1.5 transition-colors hover:border-purple-400"
+        style={{ borderColor: file ? '#7c3aed' : '#e9d5ff', backgroundColor: file ? '#f5f3ff' : '#faf9ff' }}>
+        {file ? (
+          <>
+            <img src={URL.createObjectURL(file)} alt={label} className="h-16 w-full object-cover rounded-xl" />
+            <span className="text-[10px] text-purple-600 font-semibold truncate max-w-full px-2">{file.name}</span>
+          </>
+        ) : (
+          <>
+            <ImagePlus className="w-5 h-5 text-brand-dark/30" />
+            <span className="text-xs text-brand-dark/40">Tap to upload</span>
+          </>
+        )}
+      </button>
+      <input ref={inputRef} type="file" accept="image/*" className="hidden"
+        onChange={e => onChange(e.target.files?.[0] || null)} />
+    </div>
+  )
+}
+
 export default function TalentDashboard() {
   const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'browse')
@@ -1940,6 +1966,73 @@ export default function TalentDashboard() {
   const [pwSaving,    setPwSaving]    = useState(false)
   const [pwMsg,       setPwMsg]       = useState(null)
   const [downloading, setDownloading] = useState(false)
+
+  // KYC verification state
+  const [kycSubmission, setKycSubmission] = useState(null)
+  const [kycLoaded, setKycLoaded]         = useState(false)
+  const [kycForm, setKycForm]             = useState({
+    doc_type: '', doc_number: '', social_platform: '', social_handle: '', social_followers: '',
+  })
+  const [kycFront, setKycFront]           = useState(null)
+  const [kycBack, setKycBack]             = useState(null)
+  const [kycSelfie, setKycSelfie]         = useState(null)
+  const [kycSubmitting, setKycSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (activeTab === 'settings' && !kycLoaded) {
+      supabase.auth.getUser().then(async ({ data: { user } }) => {
+        if (!user) return
+        const { data } = await supabase.from('kyc_submissions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+        setKycSubmission(data || null)
+        setKycLoaded(true)
+      })
+    }
+  }, [activeTab, kycLoaded])
+
+  async function submitKYC() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    if (!kycForm.doc_type || !kycFront) {
+      alert('Please select a document type and upload at least the front image.')
+      return
+    }
+    setKycSubmitting(true)
+    try {
+      const base = `${user.id}/${Date.now()}`
+      const uploadFile = async (file, suffix) => {
+        const { error } = await supabase.storage.from('kyc-documents').upload(`${base}_${suffix}`, file, { upsert: true })
+        if (error) throw error
+        const { data: { publicUrl } } = supabase.storage.from('kyc-documents').getPublicUrl(`${base}_${suffix}`)
+        return publicUrl
+      }
+      const frontUrl = await uploadFile(kycFront, 'front')
+      const backUrl  = kycBack   ? await uploadFile(kycBack,   'back')   : null
+      const selfieUrl = kycSelfie ? await uploadFile(kycSelfie, 'selfie') : null
+      const payload = {
+        user_id: user.id,
+        user_name: profile.name || profile.nickname || '',
+        user_handle: profile.handle || '',
+        doc_type: kycForm.doc_type,
+        doc_number: kycForm.doc_number || null,
+        doc_front_url: frontUrl,
+        doc_back_url: backUrl,
+        selfie_url: selfieUrl,
+        social_platform: kycForm.social_platform || null,
+        social_handle: kycForm.social_handle || null,
+        social_followers: kycForm.social_followers ? parseInt(kycForm.social_followers, 10) : null,
+        status: 'pending',
+      }
+      const { data: inserted, error: insErr } = await supabase.from('kyc_submissions').insert(payload).select().single()
+      if (insErr) throw insErr
+      setKycSubmission(inserted)
+      setKycForm({ doc_type: '', doc_number: '', social_platform: '', social_handle: '', social_followers: '' })
+      setKycFront(null); setKycBack(null); setKycSelfie(null)
+    } catch (e) {
+      alert('Submission failed. Please try again.')
+      console.error(e)
+    }
+    setKycSubmitting(false)
+  }
 
   async function handleChangePassword() {
     if (!pwForm.next || pwForm.next !== pwForm.confirm) {
@@ -3597,6 +3690,164 @@ export default function TalentDashboard() {
               <AccountSettingsCard settingsEditMode={settingsEditMode} realEmail={profile.email} />
 
               <SecurityCard />
+
+              {/* Identity Verification (KYC) */}
+              <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="font-bold text-brand-dark">Identity Verification</p>
+                    <p className="text-xs text-brand-dark/40 mt-0.5">Required to activate your Rubies wallet</p>
+                  </div>
+                  {kycSubmission?.status === 'approved' && (
+                    <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                      <ShieldCheck className="w-3.5 h-3.5" /> Verified
+                    </span>
+                  )}
+                  {kycSubmission?.status === 'pending' && (
+                    <span className="flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                      <Clock className="w-3.5 h-3.5" /> Under Review
+                    </span>
+                  )}
+                  {kycSubmission?.status === 'more_info' && (
+                    <span className="flex items-center gap-1 text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+                      <AlertTriangle className="w-3.5 h-3.5" /> Action Needed
+                    </span>
+                  )}
+                  {kycSubmission?.status === 'rejected' && (
+                    <span className="flex items-center gap-1 text-xs font-bold text-red-600 bg-red-50 px-3 py-1 rounded-full border border-red-200">
+                      <AlertTriangle className="w-3.5 h-3.5" /> Rejected
+                    </span>
+                  )}
+                </div>
+
+                {/* Approved state */}
+                {kycSubmission?.status === 'approved' && (
+                  <div className="flex items-center gap-3 p-4 rounded-2xl" style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+                    <ShieldCheck className="w-8 h-8 text-emerald-500 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-emerald-800">Your identity has been verified</p>
+                      <p className="text-xs text-emerald-600 mt-0.5">Your Rubies wallet is now active. You can receive and withdraw earnings.</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Pending state */}
+                {kycSubmission?.status === 'pending' && (
+                  <div className="flex items-center gap-3 p-4 rounded-2xl" style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a' }}>
+                    <Loader2 className="w-7 h-7 text-amber-500 flex-shrink-0 animate-spin" />
+                    <div>
+                      <p className="font-semibold text-amber-800">Verification in progress</p>
+                      <p className="text-xs text-amber-600 mt-0.5">Our team is reviewing your documents. This usually takes 1–2 business days.</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* More info needed */}
+                {kycSubmission?.status === 'more_info' && (
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3 p-4 rounded-2xl" style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe' }}>
+                      <AlertTriangle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-semibold text-blue-800">Additional information needed</p>
+                        <p className="text-sm text-blue-700 mt-1">{kycSubmission.rejection_reason}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => { setKycSubmission(null); setKycLoaded(false) }}
+                      className="text-xs font-semibold px-4 py-2 rounded-full text-white"
+                      style={{ backgroundColor: darkPurple }}>
+                      Resubmit Documents
+                    </button>
+                  </div>
+                )}
+
+                {/* Rejected state */}
+                {kycSubmission?.status === 'rejected' && (
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3 p-4 rounded-2xl" style={{ backgroundColor: '#fff1f2', border: '1px solid #fecdd3' }}>
+                      <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-semibold text-red-800">Verification not approved</p>
+                        <p className="text-sm text-red-700 mt-1">{kycSubmission.rejection_reason || 'Please resubmit with clearer documents.'}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => { setKycSubmission(null); setKycLoaded(false) }}
+                      className="text-xs font-semibold px-4 py-2 rounded-full text-white"
+                      style={{ backgroundColor: darkPurple }}>
+                      Resubmit Documents
+                    </button>
+                  </div>
+                )}
+
+                {/* Not submitted / submission form */}
+                {!kycSubmission && kycLoaded && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-brand-dark/60">Submit a government-issued ID to verify your identity and activate your wallet.</p>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-brand-dark/50 uppercase tracking-widest mb-1.5">Document Type *</label>
+                        <select value={kycForm.doc_type} onChange={e => setKycForm(f => ({ ...f, doc_type: e.target.value }))}
+                          className="w-full px-3 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2"
+                          style={{ borderColor: '#e9d5ff' }}>
+                          <option value="">Select document</option>
+                          <option value="National ID">National ID (NIN)</option>
+                          <option value="Passport">International Passport</option>
+                          <option value="Driver's Licence">Driver's Licence</option>
+                          <option value="Voter's Card">Voter's Card</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-brand-dark/50 uppercase tracking-widest mb-1.5">ID / NIN Number</label>
+                        <input value={kycForm.doc_number} onChange={e => setKycForm(f => ({ ...f, doc_number: e.target.value }))}
+                          placeholder="Enter document number"
+                          className="w-full px-3 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2"
+                          style={{ borderColor: '#e9d5ff' }} />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-brand-dark/50 uppercase tracking-widest mb-1.5">Primary Social Platform</label>
+                        <select value={kycForm.social_platform} onChange={e => setKycForm(f => ({ ...f, social_platform: e.target.value }))}
+                          className="w-full px-3 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2"
+                          style={{ borderColor: '#e9d5ff' }}>
+                          <option value="">Select platform</option>
+                          {['Instagram','TikTok','YouTube','Twitter / X','Facebook','Snapchat','LinkedIn'].map(p => (
+                            <option key={p} value={p}>{p}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-brand-dark/50 uppercase tracking-widest mb-1.5">Social Handle</label>
+                        <input value={kycForm.social_handle} onChange={e => setKycForm(f => ({ ...f, social_handle: e.target.value }))}
+                          placeholder="@yourhandle"
+                          className="w-full px-3 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2"
+                          style={{ borderColor: '#e9d5ff' }} />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-semibold text-brand-dark/50 uppercase tracking-widest mb-1.5">Approx. Followers</label>
+                        <input type="number" value={kycForm.social_followers} onChange={e => setKycForm(f => ({ ...f, social_followers: e.target.value }))}
+                          placeholder="e.g. 5000"
+                          className="w-full px-3 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2"
+                          style={{ borderColor: '#e9d5ff' }} />
+                      </div>
+                    </div>
+                    <div className="grid sm:grid-cols-3 gap-3">
+                      <KYCUploadSlot label="ID Front *" file={kycFront} onChange={setKycFront} />
+                      <KYCUploadSlot label="ID Back" file={kycBack} onChange={setKycBack} />
+                      <KYCUploadSlot label="Selfie with ID" file={kycSelfie} onChange={setKycSelfie} />
+                    </div>
+                    <button onClick={submitKYC} disabled={kycSubmitting || !kycForm.doc_type || !kycFront}
+                      className="flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-white disabled:opacity-50"
+                      style={{ backgroundColor: darkPurple }}>
+                      {kycSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</> : <><ShieldCheck className="w-4 h-4" /> Submit for Verification</>}
+                    </button>
+                  </div>
+                )}
+
+                {/* Not loaded yet */}
+                {!kycLoaded && (
+                  <div className="flex items-center gap-2 text-sm text-brand-dark/40 py-4">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Loading verification status…
+                  </div>
+                )}
+              </div>
 
               <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
                 <div className="flex items-center justify-between mb-4">

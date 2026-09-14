@@ -43,6 +43,7 @@ import CategoryManagementPanel from "../../components/admin/CategoryManagementPa
 import TrustSafetyPanel       from "../../components/admin/TrustSafetyPanel";
 import SupportCenterPanel     from "../../components/admin/SupportCenterPanel";
 import SystemSettingsPanel    from "../../components/admin/SystemSettingsPanel";
+import KYCReviewPanel         from "../../components/admin/KYCReviewPanel";
 import { LOGO_SLOTS, getLogo, uploadLogoFile, removeLogoFromDB } from "../../lib/brandSettings";
 import { getAllSettings, saveAllSettings, loadSettingsFromDB, getSetting, setSetting } from "../../lib/siteSettings";
 import { THEME_VARS, loadThemeFromDB, saveThemeToDB, resetThemeToDB, getThemeDefaults } from "../../lib/themeSettings";
@@ -253,6 +254,7 @@ const NAV_ITEMS = [
   { id: "rubies",         label: "Rubies",        Icon: Wallet },
   { id: "categories",     label: "Categories",    Icon: Tag },
   { id: "trust-safety",   label: "Trust & Safety",Icon: ShieldAlert },
+  { id: "kyc",            label: "KYC",           Icon: BadgeCheck, badge: true, badgeColor: "#f59e0b" },
   { id: "support2",       label: "Support",       Icon: HelpCircle },
   { id: "system",         label: "System",        Icon: Settings },
   { id: "team",           label: "Team",          Icon: Shield },
@@ -273,7 +275,7 @@ const NAV_GROUPS = [
   { title: "Dashboard", items: ["overview", "analytics"] },
   { title: "Community", items: ["users", "badges", "rankings", "jobs", "pitches", "messaging"] },
   { title: "Finance",   items: ["wallets", "withdrawals", "escrow", "financials2", "rubies", "pay-config", "pitch-settings", "payments"] },
-  { title: "Trust",     items: ["disputes2", "reviews", "ai-police", "trust-safety", "marketplace", "referrals2"] },
+  { title: "Trust",     items: ["disputes2", "reviews", "ai-police", "trust-safety", "kyc", "marketplace", "referrals2"] },
   { title: "Platform",  items: ["notifications2", "cms2", "push", "ai-controls", "discovery", "categories", "support2", "rate-cards"] },
   { title: "Admin",     items: ["team", "approvals", "content", "features", "legal", "app-config", "system", "analytics2", "audit", "settings"] },
 ];
@@ -3199,6 +3201,7 @@ export default function AdminPanel() {
     rubies:           () => <RubiesPanel showToast={showToast} auditLog={auditLog} />,
     categories:       () => <CategoryManagementPanel showToast={showToast} auditLog={auditLog} />,
     "trust-safety":   () => <TrustSafetyPanel showToast={showToast} auditLog={auditLog} />,
+    kyc:              () => <KYCReviewPanel showToast={showToast} auditLog={auditLog} />,
     support2:         () => <SupportCenterPanel showToast={showToast} auditLog={auditLog} />,
     system:           () => <SystemSettingsPanel showToast={showToast} auditLog={auditLog} />,
     team:             renderTeam,
