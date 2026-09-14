@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom'
 import { useEffect, useState, lazy, Suspense } from 'react'
 import { supabase } from './lib/supabase'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -12,6 +12,12 @@ const STARTED_WITH_RECOVERY = (
   new URLSearchParams(window.location.search).has('code') ||
   new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery'
 )
+
+// Domain routing — app.brandior.africa is the web app, www.brandior.africa is marketing/SEO.
+// localhost/127.0.0.1 behave as app domain so all routes work during development.
+const IS_APP = ['app.brandior.africa', 'localhost', '127.0.0.1'].includes(window.location.hostname)
+const APP_URL = 'https://app.brandior.africa'
+const WWW_URL = 'https://www.brandior.africa'
 
 const ComingSoon      = lazy(() => import('./pages/ComingSoon'))
 const Landing         = lazy(() => import('./pages/Landing'))
@@ -44,6 +50,22 @@ function PageLoader() {
       <div className="w-8 h-8 rounded-full border-4 border-purple-200 border-t-purple-600 animate-spin" />
     </div>
   )
+}
+
+// Immediately navigates the browser to a different domain (not React Router — full page replace).
+// Pass keepSearch=true to forward the current query string (e.g. ?role=talent).
+function CrossDomainRedirect({ to, keepSearch }) {
+  const { search } = useLocation()
+  useEffect(() => { window.location.replace(to + (keepSearch && search ? search : '')) }, [])
+  return <PageLoader />
+}
+
+// Like CrossDomainRedirect but substitutes :param tokens from the current route match.
+function ParamRedirect({ baseUrl, path }) {
+  const params = useParams()
+  const resolved = path.replace(/:(\w+)/g, (_, k) => encodeURIComponent(params[k] || ''))
+  useEffect(() => { window.location.replace(baseUrl + resolved) }, [])
+  return <PageLoader />
 }
 
 function MaintenanceGate({ children }) {
@@ -97,8 +119,7 @@ function PrivateRoute({ children, isRecoverySession }) {
 }
 
 function RootRoute() {
-  const isAppDomain = window.location.hostname === 'app.brandior.africa'
-  if (!isAppDomain) return <PublicOnly><ComingSoon /></PublicOnly>
+  if (!IS_APP) return <PublicOnly><ComingSoon /></PublicOnly>
   const user = localStorage.getItem('brandiór_user')
   if (user) {
     const role = localStorage.getItem('brandiór_role')
@@ -216,36 +237,96 @@ export default function App() {
     <MaintenanceGate>
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        <Route path="/"             element={<RootRoute />} />
-        <Route path="/preview"      element={<Landing />} />
-        <Route path="/for-talents"  element={<PublicOnly><TalentLanding /></PublicOnly>} />
-        <Route path="/for-brands"   element={<PublicOnly><BrandLanding /></PublicOnly>} />
-        <Route path="/signup"         element={<PublicOnly><SignupPage /></PublicOnly>} />
-        <Route path="/signup/brand"   element={<PublicOnly><SignupPage /></PublicOnly>} />
-        <Route path="/signup/creator" element={<PublicOnly><SignupPage /></PublicOnly>} />
-        <Route path="/login"          element={<PublicOnly><LoginPage /></PublicOnly>} />
-        <Route path="/dashboard"              element={<PrivateRoute isRecoverySession={isRecoverySession}><TalentDashboard /></PrivateRoute>} />
-        <Route path="/marketplace"            element={<Marketplace />} />
-        <Route path="/creators/:handle"       element={<TalentProfilePage />} />
-        <Route path="/marketplace/:handle"    element={<TalentProfilePage />} />
-        <Route path="/brand-dashboard"        element={<PrivateRoute isRecoverySession={isRecoverySession}><BrandDashboard /></PrivateRoute>} />
-        <Route path="/collab/brief"           element={<PrivateRoute isRecoverySession={isRecoverySession}><CollabBriefPage /></PrivateRoute>} />
-        <Route path="/collab/review"          element={<PrivateRoute isRecoverySession={isRecoverySession}><CollabReviewPage /></PrivateRoute>} />
-        <Route path="/admin/login"            element={<AdminLogin />} />
-        <Route path="/admin"                  element={<AdminPanel />} />
-        <Route path="/admin/manager"          element={<ManagerPanel />} />
-        <Route path="/admin/staff"            element={<StaffPanel />} />
-        <Route path="/terms"                  element={<LegalPage />} />
-        <Route path="/privacy"                element={<LegalPage />} />
-        <Route path="/cookies"                element={<LegalPage />} />
-        <Route path="/acceptable-use"         element={<LegalPage />} />
-        <Route path="/about"                  element={<AboutPage />} />
-        <Route path="/contact"                element={<ContactPage />} />
-        <Route path="/how-it-works"           element={<HowItWorksPage />} />
-        <Route path="/pricing"                element={<PricingPage />} />
-        <Route path="/confirmed"              element={<ConfirmedPage />} />
-        <Route path="/forgot-password"        element={<ForgotPasswordPage />} />
-        <Route path="/reset-password"         element={<ResetPasswordPage />} />
+        {/* Root — www shows ComingSoon; app redirects to marketplace or dashboard */}
+        <Route path="/" element={<RootRoute />} />
+
+        {/* ── Marketing / SEO — www.brandior.africa only ────────────────────── */}
+        <Route path="/preview"
+          element={IS_APP ? <CrossDomainRedirect to={`${WWW_URL}/preview`} /> : <Landing />} />
+        <Route path="/for-talents"
+          element={IS_APP ? <CrossDomainRedirect to={`${WWW_URL}/for-talents`} /> : <TalentLanding />} />
+        <Route path="/for-brands"
+          element={IS_APP ? <CrossDomainRedirect to={`${WWW_URL}/for-brands`} /> : <BrandLanding />} />
+        <Route path="/about"
+          element={IS_APP ? <CrossDomainRedirect to={`${WWW_URL}/about`} /> : <AboutPage />} />
+        <Route path="/contact"
+          element={IS_APP ? <CrossDomainRedirect to={`${WWW_URL}/contact`} /> : <ContactPage />} />
+        <Route path="/how-it-works"
+          element={IS_APP ? <CrossDomainRedirect to={`${WWW_URL}/how-it-works`} /> : <HowItWorksPage />} />
+        <Route path="/pricing"
+          element={IS_APP ? <CrossDomainRedirect to={`${WWW_URL}/pricing`} /> : <PricingPage />} />
+
+        {/* ── Auth — app.brandior.africa only; www redirects straight to app ── */}
+        <Route path="/login"
+          element={IS_APP
+            ? <PublicOnly><LoginPage /></PublicOnly>
+            : <CrossDomainRedirect to={`${APP_URL}/login`} keepSearch />} />
+        <Route path="/signup"
+          element={IS_APP
+            ? <PublicOnly><SignupPage /></PublicOnly>
+            : <CrossDomainRedirect to={`${APP_URL}/signup`} keepSearch />} />
+        <Route path="/signup/brand"
+          element={IS_APP
+            ? <PublicOnly><SignupPage /></PublicOnly>
+            : <CrossDomainRedirect to={`${APP_URL}/signup/brand`} />} />
+        <Route path="/signup/creator"
+          element={IS_APP
+            ? <PublicOnly><SignupPage /></PublicOnly>
+            : <CrossDomainRedirect to={`${APP_URL}/signup/creator`} />} />
+        <Route path="/forgot-password"
+          element={IS_APP
+            ? <ForgotPasswordPage />
+            : <CrossDomainRedirect to={`${APP_URL}/forgot-password`} />} />
+        <Route path="/reset-password"
+          element={IS_APP
+            ? <ResetPasswordPage />
+            : <CrossDomainRedirect to={`${APP_URL}/reset-password`} />} />
+        <Route path="/confirmed"
+          element={IS_APP
+            ? <ConfirmedPage />
+            : <CrossDomainRedirect to={`${APP_URL}/confirmed`} />} />
+
+        {/* ── App pages — app.brandior.africa only ───────────────────────────── */}
+        <Route path="/marketplace"
+          element={IS_APP
+            ? <Marketplace />
+            : <CrossDomainRedirect to={`${APP_URL}/marketplace`} />} />
+        <Route path="/creators/:handle"
+          element={IS_APP
+            ? <TalentProfilePage />
+            : <ParamRedirect baseUrl={APP_URL} path="/creators/:handle" />} />
+        <Route path="/marketplace/:handle"
+          element={IS_APP
+            ? <TalentProfilePage />
+            : <ParamRedirect baseUrl={APP_URL} path="/marketplace/:handle" />} />
+        <Route path="/dashboard"
+          element={IS_APP
+            ? <PrivateRoute isRecoverySession={isRecoverySession}><TalentDashboard /></PrivateRoute>
+            : <CrossDomainRedirect to={`${APP_URL}/dashboard`} />} />
+        <Route path="/brand-dashboard"
+          element={IS_APP
+            ? <PrivateRoute isRecoverySession={isRecoverySession}><BrandDashboard /></PrivateRoute>
+            : <CrossDomainRedirect to={`${APP_URL}/brand-dashboard`} />} />
+        <Route path="/collab/brief"
+          element={IS_APP
+            ? <PrivateRoute isRecoverySession={isRecoverySession}><CollabBriefPage /></PrivateRoute>
+            : <CrossDomainRedirect to={`${APP_URL}/collab/brief`} />} />
+        <Route path="/collab/review"
+          element={IS_APP
+            ? <PrivateRoute isRecoverySession={isRecoverySession}><CollabReviewPage /></PrivateRoute>
+            : <CrossDomainRedirect to={`${APP_URL}/collab/review`} />} />
+
+        {/* ── Admin — app.brandior.africa only (vercel.json redirects www→app) ─ */}
+        <Route path="/admin/login"   element={<AdminLogin />} />
+        <Route path="/admin"         element={<AdminPanel />} />
+        <Route path="/admin/manager" element={<ManagerPanel />} />
+        <Route path="/admin/staff"   element={<StaffPanel />} />
+
+        {/* ── Legal — available on both domains ──────────────────────────────── */}
+        <Route path="/terms"          element={<LegalPage />} />
+        <Route path="/privacy"        element={<LegalPage />} />
+        <Route path="/cookies"        element={<LegalPage />} />
+        <Route path="/acceptable-use" element={<LegalPage />} />
       </Routes>
     </Suspense>
     </MaintenanceGate>
