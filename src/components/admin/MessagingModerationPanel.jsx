@@ -36,11 +36,16 @@ export default function MessagingModerationPanel({ showToast, auditLog }) {
   const scrollRef                   = useRef(null);
   const realtimeCh                  = useRef(null);
 
-  // Grab current admin user id once
+  // Grab current admin user id from admin_users table via localStorage email
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data?.user) setAdminId(data.user.id);
-    });
+    try {
+      const stored = localStorage.getItem('brandiór_admin_user');
+      if (!stored) return;
+      const { email } = JSON.parse(stored);
+      if (!email) return;
+      supabase.from('admin_users').select('id').eq('email', email).single()
+        .then(({ data }) => { if (data?.id) setAdminId(data.id); });
+    } catch {}
   }, []);
 
   // Auto-scroll to bottom when messages change
@@ -157,7 +162,7 @@ export default function MessagingModerationPanel({ showToast, auditLog }) {
       sender_id:   adminId,
       sender_role: "admin",
       sender_type: "admin",
-      sender_name: "Brandior Team",
+      sender_name: "Brandior Support",
       body:        text,
       text:        text,
     });
@@ -220,7 +225,7 @@ export default function MessagingModerationPanel({ showToast, auditLog }) {
   }
 
   function senderLabel(msg) {
-    if (msg.sender_role === "admin" || msg.sender_type === "admin") return "Brandior Team";
+    if (msg.sender_role === "admin" || msg.sender_type === "admin") return "Brandior Support";
     return profileMap[msg.sender_id]?.label || msg.sender_name || msg.sender_id?.slice(0, 8) || "User";
   }
 
@@ -402,7 +407,7 @@ export default function MessagingModerationPanel({ showToast, auditLog }) {
                     value={compose}
                     onChange={e => setCompose(stripInjection(e.target.value))}
                     onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAdminMessage(); } }}
-                    placeholder="Write as Brandior Team…"
+                    placeholder="Write as Brandior Support…"
                     disabled={selected.locked || sending}
                     className="flex-1 bg-transparent text-sm text-gray-800 placeholder-purple-300 outline-none disabled:opacity-40"
                   />
@@ -421,7 +426,7 @@ export default function MessagingModerationPanel({ showToast, auditLog }) {
               <div className="text-center">
                 <MessageSquare className="w-10 h-10 mx-auto mb-2 text-gray-200" />
                 <p className="text-sm text-gray-400">Select a conversation to view</p>
-                <p className="text-xs text-gray-300 mt-1">You can read history and send as Brandior Team</p>
+                <p className="text-xs text-gray-300 mt-1">You can read history and send as Brandior Support</p>
               </div>
             </div>
           )}
