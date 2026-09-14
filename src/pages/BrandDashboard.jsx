@@ -11,6 +11,8 @@ import {
   Plus, CreditCard, Building2, ArrowUpRight,
 } from 'lucide-react'
 import MessagingPanel from '../components/MessagingPanel'
+import AnnouncementBanner from '../components/AnnouncementBanner'
+import PromoCodeRedeemer from '../components/PromoCodeRedeemer'
 import InviteTab from '../components/InviteTab'
 import { useFavorites } from '../hooks/useFavorites'
 import { supabase } from '../lib/supabase'
@@ -985,6 +987,7 @@ export default function BrandDashboard() {
           </div>
         </header>
 
+        <AnnouncementBanner role="brand" />
         {/* Content */}
         <main className="flex-1 p-4 sm:p-6">
           {loading ? (
@@ -1754,9 +1757,10 @@ function loadInterswitchScript(cb) {
 const QUICK_AMOUNTS = [20000, 50000, 100000, 200000]
 
 function WalletTab() {
-  const [balance,  setBalance]  = useState(0)
-  const [userId,   setUserId]   = useState(null)
-  const [loading,  setLoading]  = useState(true)
+  const [balance,      setBalance]      = useState(0)
+  const [userId,       setUserId]       = useState(null)
+  const [userProfile,  setUserProfile]  = useState(null)
+  const [loading,      setLoading]      = useState(true)
   const [amount,   setAmount]   = useState('')
   const [method,   setMethod]   = useState('card')
   const [funding,  setFunding]  = useState(false)
@@ -1783,6 +1787,8 @@ function WalletTab() {
       if (!user) { setLoading(false); return }
       setUserId(user.id)
       await reload(user.id)
+      const { data: prof } = await supabase.from('profiles').select('full_name, company_name, role').eq('id', user.id).maybeSingle()
+      setUserProfile(prof)
       setLoading(false)
     })()
   }, [])
@@ -1854,6 +1860,21 @@ function WalletTab() {
           </div>
         )}
       </div>
+
+      {/* Promo code */}
+      {userId && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <h3 className="font-bold text-gray-900 flex items-center gap-2 mb-3">
+            <span className="text-purple-600">🎟</span> Redeem Promo Code
+          </h3>
+          <PromoCodeRedeemer
+            userId={userId}
+            userRole={userProfile?.role || 'brand'}
+            userName={userProfile?.company_name || userProfile?.full_name || ''}
+            onSuccess={(credit) => setBalance(b => b + credit)}
+          />
+        </div>
+      )}
 
       {/* Fund wallet */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">

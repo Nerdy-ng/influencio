@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   X, CheckCircle, Star, DollarSign, Briefcase, Clock, Ban,
   RefreshCw, LogOut, MessageSquareOff, CreditCard, Send, Trash2,
-  MoreVertical, ChevronRight, ShieldOff, Image,
+  MoreVertical, ChevronRight, ShieldOff, Image, Plus, Loader2,
 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
@@ -82,6 +82,8 @@ export default function UserDetailModal({ user, onClose, onAction }) {
   const [tab,      setTab]      = useState("overview");
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef(null);
+  const [pitchGrant, setPitchGrant] = useState("");
+  const [grantingPitches, setGrantingPitches] = useState(false);
 
   useEffect(() => {
     function handleClick(e) {
@@ -156,6 +158,22 @@ export default function UserDetailModal({ user, onClose, onAction }) {
     wallet:         "Wallet",
     payments:       "Payments",
   };
+
+  async function grantPitches() {
+    const n = parseInt(pitchGrant, 10);
+    if (!n || n < 1) return;
+    setGrantingPitches(true);
+    const current = profile?.extra_pitches || 0;
+    const { error } = await supabase
+      .from("profiles")
+      .update({ extra_pitches: current + n })
+      .eq("id", user.id);
+    if (!error) {
+      setProfile(p => ({ ...p, extra_pitches: current + n }));
+      setPitchGrant("");
+    }
+    setGrantingPitches(false);
+  }
 
   function act(type, ...args) {
     setMoreOpen(false);
@@ -509,6 +527,22 @@ export default function UserDetailModal({ user, onClose, onAction }) {
           <div className="mt-2 p-3 rounded-xl bg-gray-50 flex items-center justify-between">
             <span className="text-sm font-semibold text-gray-600">Total remaining</span>
             <span className="text-sm font-black text-gray-900 tabular-nums">{totalLeft}</span>
+          </div>
+          <div className="mt-3 flex items-center gap-2">
+            <input
+              type="number" min="1" max="100"
+              value={pitchGrant}
+              onChange={e => setPitchGrant(e.target.value)}
+              placeholder="e.g. 5"
+              className="w-24 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2"
+              style={{ "--tw-ring-color": "#7c3aed" }}
+            />
+            <button onClick={grantPitches} disabled={grantingPitches || !pitchGrant}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-white disabled:opacity-50"
+              style={{ backgroundColor: "#7c3aed" }}>
+              {grantingPitches ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+              Grant pitches
+            </button>
           </div>
         </Section>
         {pitches.length > 0 && (

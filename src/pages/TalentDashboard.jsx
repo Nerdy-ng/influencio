@@ -15,6 +15,8 @@ import {
 } from 'lucide-react'
 
 import MessagingPanel from '../components/MessagingPanel'
+import AnnouncementBanner from '../components/AnnouncementBanner'
+import PromoCodeRedeemer from '../components/PromoCodeRedeemer'
 import { supabase } from '../lib/supabase'
 import InviteTab from '../components/InviteTab'
 import { getTalentAnalytics } from '../lib/analytics'
@@ -2571,6 +2573,7 @@ export default function TalentDashboard() {
       }} dashLogo={dashLogo} onSwitchToBrand={openBrandSetup} />
 
       <main className="flex-1 overflow-auto">
+        <AnnouncementBanner role="creator" />
         {/* Top bar */}
         <div className="sticky top-0 z-30 flex items-center justify-between px-6 py-4"
           style={{ backgroundColor: 'rgba(249,245,255,0.95)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #e9d5ff' }}>
@@ -4085,11 +4088,16 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
   const [rubiesBalance, setRubiesBalance] = useState(null)
   const [rubiesLoading, setRubiesLoading] = useState(true)
   const [withdrawError, setWithdrawError] = useState('')
+  const [txUser, setTxUser]               = useState(null)
+  const [txProfile, setTxProfile]         = useState(null)
 
   useEffect(() => {
     ;(async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setTxLoading(false); setRubiesLoading(false); return }
+      setTxUser(user)
+      const { data: prof } = await supabase.from('profiles').select('full_name, role').eq('id', user.id).maybeSingle()
+      setTxProfile(prof)
       const { data } = await supabase
         .from('collabs')
         .select('id, creator_payout, status, payment_status, content_type, created_at, brand:profiles!brand_id(company_name, full_name)')
@@ -4187,6 +4195,22 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
           <Wallet className="w-8 h-8 opacity-30" />
         </div>
       </div>
+
+      {/* Promo code redeemer */}
+      {txUser && (
+        <div className="rounded-2xl border bg-white p-5" style={{ borderColor: "#e5e7eb" }}>
+          <div className="flex items-center gap-2 mb-3">
+            <Ticket className="w-4 h-4 text-purple-600" />
+            <p className="text-sm font-bold text-gray-800">Redeem Promo Code</p>
+          </div>
+          <PromoCodeRedeemer
+            userId={txUser.id}
+            userRole={txProfile?.role || 'creator'}
+            userName={txProfile?.full_name || ''}
+            onSuccess={() => { setRubiesLoading(true); supabase.functions.invoke('rubies-balance').then(({ data: rb }) => { if (rb?.ok) setRubiesBalance(rb.balance); setRubiesLoading(false) }) }}
+          />
+        </div>
+      )}
 
       {/* Pipeline stage cards */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
