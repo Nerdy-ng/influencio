@@ -70,7 +70,13 @@ export default function AdminLogin() {
     });
 
     if (fnErr) {
-      setError(`Could not send code: ${fnErr.message}`);
+      // Try to extract the actual message from the function's JSON response body
+      let msg = fnErr.message;
+      try {
+        const body = await fnErr.context?.json?.();
+        if (body?.error) msg = body.error;
+      } catch (_) { /* ignore parse error */ }
+      setError(`Could not send code: ${msg}`);
       setLoading(false);
       return;
     }
