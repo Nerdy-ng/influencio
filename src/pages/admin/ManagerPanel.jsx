@@ -10,54 +10,9 @@ import {
 import { supabase } from "../../lib/supabase";
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\\`]/g, '');
 
-// ─── MOCK DATA ────────────────────────────────────────────────────────────────
+// ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
-const MOCK_FLAGGED_CONTENT = [
-  { id: 1, type: "Job Listing", contentId: "J07", title: "LinkedIn Thought Leadership Posts", flaggedBy: "Tunde Afolabi", reason: "Misleading budget information", timestamp: "2 hours ago", status: "pending" },
-  { id: 2, type: "User Profile", contentId: "U09", title: "Biodun Alabi (@biodun_creates)", flaggedBy: "Blessing Eze", reason: "Suspected fake follower counts", timestamp: "3 hours ago", status: "pending" },
-  { id: 3, type: "Job Listing", contentId: "J03", title: "YouTube Integration – Summer Campaign", flaggedBy: "Chinwe Obi", reason: "Adult-adjacent content in description", timestamp: "5 hours ago", status: "pending" },
-  { id: 4, type: "User Profile", contentId: "U03", title: "Kemi Fashola (@kemi.fashy)", flaggedBy: "Tunde Afolabi", reason: "Spam — repeated applications to same jobs", timestamp: "Yesterday", status: "pending" },
-  { id: 5, type: "Message", contentId: "M012", title: "Direct message thread #M012", flaggedBy: "Amaka Nze", reason: "Harassment / inappropriate language", timestamp: "2 days ago", status: "pending" },
-];
-
-const MOCK_STAFF_REQUESTS = [
-  { id: 1, staff: "Tunde Afolabi", type: "Flag content", description: "Job #J07 has misleading budget. Recommend removal.", target: "Job #J07", timestamp: "1 hour ago", canApprove: true },
-  { id: 2, staff: "Blessing Eze", type: "Add note to profile", description: "Adding internal note about Biodun Alabi's suspicious activity pattern.", target: "Biodun Alabi", timestamp: "2 hours ago", canApprove: true },
-  { id: 3, staff: "Chinwe Obi", type: "Close support ticket", description: "Ticket #45 resolved — user confirmed campaign terms understood.", target: "Ticket #45", timestamp: "4 hours ago", canApprove: true },
-  { id: 4, staff: "Amaka Nze", type: "Ban user", description: "User Kemi Fashola has been sending spam. Recommend permanent ban.", target: "Kemi Fashola", timestamp: "5 hours ago", canApprove: false, adminOnly: true },
-  { id: 5, staff: "Musa Garba", type: "Process refund", description: "GTBank cancelled campaign after delivery. ₦400k partial refund.", target: "GTBank Marketing", timestamp: "Yesterday", canApprove: false, adminOnly: true },
-  { id: 6, staff: "Tunde Afolabi", type: "Verify talent", description: "Adaeze Okafor has completed all verification requirements.", target: "Adaeze Okafor", timestamp: "2 days ago", canApprove: false, adminOnly: true },
-];
-
-const MOCK_USERS = [
-  { id: 1, name: "Adaeze Okafor", email: "adaeze@mail.com", role: "Talent", tier: "top-rated", location: "Lagos", joined: "Jan 12, 2025", status: "active", verified: true, avatar: "AO", note: "" },
-  { id: 2, name: "Tecno Mobile", email: "brand@tecno.com", role: "Brand", tier: "premium", location: "Abuja", joined: "Feb 3, 2025", status: "active", verified: true, avatar: "TM", note: "" },
-  { id: 3, name: "Kemi Fashola", email: "kemi.f@mail.com", role: "Talent", tier: "fast-rising", location: "Port Harcourt", joined: "Mar 1, 2025", status: "active", verified: false, avatar: "KF", note: "Suspected spam activity — monitor closely." },
-  { id: 4, name: "GTBank Marketing", email: "mktg@gtbank.com", role: "Brand", tier: "premium", location: "Lagos", joined: "Dec 15, 2024", status: "suspended", verified: true, avatar: "GT", note: "" },
-  { id: 5, name: "Emeka Nwosu", email: "emeka@mail.com", role: "Talent", tier: "next-rated", location: "Enugu", joined: "Feb 20, 2025", status: "active", verified: false, avatar: "EN", note: "" },
-];
-
-const MOCK_JOBS = [
-  { id: "J01", brand: "Tecno Mobile", title: "Instagram Reel Campaign – CAMON 30", platform: "Instagram", budget: "₦850,000", posted: "Mar 18, 2025", status: "active" },
-  { id: "J02", brand: "GTBank Marketing", title: "TikTok Brand Awareness Q2", platform: "TikTok", budget: "₦1,200,000", posted: "Mar 15, 2025", status: "pending" },
-  { id: "J03", brand: "Pepsi Nigeria", title: "YouTube Integration – Summer Campaign", platform: "YouTube", budget: "₦2,500,000", posted: "Mar 14, 2025", status: "flagged" },
-  { id: "J04", brand: "Zara Nigeria", title: "Fashion Week Content Creator", platform: "Instagram", budget: "₦600,000", posted: "Mar 12, 2025", status: "active" },
-  { id: "J05", brand: "Flutterwave", title: "Twitter/X Finance Tips Series", platform: "Twitter/X", budget: "₦400,000", posted: "Mar 11, 2025", status: "pending" },
-  { id: "J06", brand: "Tecno Mobile", title: "Unboxing Series – Spark 20", platform: "YouTube", budget: "₦750,000", posted: "Mar 9, 2025", status: "active" },
-];
-
-const MY_TEAM = [
-  { name: "Tunde Afolabi", email: "tunde@brandior.co", avatar: "TA", tasksOpen: 3, lastActive: "Today, 10:02 AM" },
-  { name: "Blessing Eze", email: "blessing@brandior.co", avatar: "BE", tasksOpen: 2, lastActive: "Today, 08:45 AM" },
-  { name: "Chinwe Obi", email: "chinwe@brandior.co", avatar: "CO", tasksOpen: 1, lastActive: "Yesterday, 5:10 PM" },
-];
-
-const RECENT_ACTIONS = [
-  { text: "You approved Tunde's flag on Job #J07", time: "1 hr ago" },
-  { text: "You rejected Musa's refund request for GTBank", time: "3 hrs ago" },
-  { text: "You escalated Adaeze verification request to admin", time: "Yesterday" },
-  { text: "You approved Blessing's note on Biodun's profile", time: "2 days ago" },
-];
+const ADMIN_ONLY_TYPES = ['Ban user', 'Process refund', 'Verify talent', 'Suspend user'];
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -142,11 +97,19 @@ export default function ManagerPanel() {
   const [managerUser, setManagerUser] = useState(null);
   const [toast, setToast] = useState(null);
 
-  const [flaggedContent, setFlaggedContent] = useState(MOCK_FLAGGED_CONTENT);
-  const [staffRequests, setStaffRequests] = useState(MOCK_STAFF_REQUESTS);
+  const [flaggedContent, setFlaggedContent] = useState([]);
+  const [staffRequests, setStaffRequests] = useState([]);
   const [staffRequestHistory, setStaffRequestHistory] = useState([]);
   const [users, setUsers] = useState([]);
   const [jobs, setJobs] = useState([]);
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [recentActions, setRecentActions] = useState([]);
+  const [usersReviewedToday, setUsersReviewedToday] = useState(0);
+  const [openReports, setOpenReports] = useState(0);
+  const [weeklyStats, setWeeklyStats] = useState([]);
+  const [topTalents, setTopTalents] = useState([]);
+  const [topBrands, setTopBrands] = useState([]);
+  const [flagSummary, setFlagSummary] = useState({ reviewed: 0, removed: 0, escalated: 0 });
 
   const [userSearch, setUserSearch] = useState("");
   const [jobSearch, setJobSearch] = useState("");
@@ -171,10 +134,35 @@ export default function ManagerPanel() {
 
     async function loadData() {
       const mkAvatar = name => (name || 'U').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()
-      const [{ data: profiles }, { data: collabs }] = await Promise.all([
+      const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+      const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+
+      const [
+        { data: profiles },
+        { data: collabs },
+        { data: flags },
+        { data: reqData },
+        { data: teamData },
+        { data: actionsData },
+        { count: reviewedToday },
+        { count: openTickets },
+        { data: weeklyCollabs },
+        { data: collabsAll },
+        { data: flagStats },
+      ] = await Promise.all([
         supabase.from('profiles').select('id, full_name, company_name, handle, role, tier, location, created_at, status, verified').order('created_at', { ascending: false }).limit(100),
         supabase.from('collabs').select('id, content_type, total_amount, status, created_at, brand_id, creator_id, brand:profiles!brand_id(company_name, full_name)').order('created_at', { ascending: false }).limit(50),
-      ])
+        supabase.from('admin_approvals').select('*').ilike('type', 'Flag%').order('created_at', { ascending: false }).limit(100),
+        supabase.from('admin_approvals').select('*').eq('requester_role', 'Staff').not('type', 'ilike', 'Flag%').eq('status', 'pending').order('created_at', { ascending: false }).limit(100),
+        supabase.from('admin_users').select('id, name, email, role').ilike('role', 'Staff'),
+        supabase.from('admin_approvals').select('type, target, status, reviewed_at, requester_name').neq('status', 'pending').order('reviewed_at', { ascending: false }).limit(5),
+        supabase.from('admin_approvals').select('*', { count: 'exact', head: true }).neq('status', 'pending').gte('reviewed_at', todayStart.toISOString()),
+        supabase.from('support_tickets').select('*', { count: 'exact', head: true }).eq('status', 'open'),
+        supabase.from('collabs').select('created_at').gte('created_at', sevenDaysAgo),
+        supabase.from('collabs').select('creator_id, brand_id, total_amount, creator:profiles!creator_id(full_name, company_name), brand:profiles!brand_id(full_name, company_name)').limit(500),
+        supabase.from('admin_approvals').select('status').ilike('type', 'Flag%').gte('created_at', sevenDaysAgo),
+      ]);
+
       if (profiles) {
         setUsers(profiles.map(p => ({
           id: p.id,
@@ -188,8 +176,9 @@ export default function ManagerPanel() {
           verified: p.verified || false,
           avatar: mkAvatar(p.full_name || p.company_name || p.handle),
           note: '',
-        })))
+        })));
       }
+
       if (collabs) {
         setJobs(collabs.map(c => ({
           id: c.id.slice(0,8).toUpperCase(),
@@ -200,10 +189,95 @@ export default function ManagerPanel() {
           budget: c.total_amount ? '₦' + Number(c.total_amount).toLocaleString() : '—',
           posted: new Date(c.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }),
           status: c.status === 'pending' ? 'pending' : c.status === 'in_progress' ? 'active' : c.status,
-        })))
+        })));
+      }
+
+      if (flags) {
+        setFlaggedContent(flags.map(f => ({
+          id: f.id,
+          type: f.type,
+          contentId: f.target_id || '',
+          title: f.target || f.description?.slice(0, 60) || 'Content',
+          flaggedBy: f.requester_name,
+          reason: f.description,
+          timestamp: new Date(f.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short' }),
+          status: f.status,
+        })));
+      }
+
+      if (reqData) {
+        setStaffRequests(reqData.map(r => ({
+          id: r.id,
+          staff: r.requester_name,
+          type: r.type,
+          description: r.description,
+          target: r.target || '',
+          timestamp: new Date(r.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short' }),
+          canApprove: !ADMIN_ONLY_TYPES.includes(r.type),
+          adminOnly: ADMIN_ONLY_TYPES.includes(r.type),
+        })));
+      }
+
+      if (teamData) {
+        const teamIds = teamData.map(m => m.id);
+        const { data: taskCounts } = teamIds.length
+          ? await supabase.from('staff_tasks').select('assigned_to').in('assigned_to', teamIds).neq('status', 'Done')
+          : { data: [] };
+        setTeamMembers(teamData.map(m => ({
+          name: m.name, email: m.email,
+          avatar: mkAvatar(m.name),
+          tasksOpen: (taskCounts || []).filter(t => t.assigned_to === m.id).length,
+        })));
+      }
+
+      if (actionsData) {
+        setRecentActions(actionsData.map(a => ({
+          text: `${a.status.charAt(0).toUpperCase() + a.status.slice(1)}: ${a.type}${a.target ? ' — ' + a.target : ''}`,
+          time: a.reviewed_at ? new Date(a.reviewed_at).toLocaleDateString('en', { day: 'numeric', month: 'short' }) : '—',
+        })));
+      }
+
+      setUsersReviewedToday(reviewedToday || 0);
+      setOpenReports(openTickets || 0);
+
+      if (weeklyCollabs) {
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const counts = new Array(7).fill(0);
+        weeklyCollabs.forEach(c => { counts[new Date(c.created_at).getDay()]++; });
+        const today = new Date().getDay();
+        setWeeklyStats(Array.from({ length: 7 }, (_, i) => {
+          const dayIdx = (today - 6 + i + 7) % 7;
+          return { day: days[dayIdx], campaigns: counts[dayIdx] };
+        }));
+      }
+
+      if (collabsAll) {
+        const talentMap = {}, brandMap = {};
+        collabsAll.forEach(c => {
+          if (c.creator_id) {
+            if (!talentMap[c.creator_id]) talentMap[c.creator_id] = { name: c.creator?.full_name || c.creator?.company_name || 'Unknown', campaigns: 0, earnings: 0 };
+            talentMap[c.creator_id].campaigns++;
+            talentMap[c.creator_id].earnings += Number(c.total_amount || 0);
+          }
+          if (c.brand_id) {
+            if (!brandMap[c.brand_id]) brandMap[c.brand_id] = { name: c.brand?.company_name || c.brand?.full_name || 'Unknown', campaigns: 0, spend: 0 };
+            brandMap[c.brand_id].campaigns++;
+            brandMap[c.brand_id].spend += Number(c.total_amount || 0);
+          }
+        });
+        setTopTalents(Object.values(talentMap).sort((a, b) => b.campaigns - a.campaigns).slice(0, 3).map(t => ({ ...t, earnings: '₦' + t.earnings.toLocaleString() })));
+        setTopBrands(Object.values(brandMap).sort((a, b) => b.campaigns - a.campaigns).slice(0, 3).map(b => ({ ...b, spend: '₦' + b.spend.toLocaleString() })));
+      }
+
+      if (flagStats) {
+        setFlagSummary({
+          reviewed: flagStats.filter(f => f.status !== 'pending').length,
+          removed: flagStats.filter(f => f.status === 'removed').length,
+          escalated: flagStats.filter(f => f.status === 'escalated').length,
+        });
       }
     }
-    loadData()
+    loadData();
   }, [navigate]);
 
   const showToast = (message, type = "success") => {
@@ -218,28 +292,27 @@ export default function ManagerPanel() {
     navigate("/admin/login");
   };
 
-  const handleContentAction = (id, action) => {
+  const handleContentAction = async (id, action) => {
+    const managerName = managerUser?.name || 'Manager';
     setFlaggedContent((prev) => prev.map((f) => f.id === id ? { ...f, status: action } : f));
+    await supabase.from('admin_approvals').update({ status: action, reviewed_by: managerName, reviewed_at: new Date().toISOString() }).eq('id', id);
     if (action === "escalated") showToast("Escalated to admin for review.", "info");
     else showToast(`Content ${action === "approved" ? "approved and kept" : "removed"} successfully.`);
   };
 
   const handleStaffRequest = async (id, action) => {
     const req = staffRequests.find((r) => r.id === id);
+    const managerName = managerUser?.name || 'Manager';
     setStaffRequests((prev) => prev.filter((r) => r.id !== id));
     setStaffRequestHistory((prev) => [{ ...req, decision: action, reviewedAt: "Just now" }, ...prev]);
     if (action === "escalated" && req) {
-      const managerUser = JSON.parse(localStorage.getItem('brandiór_admin_user') || '{}')
-      await supabase.from('admin_approvals').insert({
-        requester_name: managerUser.name || 'Manager',
-        requester_role: 'Manager',
-        type: req.type,
-        description: req.description,
-        target: req.target,
-        status: 'pending',
-      })
+      await Promise.all([
+        supabase.from('admin_approvals').update({ status: 'escalated', reviewed_by: managerName, reviewed_at: new Date().toISOString() }).eq('id', id),
+        supabase.from('admin_approvals').insert({ requester_name: managerName, requester_role: 'Manager', type: req.type, description: req.description, target: req.target, status: 'pending' }),
+      ]);
       showToast("Escalated to admin approval queue.", "info");
     } else {
+      await supabase.from('admin_approvals').update({ status: action, reviewed_by: managerName, reviewed_at: new Date().toISOString() }).eq('id', id);
       showToast(`Request ${action}.`);
     }
   };
@@ -276,8 +349,8 @@ export default function ManagerPanel() {
         {[
           { label: "Pending Staff Requests", value: pendingRequests, color: "#7c3aed" },
           { label: "Flagged Content", value: pendingContent, color: "#ef4444" },
-          { label: "Users Reviewed Today", value: "12", color: "#0ea5e9" },
-          { label: "Open Reports", value: "3", color: "#d97706" },
+          { label: "Reviewed Today", value: usersReviewedToday, color: "#0ea5e9" },
+          { label: "Open Tickets", value: openReports, color: "#d97706" },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">{s.label}</p>
@@ -289,35 +362,43 @@ export default function ManagerPanel() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
           <h3 className="font-semibold text-gray-900 mb-4">Your Team</h3>
-          <div className="space-y-3">
-            {MY_TEAM.map((member) => (
-              <div key={member.name} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
-                <Avatar initials={member.avatar} size="sm" color="#7c3aed" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 text-sm">{member.name}</p>
-                  <p className="text-xs text-gray-400">Last active: {member.lastActive}</p>
+          {teamMembers.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-4">No staff members found.</p>
+          ) : (
+            <div className="space-y-3">
+              {teamMembers.map((member) => (
+                <div key={member.name} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
+                  <Avatar initials={member.avatar} size="sm" color="#7c3aed" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 text-sm">{member.name}</p>
+                    <p className="text-xs text-gray-400">{member.email}</p>
+                  </div>
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: "#ede9fe", color: "#7c3aed" }}>
+                    {member.tasksOpen} open
+                  </span>
                 </div>
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: "#ede9fe", color: "#7c3aed" }}>
-                  {member.tasksOpen} tasks
-                </span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-          <h3 className="font-semibold text-gray-900 mb-4">Your Recent Actions</h3>
-          <div className="space-y-3">
-            {RECENT_ACTIONS.map((a, i) => (
-              <div key={i} className="flex items-start gap-3 py-2 border-b border-gray-50 last:border-0">
-                <div className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0" style={{ backgroundColor: "#7c3aed" }} />
-                <div>
-                  <p className="text-sm text-gray-700">{a.text}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{a.time}</p>
+          <h3 className="font-semibold text-gray-900 mb-4">Recent Actions</h3>
+          {recentActions.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-4">No recent actions.</p>
+          ) : (
+            <div className="space-y-3">
+              {recentActions.map((a, i) => (
+                <div key={i} className="flex items-start gap-3 py-2 border-b border-gray-50 last:border-0">
+                  <div className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0" style={{ backgroundColor: "#7c3aed" }} />
+                  <div>
+                    <p className="text-sm text-gray-700">{a.text}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{a.time}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -612,92 +693,90 @@ export default function ManagerPanel() {
     </div>
   );
 
-  const renderReports = () => (
-    <div className="space-y-6">
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <h3 className="font-semibold text-gray-900 mb-5">Weekly Campaign Overview</h3>
-        <div className="flex items-end gap-3 h-40">
-          {[
-            { day: "Mon", campaigns: 4, height: 40 },
-            { day: "Tue", campaigns: 7, height: 70 },
-            { day: "Wed", campaigns: 12, height: 100 },
-            { day: "Thu", campaigns: 9, height: 75 },
-            { day: "Fri", campaigns: 15, height: 130 },
-            { day: "Sat", campaigns: 6, height: 50 },
-            { day: "Sun", campaigns: 3, height: 30 },
-          ].map((d) => (
-            <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
-              <span className="text-xs font-medium text-gray-700">{d.campaigns}</span>
-              <div className="w-full rounded-t-md" style={{ height: `${d.height}px`, backgroundColor: "#7c3aed", opacity: 0.8 }} />
-              <span className="text-xs text-gray-400">{d.day}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-          <h3 className="font-semibold text-gray-900 mb-4">Top Performing Talents</h3>
-          <div className="space-y-3">
-            {[
-              { name: "Adaeze Okafor", campaigns: 8, earnings: "₦3.2M" },
-              { name: "Ngozi Adeyemi", campaigns: 6, earnings: "₦2.4M" },
-              { name: "Emeka Nwosu", campaigns: 5, earnings: "₦2.0M" },
-            ].map((t, i) => (
-              <div key={t.name} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
-                <span className="w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center text-white flex-shrink-0" style={{ backgroundColor: ["#7c3aed", "#a855f7", "#c084fc"][i] }}>
-                  {i + 1}
-                </span>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{t.name}</p>
-                  <p className="text-xs text-gray-400">{t.campaigns} campaigns</p>
+  const renderReports = () => {
+    const maxCampaigns = Math.max(...weeklyStats.map(d => d.campaigns), 1);
+    return (
+      <div className="space-y-6">
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <h3 className="font-semibold text-gray-900 mb-5">Collabs — Last 7 Days</h3>
+          <div className="flex items-end gap-3 h-40">
+            {weeklyStats.length === 0
+              ? <p className="text-sm text-gray-400 m-auto">Loading…</p>
+              : weeklyStats.map((d) => (
+                <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
+                  <span className="text-xs font-medium text-gray-700">{d.campaigns}</span>
+                  <div className="w-full rounded-t-md" style={{ height: `${Math.max(4, (d.campaigns / maxCampaigns) * 130)}px`, backgroundColor: "#7c3aed", opacity: 0.8 }} />
+                  <span className="text-xs text-gray-400">{d.day}</span>
                 </div>
-                <span className="text-sm font-semibold text-gray-800">{t.earnings}</span>
-              </div>
-            ))}
+              ))
+            }
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+            <h3 className="font-semibold text-gray-900 mb-4">Top Performing Talents</h3>
+            {topTalents.length === 0
+              ? <p className="text-sm text-gray-400 text-center py-4">No collab data yet.</p>
+              : (
+                <div className="space-y-3">
+                  {topTalents.map((t, i) => (
+                    <div key={t.name} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
+                      <span className="w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center text-white flex-shrink-0" style={{ backgroundColor: ["#7c3aed", "#a855f7", "#c084fc"][i] }}>
+                        {i + 1}
+                      </span>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{t.name}</p>
+                        <p className="text-xs text-gray-400">{t.campaigns} collabs</p>
+                      </div>
+                      <span className="text-sm font-semibold text-gray-800">{t.earnings}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+          </div>
+
+          <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+            <h3 className="font-semibold text-gray-900 mb-4">Top Brands by Collabs</h3>
+            {topBrands.length === 0
+              ? <p className="text-sm text-gray-400 text-center py-4">No collab data yet.</p>
+              : (
+                <div className="space-y-3">
+                  {topBrands.map((b, i) => (
+                    <div key={b.name} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
+                      <span className="w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center text-white flex-shrink-0" style={{ backgroundColor: ["#0ea5e9", "#38bdf8", "#7dd3fc"][i] }}>
+                        {i + 1}
+                      </span>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{b.name}</p>
+                        <p className="text-xs text-gray-400">{b.campaigns} collabs</p>
+                      </div>
+                      <span className="text-sm font-semibold text-gray-800">{b.spend}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
           </div>
         </div>
 
         <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-          <h3 className="font-semibold text-gray-900 mb-4">Top Brands by Campaigns</h3>
-          <div className="space-y-3">
+          <h3 className="font-semibold text-gray-900 mb-4">Flagged Content — This Week</h3>
+          <div className="grid grid-cols-3 gap-4">
             {[
-              { name: "Tecno Mobile", campaigns: 14, spend: "₦8.5M" },
-              { name: "Pepsi Nigeria", campaigns: 11, spend: "₦6.2M" },
-              { name: "Flutterwave", campaigns: 9, spend: "₦4.1M" },
-            ].map((b, i) => (
-              <div key={b.name} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
-                <span className="w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center text-white flex-shrink-0" style={{ backgroundColor: ["#0ea5e9", "#38bdf8", "#7dd3fc"][i] }}>
-                  {i + 1}
-                </span>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{b.name}</p>
-                  <p className="text-xs text-gray-400">{b.campaigns} campaigns</p>
-                </div>
-                <span className="text-sm font-semibold text-gray-800">{b.spend}</span>
+              { label: "Reviewed", value: flagSummary.reviewed, color: "#7c3aed" },
+              { label: "Removed", value: flagSummary.removed, color: "#dc2626" },
+              { label: "Escalated", value: flagSummary.escalated, color: "#d97706" },
+            ].map((s) => (
+              <div key={s.label} className="text-center p-4 rounded-xl" style={{ backgroundColor: s.color + "10" }}>
+                <p className="text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
+                <p className="text-xs text-gray-500 mt-1">{s.label}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
-
-      <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-        <h3 className="font-semibold text-gray-900 mb-4">Flagged Content Summary</h3>
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            { label: "Reviewed This Week", value: 14, color: "#7c3aed" },
-            { label: "Removed", value: 3, color: "#dc2626" },
-            { label: "Escalated to Admin", value: 2, color: "#d97706" },
-          ].map((s) => (
-            <div key={s.label} className="text-center p-4 rounded-xl" style={{ backgroundColor: s.color + "10" }}>
-              <p className="text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
-              <p className="text-xs text-gray-500 mt-1">{s.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const TAB_CONTENT = {
     overview: renderOverview,

@@ -10,65 +10,7 @@ import {
 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
-// ─── MOCK DATA ────────────────────────────────────────────────────────────────
-
-const MOCK_TASKS = [
-  { id: 1, title: "Review new talent profiles from this week", priority: "High", assignedBy: "Jane Okonkwo", dueDate: "Mar 25, 2025", status: "In Progress" },
-  { id: 2, title: "Check flagged job listing #J24 for policy violations", priority: "High", assignedBy: "Jane Okonkwo", dueDate: "Mar 24, 2025", status: "Todo" },
-  { id: 3, title: "Respond to support ticket #45 — talent payout issue", priority: "Medium", assignedBy: "Chidi Eze", dueDate: "Mar 26, 2025", status: "Todo" },
-  { id: 4, title: "Verify location details for brands in South Africa", priority: "Low", assignedBy: "Jane Okonkwo", dueDate: "Mar 28, 2025", status: "Todo" },
-  { id: 5, title: "Update internal spreadsheet for Q1 campaign completions", priority: "Low", assignedBy: "Chidi Eze", dueDate: "Mar 30, 2025", status: "Done" },
-];
-
-const MOCK_MY_REQUESTS = [
-  { id: 1, type: "Flag content", target: "Job #J07", submittedDate: "Mar 22, 2025", reviewedBy: "Jane Okonkwo", status: "approved", reason: "Content violated misleading info policy." },
-  { id: 2, type: "Add note to profile", target: "Biodun Alabi", submittedDate: "Mar 21, 2025", reviewedBy: "Jane Okonkwo", status: "approved", reason: "Note added successfully." },
-  { id: 3, type: "Ban user", target: "Kemi Fashola", submittedDate: "Mar 20, 2025", reviewedBy: null, status: "escalated", reason: "Escalated to admin for final decision." },
-  { id: 4, type: "Verify talent", target: "Adaeze Okafor", submittedDate: "Mar 18, 2025", reviewedBy: "Jane Okonkwo", status: "escalated", reason: "Escalated — requires admin verification sign-off." },
-  { id: 5, type: "Close support ticket", target: "Ticket #38", submittedDate: "Mar 17, 2025", reviewedBy: "Chidi Eze", status: "rejected", reason: "Ticket not yet fully resolved per manager review." },
-];
-
-const MOCK_TICKETS = [
-  {
-    id: "TKT-001",
-    user: "Adaeze Okafor",
-    userRole: "Talent",
-    subject: "Payment not received for completed campaign",
-    priority: "High",
-    created: "Mar 20, 2025",
-    status: "open",
-    thread: [
-      { from: "Adaeze Okafor", message: "Hi, I completed the Tecno Mobile campaign on March 15th but I haven't received payment yet. It's been 5 days.", time: "Mar 20, 9:14 AM", isUser: true },
-      { from: "You", message: "Hi Adaeze, thank you for reaching out. I'm looking into this now and will update you within 24 hours.", time: "Mar 20, 11:32 AM", isUser: false },
-      { from: "Adaeze Okafor", message: "Thank you! I appreciate it. Please let me know as soon as possible.", time: "Mar 20, 11:45 AM", isUser: true },
-    ],
-  },
-  {
-    id: "TKT-002",
-    user: "Tecno Mobile",
-    userRole: "Brand",
-    subject: "Talent didn't post content on agreed date",
-    priority: "Medium",
-    created: "Mar 19, 2025",
-    status: "open",
-    thread: [
-      { from: "Tecno Mobile", message: "Our influencer was supposed to post on March 18th but there's no post visible on Instagram.", time: "Mar 19, 2:05 PM", isUser: true },
-      { from: "You", message: "We're looking into this. Can you share the campaign ID so we can track it?", time: "Mar 19, 3:20 PM", isUser: false },
-    ],
-  },
-  {
-    id: "TKT-003",
-    user: "Kemi Fashola",
-    userRole: "Talent",
-    subject: "Account suspended without notice",
-    priority: "High",
-    created: "Mar 18, 2025",
-    status: "open",
-    thread: [
-      { from: "Kemi Fashola", message: "My account was suspended but I didn't receive any email or warning. I need this resolved urgently.", time: "Mar 18, 10:00 AM", isUser: true },
-    ],
-  },
-];
+// ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -127,12 +69,6 @@ function Toast({ message, type = "success" }) {
   );
 }
 
-const MOCK_SEARCH_RESULTS = [
-  { id: "U01", name: "Adaeze Okafor", handle: "@adaeze_creates", role: "Talent", tier: "top-rated", location: "Lagos, Nigeria", joined: "Jan 12, 2025", socials: ["Instagram: 142K", "TikTok: 89K"], avatar: "AO" },
-  { id: "U02", name: "Tecno Mobile", handle: "@tecnomobile_ng", role: "Brand", tier: "premium", location: "Abuja, Nigeria", joined: "Feb 3, 2025", socials: ["Instagram: Business", "Twitter: Verified"], avatar: "TM" },
-  { id: "U03", name: "Kemi Fashola", handle: "@kemi.fashy", role: "Talent", tier: "fast-rising", location: "Port Harcourt", joined: "Mar 1, 2025", socials: ["Instagram: 23K", "YouTube: 8K"], avatar: "KF" },
-];
-
 const NAV_ITEMS = [
   { id: "tasks", label: "My Tasks", Icon: CheckSquare },
   { id: "lookup", label: "User Lookup", Icon: Search },
@@ -150,7 +86,7 @@ export default function StaffPanel() {
   const [toast, setToast] = useState(null);
 
   // Tasks
-  const [tasks, setTasks] = useState(MOCK_TASKS);
+  const [tasks, setTasks] = useState([]);
 
   // User Lookup
   const [lookupQuery, setLookupQuery] = useState("");
@@ -167,15 +103,13 @@ export default function StaffPanel() {
   const [flagSubmitted, setFlagSubmitted] = useState(false);
 
   // My Requests
-  const [myRequests, setMyRequests] = useState(MOCK_MY_REQUESTS);
+  const [myRequests, setMyRequests] = useState([]);
 
   // Support
-  const [tickets] = useState(MOCK_TICKETS);
+  const [tickets, setTickets] = useState([]);
   const [activeTicket, setActiveTicket] = useState(null);
   const [replyText, setReplyText] = useState("");
-  const [ticketThreads, setTicketThreads] = useState(
-    MOCK_TICKETS.reduce((acc, t) => ({ ...acc, [t.id]: t.thread }), {})
-  );
+  const [ticketThreads, setTicketThreads] = useState({});
 
   const pendingRequests = myRequests.filter((r) => r.status === "pending").length;
   const openTickets = tickets.filter((t) => t.status === "open").length;
@@ -188,12 +122,59 @@ export default function StaffPanel() {
       if (!["admin", "super admin", "superadmin", "manager", "staff"].includes(role)) {
         clearAdminSession(); navigate("/admin/login"); return;
       }
-      setStaffUser({ email: session.email, name: session.name || '' });
+      const user = { email: session.email, name: session.name || '', adminUserId: session.admin_user_id };
+      setStaffUser(user);
       localStorage.setItem('brandiór_admin_user', JSON.stringify({ email: session.email, name: session.name }));
       localStorage.setItem('brandiór_admin_role', session.role);
+      loadStaffData(user);
     }
     verifySession();
   }, [navigate]);
+
+  async function loadStaffData(user) {
+    const [tasksRes, reqRes, ticketsRes] = await Promise.all([
+      user.adminUserId
+        ? supabase.from('staff_tasks').select('*').eq('assigned_to', user.adminUserId).order('created_at', { ascending: false })
+        : Promise.resolve({ data: [] }),
+      supabase.from('admin_approvals').select('*').eq('requester_name', user.name).order('created_at', { ascending: false }).limit(100),
+      supabase.from('support_tickets').select('*').eq('status', 'open').order('created_at', { ascending: false }).limit(50),
+    ]);
+
+    if (tasksRes.data) {
+      setTasks(tasksRes.data.map(t => ({
+        id: t.id,
+        title: t.title,
+        priority: t.priority || 'Medium',
+        assignedBy: t.assigned_by_name || 'Manager',
+        dueDate: t.due_date ? new Date(t.due_date).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }) : '—',
+        status: t.status || 'Todo',
+      })));
+    }
+
+    if (reqRes.data) {
+      setMyRequests(reqRes.data.map(r => ({
+        id: r.id,
+        type: r.type,
+        target: r.target || '',
+        submittedDate: new Date(r.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }),
+        reviewedBy: r.reviewed_by || null,
+        status: r.status,
+        reason: r.description || '',
+      })));
+    }
+
+    if (ticketsRes.data) {
+      setTickets(ticketsRes.data.map(t => ({
+        id: t.id,
+        user: t.user_name || 'User',
+        userRole: t.user_role || 'User',
+        subject: t.subject,
+        priority: t.priority || 'Medium',
+        created: new Date(t.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }),
+        status: t.status || 'open',
+      })));
+    }
+  }
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -207,8 +188,9 @@ export default function StaffPanel() {
     navigate("/admin/login");
   };
 
-  const handleTaskStatus = (id, status) => {
+  const handleTaskStatus = async (id, status) => {
     setTasks((prev) => prev.map((t) => t.id === id ? { ...t, status } : t));
+    await supabase.from('staff_tasks').update({ status, updated_at: new Date().toISOString() }).eq('id', id);
     showToast("Task status updated.");
   };
 
@@ -241,26 +223,50 @@ export default function StaffPanel() {
 
   const handleFlagUser = async () => {
     if (!flagUserReason) return;
-    const staffUser = JSON.parse(localStorage.getItem('brandiór_admin_user') || '{}')
-    await supabase.from('admin_approvals').insert({
-      requester_name: staffUser.name || 'Staff',
+    const su = staffUser || JSON.parse(localStorage.getItem('brandiór_admin_user') || '{}');
+    const { data: newRow } = await supabase.from('admin_approvals').insert({
+      requester_name: su.name || 'Staff',
       requester_role: 'Staff',
+      requester_email: su.email || '',
       type: 'Flag User',
       description: `${flagUserReason}${flagUserDesc ? ' — ' + flagUserDesc : ''}`,
       target: lookupResult.name,
       target_id: lookupResult.id || null,
       status: 'pending',
-    })
-    const newReq = { id: Date.now(), type: "Flag content", target: lookupResult.name, submittedDate: "Today", reviewedBy: null, status: "pending", reason: "" };
-    setMyRequests((prev) => [newReq, ...prev]);
+    }).select().single();
+    if (newRow) {
+      setMyRequests((prev) => [{
+        id: newRow.id, type: 'Flag User', target: lookupResult.name,
+        submittedDate: new Date().toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }),
+        reviewedBy: null, status: 'pending', reason: `${flagUserReason}${flagUserDesc ? ' — ' + flagUserDesc : ''}`,
+      }, ...prev]);
+    }
     setFlagUserOpen(false);
     setFlagUserReason("");
     setFlagUserDesc("");
     showToast("Flag submitted to manager queue.", "info");
   };
 
-  const handleAddNote = () => {
-    if (!addNoteText.trim()) return;
+  const handleAddNote = async () => {
+    if (!addNoteText.trim() || !lookupResult) return;
+    const su = staffUser || JSON.parse(localStorage.getItem('brandiór_admin_user') || '{}');
+    const { data: newRow } = await supabase.from('admin_approvals').insert({
+      requester_name: su.name || 'Staff',
+      requester_role: 'Staff',
+      requester_email: su.email || '',
+      type: 'Add note to profile',
+      description: stripInjection(addNoteText),
+      target: lookupResult.name,
+      target_id: lookupResult.id || null,
+      status: 'pending',
+    }).select().single();
+    if (newRow) {
+      setMyRequests((prev) => [{
+        id: newRow.id, type: 'Add note to profile', target: lookupResult.name,
+        submittedDate: new Date().toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }),
+        reviewedBy: null, status: 'pending', reason: addNoteText,
+      }, ...prev]);
+    }
     setAddNoteOpen(false);
     setAddNoteText("");
     showToast("Note submitted for manager review.", "info");
@@ -269,27 +275,66 @@ export default function StaffPanel() {
   const handleFlagSubmit = async (e) => {
     e.preventDefault();
     if (!flagForm.type || !flagForm.id || !flagForm.reason) return;
-    const staffUser = JSON.parse(localStorage.getItem('brandiór_admin_user') || '{}')
-    await supabase.from('admin_approvals').insert({
-      requester_name: staffUser.name || 'Staff',
+    const su = staffUser || JSON.parse(localStorage.getItem('brandiór_admin_user') || '{}');
+    const target = `${flagForm.type} #${flagForm.id}`;
+    const { data: newRow } = await supabase.from('admin_approvals').insert({
+      requester_name: su.name || 'Staff',
       requester_role: 'Staff',
+      requester_email: su.email || '',
       type: 'Flag content',
       description: `${flagForm.reason}${flagForm.description ? ' — ' + flagForm.description : ''}`,
-      target: `${flagForm.type} #${flagForm.id}`,
+      target,
       status: 'pending',
-    })
-    const newReq = { id: Date.now(), type: "Flag content", target: `${flagForm.type} #${flagForm.id}`, submittedDate: "Today", reviewedBy: null, status: "pending", reason: "" };
-    setMyRequests((prev) => [newReq, ...prev]);
+    }).select().single();
+    if (newRow) {
+      setMyRequests((prev) => [{
+        id: newRow.id, type: 'Flag content', target,
+        submittedDate: new Date().toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }),
+        reviewedBy: null, status: 'pending', reason: flagForm.reason,
+      }, ...prev]);
+    }
     setFlagForm({ type: "", id: "", reason: "", description: "" });
     setFlagSubmitted(true);
     setTimeout(() => setFlagSubmitted(false), 4000);
     showToast("Flag submitted. Managers will review within 24 hours.", "info");
   };
 
-  const handleTicketReply = (ticketId) => {
+  const handleOpenTicket = async (ticket) => {
+    setActiveTicket(ticket);
+    if (ticketThreads[ticket.id]) return;
+    const { data: msgs } = await supabase.from('ticket_messages')
+      .select('*').eq('ticket_id', ticket.id).order('created_at', { ascending: true });
+    setTicketThreads(prev => ({
+      ...prev,
+      [ticket.id]: (msgs || []).map(m => ({
+        from: m.sender_name,
+        message: m.message,
+        time: new Date(m.created_at).toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' }),
+        isUser: m.sender_type === 'user',
+      })),
+    }));
+  };
+
+  const handleTicketReply = async (ticketId) => {
     if (!replyText.trim()) return;
-    const msg = { from: "You", message: replyText, time: "Just now", isUser: false };
-    setTicketThreads((prev) => ({ ...prev, [ticketId]: [...(prev[ticketId] || []), msg] }));
+    const senderName = staffUser?.name || 'Staff';
+    const text = stripInjection(replyText);
+    const { data: msg } = await supabase.from('ticket_messages').insert({
+      ticket_id: ticketId,
+      sender_name: senderName,
+      sender_type: 'staff',
+      message: text,
+    }).select().single();
+    if (msg) {
+      setTicketThreads((prev) => ({
+        ...prev,
+        [ticketId]: [...(prev[ticketId] || []), {
+          from: senderName, message: text,
+          time: new Date(msg.created_at).toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' }),
+          isUser: false,
+        }],
+      }));
+    }
     setReplyText("");
     showToast("Reply sent.");
   };
@@ -612,7 +657,7 @@ export default function StaffPanel() {
             <div
               key={ticket.id}
               className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 cursor-pointer hover:border-sky-200 transition-colors"
-              onClick={() => setActiveTicket(ticket)}
+              onClick={() => handleOpenTicket(ticket)}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
