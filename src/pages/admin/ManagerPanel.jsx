@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { validateAdminSession, clearAdminSession, getAdminToken, callAdminFn } from "../../lib/adminAuth";
 import {
   LayoutDashboard, Eye, Inbox, Users, Briefcase, BarChart2,
   LogOut, Search, Check, X, AlertTriangle, ChevronRight,
@@ -156,16 +157,15 @@ export default function ManagerPanel() {
 
   useEffect(() => {
     async function verifySession() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { navigate("/admin/login"); return; }
-      const { data: adminRow } = await supabase
-        .from("admin_users").select("role, name").eq("email", user.email).single();
-      if (!adminRow || !["admin", "manager"].includes(adminRow.role?.toLowerCase().trim())) {
-        await supabase.auth.signOut();
-        navigate("/admin/login");
-        return;
+      const session = await validateAdminSession();
+      if (!session) { clearAdminSession(); navigate("/admin/login"); return; }
+      const role = session.role.toLowerCase().trim();
+      if (!["admin", "super admin", "superadmin", "manager"].includes(role)) {
+        clearAdminSession(); navigate("/admin/login"); return;
       }
-      setManagerUser({ email: user.email, name: adminRow.name });
+      setManagerUser({ email: session.email, name: session.name || '' });
+      localStorage.setItem('brandiór_admin_user', JSON.stringify({ email: session.email, name: session.name }));
+      localStorage.setItem('brandiór_admin_role', session.role);
     }
     verifySession();
 
@@ -212,9 +212,9 @@ export default function ManagerPanel() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    localStorage.removeItem("brandiór_admin_user");
-    localStorage.removeItem("brandiór_admin_role");
+    const token = getAdminToken();
+    if (token) callAdminFn('admin-revoke-session', { token, selfRevoke: true }).catch(() => {});
+    clearAdminSession();
     navigate("/admin/login");
   };
 

@@ -1,6 +1,22 @@
 import { useState, useRef, useEffect } from "react";
 import { Shield, Mail, AlertCircle, Loader2, CheckCircle } from "lucide-react";
-import { supabase } from "../../lib/supabase";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+async function callEdgeFn(name, body) {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json().catch(() => ({}));
+  return { ok: res.ok, status: res.status, data: json };
+}
 
 const ROLE_ROUTES = {
   "super admin": "/admin",
@@ -25,58 +41,21 @@ export default function AdminLogin() {
     return () => clearTimeout(t);
   }, [cooldown]);
 
-  // Always clear any existing session when the login page loads
-  useEffect(() => { supabase.auth.signOut(); }, []);
-
-  async function handleAuthenticatedUser(user) {
-    setStep("checking");
-
-    const { data: adminRow } = await supabase
-      .from("admin_users")
-      .select("role, name")
-      .eq("email", user.email)
-      .single();
-
-    if (!adminRow) {
-      await supabase.auth.signOut();
-      setError("Access denied. This account does not have admin privileges.");
-      setStep("error");
-      return;
-    }
-
-    const role  = adminRow.role?.toLowerCase().trim();
-    const route = ROLE_ROUTES[role];
-
-    if (!route) {
-      await supabase.auth.signOut();
-      setError("Admin role not recognised. Contact support.");
-      setStep("error");
-      return;
-    }
-
-    localStorage.setItem("brandiór_admin_user", JSON.stringify({ email: user.email, name: adminRow.name }));
-    localStorage.setItem("brandiór_admin_role", role);
-    window.location.href = route;
-  }
-
   async function handleSendCode(e) {
     e.preventDefault();
     if (cooldown > 0) return;
     setError("");
     setLoading(true);
 
-    const { error: fnErr } = await supabase.functions.invoke('admin-send-otp', {
-      body: { email: email.trim().toLowerCase() },
-    });
-
-    if (fnErr) {
-      // Try to extract the actual message from the function's JSON response body
-      let msg = fnErr.message;
-      try {
-        const body = await fnErr.context?.json?.();
-        if (body?.error) msg = body.error;
-      } catch (_) { /* ignore parse error */ }
-      setError(`Could not send code: ${msg}`);
+    try {
+      const { ok, data } = await callEdgeFn('admin-send-otp', { email: email.trim().toLowerCase() });
+      if (!ok) {
+        setError(data?.error || data?.message || data?.msg || 'Could not send code. Please try again.');
+        setLoading(false);
+        return;
+      }
+    } catch (err) {
+      setError('Network error. Please check your connection and try again.');
       setLoading(false);
       return;
     }
@@ -95,21 +74,38 @@ export default function AdminLogin() {
     setError("");
     setLoading(true);
 
-    const { data, error: verifyErr } = await supabase.auth.verifyOtp({
-      email: email.trim().toLowerCase(),
-      token,
-      type: "email",
-    });
-
-    if (verifyErr || !data?.user) {
-      setError("Incorrect or expired code. Check your email and try again.");
-      setCode(["", "", "", "", "", ""]);
-      inputRefs.current[0]?.focus();
+    let verifyData;
+    try {
+      const result = await callEdgeFn('admin-verify-otp', { email: email.trim().toLowerCase(), code: token });
+      verifyData = result.data;
+      if (!result.ok || !verifyData?.ok) {
+        setError(verifyData?.error || "Incorrect or expired code. Please try again.");
+        setCode(["", "", "", "", "", ""]);
+        inputRefs.current[0]?.focus();
+        setLoading(false);
+        return;
+      }
+    } catch (err) {
+      setError(`Network error: ${err.message}`);
       setLoading(false);
       return;
     }
 
-    await handleAuthenticatedUser(data.user);
+    // Code verified — set admin session in localStorage and redirect
+    const role  = verifyData.role?.toLowerCase().trim();
+    const route = ROLE_ROUTES[role];
+
+    if (!route) {
+      setError("Admin role not recognised. Contact support.");
+      setStep("error");
+      setLoading(false);
+      return;
+    }
+
+    if (verifyData.token) localStorage.setItem("brandiór_admin_token", verifyData.token);
+    localStorage.setItem("brandiór_admin_user", JSON.stringify({ email: email.trim().toLowerCase(), name: verifyData.name || "" }));
+    localStorage.setItem("brandiór_admin_role", role);
+    window.location.href = route;
   }
 
   function onDigitChange(i, val) {
@@ -220,7 +216,7 @@ export default function AdminLogin() {
       </form>
 
       <div className="flex items-center justify-between mt-5">
-        <button onClick={() => { setStep("email"); setCode(["","","","","","","",""]); setError(""); }}
+        <button onClick={() => { setStep("email"); setCode(["","","","","",""]); setError(""); }}
           className="text-xs" style={{ color: "#64748b", background: "none", border: "none", cursor: "pointer" }}>
           ← Use a different email
         </button>

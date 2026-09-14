@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { validateAdminSession, clearAdminSession, callAdminFn, getAdminToken } from "../../lib/adminAuth";
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\\`]/g, '');
 import {
   LayoutDashboard, Users, Briefcase, Shield, Bell,
@@ -424,6 +425,7 @@ export default function AdminPanel() {
   const [users, setUsers] = useState([]);
   const [newCountry, setNewCountry] = useState('');
   const [adminsList, setAdminsList] = useState([]);
+  const [activeSessions, setActiveSessions] = useState([]);
   const [managers, setManagers] = useState([]);
   const [staffList, setStaffList] = useState([]);
   const [approvals, setApprovals] = useState([]);
@@ -706,21 +708,28 @@ export default function AdminPanel() {
   }, []);
 
   useEffect(() => {
-    function verifySession() {
-      const stored = localStorage.getItem('brandiór_admin_user');
-      const role   = localStorage.getItem('brandiór_admin_role');
-      if (!stored || !role) { navigate("/admin/login"); return; }
-      try {
-        const adminUser = JSON.parse(stored);
-        if (!adminUser?.email) { navigate("/admin/login"); return; }
-        if (!["admin", "super admin", "superadmin"].includes(role.toLowerCase().trim())) {
-          navigate("/admin/login"); return;
-        }
-        setAdminUser({ email: adminUser.email, name: adminUser.name || '' });
-        setAdminRole(role.toLowerCase().trim());
-      } catch { navigate("/admin/login"); }
+    async function verifySession() {
+      const session = await validateAdminSession();
+      if (!session) { clearAdminSession(); navigate("/admin/login"); return; }
+      const role = session.role.toLowerCase().trim();
+      if (!["admin", "super admin", "superadmin"].includes(role)) {
+        clearAdminSession(); navigate("/admin/login"); return;
+      }
+      setAdminUser({ email: session.email, name: session.name || '' });
+      setAdminRole(role);
+      localStorage.setItem('brandiór_admin_user', JSON.stringify({ email: session.email, name: session.name }));
+      localStorage.setItem('brandiór_admin_role', session.role);
     }
     verifySession();
+  }, [navigate]);
+
+  // Heartbeat — re-validate every 5 min; redirect if session expired or revoked
+  useEffect(() => {
+    const iv = setInterval(async () => {
+      const session = await validateAdminSession();
+      if (!session) { clearAdminSession(); navigate("/admin/login"); }
+    }, 5 * 60 * 1000);
+    return () => clearInterval(iv);
   }, [navigate]);
 
   // ── Sync settings from DB so admin sees persisted values ───────────────────
@@ -1087,9 +1096,9 @@ export default function AdminPanel() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    localStorage.removeItem("brandiór_admin_user");
-    localStorage.removeItem("brandiór_admin_role");
+    const token = getAdminToken();
+    if (token) callAdminFn('admin-revoke-session', { token, selfRevoke: true }).catch(() => {});
+    clearAdminSession();
     navigate("/admin/login");
   };
 
@@ -1234,6 +1243,30 @@ export default function AdminPanel() {
     auditLog?.('add_team_member', 'admin_users', inserted.id, inserted.name, { role });
     showToast(`${inserted.name} added as ${role}.`);
   };
+
+  async function loadActiveSessions() {
+    const token = getAdminToken();
+    if (!token) return;
+    const { ok, data } = await callAdminFn('admin-get-sessions', { token });
+    if (ok && Array.isArray(data?.sessions)) setActiveSessions(data.sessions);
+  }
+
+  async function handleRevokeSession(targetId) {
+    const token = getAdminToken();
+    if (!token) return;
+    await callAdminFn('admin-revoke-session', { token, targetSessionId: targetId });
+    await loadActiveSessions();
+    showToast('Session revoked');
+  }
+
+  async function handleRevokeAllSessions() {
+    if (!window.confirm('Revoke all other active admin sessions? They will be signed out immediately.')) return;
+    const token = getAdminToken();
+    if (!token) return;
+    await callAdminFn('admin-revoke-session', { token, revokeAll: true });
+    await loadActiveSessions();
+    showToast('All other sessions revoked');
+  }
 
   const handleRemoveTeamMember = async (member) => {
     if (!window.confirm(`Remove ${member.name} (${member.role}) from the team?`)) return;
@@ -1918,6 +1951,67 @@ export default function AdminPanel() {
             : staffList.map(s => <TeamRow key={s.id} member={s} accentCol="#0ea5e9" />)}
         </div>
       </div>
+
+      {/* Active Sessions — super admin only */}
+      {isSuperAdmin && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <div>
+              <h3 className="font-semibold text-gray-900">Active Sessions <span className="text-gray-400 text-sm font-normal ml-1">({activeSessions.length})</span></h3>
+              <p className="text-xs text-gray-400 mt-0.5">Sessions idle for 8+ hours are automatically expired</p>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={loadActiveSessions}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50">
+                <RotateCcw className="w-3 h-3" /> Refresh
+              </button>
+              {activeSessions.length > 1 && (
+                <button onClick={handleRevokeAllSessions}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-50 text-red-600 hover:bg-red-100 border border-red-200">
+                  Revoke All Others
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {activeSessions.length === 0
+              ? (
+                <div className="text-center py-8">
+                  <p className="text-xs text-gray-400">No active sessions found</p>
+                  <button onClick={loadActiveSessions} className="text-xs text-indigo-500 mt-1 hover:underline">Load sessions</button>
+                </div>
+              )
+              : activeSessions.map(s => {
+                const isOwn = s.id === getAdminToken();
+                const lastActive = s.last_active_at ? new Date(s.last_active_at).toLocaleString('en', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '—';
+                return (
+                  <div key={s.id} className={`flex items-center justify-between px-5 py-3 ${isOwn ? 'bg-indigo-50' : ''}`}>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
+                        style={{ backgroundColor: isOwn ? '#4f46e5' : '#94a3b8' }}>
+                        {(s.name || s.email).slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-gray-900 truncate">{s.name || s.email}</p>
+                          {isOwn && <span className="text-[10px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-full font-semibold flex-shrink-0">You</span>}
+                          <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full capitalize flex-shrink-0">{s.role}</span>
+                        </div>
+                        <p className="text-xs text-gray-400 truncate">Last active: {lastActive} · {s.ip || 'Unknown IP'}</p>
+                      </div>
+                    </div>
+                    {!isOwn && (
+                      <button onClick={() => handleRevokeSession(s.id)}
+                        className="flex-shrink-0 ml-3 px-2 py-1 text-xs rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
+                        Revoke
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      )}
     </div>
   );
 

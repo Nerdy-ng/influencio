@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { validateAdminSession, clearAdminSession, getAdminToken, callAdminFn } from "../../lib/adminAuth";
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\\`]/g, '');
 import {
   CheckSquare, Search, AlertTriangle, Send, HelpCircle,
@@ -181,16 +182,15 @@ export default function StaffPanel() {
 
   useEffect(() => {
     async function verifySession() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { navigate("/admin/login"); return; }
-      const { data: adminRow } = await supabase
-        .from("admin_users").select("role, name").eq("email", user.email).single();
-      if (!adminRow || !["admin", "manager", "staff"].includes(adminRow.role?.toLowerCase().trim())) {
-        await supabase.auth.signOut();
-        navigate("/admin/login");
-        return;
+      const session = await validateAdminSession();
+      if (!session) { clearAdminSession(); navigate("/admin/login"); return; }
+      const role = session.role.toLowerCase().trim();
+      if (!["admin", "super admin", "superadmin", "manager", "staff"].includes(role)) {
+        clearAdminSession(); navigate("/admin/login"); return;
       }
-      setStaffUser({ email: user.email, name: adminRow.name });
+      setStaffUser({ email: session.email, name: session.name || '' });
+      localStorage.setItem('brandiór_admin_user', JSON.stringify({ email: session.email, name: session.name }));
+      localStorage.setItem('brandiór_admin_role', session.role);
     }
     verifySession();
   }, [navigate]);
@@ -201,9 +201,9 @@ export default function StaffPanel() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    localStorage.removeItem("brandiór_admin_user");
-    localStorage.removeItem("brandiór_admin_role");
+    const token = getAdminToken();
+    if (token) callAdminFn('admin-revoke-session', { token, selfRevoke: true }).catch(() => {});
+    clearAdminSession();
     navigate("/admin/login");
   };
 
