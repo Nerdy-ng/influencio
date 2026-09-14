@@ -1,6 +1,11 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 const FROM = 'Brandior <support@brandior.africa>'
 const ADMIN_EMAIL = 'nerd.owl.integrated@gmail.com'
+const supabaseAdmin = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+)
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -114,6 +119,19 @@ Deno.serve(async (req) => {
       sendEmail(email, `You're on the Brandior waitlist, ${firstName}! 🎉`, subscriberHtml),
       sendEmail(ADMIN_EMAIL, `🔔 New ${isCreator ? 'Talent' : 'Brand'} — ${name}`, adminHtml).catch(() => {}),
     ])
+
+    // Log to email_logs
+    await supabaseAdmin.from('email_logs').insert({
+      to_email:     email,
+      to_name:      name,
+      subject:      `You're on the Brandior waitlist, ${firstName}! 🎉`,
+      type:         'waitlist',
+      status:       subscriberResult?.id ? 'sent' : 'failed',
+      resend_id:    subscriberResult?.id ?? null,
+      error_message: subscriberResult?.error ?? null,
+      triggered_by: 'system',
+      metadata:     { role, industry: industry ?? null },
+    }).catch(() => {})
 
     return new Response(JSON.stringify(subscriberResult), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

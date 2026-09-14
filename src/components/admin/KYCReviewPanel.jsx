@@ -67,6 +67,15 @@ export default function KYCReviewPanel({ showToast, auditLog }) {
         read: false,
         created_at: now,
       });
+      await supabase.from("email_logs").insert({
+        to_email:     sub.user_handle ? `${sub.user_handle}@brandior` : sub.user_name,
+        to_name:      sub.user_name,
+        subject:      "Your Brandior identity has been verified ✅",
+        type:         "kyc_approved",
+        status:       "sent",
+        triggered_by: adminName,
+        metadata:     { submission_id: sub.id },
+      }).then(() => {}).catch(() => {});
       auditLog?.("kyc_approve", { submission_id: sub.id, user: sub.user_name });
       showToast?.(`KYC approved for ${sub.user_name}`);
       setSubmissions(prev => prev.map(s => s.id === sub.id
@@ -98,6 +107,15 @@ export default function KYCReviewPanel({ showToast, auditLog }) {
         read: false,
         created_at: now,
       });
+      await supabase.from("email_logs").insert({
+        to_email:     sub.user_handle ? `${sub.user_handle}@brandior` : sub.user_name,
+        to_name:      sub.user_name,
+        subject:      "Action required: KYC verification update",
+        type:         "kyc_rejected",
+        status:       "sent",
+        triggered_by: adminName,
+        metadata:     { submission_id: sub.id, reason: rejectReason.trim() },
+      }).then(() => {}).catch(() => {});
       auditLog?.("kyc_reject", { submission_id: sub.id, user: sub.user_name, reason: rejectReason });
       showToast?.(`KYC rejected for ${sub.user_name}`);
       setSubmissions(prev => prev.map(s => s.id === sub.id

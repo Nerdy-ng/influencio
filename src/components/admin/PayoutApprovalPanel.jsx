@@ -85,6 +85,15 @@ export default function PayoutApprovalPanel({ showToast, auditLog }) {
       created_at: now,
     });
 
+    await supabase.from("email_logs").insert({
+      to_name:      req.creator_name,
+      to_email:     req.creator_handle ? `${req.creator_handle}@brandior` : req.creator_name,
+      subject:      `Your withdrawal of ${fmtMoney(req.amount)} has been approved`,
+      type:         "payout_approved",
+      status:       "sent",
+      triggered_by: adminName,
+      metadata:     { request_id: req.id, amount: req.amount, bank: req.bank_name, account: req.account_number },
+    }).then(() => {}).catch(() => {});
     auditLog?.("payout_approve", { request_id: req.id, creator: req.creator_name, amount: req.amount });
     showToast?.(`Payout of ${fmtMoney(req.amount)} approved for ${req.creator_name}`);
     setRequests(prev => prev.map(r => r.id === req.id
@@ -121,6 +130,15 @@ export default function PayoutApprovalPanel({ showToast, auditLog }) {
       created_at: now,
     });
 
+    await supabase.from("email_logs").insert({
+      to_name:      req.creator_name,
+      to_email:     req.creator_handle ? `${req.creator_handle}@brandior` : req.creator_name,
+      subject:      `Your withdrawal request was not approved`,
+      type:         "payout_rejected",
+      status:       "sent",
+      triggered_by: adminName,
+      metadata:     { request_id: req.id, amount: req.amount, reason: rejectReason.trim() },
+    }).then(() => {}).catch(() => {});
     auditLog?.("payout_reject", { request_id: req.id, creator: req.creator_name, amount: req.amount, reason: rejectReason });
     showToast?.(`Payout rejected for ${req.creator_name}`);
     setRequests(prev => prev.map(r => r.id === req.id

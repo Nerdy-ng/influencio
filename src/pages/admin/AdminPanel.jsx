@@ -10,7 +10,7 @@ import {
   SlidersHorizontal, Star, Zap, BadgeCheck, RotateCcw, Info, ChevronUp, ChevronRight,
   BarChart2, HelpCircle, MessageSquare, Clock, Send, CreditCard, ToggleLeft, ToggleRight, Layers,
   Scale, Sparkles, Smartphone, Tag, ListFilter, ClipboardList, GitBranch, Star as StarIcon, Wallet,
-  Moon, Sun, PanelLeftClose, PanelLeftOpen,
+  Moon, Sun, PanelLeftClose, PanelLeftOpen, Mail,
 } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import AdminModerationDashboard from "../../components/AdminModerationDashboard";
@@ -45,6 +45,7 @@ import SupportCenterPanel     from "../../components/admin/SupportCenterPanel";
 import SystemSettingsPanel    from "../../components/admin/SystemSettingsPanel";
 import KYCReviewPanel         from "../../components/admin/KYCReviewPanel";
 import PayoutApprovalPanel    from "../../components/admin/PayoutApprovalPanel";
+import EmailDeliveryLogPanel  from "../../components/admin/EmailDeliveryLogPanel";
 import { LOGO_SLOTS, getLogo, uploadLogoFile, removeLogoFromDB } from "../../lib/brandSettings";
 import { getAllSettings, saveAllSettings, loadSettingsFromDB, getSetting, setSetting } from "../../lib/siteSettings";
 import { THEME_VARS, loadThemeFromDB, saveThemeToDB, resetThemeToDB, getThemeDefaults } from "../../lib/themeSettings";
@@ -258,6 +259,7 @@ const NAV_ITEMS = [
   { id: "trust-safety",   label: "Trust & Safety",Icon: ShieldAlert },
   { id: "kyc",            label: "KYC",           Icon: BadgeCheck, badge: true, badgeColor: "#f59e0b" },
   { id: "support2",       label: "Support",       Icon: HelpCircle },
+  { id: "email-log",      label: "Email Log",     Icon: Mail },
   { id: "system",         label: "System",        Icon: Settings },
   { id: "team",           label: "Team",          Icon: Shield },
   { id: "approvals",      label: "Approvals",     Icon: Bell, badge: true },
@@ -278,7 +280,7 @@ const NAV_GROUPS = [
   { title: "Community", items: ["users", "badges", "rankings", "jobs", "pitches", "messaging"] },
   { title: "Finance",   items: ["wallets", "withdrawals", "payout-approvals", "escrow", "financials2", "rubies", "pay-config", "pitch-settings", "payments"] },
   { title: "Trust",     items: ["disputes2", "reviews", "ai-police", "trust-safety", "kyc", "marketplace", "referrals2"] },
-  { title: "Platform",  items: ["notifications2", "cms2", "push", "ai-controls", "discovery", "categories", "support2", "rate-cards"] },
+  { title: "Platform",  items: ["notifications2", "cms2", "push", "ai-controls", "discovery", "categories", "support2", "rate-cards", "email-log"] },
   { title: "Admin",     items: ["team", "approvals", "content", "features", "legal", "app-config", "system", "analytics2", "audit", "settings"] },
 ];
 
@@ -3206,6 +3208,7 @@ export default function AdminPanel() {
     "trust-safety":   () => <TrustSafetyPanel showToast={showToast} auditLog={auditLog} />,
     kyc:              () => <KYCReviewPanel showToast={showToast} auditLog={auditLog} />,
     support2:         () => <SupportCenterPanel showToast={showToast} auditLog={auditLog} />,
+    "email-log":      () => <EmailDeliveryLogPanel showToast={showToast} />,
     system:           () => <SystemSettingsPanel showToast={showToast} auditLog={auditLog} />,
     team:             renderTeam,
     approvals:        renderApprovals,
