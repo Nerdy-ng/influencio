@@ -412,41 +412,61 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center overflow-hidden" style={{ background: '#000' }}>
+    <div className="min-h-screen flex" style={{ background: '#000' }}>
 
-      {/* ── Full-page video background ── */}
-      {heroVideo && (
-        <video
-          key={heroVideo}
-          className="absolute inset-0 w-full h-full object-cover"
-          src={heroVideo}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          onCanPlay={() => setVideoReady(true)}
+      {/* ── Left: Video (hidden on mobile, 2/3 on desktop) ── */}
+      <div className="hidden lg:block lg:flex-1 relative overflow-hidden">
+        {heroVideo && (
+          <video
+            key={heroVideo}
+            className="absolute inset-0 w-full h-full object-cover"
+            src={heroVideo}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            onCanPlay={() => setVideoReady(true)}
+          />
+        )}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(135deg, rgba(0,0,0,0.55) 0%, rgba(13,0,32,0.50) 50%, rgba(45,0,96,0.45) 100%)',
+            transition: 'opacity 0.6s ease',
+          }}
         />
-      )}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: 'linear-gradient(135deg, rgba(0,0,0,0.80) 0%, rgba(13,0,32,0.75) 50%, rgba(45,0,96,0.70) 100%)',
-          opacity: videoReady ? 1 : 1,
-          transition: 'opacity 0.6s ease',
-        }}
-      />
+        {/* Tagline over video */}
+        <div className="absolute bottom-12 left-10 right-10 z-10">
+          <p className="font-black text-4xl text-white leading-tight">
+            Where talents <span style={{ color: '#c084fc' }}>thrive.</span>
+          </p>
+          <p className="text-white/50 text-base mt-2">Brands. Talents. One platform.</p>
+        </div>
+      </div>
 
-      {/* ── Form overlay ── */}
-      <div className="relative z-10 flex flex-col items-center justify-start px-6 pt-6 pb-8 w-full min-h-screen overflow-y-auto">
+      {/* ── Right: Form panel (full width on mobile, 1/3 on desktop) ── */}
+      <div className="w-full lg:w-1/3 lg:min-w-[380px] flex flex-col items-center justify-start px-6 pt-6 pb-8 overflow-y-auto relative" style={{ background: '#fff' }}>
+
+        {/* Mobile: video behind form */}
+        <div className="lg:hidden absolute inset-0 overflow-hidden" style={{ zIndex: 0 }}>
+          {heroVideo && (
+            <video
+              className="w-full h-full object-cover"
+              src={heroVideo}
+              autoPlay muted loop playsInline preload="auto"
+            />
+          )}
+          <div className="absolute inset-0" style={{ background: 'rgba(255,255,255,0.92)' }} />
+        </div>
 
         {/* Logo */}
-        <Link to="/" className="flex items-center mb-1">
+        <Link to="/" className="relative z-10 flex items-center mb-1">
           <img src={authLogo} alt="Brandior" className="object-contain rounded-xl" style={{ height: '160px', width: 'auto' }} />
         </Link>
 
         {/* Card */}
-        <div className="w-full max-w-sm rounded-3xl p-8" style={{ background: 'rgba(255,255,255,0.97)', border: '1px solid rgba(233,213,255,0.6)', boxShadow: '0 8px 40px rgba(0,0,0,0.35)' }}>
+        <div className="relative z-10 w-full max-w-sm rounded-3xl p-8" style={{ background: 'rgba(255,255,255,0.98)', border: '1px solid #e9d5ff', boxShadow: '0 4px 24px rgba(76,29,149,0.08)' }}>
           <h1 className="text-2xl font-black text-brand-dark mb-1">Welcome back</h1>
           <p className="text-brand-dark/40 text-sm mb-5">Log in to your Brandior account.</p>
 
