@@ -412,7 +412,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen relative flex justify-end overflow-hidden" style={{ background: '#000' }}>
+    <div className="min-h-screen relative flex justify-end overflow-hidden" style={{ background: '#0a0015' }}>
 
       {/* ── Full-page video background ── */}
       {heroVideo && (
@@ -424,32 +424,64 @@ export default function LoginPage() {
           onCanPlay={() => setVideoReady(true)}
         />
       )}
-      <div
-        className="absolute inset-0"
-        style={{ background: 'linear-gradient(135deg, rgba(0,0,0,0.55) 0%, rgba(13,0,32,0.60) 50%, rgba(45,0,96,0.55) 100%)' }}
-      />
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(0,0,0,0.60) 0%, rgba(13,0,32,0.65) 60%, rgba(45,0,96,0.50) 100%)' }} />
 
-      {/* Tagline — visible on desktop only, bottom-left */}
-      <div className="hidden lg:block absolute bottom-12 left-12 z-10">
-        <p className="font-black text-4xl text-white leading-tight">
-          Where talents <span style={{ color: '#c084fc' }}>thrive.</span>
-        </p>
-        <p className="text-white/50 text-base mt-2">Brands. Talents. One platform.</p>
-      </div>
-
-      {/* ── Form panel: right 1/3 on desktop, full width on mobile ── */}
-      <div className="relative z-10 w-full lg:w-1/3 lg:min-w-[380px] min-h-screen flex flex-col items-center justify-start px-6 pt-6 pb-8 overflow-y-auto"
-        style={{ background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(12px)' }}>
-
+      {/* ── Left overlay content (desktop only) ── */}
+      <div className="hidden lg:flex absolute inset-0 flex-col justify-between px-12 py-10 z-10" style={{ right: '38%' }}>
         {/* Logo */}
-        <Link to="/" className="flex items-center mb-1">
-          <img src={authLogo} alt="Brandior" className="object-contain rounded-xl" style={{ height: '160px', width: 'auto' }} />
+        <Link to="/">
+          <img src={authLogo} alt="Brandior" className="object-contain rounded-xl" style={{ height: '56px', width: 'auto' }} />
         </Link>
 
-        {/* Card */}
-        <div className="w-full max-w-sm rounded-3xl p-8" style={{ background: 'rgba(255,255,255,0.98)', border: '1px solid #e9d5ff', boxShadow: '0 4px 24px rgba(76,29,149,0.08)' }}>
-          <h1 className="text-2xl font-black text-brand-dark mb-1">Welcome back</h1>
-          <p className="text-brand-dark/40 text-sm mb-5">Log in to your Brandior account.</p>
+        {/* Tagline */}
+        <div>
+          <p className="font-black text-5xl text-white leading-tight" style={{ textWrap: 'balance' }}>
+            Where creators &amp; brands<br /><span style={{ color: '#c084fc' }}>close deals.</span>
+          </p>
+          <p className="text-white/55 text-base mt-3 max-w-md">
+            Brandior connects creators with brands for real opportunities, meaningful collaborations, and sustainable growth across Africa.
+          </p>
+
+          {/* Feature pills */}
+          <div className="flex gap-3 mt-8">
+            {[
+              { icon: '👥', label: 'Talents',      sub: 'Showcase your skills' },
+              { icon: '🏢', label: 'Brands',       sub: 'Find the right creators' },
+              { icon: '⚡', label: 'Opportunities', sub: 'Turn ideas into impact' },
+            ].map(f => (
+              <div key={f.label} className="flex items-center gap-2 px-4 py-2.5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)' }}>
+                <span className="text-lg">{f.icon}</span>
+                <div>
+                  <p className="text-white text-xs font-bold leading-none">{f.label}</p>
+                  <p className="text-white/50 text-xs mt-0.5">{f.sub}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Form panel: right ~38% on desktop, full width on mobile ── */}
+      <div className="relative z-10 w-full lg:w-[38%] lg:min-w-[420px] min-h-screen flex flex-col px-8 pt-6 pb-8 overflow-y-auto"
+        style={{ background: '#ffffff' }}>
+
+        {/* Top bar */}
+        <div className="flex items-center justify-between mb-8">
+          {/* Logo — mobile only */}
+          <Link to="/" className="lg:hidden">
+            <img src={authLogo} alt="Brandior" className="object-contain rounded-xl" style={{ height: '40px', width: 'auto' }} />
+          </Link>
+          <div className="hidden lg:block" />
+          <p className="text-sm text-gray-500">
+            Don't have an account?{' '}
+            <Link to="/signup" className="font-semibold" style={{ color: darkPurple }}>Sign up free →</Link>
+          </p>
+        </div>
+
+        {/* Form content */}
+        <div className="flex-1 flex flex-col justify-center max-w-sm w-full mx-auto">
+          <h1 className="text-3xl font-black text-brand-dark mb-1">Welcome back</h1>
+          <p className="text-brand-dark/40 text-sm mb-6">Log in to your Brandior account to continue.</p>
 
           {/* Role toggle */}
           <div className="flex gap-2 mb-6 p-1 rounded-xl" style={{ backgroundColor: '#f3eeff' }}>
@@ -618,10 +650,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="text-center text-brand-dark/35 text-xs mt-6">
-            Don't have an account?{' '}
-            <Link to="/signup" className="font-semibold" style={{ color: darkPurple }}>Sign up free</Link>
-          </p>
         </div>
       </div>
     </div>
