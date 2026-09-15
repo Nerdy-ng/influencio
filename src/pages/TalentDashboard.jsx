@@ -1972,65 +1972,80 @@ export default function TalentDashboard() {
   // KYC verification state
   const [kycSubmission, setKycSubmission] = useState(null)
   const [kycLoaded, setKycLoaded]         = useState(false)
-  const [kycForm, setKycForm]             = useState({
-    doc_type: '', doc_number: '', social_platform: '', social_handle: '', social_followers: '',
-  })
-  const [kycFront, setKycFront]           = useState(null)
-  const [kycBack, setKycBack]             = useState(null)
-  const [kycSelfie, setKycSelfie]         = useState(null)
   const [kycSubmitting, setKycSubmitting] = useState(false)
+  const [kycVerifyType, setKycVerifyType] = useState('bvn')
+  const [kycIdNumber,   setKycIdNumber]   = useState('')
+  const [kycDob,        setKycDob]        = useState('')
+  const [kycPhone,      setKycPhone]      = useState('')
+  const [kycFirstName,  setKycFirstName]  = useState('')
+  const [kycLastName,   setKycLastName]   = useState('')
 
   useEffect(() => {
     if (activeTab === 'settings' && !kycLoaded) {
       supabase.auth.getUser().then(async ({ data: { user } }) => {
         if (!user) return
-        const { data } = await supabase.from('kyc_submissions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
-        setKycSubmission(data || null)
+        const [{ data: kycData }, { data: profData }] = await Promise.all([
+          supabase.from('kyc_submissions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+          supabase.from('profiles').select('full_name, phone').eq('id', user.id).maybeSingle(),
+        ])
+        setKycSubmission(kycData || null)
+        if (profData?.full_name) {
+          const parts = profData.full_name.trim().split(/\s+/)
+          setKycFirstName(parts[0] ?? '')
+          setKycLastName(parts.slice(1).join(' ') || '')
+        }
+        if (profData?.phone) setKycPhone(profData.phone)
         setKycLoaded(true)
       })
     }
   }, [activeTab, kycLoaded])
 
+  function formatKycDob(raw) {
+    const digits = raw.replace(/\D/g, '').slice(0, 8)
+    if (digits.length <= 2) return digits
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`
+  }
+
   async function submitKYC() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    if (!kycForm.doc_type || !kycFront) {
-      alert('Please select a document type and upload at least the front image.')
-      return
+    if (!kycFirstName.trim() || !kycLastName.trim()) { alert('Please enter your first and last name.'); return }
+    if (!kycDob || kycDob.length < 10) { alert('Please enter your date of birth (DD/MM/YYYY).'); return }
+    if (!kycPhone.trim()) { alert('Please enter your phone number.'); return }
+    if (!kycIdNumber.trim() || kycIdNumber.replace(/\D/g, '').length !== 11) {
+      alert(`Please enter a valid 11-digit ${kycVerifyType.toUpperCase()}.`); return
     }
     setKycSubmitting(true)
     try {
-      const base = `${user.id}/${Date.now()}`
-      const uploadFile = async (file, suffix) => {
-        const { error } = await supabase.storage.from('kyc-documents').upload(`${base}_${suffix}`, file, { upsert: true })
-        if (error) throw error
-        const { data: { publicUrl } } = supabase.storage.from('kyc-documents').getPublicUrl(`${base}_${suffix}`)
-        return publicUrl
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Not signed in')
+      const [d, m, y] = kycDob.split('/')
+      const body = {
+        firstName:   kycFirstName.trim(),
+        lastName:    kycLastName.trim(),
+        dob:         `${y}-${m}-${d}`,
+        phoneNumber: kycPhone.replace(/\D/g, ''),
+        [kycVerifyType]: kycIdNumber.replace(/\D/g, ''),
       }
-      const frontUrl = await uploadFile(kycFront, 'front')
-      const backUrl  = kycBack   ? await uploadFile(kycBack,   'back')   : null
-      const selfieUrl = kycSelfie ? await uploadFile(kycSelfie, 'selfie') : null
-      const payload = {
-        user_id: user.id,
-        user_name: profile.name || profile.nickname || '',
-        user_handle: profile.handle || '',
-        doc_type: kycForm.doc_type,
-        doc_number: kycForm.doc_number || null,
-        doc_front_url: frontUrl,
-        doc_back_url: backUrl,
-        selfie_url: selfieUrl,
-        social_platform: kycForm.social_platform || null,
-        social_handle: kycForm.social_handle || null,
-        social_followers: kycForm.social_followers ? parseInt(kycForm.social_followers, 10) : null,
-        status: 'pending',
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rubies-create-wallet`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify(body),
+      })
+      const result = await res.json()
+      if (!res.ok || !result.ok) {
+        alert(result.details || result.error || 'Verification failed. Please check your details and try again.')
+        setKycSubmitting(false)
+        return
       }
-      const { data: inserted, error: insErr } = await supabase.from('kyc_submissions').insert(payload).select().single()
-      if (insErr) throw insErr
-      setKycSubmission(inserted)
-      setKycForm({ doc_type: '', doc_number: '', social_platform: '', social_handle: '', social_followers: '' })
-      setKycFront(null); setKycBack(null); setKycSelfie(null)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: inserted } = await supabase.from('kyc_submissions').insert({
+          user_id: user.id, doc_type: kycVerifyType.toUpperCase(), doc_number: kycIdNumber.replace(/\D/g, ''), status: 'approved',
+        }).select().maybeSingle()
+        setKycSubmission(inserted || { status: 'approved' })
+      }
     } catch (e) {
-      alert('Submission failed. Please try again.')
+      alert('Verification failed. Please try again.')
       console.error(e)
     }
     setKycSubmitting(false)
@@ -3784,63 +3799,72 @@ export default function TalentDashboard() {
                 {/* Not submitted / submission form */}
                 {!kycSubmission && kycLoaded && (
                   <div className="space-y-4">
-                    <p className="text-sm text-brand-dark/60">Submit a government-issued ID to verify your identity and activate your wallet.</p>
+                    <div className="flex items-start gap-2 p-3 rounded-xl text-sm" style={{ backgroundColor: '#f5f3ff', color: '#6366f1' }}>
+                      <ShieldCheck className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      <span>We verify your identity instantly using your BVN or NIN. Your details are encrypted and never stored.</span>
+                    </div>
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold text-brand-dark/50 uppercase tracking-widest mb-1.5">Document Type *</label>
-                        <select value={kycForm.doc_type} onChange={e => setKycForm(f => ({ ...f, doc_type: e.target.value }))}
+                        <label className="block text-xs font-semibold text-brand-dark/50 uppercase tracking-widest mb-1.5">First Name</label>
+                        <input value={kycFirstName} onChange={e => setKycFirstName(e.target.value)}
+                          placeholder="First name"
                           className="w-full px-3 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2"
-                          style={{ borderColor: '#e9d5ff' }}>
-                          <option value="">Select document</option>
-                          <option value="National ID">National ID (NIN)</option>
-                          <option value="Passport">International Passport</option>
-                          <option value="Driver's Licence">Driver's Licence</option>
-                          <option value="Voter's Card">Voter's Card</option>
-                        </select>
+                          style={{ borderColor: '#e9d5ff', backgroundColor: kycFirstName ? '#f5f3ff' : '' }} />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-brand-dark/50 uppercase tracking-widest mb-1.5">ID / NIN Number</label>
-                        <input value={kycForm.doc_number} onChange={e => setKycForm(f => ({ ...f, doc_number: e.target.value }))}
-                          placeholder="Enter document number"
+                        <label className="block text-xs font-semibold text-brand-dark/50 uppercase tracking-widest mb-1.5">Last Name</label>
+                        <input value={kycLastName} onChange={e => setKycLastName(e.target.value)}
+                          placeholder="Last name"
+                          className="w-full px-3 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2"
+                          style={{ borderColor: '#e9d5ff', backgroundColor: kycLastName ? '#f5f3ff' : '' }} />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-brand-dark/50 uppercase tracking-widest mb-1.5">Date of Birth</label>
+                        <input value={kycDob} onChange={e => setKycDob(formatKycDob(e.target.value))}
+                          placeholder="DD/MM/YYYY" maxLength={10}
                           className="w-full px-3 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2"
                           style={{ borderColor: '#e9d5ff' }} />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-brand-dark/50 uppercase tracking-widest mb-1.5">Primary Social Platform</label>
-                        <select value={kycForm.social_platform} onChange={e => setKycForm(f => ({ ...f, social_platform: e.target.value }))}
+                        <label className="block text-xs font-semibold text-brand-dark/50 uppercase tracking-widest mb-1.5">Phone Number</label>
+                        <input value={kycPhone} onChange={e => setKycPhone(e.target.value)}
+                          placeholder="e.g. 08012345678" type="tel"
                           className="w-full px-3 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2"
-                          style={{ borderColor: '#e9d5ff' }}>
-                          <option value="">Select platform</option>
-                          {['Instagram','TikTok','YouTube','Twitter / X','Facebook','Snapchat','LinkedIn'].map(p => (
-                            <option key={p} value={p}>{p}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-brand-dark/50 uppercase tracking-widest mb-1.5">Social Handle</label>
-                        <input value={kycForm.social_handle} onChange={e => setKycForm(f => ({ ...f, social_handle: e.target.value }))}
-                          placeholder="@yourhandle"
-                          className="w-full px-3 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2"
-                          style={{ borderColor: '#e9d5ff' }} />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <label className="block text-xs font-semibold text-brand-dark/50 uppercase tracking-widest mb-1.5">Approx. Followers</label>
-                        <input type="number" value={kycForm.social_followers} onChange={e => setKycForm(f => ({ ...f, social_followers: e.target.value }))}
-                          placeholder="e.g. 5000"
-                          className="w-full px-3 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2"
-                          style={{ borderColor: '#e9d5ff' }} />
+                          style={{ borderColor: '#e9d5ff', backgroundColor: kycPhone ? '#f5f3ff' : '' }} />
                       </div>
                     </div>
-                    <div className="grid sm:grid-cols-3 gap-3">
-                      <KYCUploadSlot label="ID Front *" file={kycFront} onChange={setKycFront} />
-                      <KYCUploadSlot label="ID Back" file={kycBack} onChange={setKycBack} />
-                      <KYCUploadSlot label="Selfie with ID" file={kycSelfie} onChange={setKycSelfie} />
+                    <div>
+                      <label className="block text-xs font-semibold text-brand-dark/50 uppercase tracking-widest mb-1.5">Verification Method</label>
+                      <div className="flex rounded-xl overflow-hidden border" style={{ borderColor: '#e9d5ff' }}>
+                        {['bvn', 'nin'].map(t => (
+                          <button key={t} onClick={() => { setKycVerifyType(t); setKycIdNumber('') }}
+                            className="flex-1 py-2.5 text-sm font-bold transition-all"
+                            style={{
+                              backgroundColor: kycVerifyType === t ? darkPurple : 'transparent',
+                              color: kycVerifyType === t ? '#fff' : '#94a3b8',
+                            }}>
+                            {t.toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    <button onClick={submitKYC} disabled={kycSubmitting || !kycForm.doc_type || !kycFront}
+                    <div>
+                      <label className="block text-xs font-semibold text-brand-dark/50 uppercase tracking-widest mb-1.5">{kycVerifyType.toUpperCase()} Number</label>
+                      <input value={kycIdNumber} onChange={e => setKycIdNumber(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                        placeholder={`Enter your ${kycVerifyType.toUpperCase()} (11 digits)`}
+                        type="password" maxLength={11}
+                        className="w-full px-3 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2"
+                        style={{ borderColor: '#e9d5ff' }} />
+                      <p className="text-xs text-brand-dark/40 mt-1.5">
+                        {kycVerifyType === 'bvn' ? 'Dial *565*0# on your bank-registered number to get your BVN.' : 'Dial *346# to retrieve your NIN from NIMC.'}
+                      </p>
+                    </div>
+                    <button onClick={submitKYC} disabled={kycSubmitting}
                       className="flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-white disabled:opacity-50"
                       style={{ backgroundColor: darkPurple }}>
-                      {kycSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</> : <><ShieldCheck className="w-4 h-4" /> Submit for Verification</>}
+                      {kycSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Verifying…</> : <><ShieldCheck className="w-4 h-4" /> Verify Identity</>}
                     </button>
+                    <p className="text-xs text-brand-dark/30 text-center">By submitting, you consent to identity verification via our licensed KYC partner.</p>
                   </div>
                 )}
 

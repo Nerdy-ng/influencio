@@ -125,7 +125,7 @@ function RootRoute() {
     const role = localStorage.getItem('brandiór_role')
     return <Navigate to={role === 'talent' ? '/dashboard' : '/brand-dashboard'} replace />
   }
-  return <Navigate to="/marketplace" replace />
+  return <Navigate to="/login" replace />
 }
 
 const PUBLIC_PATHS = ['/', '/for-talents', '/for-brands', '/signup', '/login']
