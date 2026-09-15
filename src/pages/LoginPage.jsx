@@ -412,42 +412,33 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#f3eeff' }}>
+    <div className="min-h-screen relative flex items-center justify-center overflow-hidden" style={{ background: '#000' }}>
 
-      {/* ── Left: Video panel ── */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center relative overflow-hidden" style={{ background: '#000' }}>
-        {heroVideo && (
-          <video
-            key={heroVideo}
-            className="absolute inset-0 w-full h-full object-cover"
-            src={heroVideo}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-            onCanPlay={() => setVideoReady(true)}
-          />
-        )}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: 'linear-gradient(135deg, rgba(0,0,0,0.88) 0%, rgba(13,0,32,0.78) 50%, rgba(45,0,96,0.72) 100%)',
-            opacity: videoReady ? 0.80 : 1,
-            transition: 'opacity 0.6s ease',
-          }}
+      {/* ── Full-page video background ── */}
+      {heroVideo && (
+        <video
+          key={heroVideo}
+          className="absolute inset-0 w-full h-full object-cover"
+          src={heroVideo}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          onCanPlay={() => setVideoReady(true)}
         />
-        {/* Caption */}
-        <div className="relative z-10 text-center px-10">
-          <p className="font-black text-3xl text-white leading-tight">
-            Where talents <span style={{ color: '#c084fc' }}>thrive.</span>
-          </p>
-          <p className="text-white/50 text-sm mt-2">Brands. Talents. One platform.</p>
-        </div>
-      </div>
+      )}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(135deg, rgba(0,0,0,0.80) 0%, rgba(13,0,32,0.75) 50%, rgba(45,0,96,0.70) 100%)',
+          opacity: videoReady ? 1 : 1,
+          transition: 'opacity 0.6s ease',
+        }}
+      />
 
-      {/* ── Right: Form panel ── */}
-      <div className="flex-1 flex flex-col items-center justify-start px-6 pt-6 pb-8 overflow-y-auto">
+      {/* ── Form overlay ── */}
+      <div className="relative z-10 flex flex-col items-center justify-start px-6 pt-6 pb-8 w-full min-h-screen overflow-y-auto">
 
         {/* Logo */}
         <Link to="/" className="flex items-center mb-1">
@@ -455,7 +446,7 @@ export default function LoginPage() {
         </Link>
 
         {/* Card */}
-        <div className="w-full max-w-sm bg-white rounded-3xl p-8 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
+        <div className="w-full max-w-sm rounded-3xl p-8" style={{ background: 'rgba(255,255,255,0.97)', border: '1px solid rgba(233,213,255,0.6)', boxShadow: '0 8px 40px rgba(0,0,0,0.35)' }}>
           <h1 className="text-2xl font-black text-brand-dark mb-1">Welcome back</h1>
           <p className="text-brand-dark/40 text-sm mb-5">Log in to your Brandior account.</p>
 
