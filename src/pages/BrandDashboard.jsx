@@ -598,7 +598,7 @@ const NAV_ITEMS = [
   { id: 'favorites',      label: 'Saved Talents',   icon: Heart },
   { id: 'messages',       label: 'Messages',        icon: Mail },
   { id: 'wallet',         label: 'Wallet',          icon: Wallet },
-  { id: 'payments',       label: 'Payments',        icon: ArrowLeftRight },
+  { id: 'payments',       label: 'Transactions',    icon: ArrowLeftRight },
   { id: 'invite',         label: 'Invite Creators', icon: UserPlus },
   { id: 'settings',       label: 'Settings',        icon: Settings },
 ]
@@ -1626,7 +1626,7 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-gray-900">Payments</h2>
+      <h2 className="text-xl font-bold text-gray-900">Transactions</h2>
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
