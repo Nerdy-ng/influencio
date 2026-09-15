@@ -428,36 +428,43 @@ export default function LoginPage() {
 
       {/* ── Left overlay content (desktop only) ── */}
       <div className="hidden lg:flex absolute inset-0 flex-col justify-between px-12 py-10 z-10" style={{ right: '38%' }}>
-        {/* Logo */}
-        <Link to="/">
-          <img src={authLogo} alt="Brandior" className="object-contain rounded-xl" style={{ height: '56px', width: 'auto' }} />
-        </Link>
-
-        {/* Tagline */}
-        <div>
-          <p className="font-black text-5xl text-white leading-tight" style={{ textWrap: 'balance' }}>
-            Where creators &amp; brands<br /><span style={{ color: '#c084fc' }}>close deals.</span>
-          </p>
-          <p className="text-white/55 text-base mt-3 max-w-md">
-            Brandior connects creators with brands for real opportunities, meaningful collaborations, and sustainable growth across Africa.
-          </p>
-
-          {/* Feature pills */}
-          <div className="flex gap-3 mt-8">
-            {[
-              { icon: '👥', label: 'Talents',      sub: 'Showcase your skills' },
-              { icon: '🏢', label: 'Brands',       sub: 'Find the right creators' },
-              { icon: '⚡', label: 'Opportunities', sub: 'Turn ideas into impact' },
-            ].map(f => (
-              <div key={f.label} className="flex items-center gap-2 px-4 py-2.5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)' }}>
-                <span className="text-lg">{f.icon}</span>
-                <div>
-                  <p className="text-white text-xs font-bold leading-none">{f.label}</p>
-                  <p className="text-white/50 text-xs mt-0.5">{f.sub}</p>
-                </div>
-              </div>
+        {/* Top row: logo + nav */}
+        <div className="flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2">
+            <img src={authLogo} alt="Brandior" className="object-contain rounded-xl" style={{ height: '36px', width: 'auto' }} />
+          </Link>
+          <div className="flex items-center gap-6">
+            {['Creators', 'Brands', 'Opportunities'].map(l => (
+              <Link key={l} to="/" className="text-white/80 text-sm font-medium hover:text-white transition-colors">{l}</Link>
             ))}
           </div>
+        </div>
+
+        {/* Tagline — vertically centered */}
+        <div className="flex-1 flex flex-col justify-center">
+          <p className="font-black text-5xl text-white leading-tight" style={{ textWrap: 'balance' }}>
+            Where talents<br /><span style={{ color: '#c084fc' }}>thrive.</span>
+          </p>
+          <p className="text-white/60 text-base mt-4 max-w-sm">
+            Brandior connects creators with brands for real opportunities, meaningful collaborations, and sustainable growth across Africa.
+          </p>
+        </div>
+
+        {/* Feature pills — bottom */}
+        <div className="flex gap-3">
+          {[
+            { icon: '👥', label: 'Talents',      sub: 'Showcase your skills' },
+            { icon: '🏢', label: 'Brands',       sub: 'Find the right creators' },
+            { icon: '⚡', label: 'Opportunities', sub: 'Turn ideas into impact' },
+          ].map(f => (
+            <div key={f.label} className="flex items-center gap-2 px-4 py-2.5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)' }}>
+              <span className="text-lg">{f.icon}</span>
+              <div>
+                <p className="text-white text-xs font-bold leading-none">{f.label}</p>
+                <p className="text-white/50 text-xs mt-0.5">{f.sub}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -479,7 +486,7 @@ export default function LoginPage() {
         </div>
 
         {/* Form content */}
-        <div className="flex-1 flex flex-col justify-center max-w-sm w-full mx-auto">
+        <div className="flex-1 flex flex-col justify-start max-w-sm w-full mx-auto pt-8">
           <h1 className="text-3xl font-black text-brand-dark mb-1">Welcome back</h1>
           <p className="text-brand-dark/40 text-sm mb-6">Log in to your Brandior account to continue.</p>
 
