@@ -355,11 +355,15 @@ export default function LoginPage() {
   const [authError, setAuthError] = useState('')
   const [resendSent, setResendSent] = useState(false)
   const [authLogo, setAuthLogo] = useState(() => getLogo('auth'))
-  const [loginIllustration, setLoginIllustration] = useState(() => getSetting('loginIllustration'))
+  const [heroVideo, setHeroVideo] = useState(() => getSetting('heroVideo') || '')
+  const [videoReady, setVideoReady] = useState(false)
   useEffect(() => {
     function onLogoUpdate() { setAuthLogo(getLogo('auth')) }
     function onSettingsUpdate(e) {
-      if (e.detail?.key === 'loginIllustration') setLoginIllustration(e.detail.value || '')
+      if (e.detail?.key === 'heroVideo') {
+        const url = e.detail.value || ''
+        setHeroVideo(prev => { if (prev !== url) setVideoReady(false); return url })
+      }
     }
     window.addEventListener('brandior:logo-updated', onLogoUpdate)
     window.addEventListener('brandior:settings-updated', onSettingsUpdate)
@@ -410,26 +414,35 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: '#f3eeff' }}>
 
-      {/* ── Left: Illustration panel ── */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center px-10 relative overflow-hidden">
-        {/* subtle gradient backdrop */}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, #ede9fe 0%, #f3eeff 60%, #fce7f3 100%)' }} />
-        {/* dot texture */}
-        <div className="absolute inset-0 opacity-30"
-          style={{ backgroundImage: 'radial-gradient(circle, #c084fc 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
-
-        <div className="relative z-10 w-full max-w-sm flex items-center justify-center">
-          {loginIllustration
-            ? <img src={loginIllustration} alt="Login illustration" className="w-full object-contain" style={{ maxHeight: '380px' }} />
-            : <TalentIllustration />}
-        </div>
-
+      {/* ── Left: Video panel ── */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center relative overflow-hidden" style={{ background: '#000' }}>
+        {heroVideo && (
+          <video
+            key={heroVideo}
+            className="absolute inset-0 w-full h-full object-cover"
+            src={heroVideo}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            onCanPlay={() => setVideoReady(true)}
+          />
+        )}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(135deg, rgba(0,0,0,0.88) 0%, rgba(13,0,32,0.78) 50%, rgba(45,0,96,0.72) 100%)',
+            opacity: videoReady ? 0.80 : 1,
+            transition: 'opacity 0.6s ease',
+          }}
+        />
         {/* Caption */}
-        <div className="relative z-10 text-center mt-2">
-          <p className="font-black text-2xl" style={{ color: darkPurple }}>
-            Where talents <span style={{ color: pink }}>thrive.</span>
+        <div className="relative z-10 text-center px-10">
+          <p className="font-black text-3xl text-white leading-tight">
+            Where talents <span style={{ color: '#c084fc' }}>thrive.</span>
           </p>
-          <p className="text-brand-dark/40 text-sm mt-1">Brands. Talents. One platform.</p>
+          <p className="text-white/50 text-sm mt-2">Brands. Talents. One platform.</p>
         </div>
       </div>
 
