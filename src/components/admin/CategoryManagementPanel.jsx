@@ -58,6 +58,24 @@ export default function CategoryManagementPanel({ showToast, auditLog }) {
       updated_at: new Date().toISOString(),
     }));
     await supabase.from("site_settings").upsert(upserts, { onConflict: "key" }).catch(() => {});
+
+    // Sync niche_categories and content_types into the app_config blob so mobile
+    // clients (which read app_config) stay in sync with admin changes.
+    try {
+      const { data: configRow } = await supabase
+        .from("site_settings").select("value").eq("key", "app_config").single();
+      const existing = configRow?.value ? JSON.parse(configRow.value) : {};
+      const merged = {
+        ...existing,
+        niche_categories: categories["niches"] ?? existing.niche_categories ?? [],
+        content_types:    categories["content_types"] ?? existing.content_types ?? [],
+      };
+      await supabase.from("site_settings").upsert(
+        { key: "app_config", value: JSON.stringify(merged), updated_at: new Date().toISOString() },
+        { onConflict: "key" }
+      );
+    } catch {}
+
     auditLog?.("update_categories", "categories", null, activeType);
     showToast("Categories saved");
     setSaving(false);

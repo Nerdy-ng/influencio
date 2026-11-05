@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
-import { CreditCard, Save, RotateCcw, Info } from "lucide-react";
+import { CreditCard, Save, RotateCcw, Info, Globe } from "lucide-react";
 
 const DEFAULT_CONFIG = {
   commission_pct:          10,
@@ -10,6 +10,14 @@ const DEFAULT_CONFIG = {
   min_collab_amount:       20000,
   auto_release_enabled:    true,
   bank_verification_required: true,
+  support_email:           "support@brandior.africa",
+  instagram_url:           "https://instagram.com/brandior",
+  tiktok_url:              "https://tiktok.com/@brandior",
+  twitter_url:             "https://twitter.com/brandior",
+  youtube_url:             "https://youtube.com/@brandior",
+  onboarding_collabs_completed: "5,000+",
+  onboarding_paid_to_creators:  "₦2.4B+",
+  onboarding_avg_rating:        "4.8",
 };
 
 function Toggle({ checked, onChange }) {
@@ -40,6 +48,14 @@ export default function PaymentConfigPanel({ showToast, auditLog }) {
       min_collab_amount:        Number(cfg.min_collab_amount         ?? DEFAULT_CONFIG.min_collab_amount),
       auto_release_enabled:     cfg.auto_release_enabled !== false,
       bank_verification_required: cfg.bank_verification_required !== false,
+      support_email:                        cfg.support_email                        ?? DEFAULT_CONFIG.support_email,
+      instagram_url:                        cfg.instagram_url                        ?? DEFAULT_CONFIG.instagram_url,
+      tiktok_url:                           cfg.tiktok_url                           ?? DEFAULT_CONFIG.tiktok_url,
+      twitter_url:                          cfg.twitter_url                          ?? DEFAULT_CONFIG.twitter_url,
+      youtube_url:                          cfg.youtube_url                          ?? DEFAULT_CONFIG.youtube_url,
+      onboarding_collabs_completed:         cfg.onboarding_collabs_completed         ?? DEFAULT_CONFIG.onboarding_collabs_completed,
+      onboarding_paid_to_creators:          cfg.onboarding_paid_to_creators          ?? DEFAULT_CONFIG.onboarding_paid_to_creators,
+      onboarding_avg_rating:                cfg.onboarding_avg_rating                ?? DEFAULT_CONFIG.onboarding_avg_rating,
     });
     setLoading(false);
   }
@@ -61,6 +77,14 @@ export default function PaymentConfigPanel({ showToast, auditLog }) {
       min_collab_amount:          Number(config.min_collab_amount),
       auto_release_enabled:       config.auto_release_enabled,
       bank_verification_required: config.bank_verification_required,
+      support_email:                        config.support_email,
+      instagram_url:                        config.instagram_url,
+      tiktok_url:                           config.tiktok_url,
+      twitter_url:                          config.twitter_url,
+      youtube_url:                          config.youtube_url,
+      onboarding_collabs_completed:         config.onboarding_collabs_completed,
+      onboarding_paid_to_creators:          config.onboarding_paid_to_creators,
+      onboarding_avg_rating:                config.onboarding_avg_rating,
     };
     await supabase.from("site_settings").upsert(
       { key: "app_config", value: JSON.stringify(merged), updated_at: new Date().toISOString() },
@@ -166,6 +190,53 @@ export default function PaymentConfigPanel({ showToast, auditLog }) {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Contact & Social */}
+      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
+        <p className="text-sm font-bold text-gray-700 flex items-center gap-2">
+          <Globe className="w-4 h-4 text-indigo-500" /> Contact & Social Links
+        </p>
+        <div className="grid grid-cols-2 gap-4">
+          {[
+            { key: "support_email",    label: "Support Email" },
+            { key: "instagram_url",    label: "Instagram URL" },
+            { key: "tiktok_url",       label: "TikTok URL" },
+            { key: "twitter_url",      label: "Twitter / X URL" },
+            { key: "youtube_url",      label: "YouTube URL" },
+          ].map(f => (
+            <div key={f.key}>
+              <label className="text-xs font-semibold text-gray-500 mb-1 block">{f.label}</label>
+              <input
+                type="text" value={config[f.key] ?? ""}
+                onChange={e => set(f.key, e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm outline-none focus:border-indigo-400"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Onboarding Stats */}
+      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
+        <p className="text-sm font-bold text-gray-700">Onboarding Screen Stats</p>
+        <p className="text-xs text-gray-400">These display on the mobile app's onboarding screens. Use short display strings (e.g. "5,000+", "₦2.4B+", "4.8").</p>
+        <div className="grid grid-cols-3 gap-4">
+          {[
+            { key: "onboarding_collabs_completed", label: "Collabs Completed" },
+            { key: "onboarding_paid_to_creators",  label: "Paid to Creators" },
+            { key: "onboarding_avg_rating",        label: "Avg Rating" },
+          ].map(f => (
+            <div key={f.key}>
+              <label className="text-xs font-semibold text-gray-500 mb-1 block">{f.label}</label>
+              <input
+                type="text" value={config[f.key] ?? ""}
+                onChange={e => set(f.key, e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm outline-none focus:border-indigo-400"
+              />
+            </div>
+          ))}
         </div>
       </div>
 
