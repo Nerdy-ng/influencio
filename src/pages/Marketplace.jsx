@@ -10,6 +10,7 @@ import {
 import { useFavorites } from '../hooks/useFavorites'
 import Navbar from '../components/Navbar'
 import { supabase } from '../lib/supabase'
+import { calcScore, loadAlgoConfig, ALGO_DEFAULTS } from '../lib/algoRanking'
 
 const pink = '#FF6B9D'
 const darkPurple = '#4c1d95'
@@ -529,39 +530,13 @@ export default function Marketplace() {
   const [visibleCount, setVisibleCount] = useState(9)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const sentinelRef = useRef(null)
+  const algoConfigRef = useRef(ALGO_DEFAULTS)
 
   const PAGE_SIZE = 9
 
-  // Admin ranking algorithm — reads saved config from localStorage
-  const applyAdminRanking = (list) => {
-    const TIER_SCORE_MAP = { 'top-rated': 1.0, 'next-rated': 0.6, 'fast-rising': 0.25 }
-    let weights, rules
-    try {
-      weights = JSON.parse(localStorage.getItem('brandior_ranking_config_weights')) || { rating: 20, campaigns: 20, followers: 15, engagement: 20, tier: 15, verified: 5, profilePct: 5 }
-      rules   = JSON.parse(localStorage.getItem('brandior_ranking_config_rules'))   || {}
-    } catch {
-      weights = { rating: 20, campaigns: 20, followers: 15, engagement: 20, tier: 15, verified: 5, profilePct: 5 }
-      rules   = {}
-    }
-    const total = Object.values(weights).reduce((s, v) => s + v, 0) || 1
-    function score(c) {
-      const signals = {
-        rating:     (c.avgRating || 0) / 5,
-        campaigns:  Math.min(c.completedCampaigns || 0, 100) / 100,
-        followers:  Math.min(c.totalFollowers || 0, 500000) / 500000,
-        engagement: Math.min(c.avgEngagement || 0, 10) / 10,
-        tier:       TIER_SCORE_MAP[c.tier] || 0,
-        verified:   c.verified ? 1 : 0,
-        profilePct: 0.7,
-      }
-      let s = 0
-      for (const key of Object.keys(signals)) s += (signals[key] * (weights[key] || 0)) / total
-      if (rules.pinVerified && c.verified)            s = Math.min(s + 0.1, 1)
-      if (rules.highEngagementBoost && (c.avgEngagement || 0) > 7) s = Math.min(s + 0.05, 1)
-      return s
-    }
-    return [...list].sort((a, b) => score(b) - score(a))
-  }
+  useEffect(() => {
+    loadAlgoConfig(supabase).then(cfg => { algoConfigRef.current = cfg })
+  }, [])
 
   const fetchTalents = useCallback(async () => {
     setLoading(true)
@@ -607,10 +582,14 @@ export default function Marketplace() {
         contentTypes: p.content_types || [],
         languages: p.languages || [],
         tier: p.tier || 'fast-rising',
-        avgRating: p.avg_rating || 5,
+        avgRating: p.avg_rating || 0,
         totalFollowers: p.total_followers || 0,
         avgEngagement: p.avg_engagement || 0,
         completedCampaigns: p.completed_campaigns || 0,
+        identityVerified: p.identity_verified || false,
+        sparkEarned: p.spark_earned || false,
+        updatedAt: p.updated_at || null,
+        createdAt: p.created_at || null,
         minPrice: cheapestByCreator[p.id] ?? (p.min_price || 0),
         availableForHire: p.available_for_hire,
         gender: p.gender,
@@ -628,7 +607,7 @@ export default function Marketplace() {
         mapped = mapped.filter(c => c.age && selectedAgeRanges.some(r => c.age >= r.min && c.age <= r.max))
 
       // Sort
-      if (sort === 'relevant')            mapped = applyAdminRanking(mapped)
+      if (sort === 'relevant')            mapped = [...mapped].sort((a, b) => calcScore(b, algoConfigRef.current) - calcScore(a, algoConfigRef.current))
       else if (sort === 'highest-rated')  mapped.sort((a, b) => b.avgRating - a.avgRating)
       else if (sort === 'lowest-price')   mapped.sort((a, b) => a.minPrice - b.minPrice)
       else if (sort === 'most-campaigns') mapped.sort((a, b) => b.completedCampaigns - a.completedCampaigns)
@@ -651,7 +630,7 @@ export default function Marketplace() {
           if (selectedLanguages.length && !selectedLanguages.some(l => (c.languages || []).includes(l))) return false
           return true
         })
-        if (sort === 'relevant')            filtered = applyAdminRanking(filtered)
+        if (sort === 'relevant')            filtered = [...filtered].sort((a, b) => calcScore(b, algoConfigRef.current) - calcScore(a, algoConfigRef.current))
         else if (sort === 'highest-rated')  filtered.sort((a, b) => b.avgRating - a.avgRating)
         else if (sort === 'lowest-price')   filtered.sort((a, b) => a.minPrice - b.minPrice)
         else if (sort === 'most-campaigns') filtered.sort((a, b) => b.completedCampaigns - a.completedCampaigns)
@@ -672,13 +651,6 @@ export default function Marketplace() {
       sort])
 
   useEffect(() => { fetchTalents() }, [fetchTalents])
-
-  // Re-apply ranking when admin saves a new algorithm
-  useEffect(() => {
-    function onRankingUpdated() { fetchTalents() }
-    window.addEventListener('brandior:rankings-updated', onRankingUpdated)
-    return () => window.removeEventListener('brandior:rankings-updated', onRankingUpdated)
-  }, [fetchTalents])
 
   // Reset visible count when filters/sort change
   useEffect(() => { setVisibleCount(PAGE_SIZE) }, [
