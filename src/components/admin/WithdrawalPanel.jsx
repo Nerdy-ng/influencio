@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
+import { getAdminToken } from "../../lib/adminAuth";
 import { ArrowUpCircle, RotateCcw, Search, CheckCircle, XCircle, Clock, Info, AlertTriangle } from "lucide-react";
 
 const fmtMoney = (n) => `₦${Number(n || 0).toLocaleString()}`;
@@ -84,7 +85,8 @@ export default function WithdrawalPanel({ showToast, auditLog }) {
 
     if (refundWallet) {
       await supabase.functions.invoke("admin-adjust-wallet", {
-        body: { action: "credit", user_id: selected.user_id, amount: Number(selected.amount), note: "Payout failed — funds returned by admin" }
+        body: { action: "credit", user_id: selected.user_id, amount: Number(selected.amount), note: "Payout failed — funds returned by admin" },
+        headers: { "x-admin-token": getAdminToken() },
       });
     }
 

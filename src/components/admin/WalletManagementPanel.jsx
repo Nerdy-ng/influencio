@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
+import { getAdminToken } from "../../lib/adminAuth";
 import { Wallet, Search, RotateCcw, Plus, Minus, Snowflake, ArrowRightLeft } from "lucide-react";
 
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\\`]/g, '');
@@ -39,7 +40,10 @@ export default function WalletManagementPanel({ showToast, auditLog }) {
   }
 
   async function callAdjust(payload) {
-    const { data, error } = await supabase.functions.invoke("admin-adjust-wallet", { body: payload });
+    const { data, error } = await supabase.functions.invoke("admin-adjust-wallet", {
+      body: payload,
+      headers: { "x-admin-token": getAdminToken() },
+    });
     if (error || !data?.ok) throw new Error(error?.message || data?.error || "Request failed");
   }
 

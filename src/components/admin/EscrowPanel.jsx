@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
+import { getAdminToken } from "../../lib/adminAuth";
 import { Lock, RotateCcw, Search, Unlock, ArrowDownLeft, Split } from "lucide-react";
 
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\\`]/g, '');
@@ -49,6 +50,7 @@ export default function EscrowPanel({ showToast, auditLog }) {
     setBusy(true);
     const { data, error } = await supabase.functions.invoke("admin-collab-release", {
       body: { collab_id: selected.id, note: releaseNote || "Admin manual release" },
+      headers: { "x-admin-token": getAdminToken() },
     });
     if (error || data?.error) {
       showToast(data?.error || error?.message || "Release failed", "error");
@@ -67,6 +69,7 @@ export default function EscrowPanel({ showToast, auditLog }) {
     setBusy(true);
     const { data, error } = await supabase.functions.invoke("admin-escrow-refund", {
       body: { collab_id: selected.id, note: releaseNote || "Admin manual refund" },
+      headers: { "x-admin-token": getAdminToken() },
     });
     if (error || data?.error) {
       showToast(data?.error || error?.message || "Refund failed", "error");
@@ -101,6 +104,7 @@ export default function EscrowPanel({ showToast, auditLog }) {
           note:               `Admin split ${splitPct}/${100 - splitPct}`,
           skip_collab_update: false,
         },
+        headers: { "x-admin-token": getAdminToken() },
       });
       if (error || data?.error) {
         showToast(data?.error || error?.message || "Split failed", "error");
@@ -113,7 +117,8 @@ export default function EscrowPanel({ showToast, auditLog }) {
     // Brand's share — virtual wallet credit
     if (brandShare > 0) {
       await supabase.functions.invoke("admin-adjust-wallet", {
-        body: { action: "credit", user_id: selected.brand_id, amount: brandShare, note: "Escrow split — brand share" }
+        body: { action: "credit", user_id: selected.brand_id, amount: brandShare, note: "Escrow split — brand share" },
+        headers: { "x-admin-token": getAdminToken() },
       });
     }
 

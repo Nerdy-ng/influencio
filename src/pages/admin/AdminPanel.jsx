@@ -60,7 +60,7 @@ import SystemHealthPanel        from "../../components/admin/SystemHealthPanel";
 import CommissionPanel          from "../../components/admin/CommissionPanel";
 import EmailNotificationsPanel  from "../../components/admin/EmailNotificationsPanel";
 import { LOGO_SLOTS, getLogo, uploadLogoFile, removeLogoFromDB } from "../../lib/brandSettings";
-import { getAllSettings, saveAllSettings, loadSettingsFromDB, getSetting, setSetting } from "../../lib/siteSettings";
+import { getAllSettings, saveAllSettings, loadSettingsFromDB, getSetting, setSetting, isFeatureEnabled, makeFeatureValue } from "../../lib/siteSettings";
 import { THEME_VARS, loadThemeFromDB, saveThemeToDB, resetThemeToDB, getThemeDefaults } from "../../lib/themeSettings";
 import { supabase } from "../../lib/supabase";
 import { saveProfile } from "../../lib/profile";
@@ -328,19 +328,22 @@ You must provide accurate information when creating an account. You are responsi
 ## 4. Payments & Fees
 Brandior charges a platform fee on successful transactions. All payments are processed securely. Brandior is not responsible for disputes between talents and brands outside the platform.
 
-## 5. Content & Conduct
+## 5. Refunds
+Approved refunds are credited to the brand's Brandior wallet by default and may be used for future campaigns, collaborations, and other eligible services on the Platform. Brandior does not provide a general cash-withdrawal facility for brand wallet balances. Refund requests are reviewed by the Brandior administration team in accordance with applicable refund conditions. This policy does not affect any refund, reversal, chargeback, or payment rights to which a brand is entitled under applicable law or payment-provider rules; where a refund must be returned through the original payment method or another required channel, Brandior will follow the applicable process.
+
+## 6. Content & Conduct
 Users must not post misleading, offensive, or illegal content. Brandior reserves the right to remove any content or suspend any account that violates these terms.
 
-## 6. Intellectual Property
+## 7. Intellectual Property
 Content posted by users remains their property. By posting on Brandior, you grant us a licence to display that content on the Platform.
 
-## 7. Limitation of Liability
+## 8. Limitation of Liability
 Brandior is not liable for any indirect, incidental, or consequential damages arising from use of the Platform.
 
-## 8. Governing Law
+## 9. Governing Law
 These terms are governed by the laws of the Federal Republic of Nigeria.
 
-## 9. Contact
+## 10. Contact
 For questions about these terms, contact us at support@brandior.africa`
 
 const DEFAULT_PRIVACY = `## Privacy Policy
@@ -424,11 +427,8 @@ export default function AdminPanel() {
   const [activityFeed, setActivityFeed] = useState([]);
   const [brandFee, setBrandFee] = useState(() => getAllSettings().brandFee || "10");
   const [creatorFee, setCreatorFee] = useState(() => getAllSettings().creatorFee || "5");
-  const [legalDocs, setLegalDocs] = useState({
-    terms: localStorage.getItem('brandior_legal_terms') || DEFAULT_TERMS,
-    privacy: localStorage.getItem('brandior_legal_privacy') || DEFAULT_PRIVACY,
-    cookies: localStorage.getItem('brandior_legal_cookies') || DEFAULT_COOKIES,
-  })
+  const [legalDocs, setLegalDocs] = useState({ terms: DEFAULT_TERMS, privacy: DEFAULT_PRIVACY, cookies: DEFAULT_COOKIES })
+  const [legalDocIds, setLegalDocIds] = useState({ terms: null, privacy: null, cookies: null })
   const [activeLegalDoc, setActiveLegalDoc] = useState('terms')
 
   // Ranking algorithm state
@@ -443,11 +443,92 @@ export default function AdminPanel() {
   const [rankPreset, setRankPreset] = useState('balanced')
   const [rankSaved, setRankSaved] = useState(false)
   const [rankExpanded, setRankExpanded] = useState(null)
+  const [rankingCreators, setRankingCreators] = useState([])
+  const [rankingLoading, setRankingLoading] = useState(false)
 
-  function saveLegalDocs() {
-    localStorage.setItem('brandior_legal_terms', legalDocs.terms)
-    localStorage.setItem('brandior_legal_privacy', legalDocs.privacy)
-    localStorage.setItem('brandior_legal_cookies', legalDocs.cookies)
+  async function loadRankingCreators() {
+    setRankingLoading(true)
+    try {
+      const since = new Date(); since.setDate(since.getDate() - 30)
+      const [profilesRes, collabCounts] = await Promise.all([
+        supabase.from('profiles')
+          .select('id, full_name, username, badge, niche, niches, location, state, is_verified, follower_count, engagement_rate, average_rating, profile_completion, created_at')
+          .in('role', ['creator', 'talent', 'Creator', 'Talent'])
+          .eq('status', 'active')
+          .limit(100),
+        supabase.from('collabs')
+          .select('creator_id')
+          .eq('payment_status', 'released'),
+      ])
+      const campaignMap = {}
+      for (const c of collabCounts.data || []) {
+        campaignMap[c.creator_id] = (campaignMap[c.creator_id] || 0) + 1
+      }
+      const TIER_MAP = {
+        'top_rated': 'top-rated', 'top-rated': 'top-rated', 'Top Rated': 'top-rated',
+        'next_rated': 'next-rated', 'next-rated': 'next-rated', 'Next Rated': 'next-rated',
+        'fast_rising': 'fast-rising', 'fast-rising': 'fast-rising', 'Fast Rising': 'fast-rising',
+      }
+      const creators = (profilesRes.data || []).map(p => {
+        const name    = p.full_name || p.username || 'Unknown'
+        const initials = name.split(' ').map(s => s[0]).join('').slice(0, 2).toUpperCase()
+        const joined  = Math.floor((Date.now() - new Date(p.created_at)) / 86400000)
+        const niches  = Array.isArray(p.niches) ? p.niches : (p.niche ? [p.niche] : [])
+        return {
+          id:          p.id,
+          name,
+          handle:      `@${p.username || p.id.slice(0, 8)}`,
+          avatar:      initials,
+          tier:        TIER_MAP[p.badge] || 'fast-rising',
+          niches,
+          location:    p.location || p.state || '',
+          rating:      Number(p.average_rating) || 0,
+          campaigns:   campaignMap[p.id] || 0,
+          followers:   Number(p.follower_count) || 0,
+          engagement:  Number(p.engagement_rate) || 0,
+          verified:    Boolean(p.is_verified),
+          profilePct:  Number(p.profile_completion) || 0,
+          joinedDays:  joined,
+        }
+      })
+      setRankingCreators(creators)
+    } finally {
+      setRankingLoading(false)
+    }
+  }
+
+  async function loadLegalDocs() {
+    const { data } = await supabase
+      .from('cms_content')
+      .select('id, type, content')
+      .in('type', ['terms', 'privacy', 'cookies'])
+      .eq('status', 'published')
+      .order('updated_at', { ascending: false })
+    if (!data?.length) return
+    const map = {}
+    const ids = {}
+    for (const row of data) {
+      if (!map[row.type]) { map[row.type] = row.content; ids[row.type] = row.id }
+    }
+    setLegalDocs(p => ({ ...p, ...map }))
+    setLegalDocIds(p => ({ ...p, ...ids }))
+  }
+
+  async function saveLegalDocs() {
+    const TITLES = { terms: 'Terms of Service', privacy: 'Privacy Policy', cookies: 'Cookie Policy' }
+    const saves = Object.entries(legalDocs).map(async ([type, content]) => {
+      const id = legalDocIds[type]
+      if (id) {
+        return supabase.from('cms_content').update({ content, updated_at: new Date().toISOString() }).eq('id', id)
+      }
+      const { data } = await supabase.from('cms_content').insert({
+        type, title: TITLES[type], content, status: 'published',
+      }).select('id').single()
+      if (data?.id) setLegalDocIds(p => ({ ...p, [type]: data.id }))
+    })
+    const results = await Promise.all(saves)
+    const anyError = results.some(r => r?.error)
+    if (anyError) { showToast('Save failed — check console', 'error'); return }
     showToast('Legal documents saved successfully.')
   }
 
@@ -491,6 +572,9 @@ export default function AdminPanel() {
   }, []);
 
   useEffect(() => { localStorage.setItem('admin_theme', darkMode ? 'dark' : 'light'); }, [darkMode]);
+
+  useEffect(() => { loadLegalDocs() }, [])        // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { loadRankingCreators() }, [])  // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     supabase.from('tier_config').select('config').eq('id', 'brand_tiers').single()
@@ -574,42 +658,34 @@ export default function AdminPanel() {
   }
 
   // Payment processor state
-  const PAYMENT_KEY = 'brandior_payment_config'
-  const defaultPaymentConfig = {
-    activeProcessor: '',
-    mode: 'test',
-    processors: {
-      paystack:    { enabled: false, publicKey: '', secretKey: '', showSecret: false },
-      monnify:     { enabled: false, publicKey: '', secretKey: '', contractCode: '', showSecret: false },
-      flutterwave: { enabled: false, publicKey: '', secretKey: '', showSecret: false },
-      stripe:      { enabled: false, publicKey: '', secretKey: '', showSecret: false },
-    }
-  }
-  const [paymentConfig, setPaymentConfig] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(PAYMENT_KEY)) || defaultPaymentConfig } catch { return defaultPaymentConfig }
-  })
-  const [paymentSaving, setPaymentSaving] = useState(false)
-  const [paymentSaved, setPaymentSaved] = useState(false)
+  const [rubiesStatus, setRubiesStatus] = useState({ escrowAccount: '', revenueAccount: '', env: '' })
+  const [rubiesSaving, setRubiesSaving] = useState(false)
+  const [rubiesSaved, setRubiesSaved] = useState(false)
 
-  async function savePaymentConfig() {
-    setPaymentSaving(true)
-    const clean = { ...paymentConfig, processors: Object.fromEntries(
-      Object.entries(paymentConfig.processors).map(([k, v]) => [k, { ...v, showSecret: false }])
-    )}
-    localStorage.setItem(PAYMENT_KEY, JSON.stringify(clean))
-    await supabase.from('site_settings').upsert({ key: 'payment_config', value: JSON.stringify(clean), updated_at: new Date().toISOString() })
-    setPaymentSaving(false)
-    setPaymentSaved(true)
-    setTimeout(() => setPaymentSaved(false), 2000)
+  async function saveRubiesConfig() {
+    setRubiesSaving(true)
+    await supabase.from('site_settings').upsert([
+      { key: 'rubies_escrow_account',  value: rubiesStatus.escrowAccount,  updated_at: new Date().toISOString() },
+      { key: 'rubies_revenue_account', value: rubiesStatus.revenueAccount, updated_at: new Date().toISOString() },
+      { key: 'rubies_env',             value: rubiesStatus.env,            updated_at: new Date().toISOString() },
+    ])
+    setRubiesSaving(false)
+    setRubiesSaved(true)
+    setTimeout(() => setRubiesSaved(false), 2000)
   }
 
   useEffect(() => {
-    supabase.from('site_settings').select('value').eq('key', 'payment_config').single()
-      .then(({ data }) => {
-        if (data?.value) {
-          try { setPaymentConfig(JSON.parse(data.value)) } catch {}
-        }
+    Promise.all([
+      supabase.from('site_settings').select('value').eq('key', 'rubies_escrow_account').single(),
+      supabase.from('site_settings').select('value').eq('key', 'rubies_revenue_account').single(),
+      supabase.from('site_settings').select('value').eq('key', 'rubies_env').single(),
+    ]).then(([e, r, env]) => {
+      setRubiesStatus({
+        escrowAccount:  e.data?.value  || '',
+        revenueAccount: r.data?.value  || '',
+        env:            env.data?.value || 'sandbox',
       })
+    })
   }, [])
 
   // App Config state
@@ -643,12 +719,17 @@ export default function AdminPanel() {
 
   async function saveAppConfig() {
     setAppConfigSaving(true)
-    await supabase.from('site_settings').upsert({
-      key: 'app_config',
-      value: JSON.stringify(appConfig),
-      updated_at: new Date().toISOString(),
-    })
+    const { error: invokeErr, data: invokeData } = await supabase.functions.invoke(
+      'admin-site-settings-write',
+      {
+        body:    { rows: [{ key: 'app_config', value: JSON.stringify(appConfig) }] },
+        headers: { 'x-admin-token': getAdminToken() },
+      },
+    )
     setAppConfigSaving(false)
+    if (invokeErr || !invokeData?.ok) {
+      return
+    }
     setAppConfigSaved(true)
     setTimeout(() => setAppConfigSaved(false), 2500)
   }
@@ -851,7 +932,7 @@ export default function AdminPanel() {
         supabase.from('collabs').select('created_at').gte('created_at', since.toISOString()),
         supabase.from('collabs').select('updated_at').eq('status', 'completed').gte('updated_at', since.toISOString()),
         supabase.from('collabs').select('created_at, platform_fee').eq('payment_status', 'released').gte('created_at', since.toISOString()),
-        supabase.from('wallet_transactions').select('created_at, amount').eq('type', 'deposit').gte('created_at', since.toISOString()),
+        supabase.from('wallet_topups').select('created_at, amount').eq('status', 'completed').gte('created_at', since.toISOString()),
         supabase.from('payout_requests').select('created_at, amount').gte('created_at', since.toISOString()),
       ])
       setAdminCharts({
@@ -992,22 +1073,47 @@ export default function AdminPanel() {
   }
 
   async function releaseEscrow(item) {
-    await Promise.all([
-      supabase.from('collabs').update({ payment_status: 'released' }).eq('id', item.fullId || item.id),
-      supabase.functions.invoke('admin-adjust-wallet', { body: { action: 'credit', user_id: item.creator_id, amount: item.creator_payout || 0, note: 'Escrow release' } }),
-    ])
-    auditLog('release_escrow', 'collab', item.fullId || item.id, item.creatorName, { amount: item.creator_payout });
-    showToast(`Released ₦${(item.creator_payout||0).toLocaleString()} to ${item.creatorName}`)
+    const collabId = item.fullId || item.id
+    const { data, error } = await supabase.functions.invoke('admin-collab-release', {
+      body: { collab_id: collabId, next: 'release', note: 'Admin escrow release' },
+      headers: { 'x-admin-token': getAdminToken() },
+    })
+    if (error || data?.error) {
+      const msg = data?.error || error?.message || 'Release failed'
+      showToast(`Release failed: ${msg}`, 'error')
+      return
+    }
+    if (data?.already_released) {
+      showToast('Already released — no action taken', 'info')
+      loadFinancials()
+      return
+    }
+    auditLog('release_escrow', 'collab', collabId, item.creatorName, { amount: item.creator_payout })
+    showToast(`Released ₦${(item.creator_payout || 0).toLocaleString()} to ${item.creatorName}`)
     loadFinancials()
   }
 
   async function refundEscrow(item) {
-    await Promise.all([
-      supabase.from('collabs').update({ payment_status: 'refunded', status: 'cancelled' }).eq('id', item.fullId || item.id),
-      supabase.functions.invoke('admin-adjust-wallet', { body: { action: 'credit', user_id: item.brand_id, amount: item.total_amount || 0, note: 'Escrow refund' } }),
-    ])
-    auditLog('refund_escrow', 'collab', item.fullId || item.id, item.brandName, { amount: item.total_amount });
-    showToast(`Refunded ₦${(item.total_amount||0).toLocaleString()} to ${item.brandName}`)
+    const collabId = item.fullId || item.id
+    const { data, error } = await supabase.functions.invoke('admin-escrow-refund', {
+      body: { collab_id: collabId },
+      headers: { 'x-admin-token': getAdminToken() },
+    })
+    if (error || data?.error) {
+      const msg = data?.error || error?.message || 'Refund failed'
+      showToast(`Refund failed: ${msg}`, 'error')
+      return
+    }
+    if (data?.already_refunded) {
+      showToast('Already refunded — no action taken', 'info')
+      loadFinancials()
+      return
+    }
+    auditLog('refund_escrow', 'collab', collabId, item.brandName, { amount: item.total_amount })
+    const toastMsg = data?.manual_action_needed
+      ? `Refund of ₦${(item.total_amount || 0).toLocaleString()} queued — process manually via Rubies dashboard`
+      : `Refunded ₦${(item.total_amount || 0).toLocaleString()} to ${item.brandName}`
+    showToast(toastMsg, data?.manual_action_needed ? 'warning' : 'success')
     loadFinancials()
   }
 
@@ -1052,8 +1158,11 @@ export default function AdminPanel() {
     try {
       const amt = parseInt(payoutAmount.replace(/\D/g, ''), 10)
       if (amt < 100) { showToast('Minimum payout is ₦100', 'error'); return }
+      const adminToken = getAdminToken()
+      if (!adminToken) { showToast('Session expired. Please log in again.', 'error'); return }
       const { data, error } = await supabase.functions.invoke('payout-transfer', {
         body: { amount: amt, target_profile_id: payoutTarget.id },
+        headers: { 'x-admin-token': adminToken },
       })
       if (error || !data?.ok) {
         showToast(data?.error || error?.message || 'Transfer failed', 'error')
@@ -2696,7 +2805,7 @@ export default function AdminPanel() {
     setRankRules({ pinVerified: false, suppressSuspended: true, boostNewcomers: false, highEngagementBoost: false })
   }
 
-  const rankedTalents = [...RANKING_TALENTS]
+  const rankedTalents = rankingCreators
     .map(t => ({ ...t, ...calcScore(t, rankWeights, rankRules) }))
     .sort((a, b) => b.score - a.score)
 
@@ -2868,10 +2977,20 @@ export default function AdminPanel() {
                 <p className="text-xs text-gray-400 mt-0.5">Updates in real time as you adjust weights</p>
               </div>
               <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600">
-                {rankedTalents.length} creators
+                {rankingLoading ? 'Loading…' : `${rankedTalents.length} creators`}
               </span>
             </div>
 
+            {rankingLoading && (
+              <div className="px-5 py-10 text-center text-sm text-gray-400">Loading creators…</div>
+            )}
+            {!rankingLoading && rankedTalents.length === 0 && (
+              <div className="px-5 py-10 text-center space-y-1">
+                <p className="text-sm font-medium text-gray-500">No active creators found</p>
+                <p className="text-xs text-gray-400">Rankings will appear once creators with <code>role='creator'</code> and <code>status='active'</code> exist in the database.</p>
+                <button onClick={loadRankingCreators} className="mt-3 text-xs text-indigo-500 hover:underline">Retry</button>
+              </div>
+            )}
             <div className="divide-y divide-gray-50">
               {rankedTalents.map((talent, idx) => {
                 const tb = TIER_BADGE[talent.tier] || TIER_BADGE['fast-rising']
@@ -2995,17 +3114,32 @@ export default function AdminPanel() {
   ]
   const FEATURE_CATEGORIES = [...new Set(FEATURE_DEFS.map(f => f.category))]
 
+  // features[id] = { enabled: bool, platforms: { web: bool, ios: bool, android: bool } }
   const [features, setFeatures] = useState(() =>
-    Object.fromEntries(FEATURE_DEFS.map(f => [f.id, getSetting(f.id) !== false]))
+    Object.fromEntries(FEATURE_DEFS.map(f => {
+      const stored = getSetting(f.id)
+      if (stored && typeof stored === 'object' && 'enabled' in stored) return [f.id, stored]
+      const enabled = stored !== false
+      return [f.id, makeFeatureValue(enabled)]
+    }))
   )
   const [featureSaving, setFeatureSaving] = useState(false)
   const [featureSaved, setFeatureSaved]   = useState(false)
-  const [featureChanged, setFeatureChanged] = useState({}) // id → prev value for undo
+  const [featureChanged, setFeatureChanged] = useState({})
 
   function toggleFeature(id) {
     const prev = features[id]
     setFeatureChanged(c => ({ ...c, [id]: prev }))
-    setFeatures(f => ({ ...f, [id]: !prev }))
+    const nowEnabled = !prev.enabled
+    setFeatures(f => ({ ...f, [id]: makeFeatureValue(nowEnabled) }))
+  }
+
+  function togglePlatform(id, platform) {
+    setFeatureChanged(c => ({ ...c, [id]: features[id] }))
+    setFeatures(f => ({
+      ...f,
+      [id]: { ...f[id], platforms: { ...f[id].platforms, [platform]: !f[id].platforms[platform] } },
+    }))
   }
 
   async function saveFeatures() {
@@ -3042,27 +3176,53 @@ export default function AdminPanel() {
             </div>
             <div className="divide-y divide-gray-50">
               {FEATURE_DEFS.filter(f => f.category === category).map(({ id, label, desc, color }) => {
-                const on = features[id]
+                const fv      = features[id] || makeFeatureValue(true)
+                const on      = fv.enabled
+                const plats   = fv.platforms || { web: on, ios: on, android: on }
                 const changed = id in featureChanged
+                const PLAT_LABELS = [
+                  { key: 'web',     label: 'Web' },
+                  { key: 'ios',     label: 'iOS' },
+                  { key: 'android', label: 'Andr' },
+                ]
                 return (
-                  <div key={id} className="flex items-center gap-4 px-5 py-4 transition-colors"
+                  <div key={id} className="px-5 py-4 transition-colors"
                     style={{ backgroundColor: !on ? '#fef2f2' : changed ? '#f0fdf4' : 'white' }}>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold text-sm text-gray-900">{label}</p>
-                        {!on && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-600">Disabled</span>}
-                        {changed && on && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-600">Re-enabled</span>}
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-sm text-gray-900">{label}</p>
+                          {!on && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-600">All platforms off</span>}
+                          {changed && on && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-600">Changed</span>}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
                       </div>
-                      <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+                      <button
+                        onClick={() => toggleFeature(id)}
+                        className="relative flex-shrink-0 w-12 h-6 rounded-full transition-all duration-200"
+                        style={{ backgroundColor: on ? color : '#d1d5db' }}>
+                        <span className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
+                          style={{ transform: on ? 'translateX(24px)' : 'translateX(0)' }} />
+                      </button>
                     </div>
-                    {/* Toggle switch */}
-                    <button
-                      onClick={() => toggleFeature(id)}
-                      className="relative flex-shrink-0 w-12 h-6 rounded-full transition-all duration-200"
-                      style={{ backgroundColor: on ? color : '#d1d5db' }}>
-                      <span className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
-                        style={{ transform: on ? 'translateX(24px)' : 'translateX(0)' }} />
-                    </button>
+                    {/* Per-platform overrides — only shown when globally on */}
+                    {on && (
+                      <div className="flex items-center gap-2 mt-2.5 ml-0.5">
+                        <span className="text-[10px] text-gray-400 font-medium mr-1">Platforms:</span>
+                        {PLAT_LABELS.map(({ key, label: pl }) => {
+                          const platOn = plats[key] !== false
+                          return (
+                            <button key={key} onClick={() => togglePlatform(id, key)}
+                              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold transition-all border"
+                              style={platOn
+                                ? { backgroundColor: `${color}18`, color, borderColor: `${color}40` }
+                                : { backgroundColor: '#fee2e2', color: '#ef4444', borderColor: '#fca5a5' }}>
+                              {platOn ? '✓' : '✗'} {pl}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -3083,124 +3243,84 @@ export default function AdminPanel() {
     )
   }
 
-  const PROCESSORS = [
-    { id: 'paystack',    name: 'Paystack',    color: '#0ba4db', bg: '#e0f7fd', desc: 'Recommended for Nigeria & Africa',         logo: 'PS' },
-    { id: 'monnify',     name: 'Monnify',     color: '#6d28d9', bg: '#ede9fe', desc: 'Nigerian payment gateway by TeamApt/Moniepoint', logo: 'MN' },
-    { id: 'flutterwave', name: 'Flutterwave', color: '#f5a623', bg: '#fff8ed', desc: 'Pan-African payment gateway',               logo: 'FW' },
-    { id: 'stripe',      name: 'Stripe',      color: '#635bff', bg: '#f0efff', desc: 'Global card & bank payments',               logo: 'ST' },
-  ]
-
   const renderPayments = () => (
     <div className="space-y-6 max-w-3xl">
-      <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-        <h3 className="font-bold text-gray-800 mb-1">Payment Processors</h3>
-        <p className="text-sm text-gray-400 mb-5">Configure API keys for each processor. Only enabled processors will be available at checkout.</p>
-
-        {/* Mode toggle */}
-        <div className="flex items-center gap-3 mb-6 p-3 rounded-lg" style={{ backgroundColor: '#f8fafc' }}>
-          <span className="text-sm font-medium text-gray-600">Environment:</span>
-          <div className="flex gap-1 p-0.5 rounded-lg bg-gray-200">
-            {['test', 'live'].map(m => (
-              <button key={m} onClick={() => setPaymentConfig(c => ({ ...c, mode: m }))}
-                className="px-4 py-1.5 rounded-md text-xs font-bold capitalize transition-all"
-                style={paymentConfig.mode === m
-                  ? { backgroundColor: m === 'live' ? '#16a34a' : '#4f46e5', color: '#fff' }
-                  : { color: '#64748b' }}>
-                {m === 'live' ? '🟢 Live' : '🔵 Test'}
-              </button>
-            ))}
+      {/* Rubies MFB — sole payment processor */}
+      <div className="rounded-xl border-2 overflow-hidden" style={{ borderColor: '#16a34a' }}>
+        <div className="flex items-center gap-4 px-5 py-4" style={{ backgroundColor: '#f0fdf4' }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm text-white flex-shrink-0"
+            style={{ backgroundColor: '#16a34a' }}>RB</div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="font-bold text-gray-900">Rubies MFB</p>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: '#16a34a' }}>Active</span>
+            </div>
+            <p className="text-xs text-gray-500">Nigerian microfinance bank — sole payment processor for Brandior</p>
           </div>
-          {paymentConfig.mode === 'live' && (
-            <span className="text-xs font-semibold text-red-500 flex items-center gap-1">
-              <AlertTriangle className="w-3 h-3" /> Real transactions active
-            </span>
-          )}
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-100 px-3 py-1.5 rounded-full">
+            <CheckCircle className="w-3.5 h-3.5" /> Integrated
+          </span>
         </div>
-
-        {/* Processor cards */}
-        <div className="space-y-4">
-          {PROCESSORS.map(({ id, name, color, bg, desc, logo }) => {
-            const cfg = paymentConfig.processors[id]
-            const isDefault = paymentConfig.activeProcessor === id
-            return (
-              <div key={id} className="rounded-xl border-2 transition-all overflow-hidden"
-                style={{ borderColor: cfg.enabled ? color : '#e2e8f0' }}>
-                {/* Header */}
-                <div className="flex items-center gap-4 px-5 py-4" style={{ backgroundColor: cfg.enabled ? bg : '#fafafa' }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm text-white flex-shrink-0"
-                    style={{ backgroundColor: color }}>{logo}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-bold text-gray-900">{name}</p>
-                      {isDefault && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: color }}>Default</span>}
-                    </div>
-                    <p className="text-xs text-gray-400">{desc}</p>
-                  </div>
-                  <button onClick={() => setPaymentConfig(c => ({ ...c, processors: { ...c.processors, [id]: { ...cfg, enabled: !cfg.enabled } } }))}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all"
-                    style={cfg.enabled
-                      ? { backgroundColor: color, color: '#fff' }
-                      : { backgroundColor: '#e2e8f0', color: '#64748b' }}>
-                    {cfg.enabled ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                    {cfg.enabled ? 'Enabled' : 'Disabled'}
-                  </button>
-                </div>
-
-                {/* Keys — only shown when enabled */}
-                {cfg.enabled && (
-                  <div className="px-5 py-4 border-t border-gray-100 space-y-3 bg-white">
-                    <div>
-                      <label className="text-xs font-semibold text-gray-500 mb-1.5 block">
-                        {id === 'monnify' ? 'API Key' : `${paymentConfig.mode === 'test' ? 'Test' : 'Live'} Public Key`}
-                      </label>
-                      <input type="text" value={cfg.publicKey}
-                        onChange={e => setPaymentConfig(c => ({ ...c, processors: { ...c.processors, [id]: { ...cfg, publicKey: stripInjection(e.target.value) } } }))}
-                        placeholder={id === 'monnify' ? 'MK_TEST_...' : id === 'stripe' ? `pk_${paymentConfig.mode}_...` : id === 'paystack' ? `pk_${paymentConfig.mode}_...` : `FLWPUBK_${paymentConfig.mode}_...`}
-                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm font-mono outline-none focus:border-indigo-400" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-gray-500 mb-1.5 block">
-                        {id === 'monnify' ? 'Secret Key' : `${paymentConfig.mode === 'test' ? 'Test' : 'Live'} Secret Key`}
-                      </label>
-                      <div className="relative">
-                        <input type={cfg.showSecret ? 'text' : 'password'} value={cfg.secretKey}
-                          onChange={e => setPaymentConfig(c => ({ ...c, processors: { ...c.processors, [id]: { ...cfg, secretKey: stripInjection(e.target.value) } } }))}
-                          placeholder={id === 'monnify' ? 'Secret key from Monnify dashboard' : id === 'stripe' ? `sk_${paymentConfig.mode}_...` : id === 'paystack' ? `sk_${paymentConfig.mode}_...` : `FLWSECK_${paymentConfig.mode}_...`}
-                          className="w-full pl-3 pr-10 py-2.5 rounded-lg border border-gray-200 text-sm font-mono outline-none focus:border-indigo-400" />
-                        <button onClick={() => setPaymentConfig(c => ({ ...c, processors: { ...c.processors, [id]: { ...cfg, showSecret: !cfg.showSecret } } }))}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                          {cfg.showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </div>
-                    {id === 'monnify' && (
-                      <div>
-                        <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Contract Code</label>
-                        <input type="text" value={cfg.contractCode ?? ''}
-                          onChange={e => setPaymentConfig(c => ({ ...c, processors: { ...c.processors, [id]: { ...cfg, contractCode: stripInjection(e.target.value) } } }))}
-                          placeholder="Contract code from Monnify dashboard"
-                          className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm font-mono outline-none focus:border-indigo-400" />
-                      </div>
-                    )}
-                    {!isDefault && (
-                      <button onClick={() => setPaymentConfig(c => ({ ...c, activeProcessor: id }))}
-                        className="text-xs font-semibold transition-colors"
-                        style={{ color }}>
-                        Set as default processor →
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            )
-          })}
+        <div className="px-5 py-4 border-t border-gray-100 bg-white space-y-1 text-sm text-gray-600">
+          <p><span className="font-medium">API credentials:</span> Configured via Supabase Edge Function secrets — not stored in the database.</p>
+          <p><span className="font-medium">Wallet top-ups:</span> Rubies card payment API (<code className="text-xs bg-gray-100 px-1 rounded">baas-card-payment/initiate</code>)</p>
+          <p><span className="font-medium">Payouts &amp; escrow:</span> Rubies internal + external transfer API (<code className="text-xs bg-gray-100 px-1 rounded">baas-transaction/fund-transfer</code>)</p>
+          <p><span className="font-medium">KYC:</span> BVN and NIN validation via Rubies KYC API</p>
         </div>
       </div>
 
-      <button onClick={savePaymentConfig} disabled={paymentSaving}
+      {/* Operational account numbers (editable via site_settings) */}
+      <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 space-y-4">
+        <div>
+          <h3 className="font-bold text-gray-800 mb-0.5">Operational Accounts</h3>
+          <p className="text-xs text-gray-400">These numbers are used by Edge Functions at runtime. Changing them takes effect on the next EF deploy.</p>
+        </div>
+        <div className="flex items-center gap-3 p-3 rounded-lg" style={{ backgroundColor: '#f8fafc' }}>
+          <span className="text-sm font-medium text-gray-600">Environment:</span>
+          <div className="flex gap-1 p-0.5 rounded-lg bg-gray-200">
+            {['sandbox', 'production'].map(m => (
+              <button key={m} onClick={() => setRubiesStatus(s => ({ ...s, env: m }))}
+                className="px-4 py-1.5 rounded-md text-xs font-bold capitalize transition-all"
+                style={rubiesStatus.env === m
+                  ? { backgroundColor: m === 'production' ? '#16a34a' : '#4f46e5', color: '#fff' }
+                  : { color: '#64748b' }}>
+                {m === 'production' ? '🟢 Production' : '🔵 Sandbox'}
+              </button>
+            ))}
+          </div>
+          {rubiesStatus.env === 'production' && (
+            <span className="text-xs font-semibold text-red-500 flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3" /> Live money
+            </span>
+          )}
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Escrow Account Number</label>
+          <input type="text" value={rubiesStatus.escrowAccount}
+            onChange={e => setRubiesStatus(s => ({ ...s, escrowAccount: stripInjection(e.target.value) }))}
+            placeholder="e.g. 1000001748"
+            className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm font-mono outline-none focus:border-indigo-400" />
+          <p className="text-xs text-gray-400 mt-1">Funds from brands are held here until a collaboration is completed or refunded.</p>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Revenue / Fee Account Number</label>
+          <input type="text" value={rubiesStatus.revenueAccount}
+            onChange={e => setRubiesStatus(s => ({ ...s, revenueAccount: stripInjection(e.target.value) }))}
+            placeholder="e.g. 1000001749 (leave blank to skip fee transfer)"
+            className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm font-mono outline-none focus:border-indigo-400" />
+          <p className="text-xs text-gray-400 mt-1">Platform commission is transferred here on escrow release. Leave blank to skip.</p>
+        </div>
+      </div>
+
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
+        <p className="font-semibold mb-1">Changing RUBIES_API_KEY or RUBIES_BASE_URL?</p>
+        <p>Update those values in Supabase → Edge Functions → Secrets. They are not managed here.</p>
+      </div>
+
+      <button onClick={saveRubiesConfig} disabled={rubiesSaving}
         className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-60"
-        style={{ backgroundColor: paymentSaved ? '#16a34a' : '#4f46e5' }}>
-        {paymentSaved ? <><CheckCircle className="w-4 h-4" /> Saved!</> : paymentSaving ? 'Saving…' : <><Save className="w-4 h-4" /> Save Payment Settings</>}
+        style={{ backgroundColor: rubiesSaved ? '#16a34a' : '#4f46e5' }}>
+        {rubiesSaved ? <><CheckCircle className="w-4 h-4" /> Saved!</> : rubiesSaving ? 'Saving…' : <><Save className="w-4 h-4" /> Save Account Numbers</>}
       </button>
     </div>
   )

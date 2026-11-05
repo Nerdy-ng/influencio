@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
+import { getAdminToken } from "../../lib/adminAuth";
 import {
   RotateCcw, RefreshCw, Loader2, Search, ChevronDown, ChevronUp,
   Check, X, AlertTriangle, Clock, User, DollarSign, FileText,
@@ -100,15 +101,14 @@ export default function RefundWorkflowPanel({ showToast, auditLog }) {
     if (error) { showToast?.("Failed to resolve", "error"); setActionLoading(false); return; }
 
     if (approved && r.user_id && r.amount) {
-      // Credit wallet balance
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("wallet_balance")
-        .eq("id", r.user_id)
-        .single();
-      if (profile) {
-        const newBal = (Number(profile.wallet_balance) || 0) + Number(r.amount);
-        await supabase.from("profiles").update({ wallet_balance: newBal }).eq("id", r.user_id);
+      const { error: creditErr } = await supabase.functions.invoke("admin-adjust-wallet", {
+        body: { action: "credit", user_id: r.user_id, amount: Number(r.amount), note: `Refund approved — request ${r.id}` },
+        headers: { "x-admin-token": getAdminToken() },
+      });
+      if (creditErr) {
+        showToast?.("Refund approved but wallet credit failed: " + creditErr.message, "error");
+        setActionLoading(false);
+        return;
       }
     }
 

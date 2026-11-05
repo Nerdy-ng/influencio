@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
+import { getAdminToken } from "../../lib/adminAuth";
 import { Settings, Save, RotateCcw, AlertTriangle, Server } from "lucide-react";
 
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\\`]/g, '');
@@ -59,7 +60,18 @@ export default function SystemSettingsPanel({ showToast, auditLog }) {
       ...BOOL_SETTINGS.map(s => ({ key: `sys_${s.key}`, value: String(!!settings[s.key]), updated_at: new Date().toISOString() })),
       ...TEXT_SETTINGS.map(s => ({ key: `sys_${s.key}`, value: stripInjection(settings[s.key] || ""), updated_at: new Date().toISOString() })),
     ];
-    await supabase.from("site_settings").upsert(upserts, { onConflict: "key" }).catch(() => {});
+    const { error: invokeErr, data: invokeData } = await supabase.functions.invoke(
+      "admin-site-settings-write",
+      {
+        body:    { rows: upserts.map(u => ({ key: u.key, value: u.value })) },
+        headers: { "x-admin-token": getAdminToken() },
+      },
+    );
+    if (invokeErr || !invokeData?.ok) {
+      showToast("Failed to save: " + (invokeErr?.message || invokeData?.error || "unknown error"), "error");
+      setSaving(false);
+      return;
+    }
     auditLog?.("update_system_settings", "system", null, "System Settings");
     showToast("System settings saved");
     setSaving(false);

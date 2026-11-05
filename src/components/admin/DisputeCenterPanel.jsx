@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
+import { getAdminToken } from "../../lib/adminAuth";
 import { Scale, RotateCcw, Search, FileText, Download, CheckCircle, XCircle, RefreshCw, Sparkles, MessageSquare, AlertCircle } from "lucide-react";
 
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\\`]/g, '');
@@ -100,6 +101,7 @@ export default function DisputeCenterPanel({ showToast, auditLog }) {
     try {
       const { data, error } = await supabase.functions.invoke("admin-dispute-resolve", {
         body: { dispute_id: selected.id, action, note: resolution.note, ...extra },
+        headers: { "x-admin-token": getAdminToken() },
       });
       if (error || !data?.ok) throw new Error(data?.error ?? error?.message ?? "Resolution failed");
       auditLog?.(`dispute_${action}`, "dispute", selected.id, `${selected.brandName} vs ${selected.creatorName}`, extra);
