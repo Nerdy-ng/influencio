@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
+import { getAdminToken } from "../../lib/adminAuth";
 import { Tag, Plus, Trash2, Save, RotateCcw } from "lucide-react";
 
 const CATEGORY_TYPES = [
@@ -57,31 +58,34 @@ export default function CategoryManagementPanel({ showToast, auditLog }) {
       value: JSON.stringify(value),
       updated_at: new Date().toISOString(),
     }));
-    const { error: catErr } = await supabase.from("site_settings").upsert(upserts, { onConflict: "key" });
-    if (catErr) {
-      showToast("Failed to save: " + catErr.message, "error");
+    // Read existing app_config to merge niche_categories and content_types
+    // (SELECT is allowed by existing public policy — only write goes through EF)
+    const { data: configRow } = await supabase
+      .from("site_settings").select("value").eq("key", "app_config").single();
+    const existing = configRow?.value ? JSON.parse(configRow.value) : {};
+    const mergedConfig = {
+      ...existing,
+      niche_categories: categories["niches"] ?? existing.niche_categories ?? [],
+      content_types:    categories["content_types"] ?? existing.content_types ?? [],
+    };
+
+    // Combine cat_* rows and app_config sync into a single authenticated write
+    const allRows = [
+      ...upserts,
+      { key: "app_config", value: JSON.stringify(mergedConfig) },
+    ];
+
+    const { error: invokeErr, data: invokeData } = await supabase.functions.invoke(
+      "admin-site-settings-write",
+      {
+        body:    { rows: allRows },
+        headers: { "x-admin-token": getAdminToken() },
+      },
+    );
+    if (invokeErr || !invokeData?.ok) {
+      showToast("Failed to save: " + (invokeErr?.message || invokeData?.error || "unknown error"), "error");
       setSaving(false);
       return;
-    }
-
-    // Sync niche_categories and content_types into the app_config blob so mobile
-    // clients (which read app_config) stay in sync with admin changes.
-    try {
-      const { data: configRow } = await supabase
-        .from("site_settings").select("value").eq("key", "app_config").single();
-      const existing = configRow?.value ? JSON.parse(configRow.value) : {};
-      const merged = {
-        ...existing,
-        niche_categories: categories["niches"] ?? existing.niche_categories ?? [],
-        content_types:    categories["content_types"] ?? existing.content_types ?? [],
-      };
-      const { error: syncErr } = await supabase.from("site_settings").upsert(
-        { key: "app_config", value: JSON.stringify(merged), updated_at: new Date().toISOString() },
-        { onConflict: "key" }
-      );
-      if (syncErr) console.error("[CategoryManagementPanel] app_config sync failed:", syncErr.message);
-    } catch (e) {
-      console.error("[CategoryManagementPanel] app_config sync error:", e);
     }
 
     auditLog?.("update_categories", "categories", null, activeType);

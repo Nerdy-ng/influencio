@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
+import { getAdminToken } from "../../lib/adminAuth";
 import { CreditCard, Save, RotateCcw, Info, Globe } from "lucide-react";
 
 const DEFAULT_CONFIG = {
@@ -86,12 +87,15 @@ export default function PaymentConfigPanel({ showToast, auditLog }) {
       onboarding_paid_to_creators:          config.onboarding_paid_to_creators,
       onboarding_avg_rating:                config.onboarding_avg_rating,
     };
-    const { error: upsertErr } = await supabase.from("site_settings").upsert(
-      { key: "app_config", value: JSON.stringify(merged), updated_at: new Date().toISOString() },
-      { onConflict: "key" },
+    const { error: invokeErr, data: invokeData } = await supabase.functions.invoke(
+      "admin-site-settings-write",
+      {
+        body:    { rows: [{ key: "app_config", value: JSON.stringify(merged) }] },
+        headers: { "x-admin-token": getAdminToken() },
+      },
     );
-    if (upsertErr) {
-      showToast("Failed to save: " + upsertErr.message, "error");
+    if (invokeErr || !invokeData?.ok) {
+      showToast("Failed to save: " + (invokeErr?.message || invokeData?.error || "unknown error"), "error");
       setSaving(false);
       return;
     }
