@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
-import { Scale, RotateCcw, Search, FileText, Download, CheckCircle, XCircle, RefreshCw } from "lucide-react";
+import { Scale, RotateCcw, Search, FileText, Download, CheckCircle, XCircle, RefreshCw, Sparkles, MessageSquare, AlertCircle } from "lucide-react";
 
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\\`]/g, '');
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en", { day: "numeric", month: "short", year: "numeric" }) : "—";
+const fmtDateTime = (d) => d ? new Date(d).toLocaleString("en", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
 const fmtMoney = (n) => `₦${Number(n || 0).toLocaleString()}`;
 
 const STATUS_COLOR = {
@@ -22,7 +23,9 @@ const FILTERS = [
   { key: "closed",   label: "Closed" },
 ];
 
-const DETAIL_TABS = ["overview", "timeline", "evidence", "messages", "payment"];
+const isTerminal = (s) => s === "resolved" || s === "closed";
+
+const DETAIL_TABS = ["overview", "statements", "timeline", "evidence", "messages", "payment"];
 
 export default function DisputeCenterPanel({ showToast, auditLog }) {
   const [disputes, setDisputes]   = useState([]);
@@ -33,7 +36,6 @@ export default function DisputeCenterPanel({ showToast, auditLog }) {
   const [loading, setLoading]     = useState(true);
   const [busy, setBusy]           = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
-  const [aiSummary, setAiSummary] = useState(null);
   const [resolution, setResolution] = useState({ type: "", note: "" });
   const [splitPct, setSplitPct]   = useState(50);
   const [messages, setMessages]   = useState([]);
@@ -81,7 +83,11 @@ export default function DisputeCenterPanel({ showToast, auditLog }) {
 
   const filtered = disputes.filter(d => {
     const t = search.toLowerCase();
-    const matchSearch = !t || d.brandName.toLowerCase().includes(t) || d.creatorName.toLowerCase().includes(t) || (d.reason || "").toLowerCase().includes(t);
+    const matchSearch = !t
+      || d.brandName.toLowerCase().includes(t)
+      || d.creatorName.toLowerCase().includes(t)
+      || (d.reason || "").toLowerCase().includes(t)
+      || (d.dispute_reference || "").toLowerCase().includes(t);
     const matchFilter = filter === "all" || d.status === filter;
     return matchSearch && matchFilter;
   });
@@ -117,20 +123,24 @@ export default function DisputeCenterPanel({ showToast, auditLog }) {
   const handleSplit   = () => callResolve("split", { split_pct: splitPct });
   const handleClose   = () => callResolve("close");
 
-  async function getAiSummary() {
-    if (!selected) return;
+  async function requestAiAnalysis() {
+    if (!selected || aiLoading) return;
     setAiLoading(true);
-    setAiSummary(null);
     try {
-      const res = await fetch("/api/analyze-dispute", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ disputeId: selected.id }),
+      const { data, error } = await supabase.functions.invoke("analyze-dispute", {
+        body: { dispute_id: selected.id, force: true },
       });
-      const data = await res.json();
-      setAiSummary(data.summary || data.analysis || JSON.stringify(data));
-    } catch {
-      setAiSummary("Unable to load AI summary — ensure the API server is running.");
+      if (error || !data?.ok) throw new Error(data?.error ?? error?.message ?? "Analysis failed");
+      // Update selected in-place with returned AI fields; load() refreshes the list
+      setSelected(prev => prev ? {
+        ...prev,
+        ai_summary:        data.ai_summary,
+        ai_recommendation: data.ai_recommendation,
+        ai_analyzed_at:    data.ai_analyzed_at,
+      } : null);
+      await load();
+    } catch (e) {
+      showToast?.(`AI analysis error: ${e.message}`);
     }
     setAiLoading(false);
   }
@@ -139,20 +149,21 @@ export default function DisputeCenterPanel({ showToast, auditLog }) {
     if (!selected) return;
     const csv = [
       ["Field", "Value"],
-      ["ID", selected.id],
-      ["Status", selected.status],
-      ["Brand", selected.brandName],
-      ["Creator", selected.creatorName],
-      ["Reason", selected.reason],
-      ["Amount", fmtMoney(selected.amount)],
-      ["Created", fmtDate(selected.created_at)],
-      ["Resolved", fmtDate(selected.resolved_at)],
+      ["Reference",  selected.dispute_reference || selected.id],
+      ["ID",         selected.id],
+      ["Status",     selected.status],
+      ["Brand",      selected.brandName],
+      ["Creator",    selected.creatorName],
+      ["Reason",     selected.reason],
+      ["Amount",     fmtMoney(selected.amount)],
+      ["Created",    fmtDate(selected.created_at)],
+      ["Resolved",   fmtDate(selected.resolved_at)],
       ["Resolution", selected.resolution_type || "—"],
-      ["Note", selected.resolution_note || "—"],
+      ["Note",       selected.resolution_note || "—"],
     ].map(r => r.join(",")).join("\n");
     const a = document.createElement("a");
     a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
-    a.download = `dispute_${selected.id}.csv`;
+    a.download = `dispute_${selected.dispute_reference || selected.id}.csv`;
     a.click();
   }
 
@@ -181,7 +192,7 @@ export default function DisputeCenterPanel({ showToast, auditLog }) {
       <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" placeholder="Search by brand, creator or reason…" value={search}
+          <input type="text" placeholder="Search by brand, creator, reason or BD###…" value={search}
             onChange={e => setSearch(stripInjection(e.target.value))}
             className="w-full pl-9 pr-4 py-2 rounded-lg text-sm border border-gray-200 outline-none focus:border-indigo-400" />
         </div>
@@ -195,11 +206,14 @@ export default function DisputeCenterPanel({ showToast, auditLog }) {
           : filtered.map(d => {
             const sc = STATUS_COLOR[d.status] || { bg: "#f1f5f9", color: "#64748b" };
             return (
-              <button key={d.id} onClick={() => { setSelected(d); setTab("overview"); setAiSummary(null); }}
+              <button key={d.id} onClick={() => { setSelected(d); setTab("overview"); }}
                 className="w-full text-left p-4 rounded-xl transition-all"
                 style={{ backgroundColor: selected?.id === d.id ? "#eef2ff" : "#fff", border: `1px solid ${selected?.id === d.id ? "#c7d2fe" : "#e2e8f0"}` }}>
                 <div className="flex items-start justify-between gap-2 mb-1">
-                  <p className="text-sm font-semibold text-gray-900 truncate">{d.brandName} vs {d.creatorName}</p>
+                  <div className="min-w-0">
+                    {d.dispute_reference && <p className="text-xs font-bold text-indigo-500 mb-0.5">{d.dispute_reference}</p>}
+                    <p className="text-sm font-semibold text-gray-900 truncate">{d.brandName} vs {d.creatorName}</p>
+                  </div>
                   <span className="text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 capitalize" style={sc}>{d.status}</span>
                 </div>
                 <p className="text-xs text-gray-500 truncate mb-1">{d.reason || "No reason stated"}</p>
@@ -216,6 +230,9 @@ export default function DisputeCenterPanel({ showToast, auditLog }) {
             <div className="px-6 pt-5 pb-0 border-b border-gray-100 flex-shrink-0">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
+                  {selected.dispute_reference && (
+                    <p className="text-xs font-bold text-indigo-500 mb-0.5 uppercase tracking-wide">{selected.dispute_reference}</p>
+                  )}
                   <h3 className="text-lg font-bold text-gray-900">{selected.brandName} vs {selected.creatorName}</h3>
                   <p className="text-sm text-gray-500">{selected.reason || "No reason stated"}</p>
                 </div>
@@ -224,7 +241,7 @@ export default function DisputeCenterPanel({ showToast, auditLog }) {
                   <button onClick={exportDispute} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500" title="Export CSV"><Download className="w-3.5 h-3.5" /></button>
                 </div>
               </div>
-              <div className="flex gap-1 mb-0 pb-3">
+              <div className="flex gap-1 mb-0 pb-3 overflow-x-auto">
                 {DETAIL_TABS.map(t => (
                   <button key={t} onClick={() => setTab(t)}
                     className="px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all"
@@ -241,12 +258,14 @@ export default function DisputeCenterPanel({ showToast, auditLog }) {
                 <>
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      ["Brand",    selected.brandName],
-                      ["Creator",  selected.creatorName],
-                      ["Amount",   fmtMoney(selected.total_amount)],
-                      ["Opened",   fmtDate(selected.created_at)],
-                      ["Resolved", fmtDate(selected.resolved_at)],
-                      ["Raised by",selected.raised_by || "User"],
+                      ["Ref",       selected.dispute_reference || "—"],
+                      ["Raised by", selected.raised_by || "User"],
+                      ["Brand",     selected.brandName],
+                      ["Creator",   selected.creatorName],
+                      ["Amount",    fmtMoney(selected.total_amount)],
+                      ["Opened",    fmtDate(selected.created_at)],
+                      ["Resolved",  fmtDate(selected.resolved_at)],
+                      ["Status",    selected.status],
                     ].map(([l, v]) => (
                       <div key={l} className="bg-gray-50 rounded-xl p-3">
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5">{l}</p>
@@ -255,23 +274,50 @@ export default function DisputeCenterPanel({ showToast, auditLog }) {
                     ))}
                   </div>
 
-                  {/* AI Summary */}
+                  {/* AI-Assisted Analysis */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">AI Summary</p>
-                      <button onClick={getAiSummary} disabled={aiLoading} className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-600 disabled:opacity-50">
-                        <RefreshCw className={`w-3 h-3 ${aiLoading ? "animate-spin" : ""}`} /> {aiLoading ? "Analyzing…" : "Analyze"}
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">AI-Assisted Analysis</p>
+                      </div>
+                      {!isTerminal(selected.status) && (
+                        <button onClick={requestAiAnalysis} disabled={aiLoading}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-600 disabled:opacity-50">
+                          <RefreshCw className={`w-3 h-3 ${aiLoading ? "animate-spin" : ""}`} />
+                          {aiLoading ? "Analyzing…" : selected.ai_analyzed_at ? "Re-analyze" : "Analyze"}
+                        </button>
+                      )}
                     </div>
-                    {aiSummary ? (
-                      <div className="bg-indigo-50 rounded-xl p-4 text-sm text-indigo-900">{aiSummary}</div>
+                    {aiLoading ? (
+                      <div className="bg-indigo-50 rounded-xl p-4 text-sm text-indigo-400 text-center">Running AI analysis…</div>
+                    ) : selected.ai_summary ? (
+                      <div className="space-y-2">
+                        <div className="bg-indigo-50 rounded-xl p-4">
+                          <p className="text-xs font-bold text-indigo-400 uppercase tracking-wide mb-1">Summary</p>
+                          <p className="text-sm text-indigo-900">{selected.ai_summary}</p>
+                        </div>
+                        {selected.ai_recommendation && (
+                          <div className="bg-amber-50 rounded-xl p-4 border border-amber-100">
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                              <p className="text-xs font-bold text-amber-500 uppercase tracking-wide">AI Recommendation — Advisory Only</p>
+                            </div>
+                            <p className="text-sm text-amber-900">{selected.ai_recommendation}</p>
+                            <p className="text-xs text-amber-500 mt-2">This is a suggestion. The admin is the sole decision-maker.</p>
+                          </div>
+                        )}
+                        <p className="text-xs text-gray-400 text-right">Analyzed {fmtDateTime(selected.ai_analyzed_at)}</p>
+                      </div>
                     ) : (
-                      <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-400">Click "Analyze" to generate an AI summary and recommended outcome</div>
+                      <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-400">
+                        No AI analysis yet. Click "Analyze" after both party statements have been submitted.
+                      </div>
                     )}
                   </div>
 
                   {/* Resolution actions */}
-                  {selected.status !== "resolved" && selected.status !== "closed" && (
+                  {!isTerminal(selected.status) && (
                     <div>
                       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Resolve Dispute</p>
                       <div className="bg-gray-50 rounded-xl p-4 space-y-3">
@@ -310,6 +356,44 @@ export default function DisputeCenterPanel({ showToast, auditLog }) {
                     </div>
                   )}
                 </>
+              )}
+
+              {tab === "statements" && (
+                <div className="space-y-4">
+                  {/* Brand statement */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Brand Statement</p>
+                    </div>
+                    {selected.brand_statement ? (
+                      <div className="bg-blue-50 rounded-xl p-4">
+                        <p className="text-sm text-blue-900 whitespace-pre-wrap">{selected.brand_statement}</p>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 rounded-xl p-4">
+                        <p className="text-sm text-gray-400">Not submitted yet</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Creator statement */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <MessageSquare className="w-3.5 h-3.5 text-purple-400" />
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Creator Statement</p>
+                    </div>
+                    {selected.creator_statement ? (
+                      <div className="bg-purple-50 rounded-xl p-4">
+                        <p className="text-sm text-purple-900 whitespace-pre-wrap">{selected.creator_statement}</p>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 rounded-xl p-4">
+                        <p className="text-sm text-gray-400">Not submitted yet</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
 
               {tab === "timeline" && (
