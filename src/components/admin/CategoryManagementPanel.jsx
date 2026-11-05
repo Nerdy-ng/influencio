@@ -57,7 +57,12 @@ export default function CategoryManagementPanel({ showToast, auditLog }) {
       value: JSON.stringify(value),
       updated_at: new Date().toISOString(),
     }));
-    await supabase.from("site_settings").upsert(upserts, { onConflict: "key" }).catch(() => {});
+    const { error: catErr } = await supabase.from("site_settings").upsert(upserts, { onConflict: "key" });
+    if (catErr) {
+      showToast("Failed to save: " + catErr.message, "error");
+      setSaving(false);
+      return;
+    }
 
     // Sync niche_categories and content_types into the app_config blob so mobile
     // clients (which read app_config) stay in sync with admin changes.
@@ -70,11 +75,14 @@ export default function CategoryManagementPanel({ showToast, auditLog }) {
         niche_categories: categories["niches"] ?? existing.niche_categories ?? [],
         content_types:    categories["content_types"] ?? existing.content_types ?? [],
       };
-      await supabase.from("site_settings").upsert(
+      const { error: syncErr } = await supabase.from("site_settings").upsert(
         { key: "app_config", value: JSON.stringify(merged), updated_at: new Date().toISOString() },
         { onConflict: "key" }
       );
-    } catch {}
+      if (syncErr) console.error("[CategoryManagementPanel] app_config sync failed:", syncErr.message);
+    } catch (e) {
+      console.error("[CategoryManagementPanel] app_config sync error:", e);
+    }
 
     auditLog?.("update_categories", "categories", null, activeType);
     showToast("Categories saved");

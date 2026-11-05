@@ -86,10 +86,15 @@ export default function PaymentConfigPanel({ showToast, auditLog }) {
       onboarding_paid_to_creators:          config.onboarding_paid_to_creators,
       onboarding_avg_rating:                config.onboarding_avg_rating,
     };
-    await supabase.from("site_settings").upsert(
+    const { error: upsertErr } = await supabase.from("site_settings").upsert(
       { key: "app_config", value: JSON.stringify(merged), updated_at: new Date().toISOString() },
       { onConflict: "key" },
     );
+    if (upsertErr) {
+      showToast("Failed to save: " + upsertErr.message, "error");
+      setSaving(false);
+      return;
+    }
     auditLog?.("update_payment_config", "payment_config", null, "Payment Configuration");
     showToast("Payment configuration saved");
     setSaving(false);
