@@ -46,6 +46,30 @@ const DEFAULTS = {
 
 const CACHE_PREFIX = 'brandior_setting_'
 
+// Feature flags use extended format: { enabled: bool, platforms: { web: bool, ios: bool, android: bool } }
+// All older boolean values are treated as global-on / global-off for all platforms.
+export function isFeatureEnabled(key, platform = 'web') {
+  const raw = getSetting(key)
+  if (typeof raw === 'boolean') return raw
+  if (typeof raw === 'object' && raw !== null) {
+    if (!raw.enabled) return false
+    return raw.platforms?.[platform] !== false
+  }
+  return DEFAULTS[key] !== false
+}
+
+// Default platform override object for a new feature flag value
+export function makeFeatureValue(enabled, platformOverrides = {}) {
+  return {
+    enabled,
+    platforms: {
+      web:     platformOverrides.web     !== undefined ? platformOverrides.web     : enabled,
+      ios:     platformOverrides.ios     !== undefined ? platformOverrides.ios     : enabled,
+      android: platformOverrides.android !== undefined ? platformOverrides.android : enabled,
+    },
+  }
+}
+
 // Synchronous read from localStorage cache (instant)
 export function getSetting(key) {
   const raw = localStorage.getItem(CACHE_PREFIX + key)
