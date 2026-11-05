@@ -310,6 +310,28 @@ const NAV_GROUPS = [
   { title: "Admin",     items: ["team", "approvals", "content", "features", "legal", "app-config", "system", "analytics2", "audit", "security", "roles", "settings"] },
 ];
 
+// ─── TWO-LEVEL NAVIGATION ─────────────────────────────────────────────────────
+
+const NAV_DOMAINS = [
+  { id: "overview",     label: "Overview",        items: ["overview", "analytics", "funnel", "earnings", "sla", "exports", "health"] },
+  { id: "users",        label: "Users",           items: ["users", "badges", "rankings", "kyc", "referrals2"] },
+  { id: "collabs",      label: "Collabs",         items: ["jobs", "pitches", "messaging", "disputes2"] },
+  { id: "finance",      label: "Finance",         items: ["wallets", "withdrawals", "payout-approvals", "escrow", "financials2", "commission", "rubies", "refunds", "pay-config", "payments"] },
+  { id: "marketplace",  label: "Marketplace",     items: ["marketplace", "rate-cards", "categories", "discovery", "reviews"] },
+  { id: "comms",        label: "Comms",           items: ["announcements", "promo-codes", "notifications2", "push", "email-notifs", "email-log"] },
+  { id: "support",      label: "Support",         items: ["support2"] },
+  { id: "content",      label: "Content",         items: ["cms2", "content", "legal", "analytics2"] },
+  { id: "safety",       label: "Safety",          items: ["trust-safety", "ai-police", "fraud"] },
+  { id: "system",       label: "System",          items: ["ai-controls", "pitch-settings", "features", "app-config", "system", "settings", "team", "approvals", "audit", "security", "roles"] },
+];
+
+function getDomainForTab(tabId) {
+  for (const d of NAV_DOMAINS) {
+    if (d.items.includes(tabId)) return d.id;
+  }
+  return "overview";
+}
+
 // ─── DEFAULT LEGAL CONTENT ────────────────────────────────────────────────────
 
 const DEFAULT_TERMS = `## Terms & Conditions
@@ -412,6 +434,7 @@ export default function AdminPanel() {
   const [sidebarPinned, setSidebarPinned]   = useState(() => localStorage.getItem('brandior_sidebar_pinned') === 'true');
   const sidebarOpen = sidebarPinned || sidebarHovered;
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('admin_theme') === 'dark');
+  const activeDomain = getDomainForTab(activeTab);
   const [toast, setToast] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);
   const [viewUser, setViewUser] = useState(null);
@@ -3410,76 +3433,137 @@ export default function AdminPanel() {
   };
 
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: T.bg }}>
-      {/* ── Sidebar ── */}
-      <aside
-        className="flex-shrink-0 flex flex-col"
-        onMouseEnter={() => !sidebarPinned && setSidebarHovered(true)}
-        onMouseLeave={() => !sidebarPinned && setSidebarHovered(false)}
-        style={{
-          width: sidebarOpen ? 200 : 72,
-          backgroundColor: "#0d1117",
-          minHeight: "100vh", position: "sticky", top: 0, height: "100vh",
-          transition: "width 0.22s cubic-bezier(0.4,0,0.2,1)",
-          overflow: "hidden",
-          zIndex: 40,
-        }}
-      >
+    <div className="flex flex-col min-h-screen" style={{ backgroundColor: T.bg }}>
+
+      {/* ══ TOP DOMAIN BAR ══════════════════════════════════════════════════════ */}
+      <div style={{
+        height: 48, flexShrink: 0,
+        backgroundColor: "#0d1117",
+        borderBottom: "1px solid #161b22",
+        display: "flex", alignItems: "center",
+        paddingLeft: 14, paddingRight: 12,
+        gap: 6,
+        position: "sticky", top: 0, zIndex: 50,
+      }}>
         {/* Logo */}
-        <div className="flex items-center py-4 border-b" style={{ borderColor: "#161b22", paddingLeft: 19, gap: 10, minHeight: 64, position: "relative" }}>
-          <img src="/Brandiör-2.png" alt="Brandior" style={{ width: 34, height: 34, objectFit: "contain", flexShrink: 0 }} />
-          <span style={{
-            fontSize: 15, fontWeight: 900, color: "#fff", whiteSpace: "nowrap",
-            opacity: sidebarOpen ? 1 : 0,
-            transform: sidebarOpen ? "translateX(0)" : "translateX(-8px)",
-            transition: "opacity 0.18s ease, transform 0.18s ease",
-            letterSpacing: "-0.02em", flex: 1,
-          }}>Brandior</span>
-          {/* Pin / unpin toggle — visible only when sidebar is open */}
-          <button
-            onClick={() => {
-              const next = !sidebarPinned;
-              setSidebarPinned(next);
-              localStorage.setItem('brandior_sidebar_pinned', next);
-              if (!next) setSidebarHovered(false);
-            }}
-            title={sidebarPinned ? "Unpin sidebar" : "Pin sidebar open"}
-            style={{
-              opacity: sidebarOpen ? 1 : 0,
-              transition: "opacity 0.15s ease",
-              background: "none", border: "none", cursor: "pointer",
-              color: sidebarPinned ? "#7c3aed" : "#6e7681",
-              padding: "4px 8px 4px 0", flexShrink: 0,
-            }}
-          >
-            {sidebarPinned
-              ? <PanelLeftClose style={{ width: 16, height: 16 }} />
-              : <PanelLeftOpen  style={{ width: 16, height: 16 }} />
-            }
-          </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, marginRight: 8 }}>
+          <img src="/Brandiör-2.png" alt="Brandior" style={{ width: 26, height: 26, objectFit: "contain" }} />
+          <span style={{ fontSize: 14, fontWeight: 900, color: "#fff", letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>Brandior</span>
         </div>
 
-        {/* Nav icons */}
-        <nav className="flex-1 overflow-y-auto py-3 flex flex-col gap-0.5" style={{ scrollbarWidth: "none", alignItems: "stretch" }}>
-          {NAV_GROUPS.map((group, gi) => {
+        {/* Divider */}
+        <div style={{ width: 1, height: 20, backgroundColor: "#21262d", flexShrink: 0, marginRight: 4 }} />
+
+        {/* Domain tabs — scrollable */}
+        <div style={{ display: "flex", alignItems: "center", gap: 2, flex: 1, overflowX: "auto", scrollbarWidth: "none" }}>
+          {NAV_DOMAINS.map(domain => {
+            const isDomainActive = activeDomain === domain.id;
+            const domainBadgeCount =
+              domain.id === "collabs" ? openDisputeCount :
+              domain.id === "finance" ? 0 :
+              domain.id === "safety"  ? modStats.pending :
+              domain.id === "system"  ? pendingCount : 0;
             return (
-              <div key={gi} style={{ marginTop: gi === 0 ? 0 : 6 }}>
-                {/* Section title — visible only when sidebar is expanded */}
-                <div style={{
-                  height: 28,
-                  display: "flex", alignItems: "center",
-                  paddingLeft: 23,
-                  overflow: "hidden",
-                }}>
+              <button key={domain.id}
+                onClick={() => setActiveTab(domain.items[0])}
+                style={{
+                  height: 30, borderRadius: 7,
+                  padding: "0 10px",
+                  backgroundColor: isDomainActive ? "#7c3aed" : "transparent",
+                  color: isDomainActive ? "#fff" : "#8b949e",
+                  fontSize: 12, fontWeight: 700,
+                  border: "none", cursor: "pointer",
+                  whiteSpace: "nowrap", flexShrink: 0,
+                  transition: "background-color 0.15s, color 0.15s",
+                  position: "relative",
+                }}
+                onMouseEnter={e => { if (!isDomainActive) { e.currentTarget.style.backgroundColor = "#21262d"; e.currentTarget.style.color = "#c9d1d9"; }}}
+                onMouseLeave={e => { if (!isDomainActive) { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#8b949e"; }}}
+              >
+                {domain.label}
+                {domainBadgeCount > 0 && (
                   <span style={{
-                    fontSize: 10, fontWeight: 800, letterSpacing: "0.08em",
-                    color: "#6e7681", textTransform: "uppercase",
-                    opacity: sidebarOpen ? 1 : 0,
-                    transition: "opacity 0.15s ease",
-                    whiteSpace: "nowrap",
-                  }}>{group.title}</span>
-                </div>
-                {group.items.map(id => {
+                    position: "absolute", top: 3, right: 3,
+                    width: 6, height: 6, borderRadius: "50%",
+                    backgroundColor: "#ef4444",
+                    border: "1.5px solid #0d1117",
+                  }} />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Right: logout */}
+        <button onClick={handleLogout} title="Logout"
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 7, backgroundColor: "transparent", border: "none", cursor: "pointer", color: "#6e7681", flexShrink: 0 }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#21262d"; e.currentTarget.style.color = "#f87171"; }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#6e7681"; }}>
+          <LogOut style={{ width: 15, height: 15 }} />
+        </button>
+      </div>
+
+      {/* ══ BODY (sidebar + main) ═══════════════════════════════════════════════ */}
+      <div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
+
+        {/* ── Contextual Sidebar ── */}
+        <aside
+          onMouseEnter={() => !sidebarPinned && setSidebarHovered(true)}
+          onMouseLeave={() => !sidebarPinned && setSidebarHovered(false)}
+          style={{
+            width: sidebarOpen ? 168 : 48,
+            backgroundColor: "#0d1117",
+            borderRight: "1px solid #161b22",
+            flexShrink: 0,
+            display: "flex", flexDirection: "column",
+            overflowY: "auto", overflowX: "hidden",
+            transition: "width 0.22s cubic-bezier(0.4,0,0.2,1)",
+            height: "100%",
+            scrollbarWidth: "none",
+          }}
+        >
+          {/* Domain heading + pin toggle */}
+          <div style={{
+            height: 36, flexShrink: 0,
+            display: "flex", alignItems: "center",
+            paddingLeft: 14, paddingRight: 6,
+            borderBottom: "1px solid #161b22",
+          }}>
+            <span style={{
+              fontSize: 10, fontWeight: 800, letterSpacing: "0.08em",
+              color: "#6e7681", textTransform: "uppercase",
+              opacity: sidebarOpen ? 1 : 0,
+              transition: "opacity 0.15s ease",
+              whiteSpace: "nowrap", flex: 1,
+            }}>
+              {NAV_DOMAINS.find(d => d.id === activeDomain)?.label}
+            </span>
+            <button
+              onClick={() => {
+                const next = !sidebarPinned;
+                setSidebarPinned(next);
+                localStorage.setItem('brandior_sidebar_pinned', String(next));
+                if (!next) setSidebarHovered(false);
+              }}
+              title={sidebarPinned ? "Unpin sidebar" : "Pin sidebar open"}
+              style={{
+                opacity: sidebarOpen ? 1 : 0,
+                transition: "opacity 0.15s ease",
+                background: "none", border: "none", cursor: "pointer",
+                color: sidebarPinned ? "#7c3aed" : "#6e7681",
+                padding: "4px", flexShrink: 0,
+              }}
+            >
+              {sidebarPinned
+                ? <PanelLeftClose style={{ width: 14, height: 14 }} />
+                : <PanelLeftOpen  style={{ width: 14, height: 14 }} />
+              }
+            </button>
+          </div>
+
+          {/* Submenu items */}
+          <nav style={{ flex: 1, padding: "6px 6px", display: "flex", flexDirection: "column", gap: 2 }}>
+            {(NAV_DOMAINS.find(d => d.id === activeDomain)?.items || []).map(id => {
               const item = navItemMap[id];
               if (!item) return null;
               const { Icon, label, badge, badgeColor } = item;
@@ -3493,10 +3577,9 @@ export default function AdminPanel() {
                   key={id}
                   onClick={() => { setActiveTab(id); if (id === 'financials') loadFinancials(); }}
                   style={{
-                    height: 40, borderRadius: 10, flexShrink: 0,
+                    height: 36, borderRadius: 8, flexShrink: 0,
                     display: "flex", alignItems: "center",
-                    paddingLeft: 15, paddingRight: 8, gap: 10,
-                    margin: "0 8px",
+                    paddingLeft: 11, paddingRight: 6, gap: 9,
                     backgroundColor: active ? "#7c3aed" : "transparent",
                     color: active ? "#fff" : "#6e7681",
                     position: "relative",
@@ -3507,7 +3590,7 @@ export default function AdminPanel() {
                   onMouseEnter={e => { if (!active) { e.currentTarget.style.backgroundColor = "#21262d"; e.currentTarget.style.color = "#c9d1d9"; } }}
                   onMouseLeave={e => { if (!active) { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#6e7681"; } }}
                 >
-                  <Icon style={{ width: 17, height: 17, flexShrink: 0 }} />
+                  <Icon style={{ width: 15, height: 15, flexShrink: 0 }} />
                   <span style={{
                     fontSize: 13, fontWeight: 600,
                     opacity: sidebarOpen ? 1 : 0,
@@ -3516,8 +3599,8 @@ export default function AdminPanel() {
                   {badge && badgeCount > 0 && (
                     <span style={{
                       position: "absolute",
-                      top: sidebarOpen ? "50%" : 6,
-                      right: sidebarOpen ? 10 : 6,
+                      top: sidebarOpen ? "50%" : 5,
+                      right: sidebarOpen ? 8 : 5,
                       transform: sidebarOpen ? "translateY(-50%)" : "none",
                       width: sidebarOpen ? "auto" : 8,
                       height: sidebarOpen ? 18 : 8,
@@ -3534,37 +3617,8 @@ export default function AdminPanel() {
                 </button>
               );
             })}
-              </div>
-            );
-          })}
-        </nav>
-
-        {/* Bottom */}
-        <div className="flex flex-col gap-1 py-4 border-t" style={{ borderColor: "#161b22", padding: "12px 8px" }}>
-          {/* User row */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 7px", borderRadius: 10, overflow: "hidden" }}>
-            <div style={{ width: 30, height: 30, borderRadius: "50%", backgroundColor: "#7c3aed", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <span style={{ fontSize: 11, fontWeight: 800, color: "#fff" }}>
-                {(adminUser.name || "SA").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
-              </span>
-            </div>
-            <div style={{ opacity: sidebarOpen ? 1 : 0, transition: "opacity 0.15s ease", overflow: "hidden" }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "#c9d1d9", whiteSpace: "nowrap", lineHeight: 1.2 }}>{adminUser.name}</p>
-              <p style={{ fontSize: 10, color: "#6e7681", whiteSpace: "nowrap" }}>Super Admin</p>
-            </div>
-          </div>
-          {/* Logout */}
-          <button
-            onClick={handleLogout}
-            style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 7px", borderRadius: 10, backgroundColor: "transparent", border: "none", cursor: "pointer", color: "#6e7681", overflow: "hidden" }}
-            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#21262d"; e.currentTarget.style.color = "#f87171"; }}
-            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#6e7681"; }}
-          >
-            <LogOut style={{ width: 16, height: 16, flexShrink: 0 }} />
-            <span style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", opacity: sidebarOpen ? 1 : 0, transition: "opacity 0.15s ease" }}>Logout</span>
-          </button>
-        </div>
-      </aside>
+          </nav>
+        </aside>
 
       {/* ── Main Content ── */}
       <main className="flex-1 flex flex-col min-w-0">
@@ -3665,6 +3719,7 @@ export default function AdminPanel() {
           {TAB_CONTENT[activeTab]?.()}
         </div>
       </main>
+      </div>{/* ── end body (sidebar + main) ── */}
 
       {/* Modals */}
       {confirmModal && (
