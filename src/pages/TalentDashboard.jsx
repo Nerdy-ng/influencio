@@ -2299,23 +2299,38 @@ export default function TalentDashboard() {
   async function addPortfolioItem(e) {
     e.preventDefault()
     if (!newWork.title.trim()) return
+    setPortfolioUploadError('')
     setUploadingPortfolio(true)
-    let finalUrl = newWork.url
     try {
+      let finalUrl = ''
       if (portfolioFile) {
         const { data: { user } } = await supabase.auth.getUser()
-        const ext = portfolioFile.name.split('.').pop()
         const path = `${user.id}/${Date.now()}-${portfolioFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
         const { error } = await supabase.storage.from('portfolio').upload(path, portfolioFile)
-        if (!error) {
-          const { data: { publicUrl } } = supabase.storage.from('portfolio').getPublicUrl(path)
-          finalUrl = publicUrl
+        if (error) {
+          setPortfolioUploadError('Upload failed: ' + (error.message || 'Please try again.'))
+          return
         }
+        const { data: { publicUrl } } = supabase.storage.from('portfolio').getPublicUrl(path)
+        finalUrl = publicUrl
+      } else if (newWork.url && !newWork.url.startsWith('blob:')) {
+        finalUrl = newWork.url
+      } else {
+        setPortfolioUploadError('Please select a file or enter a URL.')
+        return
       }
-      const item = { ...newWork, url: finalUrl, id: Date.now() }
+      const canonicalType = newWork.type === 'video' ? 'video' : 'image'
+      const item = {
+        id: String(Date.now()),
+        url: finalUrl,
+        type: canonicalType,
+        title: newWork.title,
+        brand: newWork.brand,
+        desc: newWork.desc,
+        visible: true,
+      }
       setProfile(p => {
         const updated = [...p.portfolio, item]
-        // persist to profiles table
         supabase.auth.getUser().then(({ data: { user } }) => {
           if (user) supabase.from('profiles').upsert({ id: user.id, portfolio: updated, updated_at: new Date().toISOString() }, { onConflict: 'id' })
         })
@@ -2354,6 +2369,7 @@ export default function TalentDashboard() {
 
   const [portfolioFile, setPortfolioFile] = useState(null)
   const [uploadingPortfolio, setUploadingPortfolio] = useState(false)
+  const [portfolioUploadError, setPortfolioUploadError] = useState('')
 
   function handlePortfolioFile(file) {
     if (!file) return
@@ -2364,7 +2380,8 @@ export default function TalentDashboard() {
     const preview = { url, name: file.name, size: (file.size / (1024 * 1024)).toFixed(1), mime: file.type }
     setUploadPreview(preview)
     setPortfolioFile(file)
-    setNewWork(w => ({ ...w, url, type: isVideo ? 'video' : 'photo' }))
+    setPortfolioUploadError('')
+    setNewWork(w => ({ ...w, type: isVideo ? 'video' : 'photo' }))
   }
 
   async function handleAvatarFile(file) {
@@ -2389,6 +2406,7 @@ export default function TalentDashboard() {
     setNewWork({ title: '', brand: '', type: 'video', url: '', desc: '' })
     setUploadPreview(null)
     setPortfolioFile(null)
+    setPortfolioUploadError('')
     setShowAddWork(false)
   }
 
@@ -3091,6 +3109,11 @@ export default function TalentDashboard() {
                           rows={2} className="w-full px-4 py-3 rounded-xl text-sm outline-none resize-none"
                           style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff', color: '#1e0040' }} />
                       </div>
+
+                      {/* ── Upload error ── */}
+                      {portfolioUploadError && (
+                        <p className="text-sm text-red-600 font-medium px-1">{portfolioUploadError}</p>
+                      )}
 
                       {/* ── Actions ── */}
                       <div className="flex gap-3 pt-1">

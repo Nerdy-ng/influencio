@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '');
 import { supabase } from '../lib/supabase'
+import { normalizePortfolio } from '../lib/portfolioItem'
 import { Helmet } from 'react-helmet-async'
 import {
   ChevronLeft, MapPin, Star, CheckCircle, Users, Heart,
@@ -776,6 +777,7 @@ export default function TalentProfilePage() {
           completedCampaigns: p.completed_campaigns,
           availableForHire: p.available_for_hire,
           platforms: p.platforms || [],
+          portfolio: normalizePortfolio(p.portfolio),
         })
       } catch {
         if (!cancelled) setTalent(MOCK_CREATOR)
@@ -952,6 +954,49 @@ export default function TalentProfilePage() {
             )}
           </div>
         </div>
+
+        {/* Portfolio */}
+        {c.portfolio?.length > 0 && (
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-6 p-6">
+            <h2 className="font-bold text-gray-900 text-base mb-4">Portfolio</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {c.portfolio.map((item, i) => (
+                <a
+                  key={item.id ?? i}
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative rounded-2xl overflow-hidden aspect-square block"
+                  style={{ backgroundColor: '#f3e8ff' }}
+                >
+                  {item.type === 'video' ? (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-900">
+                      <span className="w-10 h-10 rounded-full flex items-center justify-center bg-white/20">
+                        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white ml-0.5" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>
+                      </span>
+                    </div>
+                  ) : (
+                    <img
+                      src={item.url}
+                      alt={item.title || 'Portfolio'}
+                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                      onError={e => { e.target.style.display = 'none' }}
+                    />
+                  )}
+                  {item.title && (
+                    <div className="absolute inset-x-0 bottom-0 px-2 py-1.5 bg-gradient-to-t from-black/70 to-transparent">
+                      <p className="text-white text-[10px] font-semibold truncate">{item.title}</p>
+                    </div>
+                  )}
+                  <span className="absolute top-2 left-2 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                    style={{ backgroundColor: item.type === 'video' ? 'rgba(76,29,149,0.85)' : 'rgba(255,107,157,0.85)', color: 'white' }}>
+                    {item.type === 'video' ? '🎬' : '📷'}
+                  </span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 2-col lower section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
