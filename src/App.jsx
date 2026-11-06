@@ -153,7 +153,7 @@ export default function App() {
       }
       if (location.pathname === '/reset-password') { setAuthReady(true); return }
       if (session) {
-        const metaRole = session.user.user_metadata?.role
+        const metaRole = session.user.app_metadata?.role || session.user.user_metadata?.role
 
         if (event === 'PASSWORD_RECOVERY') {
           setAuthReady(true)

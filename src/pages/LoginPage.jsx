@@ -401,8 +401,9 @@ export default function LoginPage() {
       return
     }
     localStorage.setItem('brandiór_user', data.user.id)
-    localStorage.setItem('brandiór_role', role)
-    window.location.replace(role === 'brand' ? '/brand-dashboard' : '/dashboard')
+    const serverRole = data.user.app_metadata?.role || data.user.user_metadata?.role || 'talent'
+    localStorage.setItem('brandiór_role', serverRole)
+    window.location.replace(serverRole === 'brand' ? '/brand-dashboard' : '/dashboard')
   }
 
   function handleChange(field, value) {
