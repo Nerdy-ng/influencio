@@ -4983,9 +4983,7 @@ const INIT_PLATFORMS = [
   { id: 'x',         label: 'X (Twitter)', color: '#1DA1F2', reach: 'Posts & threads',     enabled: false, fee: 10000 },
   { id: 'facebook',  label: 'Facebook',  color: '#1877F2', reach: 'Feed, Reels, Stories',  enabled: false, fee: 10000 },
 ]
-const INIT_ADDONS = [
-  { id: 'script', label: 'Script Writing', color: '#3b82f6', desc: 'You research and write the full script', enabled: true, price: 20000, custom: false },
-]
+const INIT_ADDONS = []
 const MIN_RATE = 20000
 const fmt = n => '₦' + Number(n || 0).toLocaleString()
 const parseNum = s => { const n = parseInt(String(s).replace(/[^0-9]/g, ''), 10); return isNaN(n) ? 0 : n }
