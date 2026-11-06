@@ -363,6 +363,7 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
       .from('conversations')
       .select('*')
       .eq(col, userId)
+      .not('last_message', 'is', null)
       .order('last_message_at', { ascending: false })
     if (!error && data) setConversations(data.map(mapConv))
   }, [userId, userType])

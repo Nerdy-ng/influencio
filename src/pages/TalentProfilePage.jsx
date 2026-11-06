@@ -654,6 +654,7 @@ export default function TalentProfilePage() {
   const [chatInput, setChatInput] = useState('')
   const [chatSending, setChatSending] = useState(false)
   const chatBottomRef = useRef(null)
+  const conversationIdRef = useRef(null)
   const { toggle, isFav } = useFavorites()
 
   // Custom offer state
@@ -692,9 +693,38 @@ export default function TalentProfilePage() {
 
   const canSendOffer = offerForm.title.trim().length > 0 && offerForm.brief.trim().length >= 20 && offerForm.budget.length > 0 && offerForm.deliverables.length > 0
 
-  function openChat() {
+  async function openChat() {
     setChatOpen(true)
     setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
+    // Load existing messages if a conversation already exists
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const talentId = talent?._id || talent?.id || profileId
+      const { data: conv } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('brand_id', user.id)
+        .eq('talent_id', talentId)
+        .is('collab_id', null)
+        .maybeSingle()
+      if (!conv) return
+      conversationIdRef.current = conv.id
+      const { data: msgs } = await supabase
+        .from('messages')
+        .select('id, sender_id, body, text, created_at')
+        .eq('conversation_id', conv.id)
+        .order('created_at', { ascending: true })
+      if (msgs && msgs.length > 0) {
+        setChatMessages(msgs.map(m => ({
+          id: m.id,
+          text: m.body || m.text || '',
+          from: m.sender_id === user.id ? 'brand' : 'creator',
+          sentAt: m.created_at,
+        })))
+        setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 150)
+      }
+    } catch { /* silent */ }
   }
 
   async function startConversation() { openChat() }
@@ -705,36 +735,47 @@ export default function TalentProfilePage() {
     if (!text) return
     setChatInput('')
     setChatSending(true)
-    const msg = { id: Date.now(), text, from: 'brand', sentAt: new Date().toISOString() }
-    setChatMessages(prev => [...prev, msg])
-    // Create or find conversation in Supabase
-    try {
-      const brandId = localStorage.getItem('brandiór_user') || 'brand_demo'
-      const brandName = localStorage.getItem('brandiór_brand_name') || 'Brand'
-      const talentId = talent?._id || talent?.id || profileId
-      // Check if conversation already exists
-      const { data: existing } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('brand_id', brandId)
-        .eq('talent_id', talentId)
-        .maybeSingle()
-      if (!existing) {
-        await supabase.from('conversations').insert({
-          brand_id: brandId,
-          talent_id: talentId,
-          brand_name: brandName,
-          talent_name: talent?.name || 'Creator',
-          talent_avatar: talent?.avatar || null,
-          last_message: null,
-          last_message_at: new Date().toISOString(),
-          unread_brand: 0,
-          unread_talent: 0,
-        })
-      }
-    } catch { /* silent */ }
-    setChatSending(false)
+    // Optimistic update
+    const optimisticId = Date.now()
+    setChatMessages(prev => [...prev, { id: optimisticId, text, from: 'brand', sentAt: new Date().toISOString() }])
     setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      const brandId = user?.id || localStorage.getItem('brandiór_user')
+      if (!brandId) throw new Error('not authenticated')
+      const talentId = talent?._id || talent?.id || profileId
+      // Upsert conversation (no-op if exists, never null last_message issue — trigger sets it on message insert)
+      if (!conversationIdRef.current) {
+        const { data: conv, error: convErr } = await supabase
+          .from('conversations')
+          .upsert(
+            { brand_id: brandId, talent_id: talentId, talent_name: talent?.name || 'Creator', talent_avatar: talent?.avatar || null },
+            { onConflict: 'brand_id,talent_id', ignoreDuplicates: false }
+          )
+          .select('id')
+          .single()
+        if (convErr) throw convErr
+        conversationIdRef.current = conv.id
+      }
+      // Insert message — DB trigger updates last_message + last_message_at
+      const { error: msgErr } = await supabase.from('messages').insert({
+        conversation_id: conversationIdRef.current,
+        sender_id: brandId,
+        sender_type: 'brand',
+        sender_role: 'brand',
+        body: text,
+        text,
+        file_name: null,
+        file_size: null,
+        file_url: null,
+      })
+      if (msgErr) throw msgErr
+    } catch {
+      // Roll back optimistic message on failure
+      setChatMessages(prev => prev.filter(m => m.id !== optimisticId))
+      setChatInput(text)
+    }
+    setChatSending(false)
   }
 
   useEffect(() => {
