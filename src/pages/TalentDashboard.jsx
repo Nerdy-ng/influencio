@@ -4977,11 +4977,11 @@ const INIT_DURATIONS = [
   { id: 'd5', label: '10+ mins',    price: 150000 },
 ]
 const INIT_PLATFORMS = [
-  { id: 'instagram', label: 'Instagram', color: '#E4405F', reach: 'Reels, Stories, Feed',  enabled: true,  fee: 20000 },
-  { id: 'tiktok',    label: 'TikTok',    color: '#010101', reach: 'Short-form video',       enabled: true,  fee: 15000 },
-  { id: 'youtube',   label: 'YouTube',   color: '#FF0000', reach: 'Videos & Shorts',        enabled: true,  fee: 40000 },
-  { id: 'x',         label: 'X (Twitter)', color: '#1DA1F2', reach: 'Posts & threads',     enabled: false, fee: 10000 },
-  { id: 'facebook',  label: 'Facebook',  color: '#1877F2', reach: 'Feed, Reels, Stories',  enabled: false, fee: 10000 },
+  { id: 'instagram', label: 'Instagram', color: '#E4405F', reach: 'Reels, Stories, Feed',  enabled: true,  fee: 20000, followers: 0 },
+  { id: 'tiktok',    label: 'TikTok',    color: '#010101', reach: 'Short-form video',       enabled: true,  fee: 15000, followers: 0 },
+  { id: 'youtube',   label: 'YouTube',   color: '#FF0000', reach: 'Videos & Shorts',        enabled: true,  fee: 40000, followers: 0 },
+  { id: 'x',         label: 'X (Twitter)', color: '#1DA1F2', reach: 'Posts & threads',     enabled: false, fee: 10000, followers: 0 },
+  { id: 'facebook',  label: 'Facebook',  color: '#1877F2', reach: 'Feed, Reels, Stories',  enabled: false, fee: 10000, followers: 0 },
 ]
 const INIT_ADDONS = []
 const MIN_RATE = 20000
@@ -5125,14 +5125,30 @@ function RateCardTab() {
                 <p className="text-xs text-gray-400">{p.reach}</p>
               </div>
               {p.enabled && (
-                <div className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ backgroundColor: '#f9f5ff' }}>
-                  <span className="text-xs font-bold" style={{ color: p.color }}>+₦</span>
-                  <input type="text" inputMode="numeric"
-                    value={p.fee > 0 ? p.fee.toLocaleString() : ''}
-                    onChange={e => setPlatforms(prev => prev.map(r => r.id === p.id ? { ...r, fee: parseNum(stripInjection(e.target.value)) } : r))}
-                    className="w-20 text-sm font-bold bg-transparent focus:outline-none text-right"
-                    style={{ color: p.color }}
-                    placeholder="0" />
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-col items-end gap-0.5">
+                    <span className="text-[10px] text-gray-400">Followers</span>
+                    <div className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ backgroundColor: '#f9f5ff' }}>
+                      <input type="text" inputMode="numeric"
+                        value={(p.followers ?? 0) > 0 ? (p.followers ?? 0).toLocaleString() : ''}
+                        onChange={e => setPlatforms(prev => prev.map(r => r.id === p.id ? { ...r, followers: parseNum(stripInjection(e.target.value)) } : r))}
+                        className="w-20 text-sm font-bold bg-transparent focus:outline-none text-right"
+                        style={{ color: '#374151' }}
+                        placeholder="0" />
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-0.5">
+                    <span className="text-[10px] text-gray-400">Posting fee</span>
+                    <div className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ backgroundColor: '#f9f5ff' }}>
+                      <span className="text-xs font-bold" style={{ color: p.color }}>+₦</span>
+                      <input type="text" inputMode="numeric"
+                        value={p.fee > 0 ? p.fee.toLocaleString() : ''}
+                        onChange={e => setPlatforms(prev => prev.map(r => r.id === p.id ? { ...r, fee: parseNum(stripInjection(e.target.value)) } : r))}
+                        className="w-20 text-sm font-bold bg-transparent focus:outline-none text-right"
+                        style={{ color: p.color }}
+                        placeholder="0" />
+                    </div>
+                  </div>
                 </div>
               )}
               <input type="checkbox" checked={p.enabled}

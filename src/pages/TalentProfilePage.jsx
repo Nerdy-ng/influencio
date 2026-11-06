@@ -272,10 +272,16 @@ function RateCardOrder({ talent, isPreview, navigate }) {
                   <button
                     key={p.id}
                     onClick={() => togglePlatform(p.id)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border-2 transition-colors"
+                    className="flex flex-col items-start px-3 py-2 rounded-xl text-xs font-semibold border-2 transition-colors"
                     style={{ borderColor: active ? p.color : '#f3f4f6', backgroundColor: active ? p.color + '10' : '#fff', color: active ? p.color : '#6b7280' }}
                   >
-                    {p.label} <span className="font-normal">+{formatNGN(p.fee)}</span>
+                    <span>{p.label}</span>
+                    {(p.followers ?? 0) > 0 && (
+                      <span className="font-normal text-[11px]" style={{ color: active ? p.color + 'cc' : '#9ca3af' }}>
+                        {formatFollowers(p.followers)} followers
+                      </span>
+                    )}
+                    <span className="font-normal" style={{ color: active ? p.color : '#9ca3af' }}>+{formatNGN(p.fee)}</span>
                   </button>
                 )
               })}
