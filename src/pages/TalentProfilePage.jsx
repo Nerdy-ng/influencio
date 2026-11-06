@@ -665,6 +665,7 @@ export default function TalentProfilePage() {
 
   async function sendCustomOffer(e) {
     e.preventDefault()
+    if (offerSending) return
     if (!offerForm.title.trim() || offerForm.brief.trim().length < 20 || !offerForm.budget || offerForm.deliverables.length === 0) return
     setOfferSending(true)
     const { data: { user } } = await supabase.auth.getUser()
