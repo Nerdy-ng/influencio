@@ -581,7 +581,7 @@ export default function Marketplace() {
         platforms: p.platforms || [],
         contentTypes: p.content_types || [],
         languages: p.languages || [],
-        tier: p.tier || 'fast-rising',
+        tier: p.tier || null,
         avgRating: p.avg_rating || 0,
         totalFollowers: p.total_followers || 0,
         avgEngagement: p.avg_engagement || 0,

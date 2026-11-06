@@ -464,8 +464,6 @@ export default function AdminPanel() {
   useEffect(() => { localStorage.setItem('admin_theme', darkMode ? 'dark' : 'light'); }, [darkMode]);
 
   useEffect(() => { loadLegalDocs() }, [])        // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { loadRankingCreators() }, [])  // eslint-disable-line react-hooks/exhaustive-deps
-
   useEffect(() => {
     supabase.from('tier_config').select('config').eq('id', 'brand_tiers').single()
       .then(({ data }) => { if (data?.config) setBrandTiers(data.config) })
