@@ -897,7 +897,7 @@ export default function TalentProfilePage() {
                     className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl text-white transition-colors"
                     style={{ backgroundColor: darkPurple }}
                   >
-                    <MessageCircle className="w-3.5 h-3.5" />
+                    <MessageSquare className="w-3.5 h-3.5" />
                     Message {c.name.split(' ')[0]}
                   </button>
                 </div>
@@ -1036,7 +1036,7 @@ export default function TalentProfilePage() {
                 <div className="overflow-y-auto px-4 py-4 space-y-2" style={{ minHeight: 180, maxHeight: 300, backgroundColor: '#faf5ff' }}>
                   {chatMessages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-32 text-center">
-                      <MessageCircle className="w-8 h-8 mb-2" style={{ color: '#c084fc' }} />
+                      <MessageSquare className="w-8 h-8 mb-2" style={{ color: '#c084fc' }} />
                       <p className="text-sm font-semibold text-gray-600">Start the conversation</p>
                       <p className="text-xs text-gray-400 mt-1">Introduce yourself and share what you're looking for</p>
                     </div>
