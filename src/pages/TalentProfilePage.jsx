@@ -989,7 +989,7 @@ export default function TalentProfilePage() {
                 {c.platforms.map(p => {
                   const pc = PLATFORM_COLORS[p.name] || { bg: '#6b7280', label: p.name }
                   return (
-                    <div key={p.name} className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2">
+                    <div key={p.name} className="flex items-center gap-2 rounded-xl px-3 py-2" style={{ backgroundColor: '#f3e8ff' }}>
                       <span className="w-6 h-6 rounded-md flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0" style={{ backgroundColor: pc.bg }}>{p.name[0]}</span>
                       <div>
                         <p className="text-xs font-semibold text-gray-700">{formatFollowers(p.followers)}</p>
