@@ -7,7 +7,7 @@ import { searchLocations, locationMatches } from '../lib/locationData'
 import {
   LayoutDashboard, ShoppingBag, CheckCircle, Wallet, Settings,
   Bell, ChevronDown, ChevronRight, X, AlertCircle, Shield, Loader2,
-  ExternalLink, Download, RotateCcw, Zap, Menu, Mail, Heart, MapPin, Star, Users, Search, UserPlus, LogOut,
+  ExternalLink, Download, RotateCcw, Zap, Award, Lock, Menu, Mail, Heart, MapPin, Star, Users, Search, UserPlus, LogOut,
   Inbox, Clock, ThumbsUp, ThumbsDown, MessageSquare, FileText, TrendingUp, Send, ArrowLeftRight,
   Plus, CreditCard, Building2, ArrowUpRight,
 } from 'lucide-react'
@@ -2232,10 +2232,10 @@ function FavoritesTab() {
 const INDUSTRIES = ['Fashion & Beauty', 'Food & Beverage', 'Tech & Gadgets', 'Health & Wellness', 'Finance & Fintech', 'Travel & Hospitality', 'Entertainment', 'Sports & Fitness', 'Real Estate', 'Education', 'Automotive', 'Retail & E-commerce', 'Other']
 
 const BRAND_TIER_STEPS = [
-  { key: 'dynamo',   label: 'Dynamo',   color: '#F72585', completions: 3,  creators: 2  },
-  { key: 'elite',    label: 'Elite',    color: '#f59e0b', completions: 10, creators: 4  },
-  { key: 'champion', label: 'Champion', color: '#7c3aed', completions: 22, creators: 9  },
-  { key: 'supremo',  label: 'Supremo',  color: '#D4AF37', completions: 40, creators: 16 },
+  { key: 'dynamo',   label: 'Dynamo',   color: '#F72585', completions: 3,  creators: 2,  desc: 'First milestone. Keep building creator relationships.' },
+  { key: 'elite',    label: 'Elite',    color: '#f59e0b', completions: 10, creators: 4,  desc: 'Established brand. Creators trust and return to work with you.' },
+  { key: 'champion', label: 'Champion', color: '#7c3aed', completions: 22, creators: 9,  desc: 'Top brand on Brandior. Known for consistent, paid collaborations.' },
+  { key: 'supremo',  label: 'Supremo',  color: '#D4AF37', completions: 40, creators: 16, desc: 'The pinnacle of brand achievement on Brandior. Among the most trusted and active.' },
 ]
 
 function computeBrandTierFromStats(completions, creators) {
@@ -2373,45 +2373,43 @@ function SettingsTab() {
       <h2 className="text-xl font-black" style={{ color: darkPurple }}>Brand Settings</h2>
 
       {/* Brandior Achievement */}
-      <div className="rounded-3xl overflow-hidden" style={{ border: `1px solid ${currentBrandTier ? currentBrandTier.color + '22' : '#e9d5ff'}`, backgroundColor: '#0d0020' }}>
+      <div className="rounded-3xl overflow-hidden" style={{ border: `1px solid ${currentBrandTier ? currentBrandTier.color + '22' : '#F7258520'}`, backgroundColor: '#0d0020', ...(isMaxBrandTier && currentBrandTier ? { boxShadow: `0 0 0 1px ${currentBrandTier.color}40` } : {}) }}>
         <div className="px-6 pt-5 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           <p className="text-[10px] font-bold uppercase tracking-widest mb-4" style={{ color: 'rgba(255,255,255,0.3)' }}>Brandior Achievement</p>
           <div className="flex items-start justify-between gap-3">
             <div>
               {currentBrandTier ? (
                 <>
-                  <p className="text-2xl font-black tracking-tight" style={{ color: currentBrandTier.color, letterSpacing: '-0.02em' }}>{currentBrandTier.label}</p>
-                  <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    {currentBrandTier.key === 'dynamo'   && 'First milestone. Keep working with creators.'}
-                    {currentBrandTier.key === 'elite'    && 'Established brand. Creators trust you.'}
-                    {currentBrandTier.key === 'champion' && 'Top brand. Known for consistent, paid work.'}
-                    {currentBrandTier.key === 'supremo'  && 'Pinnacle brand status on Brandior.'}
-                  </p>
+                  <p className="text-3xl font-black tracking-tight" style={{ color: currentBrandTier.color, letterSpacing: '-0.02em' }}>{currentBrandTier.label}</p>
+                  <p className="text-xs mt-1 leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>{currentBrandTier.desc}</p>
                 </>
               ) : (
                 <>
-                  <p className="text-lg font-black" style={{ color: 'rgba(255,255,255,0.4)' }}>Not yet earned</p>
-                  <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Hire creators and complete paid collabs to earn Dynamo</p>
+                  <p className="text-3xl font-black tracking-tight" style={{ color: '#F7258550', letterSpacing: '-0.02em' }}>Dynamo</p>
+                  <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Hire creators and complete paid collabs to unlock</p>
                 </>
               )}
             </div>
             <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center mt-0.5"
-              style={{ backgroundColor: currentBrandTier ? `${currentBrandTier.color}15` : 'rgba(255,255,255,0.05)', border: `1px solid ${currentBrandTier ? currentBrandTier.color + '30' : 'rgba(255,255,255,0.08)'}` }}>
-              <Zap className="w-4 h-4" style={{ color: currentBrandTier ? currentBrandTier.color : 'rgba(255,255,255,0.2)' }} />
+              style={{ backgroundColor: currentBrandTier ? `${currentBrandTier.color}15` : '#F7258508', border: `1px solid ${currentBrandTier ? currentBrandTier.color + '30' : '#F7258525'}` }}>
+              {currentBrandTier ? <Award className="w-4 h-4" style={{ color: currentBrandTier.color }} /> : <Lock className="w-4 h-4" style={{ color: '#F7258550' }} />}
             </div>
           </div>
         </div>
         <div className="px-6 py-4">
           {isMaxBrandTier ? (
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>You have reached the highest achievement on Brandior.</p>
+            <div>
+              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>{currentBrandTier.desc}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest mt-3" style={{ color: currentBrandTier.color + '80' }}>Pinnacle</p>
+            </div>
           ) : nextBrandTier ? (
             <>
-              <p className="text-[11px] font-semibold mb-3" style={{ color: 'rgba(255,255,255,0.3)' }}>Progress to {nextBrandTier.label}</p>
+              <p className="text-[11px] font-semibold mb-3" style={{ color: nextBrandTier.color + '99' }}>Progress to {nextBrandTier.label}</p>
               <div className="space-y-2.5">
                 <div>
                   <div className="flex justify-between mb-1.5">
                     <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>Paid completions</p>
-                    <p className="text-[10px] font-bold" style={{ color: nextBrandTier.color }}>{brandStats.completions} / {nextBrandTier.completions}</p>
+                    <p className="text-xs font-bold" style={{ color: nextBrandTier.color }}>{brandStats.completions} / {nextBrandTier.completions}</p>
                   </div>
                   <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                     <div className="h-full rounded-full transition-all duration-700"
@@ -2421,7 +2419,7 @@ function SettingsTab() {
                 <div>
                   <div className="flex justify-between mb-1.5">
                     <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>Unique creators</p>
-                    <p className="text-[10px] font-bold" style={{ color: nextBrandTier.color }}>{brandStats.creators} / {nextBrandTier.creators}</p>
+                    <p className="text-xs font-bold" style={{ color: nextBrandTier.color }}>{brandStats.creators} / {nextBrandTier.creators}</p>
                   </div>
                   <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                     <div className="h-full rounded-full transition-all duration-700"
@@ -2431,7 +2429,10 @@ function SettingsTab() {
               </div>
             </>
           ) : (
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>Find creators → Hire → Complete collabs → Progress</p>
+            <div>
+              <p className="text-[11px] font-semibold mb-2" style={{ color: '#F72585' + '99' }}>Progress to Dynamo</p>
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>Complete 3 paid collaborations with at least 2 unique creators.</p>
+            </div>
           )}
         </div>
       </div>

@@ -4,7 +4,7 @@ const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '');
 import { logout } from '../lib/logout'
 import { getLogo } from '../lib/brandSettings'
 import {
-  Zap, BadgeCheck, MapPin, Camera, Star,
+  Zap, Award, BadgeCheck, MapPin, Camera, Star,
   TrendingUp, Users, Heart, MessageCircle, Eye, EyeOff, ChevronRight,
   Briefcase, DollarSign, Edit3, Plus, Save, X, Bell,
   LayoutDashboard, Settings, LogOut, Upload, CheckCircle, Link2,
@@ -3388,7 +3388,7 @@ export default function TalentDashboard() {
                 const nextTier = profile.tier ? NEXT_CREATOR_TIER[profile.tier] : null
                 const isMax = profile.tier === 'champion'
                 return (
-                  <div className="rounded-3xl overflow-hidden shadow-sm" style={{ border: `1px solid ${tierCfg ? tierCfg.color + '22' : '#e9d5ff'}`, backgroundColor: '#0d0020' }}>
+                  <div className="rounded-3xl overflow-hidden" style={{ border: `1px solid ${tierCfg ? tierCfg.color + '22' : '#F7258520'}`, backgroundColor: '#0d0020', ...(isMax && tierCfg ? { boxShadow: `0 0 0 1px ${tierCfg.color}40` } : {}) }}>
                     {/* Identity */}
                     <div className="px-6 pt-5 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                       <p className="text-[10px] font-bold uppercase tracking-widest mb-4" style={{ color: 'rgba(255,255,255,0.3)' }}>Brandior Achievement</p>
@@ -3396,36 +3396,42 @@ export default function TalentDashboard() {
                         <div>
                           {tierCfg ? (
                             <>
-                              <p className="text-2xl font-black tracking-tight" style={{ color: tierCfg.color, letterSpacing: '-0.02em' }}>{tierCfg.label}</p>
+                              <p className="text-3xl font-black tracking-tight" style={{ color: tierCfg.color, letterSpacing: '-0.02em' }}>{tierCfg.label}</p>
                               <p className="text-xs mt-1 leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>{tierCfg.desc}</p>
                             </>
                           ) : (
                             <>
-                              <p className="text-lg font-black" style={{ color: 'rgba(255,255,255,0.4)' }}>Not yet earned</p>
-                              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Complete your profile to earn Spark</p>
+                              <p className="text-3xl font-black tracking-tight" style={{ color: '#F7258550', letterSpacing: '-0.02em' }}>Spark</p>
+                              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Complete your profile to unlock</p>
                             </>
                           )}
                         </div>
                         <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center mt-0.5"
-                          style={{ backgroundColor: tierCfg ? `${tierCfg.color}15` : 'rgba(255,255,255,0.05)', border: `1px solid ${tierCfg ? tierCfg.color + '30' : 'rgba(255,255,255,0.08)'}` }}>
-                          <Zap className="w-4 h-4" style={{ color: tierCfg ? tierCfg.color : 'rgba(255,255,255,0.2)' }} />
+                          style={{ backgroundColor: tierCfg ? `${tierCfg.color}15` : '#F7258508', border: `1px solid ${tierCfg ? tierCfg.color + '30' : '#F7258525'}` }}>
+                          {tierCfg ? <Award className="w-4 h-4" style={{ color: tierCfg.color }} /> : <Lock className="w-4 h-4" style={{ color: '#F7258550' }} />}
                         </div>
                       </div>
                     </div>
                     {/* Progress */}
                     <div className="px-6 py-4">
                       {isMax ? (
-                        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>You have reached the highest achievement on Brandior.</p>
+                        <div>
+                          <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>{tierCfg.desc}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest mt-3" style={{ color: tierCfg.color + '80' }}>Pinnacle</p>
+                        </div>
                       ) : !profile.tier ? (
-                        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>Pitch → Get hired → Complete work → Progress</p>
+                        <div>
+                          <p className="text-[11px] font-semibold mb-2" style={{ color: '#F72585' + '99' }}>Progress to Spark</p>
+                          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>Complete your creator profile — name, photo, niche, rate card, and payout wallet.</p>
+                        </div>
                       ) : nextTier ? (
                         <>
-                          <p className="text-[11px] font-semibold mb-3" style={{ color: 'rgba(255,255,255,0.3)' }}>Progress to {nextTier.label}</p>
+                          <p className="text-[11px] font-semibold mb-3" style={{ color: nextTier.color + '99' }}>Progress to {nextTier.label}</p>
                           <div className="space-y-2.5">
                             <div>
                               <div className="flex justify-between mb-1.5">
                                 <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>Paid completions</p>
-                                <p className="text-[10px] font-bold" style={{ color: nextTier.color }}>{achievementStats.completions} / {nextTier.completions}</p>
+                                <p className="text-xs font-bold" style={{ color: nextTier.color }}>{achievementStats.completions} / {nextTier.completions}</p>
                               </div>
                               <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                                 <div className="h-full rounded-full transition-all duration-700"
@@ -3436,7 +3442,7 @@ export default function TalentDashboard() {
                               <div>
                                 <div className="flex justify-between mb-1.5">
                                   <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>Unique brands</p>
-                                  <p className="text-[10px] font-bold" style={{ color: nextTier.color }}>{achievementStats.brands} / {nextTier.brands}</p>
+                                  <p className="text-xs font-bold" style={{ color: nextTier.color }}>{achievementStats.brands} / {nextTier.brands}</p>
                                 </div>
                                 <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                                   <div className="h-full rounded-full transition-all duration-700"
