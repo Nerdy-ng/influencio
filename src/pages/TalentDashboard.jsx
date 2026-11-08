@@ -616,6 +616,7 @@ function BrowseTab({ setActiveTab }) {
   const profileReady = doneCount === totalSteps
   const currentIdx  = stepsDone.findIndex(d => !d)
   const currentStep = currentIdx >= 0 ? setupSteps[currentIdx] : null
+  const setupWizardRef = useRef(null)
 
   useEffect(() => {
     async function load() {
@@ -789,7 +790,7 @@ function BrowseTab({ setActiveTab }) {
 
       {/* ── Setup wizard card ── */}
       {setupLoaded && !profileReady && currentStep && (
-        <div style={{ overflow: 'hidden' }}>
+        <div ref={setupWizardRef} style={{ overflow: 'hidden' }}>
           <div style={{ background: 'linear-gradient(135deg, #3b0764 0%, #6d28d9 60%, #a855f7 100%)', borderRadius: 20, padding: 24, ...cardStyle }}>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
@@ -940,7 +941,7 @@ function BrowseTab({ setActiveTab }) {
             onClick={() => {
               if (applied.includes(job.id)) return
               if (!profileReady) {
-                alert(`Complete your profile first (${doneCount}/${totalSteps} steps done).`)
+                setupWizardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                 return
               }
               setPitchJob(job); setPitchNote('')
@@ -2497,6 +2498,15 @@ export default function TalentDashboard() {
   }
 
   const tabs = ['browse', 'profile', 'collabs', 'overview', 'transactions', 'settings', 'support']
+  const TAB_LABELS = {
+    browse:       'Campaigns',
+    profile:      'My Profile',
+    collabs:      'My Collabs',
+    overview:     'Overview',
+    transactions: 'Transactions',
+    settings:     'Profile Settings',
+    support:      'Support',
+  }
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: '#f9f5ff' }}>
@@ -2658,7 +2668,7 @@ export default function TalentDashboard() {
                   color: activeTab === t ? 'white' : '#9ca3af',
                   border: activeTab === t ? 'none' : '1px solid #e9d5ff',
                 }}>
-                {t === 'settings' ? 'Profile Settings' : t}
+                {TAB_LABELS[t] ?? t}
               </button>
             ))}
           </div>

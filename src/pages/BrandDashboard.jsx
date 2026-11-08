@@ -591,6 +591,7 @@ function StatCard({ label, value, icon: Icon, color }) {
 }
 
 const NAV_ITEMS = [
+  { id: 'talents',        label: 'Find Creators',   icon: Search },
   { id: 'overview',       label: 'Overview',        icon: LayoutDashboard },
   { id: 'analytics',      label: 'Analytics',       icon: TrendingUp },
   { id: 'notifications',  label: 'Notifications',   icon: Bell },
@@ -737,6 +738,7 @@ export default function BrandDashboard() {
   const initialConvId = searchParams.get('conv')
 
   const [activeTab, setActiveTab] = useState(initialTab || 'overview')
+  const hasSetInitialTab = useRef(false)
   const [dashLogo, setDashLogo] = useState(() => getLogo('dashboard'))
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
@@ -884,6 +886,14 @@ export default function BrandDashboard() {
     return () => clearInterval(interval)
   }, [fetchOrders])
 
+  // New brand → default to Find Creators; returning brand → keep Overview
+  useEffect(() => {
+    if (loading || hasSetInitialTab.current || initialTab) return
+    hasSetInitialTab.current = true
+    const hasActivity = orders.some(o => !['cancelled'].includes(o.status))
+    if (!hasActivity) setActiveTab('talents')
+  }, [loading])
+
   useEffect(() => {
     if (newOrderId && !loading) {
       showToast('Order placed successfully! Complete payment to get started.', 'success')
@@ -972,6 +982,14 @@ export default function BrandDashboard() {
                 <ExternalLink className="w-3.5 h-3.5" />
                 Browse Talents
               </Link>
+              {/* Mobile-only: Find Creators shortcut */}
+              <button
+                onClick={() => setActiveTab('talents')}
+                className="sm:hidden p-2 rounded-xl hover:bg-gray-100 transition-colors"
+                title="Find Creators"
+              >
+                <Search className="w-5 h-5 text-gray-500" />
+              </button>
               <button onClick={() => setActiveTab('messages')} className="relative p-2 rounded-xl hover:bg-gray-100 transition-colors">
                 <Mail className="w-5 h-5 text-gray-500" />
                 <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
@@ -1442,6 +1460,21 @@ function OverviewTab({ activeOrders, pendingReview, completedOrders, setActiveTa
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-gray-900">Overview</h2>
+
+      {/* New-brand hero — visible only when no activity yet */}
+      {isNewAccount && (
+        <div className="rounded-2xl p-6" style={{ background: 'linear-gradient(135deg, #1a0035 0%, #3d0080 100%)' }}>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: '#c084fc' }}>Get Started</p>
+          <h3 className="text-xl font-black text-white mb-2">Find the right creator for your brand</h3>
+          <p className="text-sm mb-4" style={{ color: 'rgba(255,255,255,0.6)' }}>Discover creators, compare their profiles and rates, and find the right talent for your next campaign.</p>
+          <button
+            onClick={() => setActiveTab('talents')}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-opacity hover:opacity-90"
+            style={{ backgroundColor: '#c084fc', color: '#1a0035' }}>
+            Explore Creators <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Onboarding checklist */}
       <OnboardingChecklist role="brand" setActiveTab={setActiveTab} />
