@@ -2116,16 +2116,24 @@ export default function TalentDashboard() {
   async function openBrandSetup() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const hasBrandAccount = !!user.user_metadata?.brand_name
-    if (hasBrandAccount) {
-      await supabase.auth.updateUser({ data: { role: 'brand' } })
-      localStorage.setItem('brandiór_role', 'brand')
-      navigateTo('/brand-dashboard')
+    // Check server-authoritative capability — not user_metadata
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('has_brand_access, full_name, company_name')
+      .eq('id', user.id)
+      .single()
+    if (profile?.has_brand_access) {
+      // Already has brand capability — just switch workspace via EF
+      const { error } = await supabase.functions.invoke('set-workspace', { body: { workspace: 'brand' } })
+      if (!error) {
+        localStorage.setItem('brandiór_workspace', 'brand')
+        localStorage.setItem('brandiór_role', 'brand')
+        navigateTo('/brand-dashboard')
+      }
       return
     }
     setBsProfileId(user.id)
-    const { data: prof } = await supabase.from('profiles').select('full_name, company_name').eq('id', user.id).single()
-    setBsCompanyName(prof?.company_name || prof?.full_name || '')
+    setBsCompanyName(profile?.company_name || profile?.full_name || '')
     setBsIndustry('')
     setShowBrandSetup(true)
   }
@@ -2134,26 +2142,32 @@ export default function TalentDashboard() {
     if (!bsCompanyName.trim() || !bsIndustry || !bsProfileId) return
     setBsActivating(true)
     try {
-      await Promise.all([
-        supabase.auth.updateUser({ data: { brand_name: bsCompanyName.trim(), role: 'brand' } }),
-        supabase.from('profiles').upsert({ id: bsProfileId, company_name: bsCompanyName.trim(), industry: bsIndustry, role: 'Brand' }, { onConflict: 'id' }),
-        supabase.from('notifications').insert({
-          user_id: bsProfileId,
-          title:   'You just got the Brandior Partner badge! 🎉',
-          body:    `Your brand mode is now active. Complete your brand profile so creators can find you.\n\n— The Brandior Team`,
-          type:    'badge',
-          data:    { screen: 'badge' },
-        }),
-      ])
+      const { error } = await supabase.functions.invoke('set-workspace', {
+        body: { workspace: 'brand', company_name: bsCompanyName.trim(), industry: bsIndustry },
+      })
+      if (error) throw error
+      localStorage.setItem('brandiór_workspace', 'brand')
       localStorage.setItem('brandiór_role', 'brand')
       navigateTo('/brand-dashboard')
     } catch {
+      // EF failed — still navigate
+      localStorage.setItem('brandiór_workspace', 'brand')
       localStorage.setItem('brandiór_role', 'brand')
       navigateTo('/brand-dashboard')
     } finally {
       setBsActivating(false)
     }
   }
+
+  // Server-authoritative capability check: redirect if user lacks creator access
+  useEffect(() => {
+    const userId = localStorage.getItem('brandiór_user')
+    if (!userId) return
+    supabase.from('profiles').select('has_creator_access').eq('id', userId).single()
+      .then(({ data }) => {
+        if (data && data.has_creator_access === false) navigateTo('/brand-dashboard')
+      })
+  }, [])
 
   // Load profile from Supabase user metadata
   useEffect(() => {

@@ -19,5 +19,8 @@ export async function logout() {
   // Wipe our app keys
   localStorage.removeItem('brandiór_user')
   localStorage.removeItem('brandiór_role')
+  localStorage.removeItem('brandiór_workspace')
   localStorage.removeItem('brandiór_preview_profile')
+  sessionStorage.removeItem('brandiór_pending_role')
+  sessionStorage.removeItem('brandiór_new_signup')
 }

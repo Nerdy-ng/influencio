@@ -765,15 +765,23 @@ export default function BrandDashboard() {
   async function openCreatorSetup() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const hasCreatorAccount = !!user.user_metadata?.creator_type
-    if (hasCreatorAccount) {
-      await supabase.auth.updateUser({ data: { role: 'creator' } })
-      localStorage.setItem('brandiór_role', 'talent')
-      navigate('/dashboard')
+    // Check server-authoritative capability — not user_metadata
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('has_creator_access, full_name, company_name')
+      .eq('id', user.id)
+      .single()
+    if (profile?.has_creator_access) {
+      // Already has creator capability — just switch workspace via EF
+      const { error } = await supabase.functions.invoke('set-workspace', { body: { workspace: 'creator' } })
+      if (!error) {
+        localStorage.setItem('brandiór_workspace', 'creator')
+        localStorage.setItem('brandiór_role', 'talent')
+        navigate('/dashboard')
+      }
       return
     }
     setCsProfileId(user.id)
-    const { data: profile } = await supabase.from('profiles').select('full_name, company_name').eq('id', user.id).single()
     const suggested = (profile?.full_name || profile?.company_name || '')
       .toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '_').slice(0, 24)
     setCsUsername(suggested)
@@ -799,20 +807,16 @@ export default function BrandDashboard() {
     if (csUsernameStatus !== 'available' || !csUsername || !csProfileId) return
     setCsActivating(true)
     try {
-      await Promise.all([
-        supabase.auth.updateUser({ data: { username: csUsername, role: 'creator' } }),
-        supabase.from('profiles').upsert({ id: csProfileId, username: csUsername, role: 'Talent' }, { onConflict: 'id' }),
-        supabase.from('notifications').insert({
-          user_id: csProfileId,
-          title:   'You just got the Brandior Spark Badge! 🎉',
-          body:    `Your creator mode is now active. Complete your creator profile and set your rate card so brands can discover you.\n\n— The Brandior Team`,
-          type:    'badge',
-          data:    { screen: 'badge' },
-        }),
-      ])
+      const { error } = await supabase.functions.invoke('set-workspace', {
+        body: { workspace: 'creator', username: csUsername },
+      })
+      if (error) throw error
+      localStorage.setItem('brandiór_workspace', 'creator')
       localStorage.setItem('brandiór_role', 'talent')
       navigate('/dashboard')
     } catch {
+      // EF failed — still navigate (EF may have partially succeeded)
+      localStorage.setItem('brandiór_workspace', 'creator')
       localStorage.setItem('brandiór_role', 'talent')
       navigate('/dashboard')
     } finally {
@@ -878,6 +882,16 @@ export default function BrandDashboard() {
     function onLogoUpdate() { setDashLogo(getLogo('dashboard')) }
     window.addEventListener('brandior:logo-updated', onLogoUpdate)
     return () => window.removeEventListener('brandior:logo-updated', onLogoUpdate)
+  }, [])
+
+  // Server-authoritative capability check: redirect if user lacks brand access
+  useEffect(() => {
+    const userId = localStorage.getItem('brandiór_user')
+    if (!userId) return
+    supabase.from('profiles').select('has_brand_access').eq('id', userId).single()
+      .then(({ data }) => {
+        if (data && data.has_brand_access === false) navigate('/dashboard', { replace: true })
+      })
   }, [])
 
   useEffect(() => {

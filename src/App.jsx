@@ -5,6 +5,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import { getSetting, loadSettingsFromDB } from './lib/siteSettings'
 import { loadLogosFromDB } from './lib/brandSettings'
 import { loadThemeFromDB } from './lib/themeSettings'
+import { resolveWorkspaceDestination } from './lib/workspace'
 
 // Capture at module load time — before Supabase processes/strips the ?code= parameter.
 // This is the only reliable way to detect a password-recovery link click.
@@ -40,9 +41,10 @@ const AboutPage       = lazy(() => import('./pages/AboutPage'))
 const ContactPage     = lazy(() => import('./pages/ContactPage'))
 const HowItWorksPage  = lazy(() => import('./pages/HowItWorksPage'))
 const PricingPage     = lazy(() => import('./pages/PricingPage'))
-const ConfirmedPage      = lazy(() => import('./pages/ConfirmedPage'))
-const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
-const ResetPasswordPage  = lazy(() => import('./pages/ResetPasswordPage'))
+const ConfirmedPage           = lazy(() => import('./pages/ConfirmedPage'))
+const ForgotPasswordPage      = lazy(() => import('./pages/ForgotPasswordPage'))
+const ResetPasswordPage       = lazy(() => import('./pages/ResetPasswordPage'))
+const WorkspaceSelectorPage   = lazy(() => import('./pages/WorkspaceSelectorPage'))
 
 function PageLoader() {
   return (
@@ -112,9 +114,20 @@ function PublicOnly({ children }) {
 }
 
 // Logged-in → show the page. Logged-out → redirect to /login. Recovery session → reset page only.
-function PrivateRoute({ children, isRecoverySession }) {
+// requiredWorkspace: 'brand' | 'creator' — when set, redirects to the correct dashboard if the
+// stored workspace doesn't match, blocking direct URL navigation without the right capability.
+function PrivateRoute({ children, isRecoverySession, requiredWorkspace }) {
   if (isRecoverySession) return <Navigate to="/reset-password" replace />
   if (!localStorage.getItem('brandiór_user')) return <Navigate to="/login" replace />
+  if (requiredWorkspace) {
+    const ws   = localStorage.getItem('brandiór_workspace')
+    const role = localStorage.getItem('brandiór_role')
+    // Use stored workspace if available; fall back to role for pre-migration sessions
+    const effectiveWs = ws || (role === 'brand' ? 'brand' : role === 'talent' ? 'creator' : null)
+    if (effectiveWs && effectiveWs !== requiredWorkspace) {
+      return <Navigate to={effectiveWs === 'brand' ? '/brand-dashboard' : '/dashboard'} replace />
+    }
+  }
   return children
 }
 
@@ -153,7 +166,7 @@ export default function App() {
       }
       if (location.pathname === '/reset-password') { setAuthReady(true); return }
       if (session) {
-        const metaRole = session.user.app_metadata?.role || session.user.user_metadata?.role
+        const metaRole = session.user.app_metadata?.role
 
         if (event === 'PASSWORD_RECOVERY') {
           setAuthReady(true)
@@ -174,22 +187,43 @@ export default function App() {
           if (pendingRole) {
             sessionStorage.removeItem('brandiór_pending_role')
             sessionStorage.removeItem('brandiór_new_signup')
-            localStorage.setItem('brandiór_role', pendingRole)
-            if (isNewSignup) {
-              // New Google signup — send to profile completion
+            const serverRole = session.user.app_metadata?.role
+            if (serverRole) {
+              // Existing user: route via server-authoritative profile capabilities
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('active_workspace, has_brand_access, has_creator_access')
+                .eq('id', session.user.id)
+                .maybeSingle()
+              const dest = resolveWorkspaceDestination(profile, serverRole)
+              if (dest.workspace) localStorage.setItem('brandiór_workspace', dest.workspace)
+              localStorage.setItem('brandiór_role', dest.role)
+              navigate(dest.path, { replace: true })
+            } else if (isNewSignup) {
+              // New Google signup: no server role yet — trust their chosen role for profile completion
+              localStorage.setItem('brandiór_role', pendingRole)
               navigate(`/signup?step=complete&oauth=1&role=${pendingRole}`, { replace: true })
             } else {
+              // Returning Google user with no server role assigned: use their pending role
+              localStorage.setItem('brandiór_role', pendingRole)
               navigate(pendingRole === 'brand' ? '/brand-dashboard' : '/dashboard', { replace: true })
-
             }
           } else if (!localStorage.getItem('brandiór_role')) {
             if (metaRole) {
-              localStorage.setItem('brandiór_role', metaRole)
               const profileComplete = session.user.user_metadata?.profile_complete
               if (!profileComplete) {
+                localStorage.setItem('brandiór_role', metaRole)
                 navigate(`/signup?step=complete&oauth=1&role=${metaRole}`, { replace: true })
               } else {
-                navigate(metaRole === 'brand' ? '/brand-dashboard' : '/dashboard', { replace: true })
+                const { data: profile } = await supabase
+                  .from('profiles')
+                  .select('active_workspace, has_brand_access, has_creator_access')
+                  .eq('id', session.user.id)
+                  .maybeSingle()
+                const dest = resolveWorkspaceDestination(profile, metaRole)
+                if (dest.workspace) localStorage.setItem('brandiór_workspace', dest.workspace)
+                localStorage.setItem('brandiór_role', dest.role)
+                navigate(dest.path, { replace: true })
               }
             } else {
               navigate('/signup?step=role&oauth=1', { replace: true })
@@ -199,21 +233,25 @@ export default function App() {
           // Don't process initial session if it came from a recovery link
           if (STARTED_WITH_RECOVERY) { setAuthReady(true); return }
           localStorage.setItem('brandiór_user', session.user.id)
-          if (!localStorage.getItem('brandiór_role')) {
-            if (metaRole) {
-              localStorage.setItem('brandiór_role', metaRole)
-            } else {
-              // Check profiles table before falling back to role picker
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', session.user.id)
-                .maybeSingle()
-              if (profile?.role) {
-                localStorage.setItem('brandiór_role', profile.role)
-              } else {
+          const hasRole      = !!localStorage.getItem('brandiór_role')
+          const hasWorkspace = !!localStorage.getItem('brandiór_workspace')
+          if (!hasRole || !hasWorkspace) {
+            // Fetch profile to populate role and/or workspace if missing
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('active_workspace, has_brand_access, has_creator_access, role')
+              .eq('id', session.user.id)
+              .maybeSingle()
+            if (!hasRole) {
+              const dest = resolveWorkspaceDestination(profile, metaRole)
+              if (!profile && !metaRole) {
                 navigate('/signup?step=role&oauth=1', { replace: true })
+              } else {
+                if (dest.workspace) localStorage.setItem('brandiór_workspace', dest.workspace)
+                localStorage.setItem('brandiór_role', dest.role)
               }
+            } else if (!hasWorkspace && profile?.active_workspace) {
+              localStorage.setItem('brandiór_workspace', profile.active_workspace)
             }
           }
         }
@@ -299,13 +337,17 @@ export default function App() {
           element={IS_APP
             ? <TalentProfilePage />
             : <ParamRedirect baseUrl={APP_URL} path="/marketplace/:handle" />} />
+        <Route path="/workspace-select"
+          element={IS_APP
+            ? <PrivateRoute isRecoverySession={isRecoverySession}><WorkspaceSelectorPage /></PrivateRoute>
+            : <CrossDomainRedirect to={`${APP_URL}/workspace-select`} />} />
         <Route path="/dashboard"
           element={IS_APP
-            ? <PrivateRoute isRecoverySession={isRecoverySession}><TalentDashboard /></PrivateRoute>
+            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="creator"><TalentDashboard /></PrivateRoute>
             : <CrossDomainRedirect to={`${APP_URL}/dashboard`} />} />
         <Route path="/brand-dashboard"
           element={IS_APP
-            ? <PrivateRoute isRecoverySession={isRecoverySession}><BrandDashboard /></PrivateRoute>
+            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><BrandDashboard /></PrivateRoute>
             : <CrossDomainRedirect to={`${APP_URL}/brand-dashboard`} />} />
         <Route path="/collab/brief"
           element={IS_APP

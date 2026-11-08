@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Zap, Mail, Phone, Lock, Eye, EyeOff, ArrowRight, ChevronDown } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getLogo } from '../lib/brandSettings'
+import { resolveWorkspaceDestination } from '../lib/workspace'
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '');
 import { getSetting } from '../lib/siteSettings'
 
@@ -401,9 +402,15 @@ export default function LoginPage() {
       return
     }
     localStorage.setItem('brandiór_user', data.user.id)
-    const serverRole = data.user.app_metadata?.role || data.user.user_metadata?.role || 'talent'
-    localStorage.setItem('brandiór_role', serverRole)
-    window.location.replace(serverRole === 'brand' ? '/brand-dashboard' : '/dashboard')
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('active_workspace, has_brand_access, has_creator_access')
+      .eq('id', data.user.id)
+      .maybeSingle()
+    const dest = resolveWorkspaceDestination(profile, data.user.app_metadata?.role)
+    if (dest.workspace) localStorage.setItem('brandiór_workspace', dest.workspace)
+    localStorage.setItem('brandiór_role', dest.role)
+    window.location.replace(dest.path)
   }
 
   function handleChange(field, value) {
