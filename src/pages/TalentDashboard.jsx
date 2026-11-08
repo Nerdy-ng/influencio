@@ -178,7 +178,7 @@ function BrandiorRankModal({ score, profileComplete, onClose, onNavigate }) {
   useEffect(() => { const t = setTimeout(() => setBarW(profileComplete ? rank.barWidth : 0), 150); return () => clearTimeout(t) }, [rank, profileComplete])
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-end justify-center p-4 pb-8" style={{ backgroundColor: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} onClick={onClose}>
+    <div className="fixed inset-0 z-[200] flex items-end justify-center p-4 pb-8 sm:items-center" style={{ backgroundColor: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }} onClick={onClose}>
       <div className="w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl" style={{ backgroundColor: '#150025', border: '1px solid rgba(168,85,247,0.2)' }} onClick={e => e.stopPropagation()}>
         <div className="px-6 pt-7 pb-6">
           <div className="w-10 h-1 rounded-full mx-auto mb-6" style={{ backgroundColor: 'rgba(168,85,247,0.3)' }} />
@@ -524,7 +524,7 @@ function Sidebar({ active, setActive, dashLogo, onSwitchToBrand }) {
   }
 
   return (
-    <aside className="hidden lg:flex flex-col w-60 flex-shrink-0 h-screen sticky top-0 overflow-y-auto py-8 px-4"
+    <aside className="hidden md:flex flex-col w-60 flex-shrink-0 h-screen sticky top-0 overflow-y-auto py-8 px-4"
       style={{ backgroundColor: 'var(--b-creatorDashBg)', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
       {/* Logo */}
       <Link to="/" className="block -mx-4 px-4 mb-4">
@@ -964,7 +964,7 @@ function BrowseTab({ setActiveTab }) {
 
       {/* ── Pitch modal ── */}
       {pitchJob && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }} onClick={() => setPitchJob(null)}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }} onClick={() => setPitchJob(null)}>
           <div className="w-full max-w-lg rounded-t-3xl p-6 pb-10" style={{ backgroundColor: '#fff' }} onClick={e => e.stopPropagation()}>
             <div className="w-9 h-1 rounded-full mx-auto mb-5" style={{ backgroundColor: '#e9d5ff' }} />
             <h3 className="text-lg font-black mb-1" style={{ color: '#1e0040' }}>Pitch for this collab</h3>
@@ -988,7 +988,7 @@ function BrowseTab({ setActiveTab }) {
 
       {/* ── Pitch success confirmation ── */}
       {pitchSuccess && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}>
           <div className="w-full max-w-lg rounded-t-3xl p-6 pb-10" style={{ backgroundColor: '#fff' }}>
             <div className="w-9 h-1 rounded-full mx-auto mb-5" style={{ backgroundColor: '#e9d5ff' }} />
             <div className="text-center mb-6">
@@ -2703,10 +2703,10 @@ export default function TalentDashboard() {
           </div>
         </div>
 
-        <div className="p-6 max-w-4xl">
+        <div className="p-6 max-w-4xl mx-auto">
 
           {/* Mobile tab bar */}
-          <div className="flex gap-1 mb-6 lg:hidden overflow-x-auto pb-1">
+          <div className="flex gap-1 mb-6 md:hidden overflow-x-auto pb-1">
             {tabs.map(t => (
               <button key={t} onClick={() => setActiveTab(t)}
                 className="flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold capitalize transition-all"

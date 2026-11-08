@@ -678,7 +678,7 @@ function FindTalentsTab() {
       {loading ? (
         <div className="flex justify-center py-10"><div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" /></div>
       ) : (
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.length === 0 ? (
           <p className="col-span-2 text-center text-sm text-gray-400 py-8">No creators found</p>
         ) : filtered.map(t => {
@@ -1022,6 +1022,7 @@ export default function BrandDashboard() {
         <AnnouncementBanner role="brand" />
         {/* Content */}
         <main className="flex-1 p-4 sm:p-6">
+          <div className="max-w-screen-xl mx-auto">
           {loading ? (
             <div className="flex items-center justify-center py-20">
               <div className="w-8 h-8 rounded-full border-3 border-purple-200 border-t-purple-600 animate-spin" style={{ borderWidth: '3px' }} />
@@ -1066,6 +1067,7 @@ export default function BrandDashboard() {
               )}
             </>
           )}
+          </div>
         </main>
       </div>
 
