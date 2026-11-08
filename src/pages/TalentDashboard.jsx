@@ -330,7 +330,10 @@ function AvatarMenu({ profile, activeTab, setActiveTab, onSwitchToBrand }) {
   )
 }
 
+const ROUTED_CREATOR_TABS = { browse: '/creator/find-work' }
+
 function Sidebar({ active, setActive, dashLogo, onSwitchToBrand }) {
+  const navigateTo = useNavigate()
   const nav = [
     { id: 'browse',       label: 'Find Work',         icon: Briefcase },
     { id: 'collabs',      label: 'My Collabs',       icon: Inbox },
@@ -378,7 +381,7 @@ function Sidebar({ active, setActive, dashLogo, onSwitchToBrand }) {
                 <span className="flex-1">{label}</span>
                 <ArrowUpRight className="w-3.5 h-3.5 opacity-50 flex-shrink-0" />
               </Link>
-            : <button key={id} onClick={() => setActive(id)}
+            : <button key={id} onClick={() => ROUTED_CREATOR_TABS[id] ? navigateTo(ROUTED_CREATOR_TABS[id]) : setActive(id)}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left"
                 style={{
                   backgroundColor: active === id ? 'color-mix(in srgb, var(--b-creatorMenuBg) 10%, transparent)' : 'transparent',
@@ -2457,7 +2460,7 @@ export default function TalentDashboard() {
           {/* Mobile tab bar */}
           <div className="flex gap-1 mb-6 md:hidden overflow-x-auto pb-1">
             {tabs.map(t => (
-              <button key={t} onClick={() => setActiveTab(t)}
+              <button key={t} onClick={() => ROUTED_CREATOR_TABS[t] ? navigateTo(ROUTED_CREATOR_TABS[t]) : setActiveTab(t)}
                 className="flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold capitalize transition-all"
                 style={{
                   backgroundColor: activeTab === t ? darkPurple : 'white',

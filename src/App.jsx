@@ -30,8 +30,10 @@ const TalentDashboard = lazy(() => import('./pages/TalentDashboard'))
 const Marketplace     = lazy(() => import('./pages/Marketplace'))
 const TalentProfilePage = lazy(() => import('./pages/TalentProfilePage'))
 const BrandDashboard       = lazy(() => import('./pages/BrandDashboard'))
-const BrandFindCreatorsPage = lazy(() => import('./pages/BrandFindCreatorsPage'))
-const BrandCampaignsPage    = lazy(() => import('./pages/BrandCampaignsPage'))
+const BrandFindCreatorsPage  = lazy(() => import('./pages/BrandFindCreatorsPage'))
+const BrandCampaignsPage     = lazy(() => import('./pages/BrandCampaignsPage'))
+const CreatorFindWorkPage    = lazy(() => import('./pages/CreatorFindWorkPage'))
+const CampaignDetailPage     = lazy(() => import('./pages/CampaignDetailPage'))
 const CollabBriefPage  = lazy(() => import('./pages/CollabBriefPage'))
 const CollabReviewPage = lazy(() => import('./pages/CollabReviewPage'))
 const AdminLogin      = lazy(() => import('./pages/admin/AdminLogin'))
@@ -352,6 +354,14 @@ export default function App() {
           element={IS_APP
             ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><BrandDashboard /></PrivateRoute>
             : <CrossDomainRedirect to={`${APP_URL}/brand-dashboard`} />} />
+        <Route path="/creator/find-work"
+          element={IS_APP
+            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="creator"><CreatorFindWorkPage /></PrivateRoute>
+            : <CrossDomainRedirect to={`${APP_URL}/creator/find-work`} />} />
+        <Route path="/campaigns/:id"
+          element={IS_APP
+            ? <PrivateRoute isRecoverySession={isRecoverySession}><CampaignDetailPage /></PrivateRoute>
+            : <CrossDomainRedirect to={`${APP_URL}/campaigns`} />} />
         <Route path="/brand/find-creators"
           element={IS_APP
             ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><BrandFindCreatorsPage /></PrivateRoute>
