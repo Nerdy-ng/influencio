@@ -386,7 +386,19 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
       .select('*')
       .eq('conversation_id', convId)
       .order('created_at', { ascending: true })
-    if (!error && data) setMessages(data.map(mapMsg))
+    // Merge with any realtime messages that arrived during the fetch to avoid
+    // the race where setMessages(mapped) would overwrite a just-received message.
+    if (!error && data) {
+      const mapped = data.map(mapMsg)
+      setMessages(prev => {
+        const known = new Set(mapped.map(m => m.id))
+        const extra = prev.filter(
+          m => !known.has(m.id) && !String(m.id).startsWith('opt_') && !String(m.id).startsWith('scan_')
+        )
+        if (extra.length === 0) return mapped
+        return [...mapped, ...extra].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+      })
+    }
 
     // Mark as read
     const unreadCol = userType === 'brand' ? 'unread_brand' : 'unread_talent'
