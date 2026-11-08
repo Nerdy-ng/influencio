@@ -3,6 +3,7 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '');
 import { logout } from '../lib/logout'
 import { getLogo } from '../lib/brandSettings'
+import { searchLocations, locationMatches } from '../lib/locationData'
 import {
   LayoutDashboard, ShoppingBag, CheckCircle, Wallet, Settings,
   Bell, ChevronDown, ChevronRight, X, AlertCircle, Shield, Loader2,
@@ -637,16 +638,12 @@ function FindTalentsTab() {
     })()
   }, [])
 
-  const availableLocations = [...new Set(talents.map(t => t.location).filter(Boolean))].sort()
-
-  const locationSuggestions = locationSearch.trim()
-    ? availableLocations.filter(l => l.toLowerCase().includes(locationSearch.toLowerCase()) && l !== locationFilter).slice(0, 8)
-    : availableLocations.filter(l => l !== locationFilter).slice(0, 6)
+  const locationSuggestions = searchLocations(locationSearch, 8).filter(l => l !== locationFilter)
 
   const filtered = talents.filter(t => {
     if (search && !t.full_name?.toLowerCase().includes(search.toLowerCase()) && !t.handle?.toLowerCase().includes(search.toLowerCase())) return false
     if (nicheFilter !== 'All' && !(t.niches || []).includes(nicheFilter)) return false
-    if (locationFilter && t.location !== locationFilter) return false
+    if (locationFilter && !locationMatches(t.location, locationFilter)) return false
     return true
   })
 
