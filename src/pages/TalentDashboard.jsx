@@ -587,6 +587,7 @@ function BrowseTab({ setActiveTab }) {
   const [pitchJob, setPitchJob] = useState(null)
   const [pitchNote, setPitchNote] = useState('')
   const [pitching, setPitching] = useState(false)
+  const [pitchSuccess, setPitchSuccess] = useState(null)
   const [search, setSearch] = useState('')
 
   // Setup wizard
@@ -766,6 +767,7 @@ function BrowseTab({ setActiveTab }) {
       })
 
       setApplied(prev => [...prev, pitchJob.id])
+      setPitchSuccess({ title: pitchJob.title })
       setPitchJob(null)
       setPitchNote('')
     } catch (err) {
@@ -954,6 +956,9 @@ function BrowseTab({ setActiveTab }) {
             }}>
             {applied.includes(job.id) ? '✓ Pitched' : !profileReady ? `🔒 Complete profile to pitch` : 'Pitch →'}
           </button>
+          {!applied.includes(job.id) && profileReady && (
+            <p className="text-center text-[11px] mt-1.5" style={{ color: '#9ca3af' }}>Send a proposal to this brand.</p>
+          )}
         </div>
       ))}
 
@@ -977,6 +982,34 @@ function BrowseTab({ setActiveTab }) {
               {pitching ? 'Sending…' : 'Send Pitch'}
             </button>
             <button onClick={() => setPitchJob(null)} className="w-full py-2 text-sm font-semibold" style={{ color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Pitch success confirmation ── */}
+      {pitchSuccess && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}>
+          <div className="w-full max-w-lg rounded-t-3xl p-6 pb-10" style={{ backgroundColor: '#fff' }}>
+            <div className="w-9 h-1 rounded-full mx-auto mb-5" style={{ backgroundColor: '#e9d5ff' }} />
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#dcfce7' }}>
+                <span className="text-3xl">🎉</span>
+              </div>
+              <h3 className="text-lg font-black mb-1" style={{ color: '#1e0040' }}>Pitch Sent!</h3>
+              <p className="text-sm font-semibold mb-2" style={{ color: '#1e0040' }}>Your pitch was sent successfully.</p>
+              <p className="text-sm leading-relaxed" style={{ color: '#9ca3af' }}>You can track your pitch and collaboration status in My Collabs.</p>
+            </div>
+            <button
+              onClick={() => { setActiveTab('collabs'); setPitchSuccess(null) }}
+              className="w-full py-3 rounded-xl text-sm font-bold text-white mb-2 transition-opacity hover:opacity-90"
+              style={{ backgroundColor: purple }}>
+              View My Collabs
+            </button>
+            <button
+              onClick={() => setPitchSuccess(null)}
+              className="w-full py-2 text-sm font-semibold" style={{ color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer' }}>
+              Back to Campaigns
+            </button>
           </div>
         </div>
       )}

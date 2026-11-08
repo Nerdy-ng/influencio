@@ -345,7 +345,7 @@ function RateCardOrder({ talent, isPreview, navigate }) {
             className="w-full py-3.5 rounded-2xl text-white text-sm font-bold transition-opacity hover:opacity-90"
             style={{ backgroundColor: darkPurple }}
           >
-            Collab
+            Make an Offer
           </button>
         )}
       </div>
