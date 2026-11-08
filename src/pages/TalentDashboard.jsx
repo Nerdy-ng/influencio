@@ -1920,7 +1920,7 @@ export default function TalentDashboard() {
       .single()
     if (profile?.has_brand_access) {
       // Already has brand capability — just switch workspace via EF
-      const { error } = await supabase.functions.invoke('set-workspace', { body: { workspace: 'brand' } })
+      const { error } = await supabase.functions.invoke('sync-workspace', { body: { workspace: 'brand' } })
       if (!error) {
         localStorage.setItem('brandiór_workspace', 'brand')
         localStorage.setItem('brandiór_role', 'brand')
@@ -1938,7 +1938,7 @@ export default function TalentDashboard() {
     if (!bsCompanyName.trim() || !bsIndustry || !bsProfileId) return
     setBsActivating(true)
     try {
-      const { error } = await supabase.functions.invoke('set-workspace', {
+      const { error } = await supabase.functions.invoke('sync-workspace', {
         body: { workspace: 'brand', company_name: bsCompanyName.trim(), industry: bsIndustry },
       })
       if (error) throw error

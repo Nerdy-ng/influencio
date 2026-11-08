@@ -263,7 +263,7 @@ function EmptyThread({ otherName }) {
 }
 
 // ── Main MessagingPanel ───────────────────────────────────────────────────────
-export default function MessagingPanel({ userId, userType, initialConvId, onUnreadChange }) {
+export default function MessagingPanel({ userId, userType: userTypeProp, initialConvId, onUnreadChange }) {
   const [conversations, setConversations] = useState([])
   const [activeConvId, setActiveConvId] = useState(initialConvId || null)
   const [messages, setMessages] = useState([])
@@ -289,6 +289,20 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
   const bottomRef = useRef(null)
   const pollRef = useRef(null)
   const filterRef = useRef(null)
+
+  // Resolve the effective userType from the server-authoritative active_workspace.
+  // This prevents a wrongly routed workspace from making an existing inbox appear empty.
+  // Initialises from the prop so the UI renders immediately; updates once the profile fetch lands.
+  const [userType, setUserType] = useState(userTypeProp)
+  useEffect(() => {
+    if (!userId) return
+    supabase.from('profiles').select('active_workspace').eq('id', userId).maybeSingle()
+      .then(({ data }) => {
+        const ws = data?.active_workspace
+        if (ws === 'brand')   setUserType('brand')
+        if (ws === 'creator') setUserType('talent')
+      })
+  }, [userId])
 
   // Close filter dropdown on outside click
   useEffect(() => {

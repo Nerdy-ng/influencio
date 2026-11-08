@@ -841,7 +841,7 @@ export default function BrandDashboard() {
       .single()
     if (profile?.has_creator_access) {
       // Already has creator capability — just switch workspace via EF
-      const { error } = await supabase.functions.invoke('set-workspace', { body: { workspace: 'creator' } })
+      const { error } = await supabase.functions.invoke('sync-workspace', { body: { workspace: 'creator' } })
       if (!error) {
         localStorage.setItem('brandiór_workspace', 'creator')
         localStorage.setItem('brandiór_role', 'talent')
@@ -866,7 +866,7 @@ export default function BrandDashboard() {
     if (clean.length < 3) { setCsUsernameStatus('invalid'); return }
     setCsUsernameStatus('checking')
     csCheckTimer.current = setTimeout(async () => {
-      const { data } = await supabase.from('profiles').select('id').eq('username', clean).maybeSingle()
+      const { data } = await supabase.from('profiles').select('id').eq('handle', clean).maybeSingle()
       setCsUsernameStatus(data ? 'taken' : 'available')
     }, 500)
   }
@@ -875,7 +875,7 @@ export default function BrandDashboard() {
     if (csUsernameStatus !== 'available' || !csUsername || !csProfileId) return
     setCsActivating(true)
     try {
-      const { error } = await supabase.functions.invoke('set-workspace', {
+      const { error } = await supabase.functions.invoke('sync-workspace', {
         body: { workspace: 'creator', username: csUsername },
       })
       if (error) throw error

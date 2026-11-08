@@ -34,7 +34,7 @@ export default function WorkspaceSelectorPage() {
   async function selectWorkspace(workspace) {
     setSelecting(workspace)
     try {
-      const { error } = await supabase.functions.invoke('set-workspace', {
+      const { error } = await supabase.functions.invoke('sync-workspace', {
         body: { workspace },
       })
       if (error) throw error
