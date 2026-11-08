@@ -57,7 +57,7 @@ export default function HowItWorksPage() {
       </section>
 
       {/* Escrow explainer */}
-      <section className="py-10 px-6 border-b border-gray-100">
+      <section className="py-10 px-6 border-b border-brand-lav">
         <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#ede9fe' }}>
             <ShieldCheck className="w-6 h-6" style={{ color: '#7c3aed' }} />

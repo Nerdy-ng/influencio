@@ -212,8 +212,8 @@ function RateCardOrder({ talent, isPreview, navigate }) {
 
   return (
     <div className="bg-white rounded-3xl border border-brand-lav shadow-sm overflow-hidden">
-      <div className="px-5 py-4 border-b border-gray-100">
-        <h2 className="font-bold text-gray-900">Rate Card</h2>
+      <div className="px-5 py-4 border-b border-brand-lav">
+        <h2 className="font-bold" style={{ color: '#1e0040' }}>Rate Card</h2>
       </div>
 
       <div className="p-5 space-y-5">
@@ -316,7 +316,7 @@ function RateCardOrder({ talent, isPreview, navigate }) {
         )}
 
         {/* Price summary */}
-        <div className="rounded-2xl border border-gray-100 p-4 space-y-2" style={{ backgroundColor: '#faf5ff' }}>
+        <div className="rounded-2xl border border-brand-lav p-4 space-y-2" style={{ backgroundColor: '#faf5ff' }}>
           <div className="flex justify-between text-xs text-gray-500">
             <span>Production ({durationItem.label})</span>
             <span className="font-semibold text-gray-700">{formatNGN(prodCost)}</span>
@@ -415,7 +415,7 @@ function QuickStats({ talent: c }) {
           </div>
           <span className="font-bold text-gray-800">{responseRate}</span>
         </div>
-        <div className="pt-2 border-t border-gray-100">
+        <div className="pt-2 border-t border-brand-lav">
           <div className="flex items-center gap-2">
             {isVerified ? (
               <>
@@ -985,7 +985,7 @@ export default function TalentProfilePage() {
 
             {/* Social platforms */}
             {c.platforms?.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
+              <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-brand-lav">
                 {c.platforms.map(p => {
                   const pc = PLATFORM_COLORS[p.name] || { bg: '#6b7280', label: p.name }
                   return (
@@ -1067,7 +1067,7 @@ export default function TalentProfilePage() {
             {/* Inline chat box */}
             {!isPreview && (
               <div className="bg-white rounded-3xl border border-brand-lav shadow-sm overflow-hidden">
-                <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100" style={{ background: 'linear-gradient(135deg, #0d0020, #3b0764)' }}>
+                <div className="flex items-center gap-3 px-5 py-4" style={{ background: 'linear-gradient(135deg, #0d0020, #3b0764)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                   <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden">
                     {c.avatar ? <img src={c.avatar} alt={c.name} className="w-full h-full object-cover" /> : c.name?.[0]}
                   </div>
@@ -1289,7 +1289,7 @@ export default function TalentProfilePage() {
 
 function Navbar() {
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+    <nav className="sticky top-0 z-50 bg-white border-b border-brand-lav shadow-sm">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: darkPurple }}>

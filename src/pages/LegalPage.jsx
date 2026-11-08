@@ -413,7 +413,7 @@ export default function LegalPage() {
   const content = (typeof localStorage !== 'undefined' && localStorage.getItem(config.key)) || DEFAULT_CONTENT[type] || ''
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ backgroundColor: '#f9f5ff' }}>
       <Helmet>
         <title>{config.title} | Brandior</title>
       </Helmet>
@@ -436,7 +436,7 @@ export default function LegalPage() {
           ))}
         </div>
 
-        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-8 shadow-sm border border-brand-lav">
           <h1 className="text-3xl font-black mb-1" style={{ color: '#1e0040' }}>{config.title}</h1>
           <p className="text-xs mb-6" style={{ color: '#9ca3af' }}>Last revised: September 2026 · Brandior is operated by THE OWL COMPANY, Nigeria</p>
           <div className="mt-6">
