@@ -21,7 +21,7 @@ export default function AuthDiagnosticPage() {
         if (uid) {
           const { data, error } = await supabase
             .from('profiles')
-            .select('id, email, full_name, company_name, role, has_brand_access, has_creator_access, active_workspace')
+            .select('id, full_name, company_name, role, has_brand_access, has_creator_access, active_workspace')
             .eq('id', uid)
             .maybeSingle()
           profile = data
@@ -61,15 +61,16 @@ export default function AuthDiagnosticPage() {
       `Auth Error:         ${r.authError}`,
       '',
       '── PROFILE ──────────────────────────────────',
+      `Profile found:                 ${p ? 'YES' : 'NO'}`,
       p ? [
-        `profiles.id:               ${p.id}`,
-        `profiles.email:            ${p.email ?? 'null'}`,
-        `profiles.full_name:        ${p.full_name ?? 'null'}`,
-        `profiles.company_name:     ${p.company_name ?? 'null'}`,
-        `profiles.role:             ${p.role ?? 'null'}`,
-        `profiles.has_brand_access:   ${p.has_brand_access}`,
-        `profiles.has_creator_access: ${p.has_creator_access}`,
-        `profiles.active_workspace:   ${p.active_workspace ?? 'null'}`,
+        `profiles.id = auth user.id:    ${p.id === r.userId ? 'YES' : 'NO'}`,
+        `profiles.id:                   ${p.id}`,
+        `profiles.full_name:            ${p.full_name ?? 'null'}`,
+        `profiles.company_name:         ${p.company_name ?? 'null'}`,
+        `profiles.role:                 ${p.role ?? 'null'}`,
+        `profiles.has_brand_access:     ${p.has_brand_access}`,
+        `profiles.has_creator_access:   ${p.has_creator_access}`,
+        `profiles.active_workspace:     ${p.active_workspace ?? 'null'}`,
       ].join('\n') : `Profile Error: ${r.profileError ?? 'no row found'}`,
     ].join('\n')
   }
