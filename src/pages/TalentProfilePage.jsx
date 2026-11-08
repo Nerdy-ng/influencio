@@ -219,7 +219,7 @@ function RateCardOrder({ talent, isPreview, navigate }) {
       <div className="p-5 space-y-5">
         {/* Content type */}
         <div>
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2.5">What do you need?</p>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2.5">Services</p>
           <div className="grid grid-cols-2 gap-2.5">
             {contentTypes.map(t => {
               const active = selectedType === t.id
