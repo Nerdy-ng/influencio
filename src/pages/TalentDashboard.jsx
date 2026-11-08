@@ -4406,7 +4406,7 @@ function SupportTab() {
     <div className="space-y-6">
 
       {/* Header cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           { label: 'Open Tickets',    value: '0' },
           { label: 'Avg. Response',   value: '< 2h' },
@@ -4832,7 +4832,7 @@ function RateCardTab() {
       <div className="space-y-6">
       {/* Content Types */}
       <RCSection label="Content Type" hint="Types of content you offer">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {types.map(t => (
             <button key={t.id} onClick={() => setTypes(prev => prev.map(x => x.id === t.id ? { ...x, enabled: !x.enabled } : x))}
               className="rounded-2xl p-4 text-left transition-all"
