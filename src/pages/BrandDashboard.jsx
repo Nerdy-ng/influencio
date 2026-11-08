@@ -2231,6 +2231,21 @@ function FavoritesTab() {
 
 const INDUSTRIES = ['Fashion & Beauty', 'Food & Beverage', 'Tech & Gadgets', 'Health & Wellness', 'Finance & Fintech', 'Travel & Hospitality', 'Entertainment', 'Sports & Fitness', 'Real Estate', 'Education', 'Automotive', 'Retail & E-commerce', 'Other']
 
+const BRAND_TIER_STEPS = [
+  { key: 'dynamo',   label: 'Dynamo',   color: '#F72585', completions: 3,  creators: 2  },
+  { key: 'elite',    label: 'Elite',    color: '#f59e0b', completions: 10, creators: 4  },
+  { key: 'champion', label: 'Champion', color: '#7c3aed', completions: 22, creators: 9  },
+  { key: 'supremo',  label: 'Supremo',  color: '#D4AF37', completions: 40, creators: 16 },
+]
+
+function computeBrandTierFromStats(completions, creators) {
+  for (let i = BRAND_TIER_STEPS.length - 1; i >= 0; i--) {
+    const t = BRAND_TIER_STEPS[i]
+    if (completions >= t.completions && creators >= t.creators) return t
+  }
+  return null
+}
+
 function SettingsTab() {
   const [saved,          setSaved]          = useState(false)
   const [saving,         setSaving]         = useState(false)
@@ -2240,11 +2255,21 @@ function SettingsTab() {
   const [pwSaving,       setPwSaving]       = useState(false)
   const [pwMsg,          setPwMsg]          = useState(null)
   const [downloading,    setDownloading]    = useState(false)
+  const [brandStats,     setBrandStats]     = useState({ completions: 0, creators: 0 })
 
   useEffect(() => {
     ;(async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
+      // Load brand achievement stats
+      supabase.from('collabs').select('creator_id').eq('brand_id', user.id)
+        .eq('status', 'completed').eq('payment_status', 'released')
+        .then(({ data }) => {
+          if (data) setBrandStats({
+            completions: data.length,
+            creators: new Set(data.map(c => c.creator_id)).size,
+          })
+        })
       const { data: profile } = await supabase.from('profiles').select('company_name, owner_name, industry, website, full_name').eq('id', user.id).maybeSingle()
       const meta = user.user_metadata || {}
       setForm({
@@ -2338,9 +2363,78 @@ function SettingsTab() {
     </div>
   )
 
+  const currentBrandTier = computeBrandTierFromStats(brandStats.completions, brandStats.creators)
+  const currentTierIdx  = currentBrandTier ? BRAND_TIER_STEPS.findIndex(t => t.key === currentBrandTier.key) : -1
+  const nextBrandTier   = currentTierIdx < BRAND_TIER_STEPS.length - 1 ? BRAND_TIER_STEPS[currentTierIdx + 1] : null
+  const isMaxBrandTier  = currentTierIdx === BRAND_TIER_STEPS.length - 1
+
   return (
     <div className="space-y-6 max-w-lg">
       <h2 className="text-xl font-black" style={{ color: darkPurple }}>Brand Settings</h2>
+
+      {/* Brandior Achievement */}
+      <div className="rounded-3xl overflow-hidden" style={{ border: `1px solid ${currentBrandTier ? currentBrandTier.color + '22' : '#e9d5ff'}`, backgroundColor: '#0d0020' }}>
+        <div className="px-6 pt-5 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <p className="text-[10px] font-bold uppercase tracking-widest mb-4" style={{ color: 'rgba(255,255,255,0.3)' }}>Brandior Achievement</p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              {currentBrandTier ? (
+                <>
+                  <p className="text-2xl font-black tracking-tight" style={{ color: currentBrandTier.color, letterSpacing: '-0.02em' }}>{currentBrandTier.label}</p>
+                  <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                    {currentBrandTier.key === 'dynamo'   && 'First milestone. Keep working with creators.'}
+                    {currentBrandTier.key === 'elite'    && 'Established brand. Creators trust you.'}
+                    {currentBrandTier.key === 'champion' && 'Top brand. Known for consistent, paid work.'}
+                    {currentBrandTier.key === 'supremo'  && 'Pinnacle brand status on Brandior.'}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-lg font-black" style={{ color: 'rgba(255,255,255,0.4)' }}>Not yet earned</p>
+                  <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Hire creators and complete paid collabs to earn Dynamo</p>
+                </>
+              )}
+            </div>
+            <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center mt-0.5"
+              style={{ backgroundColor: currentBrandTier ? `${currentBrandTier.color}15` : 'rgba(255,255,255,0.05)', border: `1px solid ${currentBrandTier ? currentBrandTier.color + '30' : 'rgba(255,255,255,0.08)'}` }}>
+              <Zap className="w-4 h-4" style={{ color: currentBrandTier ? currentBrandTier.color : 'rgba(255,255,255,0.2)' }} />
+            </div>
+          </div>
+        </div>
+        <div className="px-6 py-4">
+          {isMaxBrandTier ? (
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>You have reached the highest achievement on Brandior.</p>
+          ) : nextBrandTier ? (
+            <>
+              <p className="text-[11px] font-semibold mb-3" style={{ color: 'rgba(255,255,255,0.3)' }}>Progress to {nextBrandTier.label}</p>
+              <div className="space-y-2.5">
+                <div>
+                  <div className="flex justify-between mb-1.5">
+                    <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>Paid completions</p>
+                    <p className="text-[10px] font-bold" style={{ color: nextBrandTier.color }}>{brandStats.completions} / {nextBrandTier.completions}</p>
+                  </div>
+                  <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                    <div className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${Math.min(100, (brandStats.completions / nextBrandTier.completions) * 100)}%`, backgroundColor: nextBrandTier.color }} />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between mb-1.5">
+                    <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>Unique creators</p>
+                    <p className="text-[10px] font-bold" style={{ color: nextBrandTier.color }}>{brandStats.creators} / {nextBrandTier.creators}</p>
+                  </div>
+                  <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                    <div className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${Math.min(100, (brandStats.creators / nextBrandTier.creators) * 100)}%`, backgroundColor: nextBrandTier.color }} />
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>Find creators → Hire → Complete collabs → Progress</p>
+          )}
+        </div>
+      </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
         <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Brand Info</p>

@@ -30,119 +30,53 @@ const gold = '#D4AF37'
 const purple = '#7c3aed'
 const darkPurple = '#4c1d95'
 
-const TIERS = {
-  'fast-rising': {
-    label: 'Fast Rising', color: '#22c55e', bg: '#22c55e18', border: '#22c55e40', emoji: null, StarIcon: true, diamond: false,
-    desc: 'You\'re new and climbing. Keep creating!',
-    perks: ['Profile listed on Brandior', 'Receive collab offers from brands', 'Access talent community'],
-    criteria: ['Complete your profile', 'Connect 1 social account', '3+ completed campaigns'],
+const CREATOR_TIER_CONFIG = {
+  spark: {
+    label: 'Spark',
+    color: '#F72585',
+    desc: 'Profile complete. Ready to collaborate with brands.',
   },
-  'next-rated': {
-    label: 'Next', color: '#a78bfa', bg: '#a78bfa18', border: '#a78bfa40', emoji: '⚡', StarIcon: false, diamond: true,
-    desc: 'You\'re gaining traction. Brands are noticing you.',
-    perks: ['Priority in brand searches', 'Higher-value collab access', 'Verified badge eligibility', 'Dedicated account manager'],
-    criteria: ['10+ completed campaigns', '4.0+ average rating', '5K+ total followers'],
+  rising: {
+    label: 'Rising',
+    color: '#a78bfa',
+    desc: 'Your first paid collabs done. Brands are noticing you.',
   },
-  'top-rated': {
-    label: 'Top', color: '#D4AF37', bg: '#D4AF3718', border: '#D4AF3740', emoji: '👑', StarIcon: false, diamond: true,
-    desc: 'The elite. Brands seek you out directly.',
-    perks: ['Featured in brand discovery', 'Premium collab access', 'Negotiated rates unlocked', 'Early access to new features', 'Dedicated talent manager'],
-    criteria: ['30+ completed campaigns', '4.7+ average rating', '25K+ total followers'],
+  pro: {
+    label: 'Pro',
+    color: '#60a5fa',
+    desc: 'Consistent track record across multiple brands.',
+  },
+  champion: {
+    label: 'Champion',
+    color: '#D4AF37',
+    desc: 'Elite creator status. Among the most trusted on Brandior.',
   },
 }
-
-function Diamond({ color, size = 10 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={color} style={{ display: 'inline', flexShrink: 0 }}>
-      <path d="M12 2L2 9l10 13L22 9z" />
-    </svg>
-  )
-}
-
-function TierLabel({ tier }) {
-  const t = TIERS[tier]
-  return (
-    <span className="flex items-center gap-1">
-      {t.diamond
-        ? <Diamond color={t.color} size={10} />
-        : t.label
-      }
-    </span>
-  )
-}
-
-function TierIcon({ tier }) {
-  const t = TIERS[tier]
-  if (t.StarIcon) return <Star className="w-3 h-3 fill-current" style={{ color: t.color }} />
-  return <span>{t.emoji}</span>
-}
-
-function TierInfoModal({ tier, onClose }) {
-  const t = TIERS[tier]
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
-      <div className="w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl" style={{ backgroundColor: '#13092a' }}>
-        <div className="px-6 pt-6 pb-4" style={{ background: `linear-gradient(135deg, ${t.color}22 0%, #13092a 100%)`, borderBottom: `1px solid ${t.color}30` }}>
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${t.color}25`, border: `1px solid ${t.color}40` }}>
-              {t.StarIcon ? <Star className="w-6 h-6 fill-current" style={{ color: t.color }} /> : <span className="text-2xl">{t.emoji}</span>}
-            </div>
-            <button onClick={onClose} className="text-white/40 hover:text-white/80 transition-colors text-xl leading-none">✕</button>
-          </div>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: t.color }}>Brandior Tier</p>
-          <h2 className="text-xl font-black text-white mb-2">{t.label}</h2>
-          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>{t.desc}</p>
-        </div>
-        <div className="px-6 py-5">
-          <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>What you get</p>
-          <ul className="space-y-2.5 mb-6">
-            {t.perks.map((perk, i) => (
-              <li key={i} className="flex items-start gap-2.5 text-sm" style={{ color: 'rgba(255,255,255,0.75)' }}>
-                <span className="mt-0.5 flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: `${t.color}25` }}>
-                  <svg className="w-2.5 h-2.5" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke={t.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </span>
-                {perk}
-              </li>
-            ))}
-          </ul>
-          <button onClick={onClose} className="w-full py-3 rounded-xl font-bold text-sm text-white transition-opacity hover:opacity-90"
-            style={{ background: `linear-gradient(135deg, #7c3aed 0%, #ec4899 100%)` }}>
-            Got it
-          </button>
-        </div>
-      </div>
-    </div>
-  )
+const CREATOR_TIER_ORDER = ['spark', 'rising', 'pro', 'champion']
+const NEXT_CREATOR_TIER = {
+  spark:    { label: 'Rising',   completions: 3,  brands: 0, color: '#a78bfa' },
+  rising:   { label: 'Pro',      completions: 10, brands: 3, color: '#60a5fa' },
+  pro:      { label: 'Champion', completions: 25, brands: 6, color: '#D4AF37' },
+  champion: null,
 }
 
 function TierUpgradeModal({ tier, onClose }) {
-  const t = TIERS[tier]
+  const t = CREATOR_TIER_CONFIG[tier]
+  if (!t) return null
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}>
-      <div className="w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl text-center" style={{ backgroundColor: '#13092a' }}>
-        <div className="px-6 pt-8 pb-6" style={{ background: `linear-gradient(160deg, ${t.color}30 0%, #13092a 60%)` }}>
-          <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${t.color}22`, border: `2px solid ${t.color}50` }}>
-            {t.StarIcon ? <Star className="w-9 h-9 fill-current" style={{ color: t.color }} /> : <span className="text-4xl">{t.emoji}</span>}
+      <div className="w-full max-w-sm rounded-3xl text-center shadow-2xl" style={{ backgroundColor: '#13092a', border: `1px solid ${t.color}30` }}>
+        <div className="px-6 pt-8 pb-7">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5" style={{ backgroundColor: `${t.color}18`, border: `1px solid ${t.color}40` }}>
+            <Zap className="w-7 h-7" style={{ color: t.color }} />
           </div>
-          <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: t.color }}>Tier Upgrade 🎉</p>
-          <h2 className="text-2xl font-black text-white mb-3">You're now <span style={{ color: t.color }}>{t.label}</span></h2>
-          <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>{t.desc}</p>
-        </div>
-        <div className="px-6 pb-6">
-          <p className="text-xs font-bold uppercase tracking-wider mb-3 text-left" style={{ color: 'rgba(255,255,255,0.35)' }}>Your new perks</p>
-          <ul className="space-y-2 mb-6 text-left">
-            {t.perks.map((perk, i) => (
-              <li key={i} className="flex items-start gap-2.5 text-sm" style={{ color: 'rgba(255,255,255,0.75)' }}>
-                <span className="mt-0.5 flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: `${t.color}25` }}>
-                  <svg className="w-2.5 h-2.5" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke={t.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </span>
-                {perk}
-              </li>
-            ))}
-          </ul>
-          <button onClick={onClose} className="w-full py-3 rounded-xl font-bold text-sm text-white transition-opacity hover:opacity-90"
-            style={{ background: `linear-gradient(135deg, #7c3aed 0%, #ec4899 100%)` }}>
-            Let's go!
+          <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: t.color }}>Achievement Unlocked</p>
+          <h2 className="text-2xl font-black text-white mb-3" style={{ letterSpacing: '-0.02em' }}>{t.label}</h2>
+          <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>{t.desc}</p>
+          <button onClick={onClose}
+            className="mt-6 w-full py-3 rounded-xl font-bold text-sm transition-opacity hover:opacity-90"
+            style={{ backgroundColor: t.color, color: '#fff' }}>
+            Continue
           </button>
         </div>
       </div>
@@ -150,13 +84,6 @@ function TierUpgradeModal({ tier, onClose }) {
   )
 }
 
-function TrophyIcon({ color, size = 16 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={color} style={{ display: 'inline-block', flexShrink: 0 }}>
-      <path d="M19 5h-2V3H7v2H5C3.9 5 3 5.9 3 7v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0011 15.9V18H9v2h6v-2h-2v-2.1a5.01 5.01 0 003.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zm-2 3c0 1.65-1.35 3-3 3s-3-1.35-3-3V7h6v1z"/>
-    </svg>
-  )
-}
 
 
 const NICHES = [
@@ -238,7 +165,7 @@ const emptyProfile = {
   hashtags: [],
   contentStyles: [],
   availableForHire: true,
-  tier: 'fast-rising',
+  tier: null,
   rating: 4.2,
   pricing: {
     type: 'negotiable', // 'fixed' | 'negotiable'
@@ -938,99 +865,6 @@ function ProfileSetupBanner({ completion }) {
   )
 }
 
-function TierLadderAccordion({ profile }) {
-  const [openTier, setOpenTier] = useState(null)
-  const tierKeys = Object.keys(TIERS)
-  const currentIdx = tierKeys.indexOf(profile.tier)
-
-  return (
-    <div style={{ backgroundColor: 'white' }}>
-      {Object.entries(TIERS).map(([key, t], idx) => {
-        const isCurrent = profile.tier === key
-        const achieved = idx <= currentIdx
-        const locked = idx > currentIdx
-        const isOpen = openTier === key
-
-        return (
-          <div key={key} style={{ borderTop: idx > 0 ? '1px solid #f3eeff' : 'none' }}>
-            {/* Row header — always visible, click to toggle */}
-            <button
-              onClick={() => setOpenTier(isOpen ? null : key)}
-              className="w-full flex items-center gap-4 p-5 hover:bg-purple-50/40 transition-colors text-left"
-            >
-              <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: achieved ? t.bg : '#f3f4f6' }}>
-                {t.StarIcon
-                  ? <Star className="w-5 h-5 fill-current" style={{ color: achieved ? t.color : '#d1d5db' }} />
-                  : <span className="text-xl" style={{ filter: locked ? 'grayscale(1) opacity(0.4)' : 'none' }}>{t.emoji}</span>}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-black text-sm flex items-center gap-1" style={{ color: achieved ? t.color : '#9ca3af' }}>
-                    {t.diamond
-                      ? <Diamond color={achieved ? t.color : '#9ca3af'} size={11} />
-                      : t.label
-                    }
-                  </p>
-                  {isCurrent && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                      style={{ backgroundColor: `${t.color}18`, color: t.color }}>Current</span>
-                  )}
-                  {locked && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                      style={{ backgroundColor: '#f3f4f6', color: '#9ca3af' }}>Locked</span>
-                  )}
-                </div>
-                <p className="text-[11px] mt-0.5" style={{ color: achieved ? t.color + 'aa' : '#9ca3af' }}>
-                  {isOpen ? 'Tap to collapse' : 'Tap to see perks & criteria'}
-                </p>
-              </div>
-              <ChevronDown className="w-4 h-4 flex-shrink-0 transition-transform"
-                style={{ color: '#9ca3af', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
-            </button>
-
-            {/* Expandable body */}
-            {isOpen && (
-              <div className="px-5 pb-5 space-y-4" style={{ borderTop: '1px solid #f9f5ff' }}>
-                {/* Perks */}
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: '#9ca3af' }}>Perks</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {t.perks.map(p => (
-                      <span key={p} className="text-[11px] px-2.5 py-1 rounded-full font-medium"
-                        style={{
-                          backgroundColor: achieved ? `${t.color}12` : '#f3f4f6',
-                          color: achieved ? t.color : '#9ca3af',
-                        }}>
-                        {p}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                {/* Criteria */}
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: '#9ca3af' }}>
-                    {isCurrent ? 'How you got here' : 'Requirements'}
-                  </p>
-                  <div className="space-y-1.5">
-                    {t.criteria.map(c => (
-                      <div key={c} className="flex items-center gap-2">
-                        {achieved
-                          ? <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: t.color }} />
-                          : <div className="w-3.5 h-3.5 rounded-full border flex-shrink-0" style={{ borderColor: '#d1d5db' }} />}
-                        <span className="text-[11px]" style={{ color: achieved ? '#374151' : '#9ca3af' }}>{c}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
 
 function EditableField({ label, value, onChange, placeholder, multiline, isEditing }) {
   return (
@@ -1886,15 +1720,14 @@ export default function TalentDashboard() {
   const [saved, setSaved] = useState(false)
   const [showWithdraw, setShowWithdraw] = useState(false)
   const [showAddWork, setShowAddWork] = useState(false)
-  const [showRatingDetail, setShowRatingDetail] = useState(false)
+  const [achievementStats, setAchievementStats] = useState({ completions: 0, brands: 0 })
   const [settingsEditMode, setSettingsEditMode] = useState(false)
   const [profileSnapshot, setProfileSnapshot] = useState(null)
   const [unreadMessages, setUnreadMessages] = useState(0)
   const userId = localStorage.getItem('brandiór_user') || 'guest'
   const [showTour, setShowTour] = useState(() => !localStorage.getItem(`brandior_tour_done_${userId}`))
   const [showOffPlatformWarning, setShowOffPlatformWarning] = useState(() => !localStorage.getItem(`brandior_offplatform_seen_${userId}`))
-  const [tierInfoOpen, setTierInfoOpen] = useState(false)
-  const [tierUpgradeModal, setTierUpgradeModal] = useState(null) // tier key when upgrade detected
+  const [tierUpgradeModal, setTierUpgradeModal] = useState(null)
   // Password + data export state (used in inline settings section)
   const [pwForm,      setPwForm]      = useState({ next: '', confirm: '' })
   const [pwSaving,    setPwSaving]    = useState(false)
@@ -2133,7 +1966,7 @@ export default function TalentDashboard() {
       // Load portfolio, avatar, and tier from profiles table
       const { data: profileRow } = await supabase.from('profiles').select('portfolio, avatar_url, tier').eq('id', user.id).single()
       if (profileRow) {
-        const newTier = profileRow.tier || 'fast-rising'
+        const newTier = profileRow.tier || null
         setProfile(p => ({
           ...p,
           portfolio: profileRow.portfolio?.length ? profileRow.portfolio : p.portfolio,
@@ -2141,13 +1974,25 @@ export default function TalentDashboard() {
           tier: newTier,
         }))
         // Detect tier upgrade
-        const lastTier = localStorage.getItem(`brandior_last_tier_${user.id}`)
-        const tierOrder = Object.keys(TIERS)
-        if (lastTier && tierOrder.indexOf(newTier) > tierOrder.indexOf(lastTier)) {
-          setTierUpgradeModal(newTier)
+        if (newTier) {
+          const lastTier = localStorage.getItem(`brandior_last_tier_${user.id}`)
+          if (lastTier && CREATOR_TIER_ORDER.indexOf(newTier) > CREATOR_TIER_ORDER.indexOf(lastTier)) {
+            setTierUpgradeModal(newTier)
+          }
+          localStorage.setItem(`brandior_last_tier_${user.id}`, newTier)
         }
-        localStorage.setItem(`brandior_last_tier_${user.id}`, newTier)
       }
+      // Fetch achievement progress stats (fire-and-forget)
+      supabase.from('collabs').select('brand_id')
+        .eq('creator_id', user.id).eq('status', 'completed').eq('payment_status', 'released')
+        .then(({ data: paidCollabs }) => {
+          if (paidCollabs) {
+            setAchievementStats({
+              completions: paidCollabs.length,
+              brands: new Set(paidCollabs.map(c => c.brand_id)).size,
+            })
+          }
+        })
     })
   }, [])
 
@@ -2455,7 +2300,6 @@ export default function TalentDashboard() {
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: '#f9f5ff' }}>
-      {tierInfoOpen && <TierInfoModal tier={profile.tier} onClose={() => setTierInfoOpen(false)} />}
       {tierUpgradeModal && <TierUpgradeModal tier={tierUpgradeModal} onClose={() => setTierUpgradeModal(null)} />}
       {/* Brand-mode activation modal */}
       {showBrandSetup && (
@@ -3201,93 +3045,26 @@ export default function TalentDashboard() {
 
               {/* Job Score Card */}
               <div className="rounded-3xl shadow-sm overflow-hidden" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
-                <button
-                  onClick={() => setShowRatingDetail(v => !v)}
-                  className="w-full flex items-center justify-between p-6 hover:bg-purple-50/30 transition-colors"
-                >
+                <div className="flex items-center justify-between p-6">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#D4AF3718' }}>
                       <Star className="w-5 h-5 fill-current" style={{ color: '#D4AF37' }} />
                     </div>
-                    <div className="text-left">
+                    <div>
                       <p className="font-bold text-brand-dark">Job Score</p>
-                      <p className="text-xs text-brand-dark/40 mt-0.5">Your performance score &amp; tier eligibility</p>
+                      <p className="text-xs text-brand-dark/40 mt-0.5">Your average rating across completed collabs</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1">
-                      {[1,2,3,4,5].map(i => (
-                        <Star key={i} className="w-4 h-4"
-                          style={{ color: i <= Math.round(profile.rating) ? '#D4AF37' : '#e5e7eb' }}
-                          fill={i <= Math.round(profile.rating) ? '#D4AF37' : 'none'} />
-                      ))}
-                      <span className="font-black text-brand-dark ml-1">{profile.rating.toFixed(1)}</span>
-                      <span className="text-brand-dark/30 text-sm">/5</span>
-                    </div>
-                    <ChevronDown className="w-4 h-4 text-brand-dark/30 transition-transform" style={{ transform: showRatingDetail ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+                  <div className="flex items-center gap-1">
+                    {[1,2,3,4,5].map(i => (
+                      <Star key={i} className="w-4 h-4"
+                        style={{ color: i <= Math.round(profile.rating) ? '#D4AF37' : '#e5e7eb' }}
+                        fill={i <= Math.round(profile.rating) ? '#D4AF37' : 'none'} />
+                    ))}
+                    <span className="font-black text-brand-dark ml-1">{profile.rating.toFixed(1)}</span>
+                    <span className="text-brand-dark/30 text-sm">/5</span>
                   </div>
-                </button>
-
-                {showRatingDetail && (
-                  <div className="px-6 pb-6 space-y-4">
-                    <div className="h-px" style={{ backgroundColor: '#e9d5ff' }} />
-                    <p className="text-xs text-brand-dark/40 uppercase tracking-widest font-semibold">Tier Ladder &amp; Eligibility</p>
-                    {Object.entries(TIERS).map(([key, tier]) => {
-                      const isCurrent = profile.tier === key
-                      return (
-                        <div key={key} className="rounded-2xl p-5" style={{
-                          backgroundColor: isCurrent ? tier.bg : '#fafafa',
-                          border: `1px solid ${isCurrent ? tier.border : '#e9d5ff'}`,
-                        }}>
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-xl flex items-center justify-center text-sm" style={{ backgroundColor: `${tier.color}20` }}>
-                                <TierIcon tier={key} />
-                              </div>
-                              <div>
-                                <p className="font-bold text-sm" style={{ color: tier.color }}>{tier.label}</p>
-                                <p className="text-[11px] text-brand-dark/40">{tier.desc}</p>
-                              </div>
-                            </div>
-                            {isCurrent ? (
-                              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full text-white" style={{ backgroundColor: tier.color }}>Current</span>
-                            ) : (
-                              <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full text-brand-dark/30" style={{ border: '1px solid #e5e7eb' }}>Locked</span>
-                            )}
-                          </div>
-                          <div className="mb-3">
-                            <p className="text-[10px] font-semibold uppercase tracking-widest text-brand-dark/30 mb-2">Eligibility Criteria</p>
-                            <div className="space-y-1.5">
-                              {tier.criteria.map((c, i) => {
-                                const achieved = isCurrent || key === 'fast-rising'
-                                return (
-                                  <div key={i} className="flex items-center gap-2">
-                                    {achieved
-                                      ? <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: tier.color }} />
-                                      : <div className="w-3.5 h-3.5 rounded-full border flex-shrink-0" style={{ borderColor: '#d1d5db' }} />
-                                    }
-                                    <span className="text-xs" style={{ color: achieved ? '#0a0a0a' : '#9ca3af' }}>{c}</span>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-widest text-brand-dark/30 mb-2">Perks</p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {tier.perks.map((perk, i) => (
-                                <span key={i} className="text-[11px] font-medium px-2.5 py-1 rounded-full" style={{
-                                  backgroundColor: isCurrent ? `${tier.color}15` : '#f3f4f6',
-                                  color: isCurrent ? tier.color : '#9ca3af',
-                                }}>{perk}</span>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
+                </div>
               </div>
 
               {/* ── Pricing ── */}
@@ -3605,36 +3382,75 @@ export default function TalentDashboard() {
                 </div>
               </div>
 
-              {/* Talent Tier */}
-              <div className="rounded-3xl overflow-hidden shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
-                {/* Header */}
-                <div className="px-6 py-5" style={{ background: 'linear-gradient(135deg, #0d0020 0%, #1e0a3c 100%)' }}>
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="font-bold text-white">Talent Tier</p>
-                    <span className="text-[10px] text-white/30">Assigned by Brandior</span>
-                  </div>
-                  <p className="text-xs text-white/40">Grow your profile, complete campaigns, and earn your way to the top.</p>
-                  {/* Current tier highlight */}
-                  {(() => { const t = TIERS[profile.tier]; return (
-                    <div className="flex items-center gap-3 mt-4 p-3 rounded-2xl"
-                      style={{ backgroundColor: `${t.color}18`, border: `1px solid ${t.color}40` }}>
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: `${t.color}25` }}>
-                        {t.StarIcon
-                          ? <Star className="w-5 h-5 fill-current" style={{ color: t.color }} />
-                          : <span className="text-xl">{t.emoji}</span>}
-                      </div>
-                      <div>
-                        <p className="text-sm font-black" style={{ color: t.color }}>You are {t.label}</p>
-                        <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.45)' }}>{t.desc}</p>
+              {/* Brandior Achievement */}
+              {(() => {
+                const tierCfg = CREATOR_TIER_CONFIG[profile.tier]
+                const nextTier = profile.tier ? NEXT_CREATOR_TIER[profile.tier] : null
+                const isMax = profile.tier === 'champion'
+                return (
+                  <div className="rounded-3xl overflow-hidden shadow-sm" style={{ border: `1px solid ${tierCfg ? tierCfg.color + '22' : '#e9d5ff'}`, backgroundColor: '#0d0020' }}>
+                    {/* Identity */}
+                    <div className="px-6 pt-5 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <p className="text-[10px] font-bold uppercase tracking-widest mb-4" style={{ color: 'rgba(255,255,255,0.3)' }}>Brandior Achievement</p>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          {tierCfg ? (
+                            <>
+                              <p className="text-2xl font-black tracking-tight" style={{ color: tierCfg.color, letterSpacing: '-0.02em' }}>{tierCfg.label}</p>
+                              <p className="text-xs mt-1 leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>{tierCfg.desc}</p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-lg font-black" style={{ color: 'rgba(255,255,255,0.4)' }}>Not yet earned</p>
+                              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Complete your profile to earn Spark</p>
+                            </>
+                          )}
+                        </div>
+                        <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center mt-0.5"
+                          style={{ backgroundColor: tierCfg ? `${tierCfg.color}15` : 'rgba(255,255,255,0.05)', border: `1px solid ${tierCfg ? tierCfg.color + '30' : 'rgba(255,255,255,0.08)'}` }}>
+                          <Zap className="w-4 h-4" style={{ color: tierCfg ? tierCfg.color : 'rgba(255,255,255,0.2)' }} />
+                        </div>
                       </div>
                     </div>
-                  )})()}
-                </div>
-
-                {/* Tier ladder — accordion */}
-                <TierLadderAccordion profile={profile} />
-              </div>
+                    {/* Progress */}
+                    <div className="px-6 py-4">
+                      {isMax ? (
+                        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>You have reached the highest achievement on Brandior.</p>
+                      ) : !profile.tier ? (
+                        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>Pitch → Get hired → Complete work → Progress</p>
+                      ) : nextTier ? (
+                        <>
+                          <p className="text-[11px] font-semibold mb-3" style={{ color: 'rgba(255,255,255,0.3)' }}>Progress to {nextTier.label}</p>
+                          <div className="space-y-2.5">
+                            <div>
+                              <div className="flex justify-between mb-1.5">
+                                <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>Paid completions</p>
+                                <p className="text-[10px] font-bold" style={{ color: nextTier.color }}>{achievementStats.completions} / {nextTier.completions}</p>
+                              </div>
+                              <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                                <div className="h-full rounded-full transition-all duration-700"
+                                  style={{ width: `${Math.min(100, (achievementStats.completions / nextTier.completions) * 100)}%`, backgroundColor: nextTier.color }} />
+                              </div>
+                            </div>
+                            {nextTier.brands > 0 && (
+                              <div>
+                                <div className="flex justify-between mb-1.5">
+                                  <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>Unique brands</p>
+                                  <p className="text-[10px] font-bold" style={{ color: nextTier.color }}>{achievementStats.brands} / {nextTier.brands}</p>
+                                </div>
+                                <div className="h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                                  <div className="h-full rounded-full transition-all duration-700"
+                                    style={{ width: `${Math.min(100, (achievementStats.brands / nextTier.brands) * 100)}%`, backgroundColor: nextTier.color }} />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+                )
+              })()}
 
               {/* Private info */}
               <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
