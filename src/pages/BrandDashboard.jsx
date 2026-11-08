@@ -133,7 +133,7 @@ function PaymentModal({ order, onClose, onSuccess }) {
               <h2 className="text-xl font-black text-brand-dpurple">Complete Payment</h2>
               <button onClick={onClose}><X className="w-5 h-5 text-gray-400" /></button>
             </div>
-            <div className="bg-gray-50 rounded-2xl p-4 mb-6">
+            <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#f9f5ff', border: '1px solid #e9d5ff' }}>
               <div className="flex justify-between text-sm mb-2">
                 <span className="text-gray-500">Package</span>
                 <span className="font-medium text-gray-800">{order.package?.name}</span>
@@ -295,7 +295,7 @@ function OrderCard({ order, onPayNow, onApprove, onRevision, onReview }) {
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-3xl border border-brand-lav shadow-sm overflow-hidden">
       {/* Main row */}
       <div className="p-5">
         <div className="flex flex-wrap items-start gap-4">
@@ -343,7 +343,7 @@ function OrderCard({ order, onPayNow, onApprove, onRevision, onReview }) {
 
       {/* Expanded details */}
       {expanded && (
-        <div className="border-t border-gray-100 p-5 bg-gray-50">
+        <div className="border-t border-brand-lav p-5" style={{ backgroundColor: "#f9f5ff" }}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Brief Summary</p>
@@ -367,7 +367,7 @@ function OrderCard({ order, onPayNow, onApprove, onRevision, onReview }) {
                   <a
                     key={f.name}
                     href={f.url}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-purple-50 transition-colors"
                     download
                   >
                     <Download className="w-3.5 h-3.5" />
@@ -1458,7 +1458,7 @@ function BrandAnalyticsTab() {
 
       {/* Collabs over time */}
       <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
-        <p className="font-bold text-gray-900 mb-4">Collabs — Last 30 Days</p>
+        <p className="font-bold mb-4" style={{ color: "#1e0040" }}>Collabs — Last 30 Days</p>
         {data.dailyCollabs.some(d => d.count > 0) ? (
           <ResponsiveContainer width="100%" height={180}>
             <LineChart data={data.dailyCollabs}>
@@ -1476,7 +1476,7 @@ function BrandAnalyticsTab() {
       <div className="grid sm:grid-cols-2 gap-5">
         {/* Collab status breakdown */}
         <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
-          <p className="font-bold text-gray-900 mb-4">Collab Status</p>
+          <p className="font-bold mb-4" style={{ color: "#1e0040" }}>Collab Status</p>
           {pieData.length > 0 ? (
             <div className="flex items-center gap-4">
               <ResponsiveContainer width={120} height={120}>
@@ -1503,7 +1503,7 @@ function BrandAnalyticsTab() {
 
         {/* Top creators by collabs */}
         <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
-          <p className="font-bold text-gray-900 mb-4">Top Creators by Collabs</p>
+          <p className="font-bold mb-4" style={{ color: "#1e0040" }}>Top Creators by Collabs</p>
           {data.topCreators.length > 0 ? (
             <ResponsiveContainer width="100%" height={140}>
               <BarChart data={data.topCreators} layout="vertical">
@@ -1677,9 +1677,9 @@ function OrdersTab({ title, orders, emptyMsg, onPayNow, onApprove, onRevision, o
 
       {/* Filters bar */}
       {orders.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
+        <div className="bg-white rounded-2xl border border-brand-lav p-4 space-y-3">
           {/* Search */}
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 border border-gray-100">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-brand-lav" style={{ backgroundColor: '#f9f5ff' }}>
             <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
             <input
               value={search}
@@ -1714,7 +1714,7 @@ function OrdersTab({ title, orders, emptyMsg, onPayNow, onApprove, onRevision, o
       )}
 
       {orders.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-3xl border border-gray-100">
+        <div className="text-center py-20 bg-white rounded-3xl border border-brand-lav">
           <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#f3e8ff' }}>
             <ShoppingBag className="w-7 h-7" style={{ color: purple }} />
           </div>
@@ -1724,7 +1724,7 @@ function OrdersTab({ title, orders, emptyMsg, onPayNow, onApprove, onRevision, o
           </Link>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-14 bg-white rounded-2xl border border-gray-100">
+        <div className="text-center py-14 bg-white rounded-2xl border border-brand-lav">
           <p className="text-gray-400 text-sm mb-3">No orders match your filters</p>
           <button
             onClick={() => { setSearch(''); setStatusFilter('all') }}
@@ -1756,24 +1756,24 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-5">
           <p className="text-sm text-gray-500 mb-1">Total Spent</p>
           <p className="text-2xl font-extrabold" style={{ color: pink }}>{formatNGN(totalSpent)}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-5">
           <p className="text-sm text-gray-500 mb-1">Platform Fees Paid</p>
           <p className="text-2xl font-extrabold text-gray-800">{formatNGN(totalFees)}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-5">
           <p className="text-sm text-gray-500 mb-1">Transactions</p>
           <p className="text-2xl font-extrabold text-gray-800">{paidOrders.length}</p>
         </div>
       </div>
 
       {/* Recent Orders */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h3 className="font-bold text-gray-900">Recent Orders</h3>
+      <div className="bg-white rounded-2xl border border-brand-lav shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-brand-lav">
+          <h3 className="font-bold" style={{ color: "#1e0040" }}>Recent Orders</h3>
         </div>
         {recentOrders.length === 0 ? (
           <div className="px-5 py-12 text-center text-gray-400 text-sm">No orders yet</div>
@@ -1781,7 +1781,7 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-50">
+                <tr style={{ backgroundColor: "#f9f5ff" }}>
                   <th className="text-left text-xs font-semibold text-gray-500 px-5 py-3">Talent</th>
                   <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Package</th>
                   <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Status</th>
@@ -1792,7 +1792,7 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {recentOrders.map(order => (
-                  <tr key={order._id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={order._id} className="hover:bg-purple-50 transition-colors">
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-2">
                         <img
@@ -1819,9 +1819,9 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
       </div>
 
       {/* Payment history */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h3 className="font-bold text-gray-900">Payment History</h3>
+      <div className="bg-white rounded-2xl border border-brand-lav shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-brand-lav">
+          <h3 className="font-bold" style={{ color: "#1e0040" }}>Payment History</h3>
         </div>
         {paidOrders.length === 0 ? (
           <div className="px-5 py-12 text-center text-gray-400 text-sm">No payments yet</div>
@@ -1829,7 +1829,7 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-50">
+                <tr style={{ backgroundColor: "#f9f5ff" }}>
                   <th className="text-left text-xs font-semibold text-gray-500 px-5 py-3">Talent</th>
                   <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Package</th>
                   <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Amount</th>
@@ -1840,7 +1840,7 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {paidOrders.map(order => (
-                  <tr key={order._id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={order._id} className="hover:bg-purple-50 transition-colors">
                     <td className="px-5 py-3 text-sm font-medium text-gray-800 whitespace-nowrap">{order.talent?.name}</td>
                     <td className="px-3 py-3 text-sm text-gray-600 whitespace-nowrap">{order.package?.name}</td>
                     <td className="px-3 py-3 text-sm font-semibold text-gray-800 whitespace-nowrap">{formatNGN(order.total)}</td>
@@ -1989,8 +1989,8 @@ function WalletTab() {
 
       {/* Promo code */}
       {userId && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <h3 className="font-bold text-gray-900 flex items-center gap-2 mb-3">
+        <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-5">
+          <h3 className="font-bold flex items-center gap-2 mb-3" style={{ color: "#1e0040" }}>
             <span className="text-purple-600">🎟</span> Redeem Promo Code
           </h3>
           <PromoCodeRedeemer
@@ -2003,8 +2003,8 @@ function WalletTab() {
       )}
 
       {/* Fund wallet */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
-        <h3 className="font-bold text-gray-900 flex items-center gap-2">
+      <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-6 space-y-5">
+        <h3 className="font-bold flex items-center gap-2" style={{ color: "#1e0040" }}>
           <Plus className="w-4 h-4" style={{ color: purple }} /> Fund Wallet
         </h3>
 
@@ -2092,9 +2092,9 @@ function WalletTab() {
       </div>
 
       {/* Transaction history */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-bold text-gray-900">Transaction History</h3>
+      <div className="bg-white rounded-2xl border border-brand-lav shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-brand-lav flex items-center justify-between">
+          <h3 className="font-bold" style={{ color: "#1e0040" }}>Transaction History</h3>
           <span className="text-xs text-gray-400">{txns.length} records</span>
         </div>
         {txns.length === 0 ? (
@@ -2169,7 +2169,7 @@ function FavoritesTab() {
           const tier = TIER_STYLE[talent.tier] || TIER_STYLE['fast-rising']
           return (
             <div key={talent._id || talent.id}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3 hover:shadow-md transition-shadow">
+              className="bg-white rounded-2xl border border-brand-lav shadow-sm p-4 flex flex-col gap-3 hover:shadow-md transition-shadow">
               {/* Header */}
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
@@ -2448,7 +2448,7 @@ function SettingsTab() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+      <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-6 space-y-5">
         <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Brand Info</p>
         {field('Company / Brand name', 'companyName', { placeholder: 'e.g. GlowUp Cosmetics' })}
         {field('Owner / Contact name', 'ownerName',   { placeholder: 'e.g. Chisom Adeyemi' })}
@@ -2463,7 +2463,7 @@ function SettingsTab() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+      <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-6 space-y-5">
         <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Account</p>
         {field('Email', 'email', { type: 'email', disabled: true })}
         <p className="text-xs text-gray-400">To change your email, contact support@brandior.africa</p>
@@ -2476,7 +2476,7 @@ function SettingsTab() {
       </button>
 
       {/* Change Password */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+      <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-6 space-y-4">
         <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Change Password</p>
         {['next', 'confirm'].map(k => (
           <div key={k}>
@@ -2499,7 +2499,7 @@ function SettingsTab() {
       </div>
 
       {/* Privacy & Data */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-6">
         <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-4">Privacy & Data</p>
         <div className="flex items-center justify-between">
           <div>
@@ -2579,7 +2579,7 @@ function BrandNotificationsTab() {
       {/* Preferences section */}
       <div>
         <h2 className="text-xl font-black mb-4" style={{ color: darkPurple }}>Notification Preferences</h2>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+        <div className="bg-white rounded-2xl border border-brand-lav shadow-sm divide-y divide-gray-50">
           {PREF_ITEMS.map(({ key, label, desc, color }) => (
             <div key={key} className="flex items-center justify-between px-5 py-4">
               <div className="flex items-center gap-3">
