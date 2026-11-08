@@ -405,7 +405,7 @@ function RegistrationModal({ onClose }) {
 
         <h2 className="text-xl font-extrabold text-white mb-3">Join to View Full Profiles</h2>
         <p className="text-sm mb-7" style={{ color: '#a78bfa', lineHeight: '1.6' }}>
-          Create a free account to hire creators, view rates, and run campaigns with escrow protection.
+          Create a free account to hire creators, view rates, and run campaigns with payment protection.
         </p>
 
         <div className="flex flex-col gap-3 w-full">

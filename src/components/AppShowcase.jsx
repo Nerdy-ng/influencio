@@ -289,7 +289,7 @@ export default function AppShowcase() {
           {/* feature list */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 44 }}>
             {[
-              ['Escrow-protected payments', purp],
+              ['Payment-protected campaigns', purp],
               ['Real-time collab messaging', pink],
               ['KYC-verified creator profiles', '#22c55e'],
               ['Instant deal tracking & receipts', gold],

@@ -1131,7 +1131,7 @@ export default function TalentProfilePage() {
               <h3 className="font-bold text-gray-900 mb-3 text-sm">Why work with {c.name.split(' ')[0]}?</h3>
               <ul className="space-y-2.5">
                 {[
-                  { icon: Shield, text: 'Escrow payment — funds held until you approve' },
+                  { icon: Shield, text: 'Payment protected — funds held until you approve' },
                   { icon: CheckCircle, text: `${c.completedCampaigns || 0}+ completed campaigns` },
                   { icon: RefreshCw, text: 'Revisions included in every package' },
                   { icon: ExternalLink, text: 'Verified African talent' },
@@ -1147,7 +1147,7 @@ export default function TalentProfilePage() {
             <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-start gap-2.5">
               <Shield className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-green-800">Escrow Protected</p>
+                <p className="text-sm font-semibold text-green-800">Payment Protected</p>
                 <p className="text-xs text-green-600 mt-0.5">Payment held securely until you approve deliverables.</p>
               </div>
             </div>

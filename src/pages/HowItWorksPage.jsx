@@ -7,14 +7,14 @@ import { Search, FileText, CreditCard, Star, User, Briefcase, ShieldCheck, Arrow
 const brandSteps = [
   { icon: Search,      color: '#7c3aed', n: '01', title: 'Find your creator',     desc: 'Browse verified creator profiles. Review their rate card — content types, durations, platform fees — all upfront. No negotiating in the dark.' },
   { icon: FileText,    color: '#FA8112', n: '02', title: 'Send a project brief',   desc: 'Fill in your campaign goal, product, hashtags, and deadline. The creator reviews it before accepting — so you both know exactly what\'s been agreed.' },
-  { icon: CreditCard,  color: '#4c1d95', n: '03', title: 'Pay into escrow',        desc: 'Payment is held securely until you approve the delivered work. The creator knows payment is guaranteed; you know the work must meet the brief.' },
+  { icon: CreditCard,  color: '#4c1d95', n: '03', title: 'Fund your campaign',      desc: 'Payment is held securely until you approve the delivered work. The creator knows payment is guaranteed; you know the work must meet the brief.' },
   { icon: Star,        color: '#22c55e', n: '04', title: 'Review and release',     desc: 'Once the creator delivers, review the content. Request a revision if needed (up to the agreed rounds), then approve to release payment.' },
 ]
 
 const creatorSteps = [
   { icon: User,       color: '#F72585', n: '01', title: 'Build your rate card',    desc: 'Set your prices per content type, duration, and platform. You\'re in control — the minimum is ₦20,000 and you set everything above that.' },
   { icon: Briefcase,  color: '#7c3aed', n: '02', title: 'Get discovered',          desc: 'Brands search by niche, platform, and budget. When you\'re a fit, they send you a brief. You review it, accept or decline — no pressure.' },
-  { icon: ShieldCheck, color: '#FA8112', n: '03', title: 'Deliver your work',      desc: 'Create the content, upload your deliverables, and submit. Payment is already in escrow — it\'s waiting for your approval, not a brand\'s promise.' },
+  { icon: ShieldCheck, color: '#FA8112', n: '03', title: 'Deliver your work',      desc: 'Create the content, upload your deliverables, and submit. Payment is already secured — it\'s waiting for your approval, not a brand\'s promise.' },
   { icon: Star,       color: '#22c55e', n: '04', title: 'Get paid and grow',       desc: 'Once the brand approves, payment is released to your wallet instantly. Build your rating, grow your portfolio, unlock higher-value collabs.' },
 ]
 
@@ -41,7 +41,7 @@ export default function HowItWorksPage() {
     <div className="min-h-screen bg-white">
       <Helmet>
         <title>How It Works | Brandior</title>
-        <meta name="description" content="Learn how Brandior connects brands and creators — from discovery to payment — with escrow protection and transparent pricing." />
+        <meta name="description" content="Learn how Brandior connects brands and creators — from discovery to payment — with secure payment protection and transparent pricing." />
       </Helmet>
       <Navbar />
 
@@ -56,14 +56,14 @@ export default function HowItWorksPage() {
         </div>
       </section>
 
-      {/* Escrow explainer */}
+      {/* Payment protection explainer */}
       <section className="py-10 px-6 border-b border-brand-lav">
         <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#ede9fe' }}>
             <ShieldCheck className="w-6 h-6" style={{ color: '#7c3aed' }} />
           </div>
           <div>
-            <h2 className="font-black text-sm" style={{ color: '#1e0040' }}>Every collab is protected by escrow</h2>
+            <h2 className="font-black text-sm" style={{ color: '#1e0040' }}>Every collab is payment protected</h2>
             <p className="text-gray-500 text-sm mt-1">
               Payment is collected from the brand upfront and held by Brandior until the creator delivers and the brand approves. Neither side can be left out of pocket.
             </p>
@@ -109,7 +109,7 @@ export default function HowItWorksPage() {
           <h2 className="text-2xl font-black mb-10 text-center" style={{ color: '#1e0040' }}>Common questions</h2>
           <div className="space-y-5">
             {[
-              { q: 'What if the brand disappears after I deliver?', a: 'They can\'t. Payment is in escrow before you start work. If a brand fails to respond for 7 days after delivery, Brandior releases the funds to you automatically.' },
+              { q: 'What if the brand disappears after I deliver?', a: 'They can\'t. Payment is secured before you start work. If a brand fails to respond for 7 days after delivery, Brandior releases the funds to you automatically.' },
               { q: 'Can I revise my rate card?', a: 'Yes, anytime. Your updated rates apply to new collabs — ongoing collabs keep the rate that was agreed at the time of booking.' },
               { q: 'What does Brandior charge?', a: 'Brandior takes a platform fee on each transaction. This is shown to both parties upfront in the order summary — no hidden charges.' },
               { q: 'What if I\'m not satisfied with the work as a brand?', a: 'You can request revisions up to the number agreed on your collab. If the creator doesn\'t deliver to the brief, you can raise a dispute and Brandior will mediate.' },

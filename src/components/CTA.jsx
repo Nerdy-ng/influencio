@@ -50,7 +50,7 @@ export default function CTA() {
               <Building2 className="w-5 h-5" style={{ color: '#c4b5fd' }} />
             </div>
             <p className="text-lg font-extrabold text-white mb-1">I'm a Brand</p>
-            <p className="text-sm text-white/50 mb-4 leading-relaxed">Discover verified African creators and run campaigns with full escrow protection.</p>
+            <p className="text-sm text-white/50 mb-4 leading-relaxed">Discover verified African creators and run campaigns with full payment protection.</p>
             <span className="inline-flex items-center gap-1.5 text-sm font-bold transition-all"
               style={{ color: '#c4b5fd' }}>
               Browse creators <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -60,7 +60,7 @@ export default function CTA() {
 
         {/* trust bullets */}
         <div className="flex items-center justify-center gap-6 flex-wrap mb-12">
-          {['No setup fees', 'Free to join', 'Escrow protected', '24/7 Support'].map(item => (
+          {['No setup fees', 'Free to join', 'Payment protected', '24/7 Support'].map(item => (
             <span key={item} className="flex items-center gap-1.5 text-white/30 text-sm">
               <span className="w-1 h-1 rounded-full inline-block" style={{ backgroundColor: pink }} />
               {item}

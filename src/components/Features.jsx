@@ -2,7 +2,7 @@ import { Zap, Shield, MessageSquare, CheckSquare, BarChart2, BadgeCheck } from '
 
 const features = [
   { icon: Zap,           title: 'Smart Matching',          tag: 'AI Powered',  desc: 'AI-powered algorithm surfaces the most relevant talent-brand pairings based on niche, audience overlap, engagement, and budget fit.' },
-  { icon: Shield,        title: 'Secure Escrow Payments',  tag: 'Protected',   desc: 'Funds are held safely until deliverables are approved. No more chasing payments or unpaid work. Talents get paid on time, every time.' },
+  { icon: Shield,        title: 'Secure Payment Protection',  tag: 'Protected',   desc: 'Funds are held safely until deliverables are approved. No more chasing payments or unpaid work. Talents get paid on time, every time.' },
   { icon: MessageSquare, title: 'Built-in Messaging',      tag: 'Real-time',   desc: 'Communicate directly with brands or talents through our integrated messaging system. Share briefs, feedback, and files in one thread.' },
   { icon: CheckSquare,   title: 'Content Approval Flow',   tag: 'Streamlined', desc: 'Structured content submission and revision workflow. Request edits, leave feedback, and approve content with a clear audit trail.' },
   { icon: BarChart2,     title: 'Analytics Dashboard',     tag: 'Insights',    desc: 'Track earnings, campaign performance, engagement metrics, and audience growth. Brands get ROI data; talents get proof of impact.' },

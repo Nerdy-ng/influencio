@@ -22,7 +22,7 @@ const links = {
   Brands: [
     { label: 'Brand Signup',      to: '/signup/brand'   },
     { label: 'Find Creators',     to: '/marketplace'    },
-    { label: 'How Escrow Works',  to: '/how-it-works'   },
+    { label: 'How Payments Work',  to: '/how-it-works'   },
     { label: 'Pricing',           to: '/pricing'        },
   ],
   Company: [

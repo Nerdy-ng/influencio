@@ -66,7 +66,7 @@ export const CMS_DEFAULTS = {
       benefit1_title: 'Get Discovered',
       benefit1_desc: 'Your profile is visible to hundreds of brands actively looking for creators.',
       benefit2_title: 'Secure Payments',
-      benefit2_desc: 'Funds are held in escrow and released only when you deliver.',
+      benefit2_desc: 'Funds are held securely and released only when you deliver.',
       benefit3_title: 'Grow Your Tier',
       benefit3_desc: 'The more campaigns you complete, the higher your tier and earnings.',
     },

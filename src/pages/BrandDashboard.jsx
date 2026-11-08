@@ -150,7 +150,7 @@ function PaymentModal({ order, onClose, onSuccess }) {
             </div>
             <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-2xl p-4 mb-6">
               <Shield className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-green-700">Your payment will be held in escrow until you approve the delivered content.</p>
+              <p className="text-sm text-green-700">Your payment will be held securely until you approve the delivered content.</p>
             </div>
             <button
               onClick={handlePay}
@@ -180,7 +180,7 @@ function PaymentModal({ order, onClose, onSuccess }) {
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
             <p className="font-bold text-gray-900 mb-1">Payment Successful!</p>
-            <p className="text-sm text-gray-500">Funds held in escrow. The talent has been notified.</p>
+            <p className="text-sm text-gray-500">Funds held securely. The talent has been notified.</p>
           </div>
         )}
       </div>
@@ -985,7 +985,7 @@ export default function BrandDashboard() {
   const handlePaySuccess = async (orderId) => {
     setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: 'in_progress' } : o))
     await supabase.from('collabs').update({ status: 'in_progress', payment_status: 'paid' }).eq('id', orderId)
-    showToast('Payment successful! Funds held in escrow.')
+    showToast('Payment successful! Funds held securely.')
   }
 
   const handleApprove = async (orderId) => {
@@ -1834,7 +1834,7 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
                   <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Package</th>
                   <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Amount</th>
                   <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Platform Fee</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Escrow</th>
+                  <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Payment Status</th>
                   <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Date</th>
                 </tr>
               </thead>
@@ -1847,7 +1847,7 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
                     <td className="px-3 py-3 text-sm text-gray-600 whitespace-nowrap">{formatNGN(order.platformFee)}</td>
                     <td className="px-3 py-3">
                       <span className={`text-xs font-medium px-2 py-1 rounded-full ${order.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                        {order.status === 'completed' ? 'Released' : 'In Escrow'}
+                        {order.status === 'completed' ? 'Released' : 'Active'}
                       </span>
                     </td>
                     <td className="px-3 py-3 text-xs text-gray-400 whitespace-nowrap">{timeAgo(order.createdAt)}</td>
@@ -1967,7 +1967,7 @@ function WalletTab() {
     </div>
   )
 
-  const txnStatusLabel = (ps) => ps === 'released' ? 'Released' : ps === 'paid' ? 'In Escrow' : ps === 'refunded' ? 'Refunded' : ps
+  const txnStatusLabel = (ps) => ps === 'released' ? 'Released' : ps === 'paid' ? 'Active' : ps === 'refunded' ? 'Refunded' : ps
   const txnStatusColor = (ps) => ps === 'released' ? { bg: '#dcfce7', color: '#166534' } : ps === 'paid' ? { bg: '#dbeafe', color: '#1e40af' } : { bg: '#fee2e2', color: '#991b1b' }
 
   return (

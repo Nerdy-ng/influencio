@@ -146,7 +146,7 @@ function DiscoveryPanel() {
 /* ── 3. TRANSACTIONS ── */
 const transactions = [
   { brand: 'GlowLab',    title: 'Instagram Reel',         amount: '₦350,000', status: 'Completed', date: 'Mar 18, 2025', color: '#22c55e'  },
-  { brand: 'PeakFit',    title: 'YouTube Review',          amount: '₦980,000', status: 'In Escrow', date: 'Mar 21, 2025', color: '#c084fc'  },
+  { brand: 'PeakFit',    title: 'YouTube Review',          amount: '₦980,000', status: 'In Progress', date: 'Mar 21, 2025', color: '#c084fc'  },
   { brand: 'UrbanThread', title: 'Eid Lookbook',           amount: '₦220,000', status: 'Pending',   date: 'Mar 22, 2025', color: '#D4AF37'  },
   { brand: 'MindfulBrew', title: 'TikTok Integration',     amount: '₦180,000', status: 'Completed', date: 'Mar 10, 2025', color: '#22c55e'  },
 ]
@@ -158,7 +158,7 @@ function TransactionsPanel() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Total Earned',    value: '₦6.2M',  color: '#c084fc', sub: 'All time'       },
-          { label: 'In Escrow',       value: '₦980K',  color: '#D4AF37', sub: 'Being held'     },
+          { label: 'In Progress',      value: '₦980K',  color: '#D4AF37', sub: 'Being held'     },
           { label: 'This Month',      value: '₦1.73M', color: '#F72585', sub: 'March 2025'     },
           { label: 'Active Orders',   value: '3',       color: '#F72585', sub: 'In progress'    },
         ].map((s, i) => (
@@ -190,8 +190,8 @@ function TransactionsPanel() {
             </div>
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0"
               style={{
-                color: t.status === 'Completed' ? '#22c55e' : t.status === 'In Escrow' ? '#c084fc' : '#D4AF37',
-                backgroundColor: t.status === 'Completed' ? '#22c55e18' : t.status === 'In Escrow' ? '#c084fc18' : '#D4AF3718',
+                color: t.status === 'Completed' ? '#22c55e' : t.status === 'In Progress' ? '#c084fc' : '#D4AF37',
+                backgroundColor: t.status === 'Completed' ? '#22c55e18' : t.status === 'In Progress' ? '#c084fc18' : '#D4AF3718',
               }}>
               {t.status}
             </span>

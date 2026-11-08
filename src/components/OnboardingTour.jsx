@@ -45,7 +45,7 @@ const TALENT_STEPS = [
     gradTo: '#0a0025',
     visual: <ApplyVisual />,
     title: 'Apply & Get Paid Securely',
-    desc: "Send proposals directly to brands — no middlemen. Once accepted, your payment is held safely in escrow and released when you deliver.",
+    desc: "Send proposals directly to brands — no middlemen. Once accepted, your payment is held safely until you deliver.",
     cta: null,
   },
   {
@@ -99,7 +99,7 @@ const BRAND_STEPS = [
     gradFrom: '#001a08',
     gradTo: '#0a0025',
     visual: <EscrowVisual />,
-    title: 'Payments Held in Escrow',
+    title: 'Payments Are Protected',
     desc: "Your money is held securely until you review and approve the content. You're fully protected — only release payment when you're satisfied.",
     cta: null,
   },
@@ -233,7 +233,7 @@ function ApplyVisual() {
         <div className="w-7 h-7 rounded-full flex items-center justify-center mx-auto" style={{ backgroundColor: '#22c55e' }}>
           <Shield className="w-4 h-4 text-white" />
         </div>
-        <p className="text-center text-[10px] font-bold" style={{ color: '#22c55e' }}>Escrow</p>
+        <p className="text-center text-[10px] font-bold" style={{ color: '#22c55e' }}>Protected</p>
         <p className="text-center text-[9px]" style={{ color: 'rgba(255,255,255,0.4)' }}>Funds held safely until delivery</p>
       </div>
     </div>
@@ -318,7 +318,7 @@ function EscrowVisual() {
   }, [])
   const steps = [
     { label: 'Brand pays', icon: DollarSign, color: '#7c3aed', done: step >= 1 },
-    { label: 'In escrow', icon: Shield, color: '#D4AF37', done: step >= 2 },
+    { label: 'Held safely', icon: Shield, color: '#D4AF37', done: step >= 2 },
     { label: 'Content delivered', icon: CheckCircle, color: '#c084fc', done: step >= 3 },
     { label: 'Funds released', icon: Zap, color: '#22c55e', done: step >= 4 },
   ]

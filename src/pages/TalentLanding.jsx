@@ -68,7 +68,7 @@ const HeroCard3 = () => (
 const STEPS = [
   { icon: UserCircle, step: '01', title: 'Build Your Profile',   desc: 'Showcase your niche, audience stats, content portfolio, and rates. Your media kit is auto-generated.' },
   { icon: Search,     step: '02', title: 'Get Discovered',       desc: 'Brands search and filter by niche, tier, and budget. Your profile appears in front of the right buyers.' },
-  { icon: DollarSign, step: '03', title: 'Create & Get Paid',    desc: 'Accept campaign briefs, deliver your content, and receive secure escrow payment — automatically released on approval.' },
+  { icon: DollarSign, step: '03', title: 'Create & Get Paid',    desc: 'Accept campaign briefs, deliver your content, and receive secure payment — automatically released on approval.' },
 ]
 
 const TIERS = [
@@ -78,11 +78,11 @@ const TIERS = [
 ]
 
 const FEATURES = [
-  { icon: Shield,     title: 'Escrow Protection',   desc: 'Payment is locked before you start. No ghosting, no delays — guaranteed.' },
+  { icon: Shield,     title: 'Payment Protection',  desc: 'Payment is locked before you start. No ghosting, no delays — guaranteed.' },
   { icon: BadgeCheck, title: 'Verified Badge',       desc: 'Complete campaigns and earn your badge. Stand out in every brand search.' },
   { icon: TrendingUp, title: 'Tier Progression',     desc: 'Climb from Fast Rising to Top Rated and unlock bigger brand deals.' },
   { icon: BarChart2,  title: 'Earnings Dashboard',   desc: 'Track campaigns, income, engagement, and ratings all in one place.' },
-  { icon: Wallet,     title: 'Fast Payouts',          desc: 'Withdraw via bank transfer or Paystack. Minimum payout ₦5,000.' },
+  { icon: Wallet,     title: 'Fast Payouts',          desc: 'Withdraw to any major Nigerian bank. Minimum payout ₦5,000.' },
   { icon: Users,      title: 'Creator Community',    desc: 'Connect with other African creators. Share tips, collab, and grow.' },
 ]
 
@@ -102,7 +102,7 @@ const STATS = [
 /* ── FAQ ── */
 const FAQS = [
   { q: 'Is it free to join?',                   a: 'Yes — creating a profile is completely free. Brandior takes a 10% platform fee only when you complete a paid campaign.' },
-  { q: 'How do I get paid?',                     a: 'Payment is held in escrow when a brand places an order. Once you deliver and the brand approves, funds are released within 24 hours.' },
+  { q: 'How do I get paid?',                     a: 'Payment is held securely when a brand places an order. Once you deliver and the brand approves, funds are released to your wallet within 24 hours.' },
   { q: 'How do I move up tiers?',                a: 'Complete campaigns, maintain a high rating, and grow your followers. The platform automatically upgrades your tier when you hit the criteria.' },
   { q: 'What platforms are supported?',          a: 'Instagram, TikTok, YouTube, Twitter/X, Facebook, and Snapchat. You can connect all your accounts to your profile.' },
 ]
@@ -367,7 +367,7 @@ export default function TalentLanding() {
             </Link>}
           </div>
           <div className="flex items-center justify-center gap-6 mt-10 flex-wrap">
-            {['Free to join', 'No hidden fees', 'Payouts in 24h', 'Escrow protected'].map(item => (
+            {['Free to join', 'No hidden fees', 'Payouts in 24h', 'Payment protected'].map(item => (
               <span key={item} className="flex items-center gap-1.5 text-white/30 text-sm">
                 <span className="w-1 h-1 rounded-full inline-block" style={{ backgroundColor: pink }} />
                 {item}

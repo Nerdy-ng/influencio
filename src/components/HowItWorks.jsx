@@ -4,7 +4,7 @@ import { UserCircle, Search, DollarSign, Megaphone, Users, BarChart3 } from 'luc
 const talentSteps = [
   { icon: UserCircle, step: '01', title: 'Build Your Profile',   desc: 'Showcase your niche, audience stats across all platforms, content portfolio, and set your rates. Your media kit is auto-generated.' },
   { icon: Search,     step: '02', title: 'Discover Campaigns',   desc: 'Browse curated brand opportunities matched to your niche and audience. Apply with a personalised pitch in minutes.' },
-  { icon: DollarSign, step: '03', title: 'Create & Get Paid',    desc: 'Submit your content for brand approval, hit your deliverables, and receive secure escrow payment — automatically released when done.' },
+  { icon: DollarSign, step: '03', title: 'Create & Get Paid',    desc: 'Submit your content for brand approval, hit your deliverables, and receive secure payment — automatically released when done.' },
 ]
 
 const brandSteps = [

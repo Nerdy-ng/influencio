@@ -7,7 +7,7 @@ import { Check, ArrowRight, ShieldCheck, Zap } from 'lucide-react'
 const creatorPerks = [
   'Free to join — no subscription',
   'Set your own rates (min. ₦20,000)',
-  'Secure escrow on every collab',
+  'Secure payment on every collab',
   'Rate card visible to all brands',
   'Up to 2 content niches on your profile',
   'Direct messaging with brands',
@@ -20,7 +20,7 @@ const brandPerks = [
   'Pay only when you book a collab',
   'Browse all creator profiles free',
   'Transparent rate cards upfront',
-  'Escrow holds payment until approval',
+  'Payment held until your approval',
   'Request revisions before releasing funds',
   'Campaign analytics dashboard',
   'Dispute mediation included',
@@ -108,15 +108,15 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Escrow callout */}
+      {/* Payment protection callout */}
       <section className="py-14 px-6" style={{ background: '#faf9ff' }}>
         <div className="max-w-3xl mx-auto text-center">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-5" style={{ background: '#ede9fe' }}>
             <ShieldCheck className="w-7 h-7" style={{ color: '#7c3aed' }} />
           </div>
-          <h2 className="text-2xl font-black mb-4" style={{ color: '#1e0040' }}>Every transaction is protected by escrow</h2>
+          <h2 className="text-2xl font-black mb-4" style={{ color: '#1e0040' }}>Every transaction is payment protected</h2>
           <p className="text-gray-500 max-w-xl mx-auto text-sm leading-relaxed mb-8">
-            When a brand books a collab, they pay the full amount upfront. Brandior holds it in escrow until the creator delivers and the brand approves. If the creator doesn't deliver, the brand gets a full refund. If the brand ghosts after delivery, the funds are auto-released to the creator.
+            When a brand books a collab, they pay the full amount upfront. Brandior holds it securely until the creator delivers and the brand approves. If the creator doesn't deliver, the brand gets a full refund. If the brand ghosts after delivery, the funds are auto-released to the creator.
           </p>
           <Link to="/how-it-works" className="inline-flex items-center gap-2 text-sm font-bold" style={{ color: '#7c3aed' }}>
             See how the full flow works <ArrowRight className="w-4 h-4" />
@@ -132,7 +132,7 @@ export default function PricingPage() {
             {[
               { q: 'What is the platform fee?', a: 'The platform fee is a percentage added to each transaction. The exact amount is displayed in the order summary before either party confirms the collab.' },
               { q: 'Is there a minimum collab value?', a: 'Yes. The minimum is ₦20,000. Creators set their own rates above that floor.' },
-              { q: 'Can I negotiate outside the platform?', a: 'All payments must go through Brandior\'s escrow to protect both parties. Off-platform payments void the escrow guarantee and dispute protection.' },
+              { q: 'Can I negotiate outside the platform?', a: 'All payments must go through Brandior to protect both parties. Off-platform payments void Brandior\'s payment guarantee and dispute protection.' },
               { q: 'What if a collab is cancelled?', a: 'If cancelled before the creator starts work, a full refund is issued. If cancelled mid-delivery, Brandior mediates a fair split based on the work completed.' },
               { q: 'Do brands pay for browsing and messaging?', a: 'No. Browsing creator profiles and exchanging messages is free. You only pay when you formally book a collab through the order flow.' },
             ].map(({ q, a }) => (

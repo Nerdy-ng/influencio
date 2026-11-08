@@ -2380,7 +2380,7 @@ export default function TalentDashboard() {
             <div className="mb-5">
               <div className="flex items-start gap-2.5 text-sm" style={{ color: 'rgba(255,255,255,0.65)' }}>
                 <span className="flex-shrink-0">🚫</span>
-                <span>No escrow = no protection. If a brand pays you directly and disputes it, you have no recourse.</span>
+                <span>Payments off-platform have no protection. If a brand pays you directly and disputes it, you have no recourse.</span>
               </div>
             </div>
 
@@ -3482,7 +3482,7 @@ export default function TalentDashboard() {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="font-bold text-brand-dark">Identity Verification</p>
-                    <p className="text-xs text-brand-dark/40 mt-0.5">Required to activate your Rubies wallet</p>
+                    <p className="text-xs text-brand-dark/40 mt-0.5">Required to activate your Brandior wallet</p>
                   </div>
                   {kycSubmission?.status === 'approved' && (
                     <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
@@ -3512,7 +3512,7 @@ export default function TalentDashboard() {
                     <ShieldCheck className="w-8 h-8 text-emerald-500 flex-shrink-0" />
                     <div>
                       <p className="font-semibold text-emerald-800">Your identity has been verified</p>
-                      <p className="text-xs text-emerald-600 mt-0.5">Your Rubies wallet is now active. You can receive and withdraw earnings.</p>
+                      <p className="text-xs text-emerald-600 mt-0.5">Your Brandior wallet is now active. You can receive and withdraw earnings.</p>
                     </div>
                   </div>
                 )}
@@ -3986,11 +3986,11 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
   return (
     <div className="space-y-5">
 
-      {/* Rubies Wallet Balance */}
+      {/* Wallet Balance */}
       <div className="rounded-2xl p-5 text-white" style={{ background: 'linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%)' }}>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.6)' }}>Rubies Wallet Balance</p>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.6)' }}>Wallet Balance</p>
             {rubiesLoading ? (
               <div className="h-8 w-32 rounded-lg animate-pulse" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
             ) : rubiesBalance !== null ? (
@@ -3998,7 +3998,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
             ) : (
               <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>Complete KYC to activate wallet</p>
             )}
-            <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Available to withdraw · Credited when escrow releases</p>
+            <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Available to withdraw · Funds arrive when your collab is completed</p>
           </div>
           <Wallet className="w-8 h-8 opacity-30" />
         </div>
@@ -4125,7 +4125,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
           </button>
         </div>
         <div className="flex flex-wrap gap-2 mt-4">
-          {['Bank Transfer via Rubies', 'All Major Nigerian Banks'].map(m => (
+          {['Bank Transfer', 'All Major Nigerian Banks'].map(m => (
             <span key={m} className="flex items-center gap-1.5 text-[11px] font-medium px-3 py-1 rounded-full"
               style={{ backgroundColor: `${purple}10`, color: darkPurple, border: `1px solid ${purple}25` }}>
               <CreditCard className="w-3 h-3" /> {m}
@@ -4398,7 +4398,7 @@ function SupportTab() {
     { q: 'When do I get paid for a completed campaign?', a: 'Payments are released within 24–48 hours after the brand approves your content. Funds go directly to your Brandior wallet.' },
     { q: 'How do I dispute a rejected submission?', a: 'Go to the campaign in your dashboard, click "View Feedback", and use the dispute button. Our team reviews all disputes within 2 business days.' },
     { q: 'Can I change my rate card after a collab is booked?', a: 'Your rate card updates apply to new collabs only. Rates already agreed upon in an active collab cannot be changed.' },
-    { q: 'How do I withdraw my earnings?', a: 'Go to Wallet → Withdraw. We support bank transfer across our supported countries, Paystack, and Flutterwave. Minimum withdrawal is ₦5,000.' },
+    { q: 'How do I withdraw my earnings?', a: 'Go to Wallet → Withdraw. We support bank transfer to all major Nigerian banks. Minimum withdrawal is ₦5,000.' },
     { q: 'What happens if a brand ghosts me?', a: "If a brand doesn't respond within 5 days of your submission, you can escalate the campaign to our team and we'll mediate." },
   ]
 

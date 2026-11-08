@@ -41,7 +41,7 @@ const HeroCard2 = () => (
         <Shield className="w-4 h-4" style={{ color: '#4ade80' }} />
       </div>
       <div>
-        <p className="text-white text-sm font-semibold">Escrow Protected</p>
+        <p className="text-white text-sm font-semibold">Payment Protected</p>
         <p className="text-emerald-400 text-xs font-medium">• Funds secured</p>
       </div>
     </div>
@@ -79,7 +79,7 @@ const HeroCard3 = () => (
 const STEPS = [
   { icon: Search,     step: '01', title: 'Browse & Filter Talents',  desc: 'Search 500+ verified African creators by niche, tier, follower count, location, and budget.' },
   { icon: Target,     step: '02', title: 'Place a Campaign Order',   desc: 'Select a package, fill in your brief, and submit. The talent reviews and accepts your campaign.' },
-  { icon: Shield,     step: '03', title: 'Fund Escrow Securely',     desc: 'Payment is held in secure escrow — released only when you approve the delivered content.' },
+  { icon: Shield,     step: '03', title: 'Fund Your Campaign',        desc: 'Payment is held securely — released only when you approve the delivered content.' },
   { icon: CheckCircle,step: '04', title: 'Receive & Approve Content',desc: 'Review deliverables, request revisions if needed, then approve to release payment.' },
 ]
 
@@ -95,7 +95,7 @@ const NICHES = [
 ]
 
 const FEATURES = [
-  { icon: Shield,    title: 'Escrow Payment Protection', desc: 'Funds are locked until you approve the content. Zero risk of paying for work that doesn\'t meet your brief.' },
+  { icon: Shield,    title: 'Payment Protection', desc: 'Funds are locked until you approve the content. Zero risk of paying for work that doesn\'t meet your brief.' },
   { icon: BadgeCheck,title: 'Verified Creator Network',  desc: 'Every creator on Brandior is vetted. View real follower counts, engagement rates, and completed campaigns.' },
   { icon: Filter,    title: 'Advanced Search & Filters', desc: 'Filter by niche, tier, platform, price range, location, and availability to find your perfect match.' },
   { icon: BarChart2, title: 'Campaign Dashboard',        desc: 'Manage all active, pending, and completed campaigns from one clean brand dashboard.' },
