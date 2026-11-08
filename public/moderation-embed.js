@@ -234,7 +234,7 @@
 
     var badge = document.createElement('span')
     badge.textContent = '\u26A0'
-    badge.title = 'Brandiór: Flagged content'
+    badge.title = 'Bandior: Flagged content'
     badge.style.cssText = [
       'position:absolute',
       'top:4px',

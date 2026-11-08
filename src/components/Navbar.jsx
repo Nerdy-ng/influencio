@@ -317,7 +317,7 @@ export default function Navbar() {
                     <UserAvatar profile={profile} size="sm" />
                     <div className="min-w-0">
                       <p className="text-brand-dark font-bold text-sm truncate">{profile?.nickname || 'Your Profile'}</p>
-                      <p className="text-brand-dark/40 text-xs truncate">{profile?.email || 'talent@brandiór.co'}</p>
+                      {profile?.email && <p className="text-brand-dark/40 text-xs truncate">{profile.email}</p>}
                     </div>
                   </div>
 
