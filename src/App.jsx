@@ -29,7 +29,9 @@ const LoginPage       = lazy(() => import('./pages/LoginPage'))
 const TalentDashboard = lazy(() => import('./pages/TalentDashboard'))
 const Marketplace     = lazy(() => import('./pages/Marketplace'))
 const TalentProfilePage = lazy(() => import('./pages/TalentProfilePage'))
-const BrandDashboard  = lazy(() => import('./pages/BrandDashboard'))
+const BrandDashboard       = lazy(() => import('./pages/BrandDashboard'))
+const BrandFindCreatorsPage = lazy(() => import('./pages/BrandFindCreatorsPage'))
+const BrandCampaignsPage    = lazy(() => import('./pages/BrandCampaignsPage'))
 const CollabBriefPage  = lazy(() => import('./pages/CollabBriefPage'))
 const CollabReviewPage = lazy(() => import('./pages/CollabReviewPage'))
 const AdminLogin      = lazy(() => import('./pages/admin/AdminLogin'))
@@ -350,6 +352,22 @@ export default function App() {
           element={IS_APP
             ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><BrandDashboard /></PrivateRoute>
             : <CrossDomainRedirect to={`${APP_URL}/brand-dashboard`} />} />
+        <Route path="/brand/find-creators"
+          element={IS_APP
+            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><BrandFindCreatorsPage /></PrivateRoute>
+            : <CrossDomainRedirect to={`${APP_URL}/brand/find-creators`} />} />
+        <Route path="/brand/my-campaigns"
+          element={IS_APP
+            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><BrandCampaignsPage /></PrivateRoute>
+            : <CrossDomainRedirect to={`${APP_URL}/brand/my-campaigns`} />} />
+        <Route path="/brand/my-campaigns/:id"
+          element={IS_APP
+            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><BrandCampaignsPage /></PrivateRoute>
+            : <CrossDomainRedirect to={`${APP_URL}/brand/my-campaigns`} />} />
+        <Route path="/brand/my-campaigns/:id/pitches"
+          element={IS_APP
+            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><BrandCampaignsPage /></PrivateRoute>
+            : <CrossDomainRedirect to={`${APP_URL}/brand/my-campaigns`} />} />
         <Route path="/collab/brief"
           element={IS_APP
             ? <PrivateRoute isRecoverySession={isRecoverySession}><CollabBriefPage /></PrivateRoute>

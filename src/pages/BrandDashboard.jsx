@@ -1068,7 +1068,7 @@ export default function BrandDashboard() {
                 Browse Talents
               </Link>
               <button
-                onClick={() => setActiveTab('talents')}
+                onClick={() => navigate('/brand/find-creators')}
                 className="sm:hidden p-2 rounded-xl transition-colors"
                 style={{ color: 'rgba(28,0,64,0.4)' }}
                 onMouseEnter={e => e.currentTarget.style.backgroundColor = 'white'}
@@ -1108,9 +1108,7 @@ export default function BrandDashboard() {
             </div>
           ) : (
             <>
-              {activeTab === 'talents' && <FindTalentsTab />}
-              {activeTab === 'post-campaign' && <PostCampaignTab onCreated={() => setActiveTab('my-campaigns')} />}
-              {activeTab === 'my-campaigns' && <MyCampaignsTab />}
+              {activeTab === 'post-campaign' && <PostCampaignTab onCreated={() => navigate('/brand/my-campaigns')} />}
               {activeTab === 'overview' && (
                 <OverviewTab
                   activeOrders={activeOrders}
@@ -1164,7 +1162,7 @@ export default function BrandDashboard() {
             { id: 'messages',  label: 'Messages',  Icon: Mail },
             { id: 'wallet',    label: 'Wallet',    Icon: Wallet },
           ].map(({ id, label, Icon }) => (
-            <button key={id} onClick={() => setActiveTab(id)}
+            <button key={id} onClick={() => ROUTED_BRAND_TABS[id] ? navigate(ROUTED_BRAND_TABS[id]) : setActiveTab(id)}
               className="flex-1 flex flex-col items-center gap-1 py-2.5 text-[10px] font-bold transition-colors"
               style={{ color: activeTab === id ? '#c084fc' : 'rgba(196,181,253,0.4)' }}>
               <Icon className="w-5 h-5" />
@@ -1324,7 +1322,13 @@ function BrandAvatarMenu({ onSwitchToCreator }) {
   )
 }
 
+const ROUTED_BRAND_TABS = {
+  talents:        '/brand/find-creators',
+  'my-campaigns': '/brand/my-campaigns',
+}
+
 function SidebarContent({ activeTab, setActiveTab, dashLogo, onSwitchToCreator }) {
+  const navigate = useNavigate()
 
   return (
     <>
@@ -1344,7 +1348,7 @@ function SidebarContent({ activeTab, setActiveTab, dashLogo, onSwitchToCreator }
         {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
-            onClick={() => setActiveTab(id)}
+            onClick={() => ROUTED_BRAND_TABS[id] ? navigate(ROUTED_BRAND_TABS[id]) : setActiveTab(id)}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left"
             style={
               activeTab === id
