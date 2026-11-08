@@ -1,160 +1,223 @@
 /**
- * Curated global city list for the Brandior location selector.
- * Africa-focused; covers major diaspora and international brand hubs.
- * Format: "City, Country" — matches what brands see and select.
+ * Brandior location dataset — Nigeria-focused launch phase.
+ * Covers all 36 states + FCT with state capitals and major population centres.
+ * Format: "City, Nigeria" for consistent matching with existing free-text values.
  */
 export const CITY_LIST: string[] = [
-  // ── Nigeria (primary market) ──────────────────────────────────────────────
+  // ── Lagos State ───────────────────────────────────────────────────────────
   'Lagos, Nigeria',
-  'Abuja, Nigeria',
-  'Port Harcourt, Nigeria',
-  'Ibadan, Nigeria',
-  'Kano, Nigeria',
-  'Enugu, Nigeria',
-  'Benin City, Nigeria',
-  'Warri, Nigeria',
-  'Owerri, Nigeria',
-  'Calabar, Nigeria',
-  'Uyo, Nigeria',
-  'Jos, Nigeria',
-  'Ilorin, Nigeria',
-  'Kaduna, Nigeria',
-  'Onitsha, Nigeria',
-  'Aba, Nigeria',
-  'Zaria, Nigeria',
-  'Maiduguri, Nigeria',
+  'Ikeja, Nigeria',
+  'Ikorodu, Nigeria',
+  'Badagry, Nigeria',
+  'Epe, Nigeria',
+
+  // ── Ogun State ────────────────────────────────────────────────────────────
   'Abeokuta, Nigeria',
+  'Sagamu, Nigeria',
+  'Ijebu-Ode, Nigeria',
+  'Ilaro, Nigeria',
+  'Ijebu-Igbo, Nigeria',
+
+  // ── Oyo State ─────────────────────────────────────────────────────────────
+  'Ibadan, Nigeria',
+  'Ogbomosho, Nigeria',
+  'Oyo, Nigeria',
+  'Iseyin, Nigeria',
+  'Eruwa, Nigeria',
+
+  // ── Osun State ────────────────────────────────────────────────────────────
+  'Osogbo, Nigeria',
+  'Ile-Ife, Nigeria',
+  'Ilesa, Nigeria',
+  'Ede, Nigeria',
+  'Iwo, Nigeria',
+
+  // ── Ekiti State ───────────────────────────────────────────────────────────
+  'Ado-Ekiti, Nigeria',
+  'Ikere-Ekiti, Nigeria',
+  'Efon-Alaaye, Nigeria',
+
+  // ── Ondo State ────────────────────────────────────────────────────────────
   'Akure, Nigeria',
+  'Ondo, Nigeria',
+  'Owo, Nigeria',
+  'Okitipupa, Nigeria',
+  'Ikare-Akoko, Nigeria',
 
-  // ── West Africa ───────────────────────────────────────────────────────────
-  'Accra, Ghana',
-  'Kumasi, Ghana',
-  'Tamale, Ghana',
-  'Dakar, Senegal',
-  'Abidjan, Côte d\'Ivoire',
-  'Lomé, Togo',
-  'Cotonou, Benin',
-  'Ouagadougou, Burkina Faso',
-  'Bamako, Mali',
-  'Conakry, Guinea',
-  'Freetown, Sierra Leone',
-  'Monrovia, Liberia',
-  'Banjul, Gambia',
-  'Bissau, Guinea-Bissau',
-  'Praia, Cape Verde',
-  'Niamey, Niger',
-  'Nouakchott, Mauritania',
+  // ── Kwara State ───────────────────────────────────────────────────────────
+  'Ilorin, Nigeria',
+  'Offa, Nigeria',
+  'Omu-Aran, Nigeria',
+  'Share, Nigeria',
 
-  // ── East Africa ───────────────────────────────────────────────────────────
-  'Nairobi, Kenya',
-  'Mombasa, Kenya',
-  'Kampala, Uganda',
-  'Dar es Salaam, Tanzania',
-  'Dodoma, Tanzania',
-  'Addis Ababa, Ethiopia',
-  'Kigali, Rwanda',
-  'Bujumbura, Burundi',
-  'Mogadishu, Somalia',
-  'Djibouti, Djibouti',
-  'Asmara, Eritrea',
+  // ── FCT (Abuja) ───────────────────────────────────────────────────────────
+  'Abuja, Nigeria',
+  'Gwagwalada, Nigeria',
+  'Kuje, Nigeria',
 
-  // ── Central Africa ────────────────────────────────────────────────────────
-  'Kinshasa, DRC',
-  'Brazzaville, Republic of Congo',
-  'Yaoundé, Cameroon',
-  'Douala, Cameroon',
-  'Libreville, Gabon',
-  'Malabo, Equatorial Guinea',
-  'Bangui, Central African Republic',
-  'N\'Djamena, Chad',
+  // ── Niger State ───────────────────────────────────────────────────────────
+  'Minna, Nigeria',
+  'Bida, Nigeria',
+  'Suleja, Nigeria',
+  'Kontagora, Nigeria',
+  'New Bussa, Nigeria',
 
-  // ── Southern Africa ───────────────────────────────────────────────────────
-  'Johannesburg, South Africa',
-  'Cape Town, South Africa',
-  'Durban, South Africa',
-  'Pretoria, South Africa',
-  'Maputo, Mozambique',
-  'Harare, Zimbabwe',
-  'Bulawayo, Zimbabwe',
-  'Lusaka, Zambia',
-  'Windhoek, Namibia',
-  'Gaborone, Botswana',
-  'Lilongwe, Malawi',
-  'Blantyre, Malawi',
-  'Antananarivo, Madagascar',
-  'Port Louis, Mauritius',
+  // ── Kogi State ────────────────────────────────────────────────────────────
+  'Lokoja, Nigeria',
+  'Okene, Nigeria',
+  'Idah, Nigeria',
+  'Anyigba, Nigeria',
+  'Ankpa, Nigeria',
 
-  // ── North Africa ──────────────────────────────────────────────────────────
-  'Cairo, Egypt',
-  'Alexandria, Egypt',
-  'Casablanca, Morocco',
-  'Rabat, Morocco',
-  'Algiers, Algeria',
-  'Tunis, Tunisia',
-  'Tripoli, Libya',
-  'Khartoum, Sudan',
+  // ── Benue State ───────────────────────────────────────────────────────────
+  'Makurdi, Nigeria',
+  'Gboko, Nigeria',
+  'Otukpo, Nigeria',
+  'Zaki Biam, Nigeria',
 
-  // ── Middle East ───────────────────────────────────────────────────────────
-  'Dubai, UAE',
-  'Abu Dhabi, UAE',
-  'Riyadh, Saudi Arabia',
-  'Jeddah, Saudi Arabia',
-  'Doha, Qatar',
-  'Kuwait City, Kuwait',
+  // ── Nasarawa State ────────────────────────────────────────────────────────
+  'Lafia, Nigeria',
+  'Keffi, Nigeria',
+  'Nasarawa, Nigeria',
 
-  // ── Europe ────────────────────────────────────────────────────────────────
-  'London, United Kingdom',
-  'Manchester, United Kingdom',
-  'Birmingham, United Kingdom',
-  'Leeds, United Kingdom',
-  'Paris, France',
-  'Berlin, Germany',
-  'Amsterdam, Netherlands',
-  'Stockholm, Sweden',
-  'Oslo, Norway',
-  'Copenhagen, Denmark',
-  'Dublin, Ireland',
-  'Madrid, Spain',
-  'Rome, Italy',
-  'Lisbon, Portugal',
-  'Brussels, Belgium',
+  // ── Plateau State ─────────────────────────────────────────────────────────
+  'Jos, Nigeria',
+  'Bukuru, Nigeria',
+  'Pankshin, Nigeria',
+  'Shendam, Nigeria',
 
-  // ── North America ─────────────────────────────────────────────────────────
-  'New York, United States',
-  'Los Angeles, United States',
-  'Houston, United States',
-  'Atlanta, United States',
-  'Chicago, United States',
-  'Dallas, United States',
-  'Washington DC, United States',
-  'Miami, United States',
-  'Toronto, Canada',
-  'Vancouver, Canada',
-  'Montreal, Canada',
+  // ── Kaduna State ──────────────────────────────────────────────────────────
+  'Kaduna, Nigeria',
+  'Zaria, Nigeria',
+  'Kafanchan, Nigeria',
 
-  // ── Asia-Pacific ──────────────────────────────────────────────────────────
-  'Sydney, Australia',
-  'Melbourne, Australia',
-  'Tokyo, Japan',
-  'Singapore, Singapore',
-  'Kuala Lumpur, Malaysia',
-  'Hong Kong, Hong Kong',
+  // ── Kano State ────────────────────────────────────────────────────────────
+  'Kano, Nigeria',
+
+  // ── Jigawa State ──────────────────────────────────────────────────────────
+  'Dutse, Nigeria',
+  'Hadejia, Nigeria',
+  'Gumel, Nigeria',
+
+  // ── Katsina State ─────────────────────────────────────────────────────────
+  'Katsina, Nigeria',
+  'Daura, Nigeria',
+  'Funtua, Nigeria',
+
+  // ── Sokoto State ──────────────────────────────────────────────────────────
+  'Sokoto, Nigeria',
+
+  // ── Kebbi State ───────────────────────────────────────────────────────────
+  'Birnin Kebbi, Nigeria',
+  'Argungu, Nigeria',
+
+  // ── Zamfara State ─────────────────────────────────────────────────────────
+  'Gusau, Nigeria',
+  'Talata-Mafara, Nigeria',
+
+  // ── Bauchi State ──────────────────────────────────────────────────────────
+  'Bauchi, Nigeria',
+  'Azare, Nigeria',
+
+  // ── Gombe State ───────────────────────────────────────────────────────────
+  'Gombe, Nigeria',
+  'Deba, Nigeria',
+
+  // ── Taraba State ──────────────────────────────────────────────────────────
+  'Jalingo, Nigeria',
+  'Wukari, Nigeria',
+  'Bali, Nigeria',
+
+  // ── Adamawa State ─────────────────────────────────────────────────────────
+  'Yola, Nigeria',
+  'Mubi, Nigeria',
+  'Numan, Nigeria',
+
+  // ── Borno State ───────────────────────────────────────────────────────────
+  'Maiduguri, Nigeria',
+  'Biu, Nigeria',
+
+  // ── Yobe State ────────────────────────────────────────────────────────────
+  'Damaturu, Nigeria',
+  'Potiskum, Nigeria',
+  'Nguru, Nigeria',
+
+  // ── Enugu State ───────────────────────────────────────────────────────────
+  'Enugu, Nigeria',
+  'Nsukka, Nigeria',
+  'Agbani, Nigeria',
+
+  // ── Anambra State ─────────────────────────────────────────────────────────
+  'Awka, Nigeria',
+  'Onitsha, Nigeria',
+  'Nnewi, Nigeria',
+  'Ekwulobia, Nigeria',
+  'Nkpor, Nigeria',
+
+  // ── Imo State ─────────────────────────────────────────────────────────────
+  'Owerri, Nigeria',
+  'Orlu, Nigeria',
+  'Okigwe, Nigeria',
+
+  // ── Abia State ────────────────────────────────────────────────────────────
+  'Umuahia, Nigeria',
+  'Aba, Nigeria',
+  'Arochukwu, Nigeria',
+
+  // ── Ebonyi State ──────────────────────────────────────────────────────────
+  'Abakaliki, Nigeria',
+  'Afikpo, Nigeria',
+
+  // ── Cross River State ─────────────────────────────────────────────────────
+  'Calabar, Nigeria',
+  'Ikom, Nigeria',
+  'Ugep, Nigeria',
+
+  // ── Akwa Ibom State ───────────────────────────────────────────────────────
+  'Uyo, Nigeria',
+  'Eket, Nigeria',
+  'Ikot Ekpene, Nigeria',
+  'Oron, Nigeria',
+
+  // ── Rivers State ──────────────────────────────────────────────────────────
+  'Port Harcourt, Nigeria',
+  'Bonny, Nigeria',
+  'Eleme, Nigeria',
+
+  // ── Bayelsa State ─────────────────────────────────────────────────────────
+  'Yenagoa, Nigeria',
+  'Sagbama, Nigeria',
+
+  // ── Delta State ───────────────────────────────────────────────────────────
+  'Asaba, Nigeria',
+  'Warri, Nigeria',
+  'Sapele, Nigeria',
+  'Ughelli, Nigeria',
+  'Agbor, Nigeria',
+  'Abraka, Nigeria',
+
+  // ── Edo State ─────────────────────────────────────────────────────────────
+  'Benin City, Nigeria',
+  'Auchi, Nigeria',
+  'Ekpoma, Nigeria',
+  'Uromi, Nigeria',
+  'Irrua, Nigeria',
 ]
 
 /**
  * Returns matching city suggestions for a search query.
- * - Searches both the full display string and the city component.
- * - Case-insensitive, trims whitespace.
+ * - Searches the full display string; case-insensitive.
+ * - Returns the first `limit` entries when query is empty.
  */
 export function searchLocations(query: string, limit = 8): string[] {
   const q = query.trim().toLowerCase()
-  if (!q) return CITY_LIST.slice(0, 8)
+  if (!q) return CITY_LIST.slice(0, limit)
   return CITY_LIST.filter(entry => entry.toLowerCase().includes(q)).slice(0, limit)
 }
 
 /**
  * Checks whether a creator's stored location string matches a selected
- * "City, Country" filter value.
+ * "City, Nigeria" filter value.
  *
  * Handles legacy free-text values:
  *   creator.location = "Lagos"       → matches filter "Lagos, Nigeria"  ✓
@@ -166,7 +229,6 @@ export function locationMatches(creatorLocation: string, filterValue: string): b
   const cl = creatorLocation.toLowerCase().trim()
   const fl = filterValue.toLowerCase().trim()
   if (cl === fl) return true
-  // Extract city component from both sides and compare
   const clCity = cl.split(',')[0].trim()
   const flCity = fl.split(',')[0].trim()
   return clCity === flCity
