@@ -12,7 +12,7 @@ import Navbar from '../components/Navbar'
 import { supabase } from '../lib/supabase'
 import { calcScore, loadAlgoConfig, ALGO_DEFAULTS } from '../lib/algoRanking'
 
-const pink = '#FF6B9D'
+const pink = '#F72585'
 const darkPurple = '#4c1d95'
 const purple = '#7c3aed'
 

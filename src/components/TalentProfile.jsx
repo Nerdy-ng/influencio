@@ -10,7 +10,7 @@ const profile = {
   bio: 'Beauty talent & skincare educator passionate about celebrating African skin. I help brands connect authentically with modern African women through honest, engaging content that converts.',
   avatar: null,
   initials: 'AO',
-  accentColor: '#FF6B9D',
+  accentColor: '#F72585',
   tags: ['Skincare', 'Beauty', 'Lifestyle', 'Self-care', 'Natural Hair'],
   socials: [
     { platform: 'Instagram', handle: '@amaraosei',  followers: '284K', engagement: '6.4%', icon: Camera,     color: '#E1306C' },
@@ -32,18 +32,18 @@ const profile = {
   },
   metrics: [
     { label: 'Avg. Views',     value: '42K',  icon: Eye,           color: '#c084fc' },
-    { label: 'Avg. Likes',     value: '8.2K', icon: Heart,         color: '#FF6B9D' },
+    { label: 'Avg. Likes',     value: '8.2K', icon: Heart,         color: '#F72585' },
     { label: 'Avg. Comments',  value: '640',  icon: MessageCircle, color: '#D4AF37' },
-    { label: 'Reach / Post',   value: '61K',  icon: Users,         color: '#FF6B9D' },
+    { label: 'Reach / Post',   value: '61K',  icon: Users,         color: '#F72585' },
     { label: 'Campaigns Done', value: '34',   icon: Briefcase,     color: '#c084fc' },
     { label: 'Talent Rating', value: '4.9★', icon: Star,          color: '#D4AF37' },
   ],
   portfolio: [
-    { brand: 'NovaSkin',    type: 'Instagram Reel',    result: '2.1M views',  initials: 'NS', color: '#FF6B9D' },
+    { brand: 'NovaSkin',    type: 'Instagram Reel',    result: '2.1M views',  initials: 'NS', color: '#F72585' },
     { brand: 'GlowLab',     type: 'YouTube Review',    result: '340K views',  initials: 'GL', color: '#c084fc' },
     { brand: 'UrbanThread',  type: 'TikTok Campaign',   result: '890K views',  initials: 'UT', color: '#D4AF37' },
-    { brand: 'VerdeFresh',  type: 'Story Series × 7',  result: '120K reach',  initials: 'VF', color: '#FF6B9D' },
-    { brand: 'LuxeNest',    type: 'Feed Post × 3',     result: '85K reach',   initials: 'LN', color: '#FF6B9D' },
+    { brand: 'VerdeFresh',  type: 'Story Series × 7',  result: '120K reach',  initials: 'VF', color: '#F72585' },
+    { brand: 'LuxeNest',    type: 'Feed Post × 3',     result: '85K reach',   initials: 'LN', color: '#F72585' },
     { brand: 'MindfulBrew', type: 'Instagram Reel',    result: '670K views',  initials: 'MB', color: '#c084fc' },
   ],
   pricing: [
@@ -78,7 +78,7 @@ export default function TalentProfile() {
 
         {/* Section header */}
         <div className="text-center mb-16">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#FF6B9D' }}>Talent Profiles</p>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#F72585' }}>Talent Profiles</p>
           <h2 className="text-4xl lg:text-5xl font-black text-brand-dark mb-4">
             Everything you need to<br />
             <span style={{ color: '#c084fc' }}>make the right call</span>
@@ -207,7 +207,7 @@ export default function TalentProfile() {
                   <p className="text-xs font-semibold uppercase tracking-widest text-brand-dark/30 mb-5">Gender Split</p>
                   <div className="space-y-3">
                     {profile.demographics.gender.map((g, i) => (
-                      <StatBar key={i} label={g.label} pct={g.pct} color={['#FF6B9D', '#c084fc', '#D4AF37'][i]} />
+                      <StatBar key={i} label={g.label} pct={g.pct} color={['#F72585', '#c084fc', '#D4AF37'][i]} />
                     ))}
                   </div>
                 </div>
@@ -271,7 +271,7 @@ export default function TalentProfile() {
                 <p className="text-xs font-semibold uppercase tracking-widest text-brand-dark/30 mb-6">Rate Card</p>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {profile.pricing.map((p, i) => {
-                    const colors = ['#FF6B9D', '#c084fc', '#D4AF37', '#FF6B9D', '#c084fc', '#FF6B9D']
+                    const colors = ['#F72585', '#c084fc', '#D4AF37', '#F72585', '#c084fc', '#F72585']
                     const c = colors[i]
                     return (
                       <div key={i} className="rounded-2xl p-5 flex items-center justify-between" style={{ backgroundColor: `${c}08`, border: `1px solid ${c}25` }}>
@@ -295,7 +295,7 @@ export default function TalentProfile() {
                     <p className="text-white/50 text-xs mt-0.5">Send a brief and get a response within 24 hours.</p>
                   </div>
                   <button className="flex items-center gap-1.5 text-sm font-bold px-5 py-2.5 rounded-full text-white flex-shrink-0"
-                    style={{ backgroundColor: '#FF6B9D' }}>
+                    style={{ backgroundColor: '#F72585' }}>
                     Send Brief <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>

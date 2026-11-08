@@ -9,7 +9,7 @@ import { getSetting } from '../lib/siteSettings'
 
 const purple = '#c084fc'
 const darkPurple = '#4c1d95'
-const pink = '#FF6B9D'
+const pink = '#F72585'
 
 function GoogleIcon() {
   return (

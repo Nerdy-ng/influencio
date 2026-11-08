@@ -9,7 +9,7 @@
   --b-navbarBg:  #e9d5ff;
   --b-dark:      #4c1d95;
   --b-cta:       #FA8112;
-  --b-pink:      #FF6B9D;
+  --b-pink:      #F72585;
   --b-bodyBg:    #222222;
   --b-bodyText:  #FAF3E1;
 }
@@ -93,5 +93,6 @@ input, textarea, select {
 
 /* Scrollbar */
 ::-webkit-scrollbar       { width: 6px; }
-::-webkit-scrollbar-track { background: #2a2a2a; }
-::-webkit-scrollbar-thumb { background: #FF6B9D; border-radius: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(247,37,133,0.35); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #F72585; }

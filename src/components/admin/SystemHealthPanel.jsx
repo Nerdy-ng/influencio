@@ -112,8 +112,8 @@ export default function SystemHealthPanel({ showToast }) {
       ] = await Promise.all([
         supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "creator"),
         supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "brand"),
-        supabase.from("collaborations").select("id", { count: "exact", head: true }).eq("status", "active"),
-        supabase.from("collaborations").select("id", { count: "exact", head: true }),
+        supabase.from("collabs").select("id", { count: "exact", head: true }).eq("status", "active"),
+        supabase.from("collabs").select("id", { count: "exact", head: true }),
         supabase.from("payout_requests").select("amount").eq("status", "completed"),
         supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", sevenDaysAgo),
         supabase.from("admin_sessions").select("id", { count: "exact", head: true }).eq("is_active", true).gt("expires_at", new Date().toISOString()),

@@ -32,7 +32,7 @@ export default function RubiesPanel({ showToast, auditLog }) {
     const [txRes, topupRes, profileRes, collabRes] = await Promise.all([
       supabase.from("rubies_transactions").select("*").order("created_at", { ascending: false }).limit(50),
       supabase.from("wallet_topups").select("*").order("created_at", { ascending: false }).limit(30),
-      supabase.from("profiles").select("id, rubies_account_number, role").in("role", ["Talent"]),
+      supabase.from("profiles").select("id, rubies_account_number, role").in("role", ["creator", "talent", "Creator", "Talent"]),
       supabase.from("collabs").select("payment_status, creator_payout, total_amount").neq("payment_status", "unpaid"),
     ]);
 

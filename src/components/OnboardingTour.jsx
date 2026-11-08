@@ -3,7 +3,7 @@ import { X, ChevronRight, ChevronLeft, CheckCircle, Zap, Star, Users, DollarSign
 
 const darkPurple = '#4c1d95'
 const purple = '#7c3aed'
-const pink = '#FF6B9D'
+const pink = '#F72585'
 const gold = '#D4AF37'
 
 // ── Talent tour steps ──────────────────────────────────────────────────────────
@@ -20,7 +20,7 @@ const TALENT_STEPS = [
   },
   {
     id: 'profile',
-    accent: '#FF6B9D',
+    accent: '#F72585',
     gradFrom: '#3d0040',
     gradTo: '#0a001a',
     visual: <ProfileVisual />,
@@ -75,7 +75,7 @@ const BRAND_STEPS = [
   },
   {
     id: 'discover',
-    accent: '#FF6B9D',
+    accent: '#F72585',
     gradFrom: '#2d0020',
     gradTo: '#0a0030',
     visual: <DiscoverVisual />,
@@ -130,7 +130,7 @@ function WelcomeVisual({ role }) {
       </div>
       {/* Floating badges */}
       <div className="absolute top-4 right-8 px-3 py-1.5 rounded-full text-xs font-bold shadow-lg animate-bounce"
-        style={{ backgroundColor: '#FF6B9D', color: 'white', animationDuration: '2.2s' }}>
+        style={{ backgroundColor: '#F72585', color: 'white', animationDuration: '2.2s' }}>
         {role === 'talent' ? '🎨 Creator' : '🏷️ Brand'}
       </div>
       <div className="absolute bottom-4 left-8 px-3 py-1.5 rounded-full text-xs font-bold shadow-lg animate-bounce"
@@ -151,7 +151,7 @@ function ProfileVisual() {
     <div className="flex items-center justify-center h-48">
       <div className="bg-white/8 rounded-2xl p-4 w-64 space-y-3" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg" style={{ background: 'linear-gradient(135deg, #FF6B9D, #c084fc)' }}>A</div>
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg" style={{ background: 'linear-gradient(135deg, #F72585, #c084fc)' }}>A</div>
           <div>
             <p className="text-white font-bold text-sm">Adaeze Okafor</p>
             <p className="text-white/40 text-xs">@adaeze_glow</p>
@@ -170,7 +170,7 @@ function ProfileVisual() {
             <span>Profile complete</span><span style={{ color: '#c084fc' }}>{pct}%</span>
           </div>
           <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
-            <div className="h-full rounded-full transition-all duration-1000 ease-out" style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #7c3aed, #FF6B9D)' }} />
+            <div className="h-full rounded-full transition-all duration-1000 ease-out" style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #7c3aed, #F72585)' }} />
           </div>
         </div>
       </div>
@@ -180,7 +180,7 @@ function ProfileVisual() {
 
 function JobsVisual() {
   const jobs = [
-    { brand: 'GlowUp', budget: '₦350K', platform: 'Instagram', color: '#FF6B9D', tag: 'Beauty' },
+    { brand: 'GlowUp', budget: '₦350K', platform: 'Instagram', color: '#F72585', tag: 'Beauty' },
     { brand: 'TechHub', budget: '₦980K', platform: 'YouTube', color: '#a78bfa', tag: 'Tech' },
   ]
   return (
@@ -212,7 +212,7 @@ function ApplyVisual() {
       {/* Proposal */}
       <div className="rounded-xl p-3 w-28 space-y-2" style={{ backgroundColor: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}>
         <div className="flex items-center gap-1.5">
-          <div className="w-5 h-5 rounded-full" style={{ background: 'linear-gradient(135deg, #FF6B9D, #c084fc)' }} />
+          <div className="w-5 h-5 rounded-full" style={{ background: 'linear-gradient(135deg, #F72585, #c084fc)' }} />
           <p className="text-white text-[10px] font-bold">Your Proposal</p>
         </div>
         <div className="space-y-1">
@@ -244,7 +244,7 @@ function ReadyVisualTalent() {
   const stats = [
     { icon: Briefcase, val: '8', label: 'Open Jobs', color: '#c084fc' },
     { icon: DollarSign, val: '₦0', label: 'Earned', color: '#D4AF37' },
-    { icon: Star, val: '—', label: 'Rating', color: '#FF6B9D' },
+    { icon: Star, val: '—', label: 'Rating', color: '#F72585' },
   ]
   return (
     <div className="flex items-center justify-center h-48 gap-3">
@@ -263,7 +263,7 @@ function ReadyVisualTalent() {
 
 function DiscoverVisual() {
   const creators = [
-    { name: 'Adaeze', niche: 'Beauty', followers: '128K', color: '#FF6B9D' },
+    { name: 'Adaeze', niche: 'Beauty', followers: '128K', color: '#F72585' },
     { name: 'Chidi', niche: 'Tech', followers: '84K', color: '#a78bfa' },
     { name: 'Fatimah', niche: 'Fashion', followers: '210K', color: '#D4AF37' },
   ]
@@ -292,7 +292,7 @@ function PostJobVisual() {
       <div className="rounded-2xl p-4 w-64 space-y-3" style={{ backgroundColor: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}>
         <p className="text-white/60 text-[10px] font-semibold uppercase tracking-wide">Rate Card</p>
         {[
-          { label: 'Content', val: 'Instagram Reel', color: '#FF6B9D' },
+          { label: 'Content', val: 'Instagram Reel', color: '#F72585' },
           { label: 'Duration', val: '30 seconds', color: '#c084fc' },
           { label: 'Production', val: '₦150,000', color: '#D4AF37' },
         ].map(({ label, val, color }) => (

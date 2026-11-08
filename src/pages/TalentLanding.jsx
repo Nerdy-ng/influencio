@@ -9,7 +9,7 @@ import {
   CheckCircle, Zap, ChevronDown,
 } from 'lucide-react'
 
-const pink       = '#FF6B9D'
+const pink       = '#F72585'
 const purple     = '#7c3aed'
 const darkPurple = '#4c1d95'
 const gold       = '#D4AF37'

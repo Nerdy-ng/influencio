@@ -25,7 +25,7 @@ import OnboardingTour from '../components/OnboardingTour'
 import OnboardingChecklist from '../components/OnboardingChecklist'
 import { getOrCreatePhylloUser, getPhylloSDKToken, openPhylloConnect, PHYLLO_PLATFORMS } from '../lib/phyllo'
 
-const pink = '#FF6B9D'
+const pink = '#F72585'
 const gold = '#D4AF37'
 const purple = '#7c3aed'
 const darkPurple = '#4c1d95'
@@ -319,8 +319,8 @@ function AvatarMenu({ profile, activeTab, setActiveTab, onSwitchToBrand }) {
           </button>
           <button onClick={handleLogout}
             className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium w-full text-left transition-colors"
-            style={{ color: '#FF6B9D' }}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,107,157,0.08)'}
+            style={{ color: '#F72585' }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(247,37,133,0.08)'}
             onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
             <LogOut className="w-3.5 h-3.5" /> Log Out
           </button>

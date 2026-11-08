@@ -5,7 +5,7 @@ import { getSetting } from '../lib/siteSettings'
 import { GooglePlayBadge, AppStoreBadge } from './AppShowcase'
 
 const gold = '#D4AF37'
-const pink = '#FF6B9D'
+const pink = '#F72585'
 
 export default function Hero() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('brandiór_user'))

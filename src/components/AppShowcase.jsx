@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 
-const pink = '#FF6B9D'
+const pink = '#F72585'
 const purp = '#7c3aed'
 const gold = '#D4AF37'
 

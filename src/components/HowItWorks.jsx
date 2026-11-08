@@ -21,7 +21,7 @@ export default function HowItWorks() {
     <section id="how-it-works" className="bg-white py-28">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-14">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#FF6B9D' }}>How It Works</p>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#F72585' }}>How It Works</p>
           <h2 className="text-4xl lg:text-5xl font-black text-brand-dark mb-5">Simple. Fast. Effective.</h2>
           <p className="text-brand-dark/50 max-w-xl mx-auto text-lg">
             Whether you're a talent looking for brand deals or a brand hunting for the
@@ -35,11 +35,11 @@ export default function HowItWorks() {
                 key={tab}
                 onClick={() => setActive(tab)}
                 className="relative px-8 py-3 text-sm font-semibold transition-colors"
-                style={{ color: active === tab ? '#FF6B9D' : '#0a0a0a' }}
+                style={{ color: active === tab ? '#F72585' : '#0a0a0a' }}
               >
                 For {tab.charAt(0).toUpperCase() + tab.slice(1)}s
                 <span className={`absolute bottom-[-1px] left-0 right-0 h-0.5 rounded-full transition-all duration-300 ${active === tab ? 'opacity-100' : 'opacity-0'}`}
-                  style={{ backgroundColor: '#FF6B9D' }} />
+                  style={{ backgroundColor: '#F72585' }} />
               </button>
             ))}
           </div>

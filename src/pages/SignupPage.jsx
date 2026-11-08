@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { getLogo } from '../lib/brandSettings'
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '');
 
-const pink = '#FF6B9D'
+const pink = '#F72585'
 const gold = '#D4AF37'
 const purple = '#c084fc'
 const darkPurple = '#4c1d95'
@@ -748,7 +748,7 @@ export default function SignupPage() {
                 if (data.session) {
                   const u = data.session.user
                   localStorage.setItem('brandiór_user', u.id)
-                  localStorage.setItem('brandiór_role', u.user_metadata?.role || role)
+                  localStorage.setItem('brandiór_role', u.app_metadata?.role || role)
                 }
                 navigate(role === 'brand' ? '/brand-dashboard' : '/dashboard')
               }}

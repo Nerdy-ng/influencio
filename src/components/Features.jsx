@@ -14,7 +14,7 @@ export default function Features() {
     <section className="py-28" style={{ background: 'linear-gradient(135deg, #f3eeff 0%, #e8d5ff 100%)' }}>
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#FF6B9D' }}>Platform Features</p>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#F72585' }}>Platform Features</p>
           <h2 className="text-4xl lg:text-5xl font-black text-brand-dark mb-5">
             Everything you need to collaborate at scale
           </h2>
@@ -32,13 +32,13 @@ export default function Features() {
                 </div>
                 {/* orange tag — secondary accent */}
                 <span className="text-xs font-semibold rounded-full px-3 py-1"
-                  style={{ color: '#FF6B9D', border: '1px solid #FF6B9D40' }}>
+                  style={{ color: '#F72585', border: '1px solid #F7258540' }}>
                   {f.tag}
                 </span>
               </div>
               <h3 className="text-lg font-bold text-brand-dark mb-2">{f.title}</h3>
               <div className="w-8 h-0.5 rounded-full mb-3 transition-all duration-300 opacity-0 group-hover:opacity-100"
-                style={{ backgroundColor: '#FF6B9D' }} />
+                style={{ backgroundColor: '#F72585' }} />
               <p className="text-brand-dark/50 text-sm leading-relaxed">{f.desc}</p>
             </div>
           ))}

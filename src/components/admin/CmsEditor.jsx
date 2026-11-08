@@ -296,7 +296,7 @@ function LivePreview({ sectionId, draft }) {
     return (
       <div className="p-4 rounded-xl" style={{ background: 'linear-gradient(135deg, #f3eeff, #e8d5ff)' }}>
         {draft.section_label && (
-          <p className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: '#FF6B9D' }}>{draft.section_label}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: '#F72585' }}>{draft.section_label}</p>
         )}
         {draft.section_title && (
           <p className="font-black text-base" style={{ color: '#1a0030' }}>

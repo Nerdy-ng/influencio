@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Zap, Building2 } from 'lucide-react'
 import { GooglePlayBadge, AppStoreBadge } from './AppShowcase'
 
-const pink = '#FF6B9D'
+const pink = '#F72585'
 
 export default function CTA() {
   return (

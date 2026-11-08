@@ -23,7 +23,7 @@ async function fetchReviews(talentId) {
   return { reviews, avgRating: Math.round(avgRating * 10) / 10, reviewCount: reviews.length }
 }
 
-const pink = '#FF6B9D'
+const pink = '#F72585'
 const darkPurple = '#4c1d95'
 const purple = '#7c3aed'
 
@@ -1058,7 +1058,7 @@ export default function TalentProfilePage() {
             {!isPreview && (
               <button onClick={() => setShowOfferModal(true)}
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90"
-                style={{ background: 'linear-gradient(135deg, #7c3aed, #FF6B9D)', color: '#fff', border: 'none' }}>
+                style={{ background: 'linear-gradient(135deg, #7c3aed, #F72585)', color: '#fff', border: 'none' }}>
                 <Send className="w-4 h-4" />
                 Send a Custom Offer
               </button>
@@ -1173,7 +1173,7 @@ export default function TalentProfilePage() {
 
           {offerSent ? (
             <div className="text-center py-12 px-6">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'linear-gradient(135deg, #7c3aed, #FF6B9D)' }}>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'linear-gradient(135deg, #7c3aed, #F72585)' }}>
                 <Send className="w-7 h-7 text-white" />
               </div>
               <p className="font-black text-gray-900 text-xl mb-2">Offer Sent! 🎉</p>
@@ -1273,7 +1273,7 @@ export default function TalentProfilePage() {
 
               <button type="submit" disabled={!canSendOffer || offerSending}
                 className="w-full py-3.5 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 disabled:opacity-40"
-                style={{ background: canSendOffer && !offerSending ? 'linear-gradient(135deg, #7c3aed, #FF6B9D)' : '#9ca3af' }}>
+                style={{ background: canSendOffer && !offerSending ? 'linear-gradient(135deg, #7c3aed, #F72585)' : '#9ca3af' }}>
                 {offerSending
                   ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Sending…</>
                   : <><Send className="w-4 h-4" /> Send Custom Offer</>}

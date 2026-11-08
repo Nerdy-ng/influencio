@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { getLogo } from '../lib/brandSettings'
 
 const darkPurple = '#4c1d95'
-const pink = '#FF6B9D'
+const pink = '#F72585'
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate()

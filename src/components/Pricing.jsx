@@ -18,7 +18,7 @@ const gigs = [
     engagement: '4%+',
     desc: 'We need a talent to showcase our new GlowSerum in a 30–60 second Instagram Reel. Must include product demo and personal review.',
     tags: ['Skincare', 'Reels', 'UGC'],
-    accentColor: '#FF6B9D',
+    accentColor: '#F72585',
     featured: true,
   },
   {
@@ -72,7 +72,7 @@ const gigs = [
     engagement: '6%+',
     desc: 'Integrate our herbal tea into your morning routine TikTok. Casual, authentic feel. No scripted lines — just show how you enjoy it.',
     tags: ['TikTok', 'Lifestyle', 'Wellness'],
-    accentColor: '#FF6B9D',
+    accentColor: '#F72585',
     featured: false,
   },
   {
@@ -238,7 +238,7 @@ export default function FeaturedJobs() {
     <section id="pricing" className="py-28 bg-white">
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center mb-16">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#FF6B9D' }}>Opportunities</p>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#F72585' }}>Opportunities</p>
           <h2 className="text-4xl lg:text-5xl font-black text-brand-dark mb-5">Featured Jobs</h2>
           <p className="text-brand-dark/50 max-w-lg mx-auto text-lg">
             Discover top brand campaigns and talent opportunities on Brandior.
@@ -252,7 +252,7 @@ export default function FeaturedJobs() {
 
         <p className="text-center text-brand-dark/30 text-sm mt-10">
           Hundreds more opportunities inside.{' '}
-          <a href="#" className="font-semibold hover:underline" style={{ color: '#FF6B9D' }}>
+          <a href="#" className="font-semibold hover:underline" style={{ color: '#F72585' }}>
             Browse all gigs →
           </a>
         </p>

@@ -30,10 +30,10 @@ const ALL_NICHES = [
 ]
 
 const discoveryTalents = [
-  { initials: 'AO', name: 'Amara Osei',    niche: 'Beauty',   followers: '284K', rating: 4.9, color: '#FF6B9D', verified: true  },
+  { initials: 'AO', name: 'Amara Osei',    niche: 'Beauty',   followers: '284K', rating: 4.9, color: '#F72585', verified: true  },
   { initials: 'JM', name: 'Jordan Malik',  niche: 'Fitness',  followers: '512K', rating: 4.8, color: '#c084fc', verified: true  },
   { initials: 'PK', name: 'Priya Kapoor',  niche: 'Food',     followers: '97K',  rating: 5.0, color: '#D4AF37', verified: false },
-  { initials: 'KA', name: 'Kwame Asante',  niche: 'Comedy',   followers: '890K', rating: 4.7, color: '#FF6B9D', verified: true  },
+  { initials: 'KA', name: 'Kwame Asante',  niche: 'Comedy',   followers: '890K', rating: 4.7, color: '#F72585', verified: true  },
   { initials: 'TO', name: 'Tunde Okafor',  niche: 'Tech',     followers: '143K', rating: 4.6, color: '#3b82f6', verified: true  },
   { initials: 'NE', name: 'Ngozi Eze',     niche: 'Fashion',  followers: '320K', rating: 4.8, color: '#a78bfa', verified: true  },
   { initials: 'CB', name: 'Chisom Bello',  niche: 'Health',   followers: '78K',  rating: 4.7, color: '#22c55e', verified: true  },
@@ -69,7 +69,7 @@ function DiscoveryPanel() {
       <div className="flex gap-3 flex-wrap">
         {['Followers: 50K+', 'Eng. Rate: 4%+', 'Location: Nigeria', 'Platform: Instagram'].map(f => (
           <span key={f} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full select-none"
-            style={{ backgroundColor: '#FF6B9D15', color: '#FF6B9D', border: '1px solid #FF6B9D30' }}>
+            style={{ backgroundColor: '#F7258515', color: '#F72585', border: '1px solid #F7258530' }}>
             <Filter className="w-3 h-3" /> {f}
           </span>
         ))}
@@ -134,7 +134,7 @@ function DiscoveryPanel() {
         </div>
         <Link to="/marketplace"
           className="flex items-center gap-2 text-xs font-bold px-5 py-2.5 rounded-full text-white flex-shrink-0 transition-all hover:scale-105"
-          style={{ backgroundColor: '#FF6B9D', boxShadow: '0 4px 14px rgba(255,107,157,0.4)' }}>
+          style={{ backgroundColor: '#F72585', boxShadow: '0 4px 14px rgba(255,107,157,0.4)' }}>
           Browse All <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
@@ -159,8 +159,8 @@ function TransactionsPanel() {
         {[
           { label: 'Total Earned',    value: '₦6.2M',  color: '#c084fc', sub: 'All time'       },
           { label: 'In Escrow',       value: '₦980K',  color: '#D4AF37', sub: 'Being held'     },
-          { label: 'This Month',      value: '₦1.73M', color: '#FF6B9D', sub: 'March 2025'     },
-          { label: 'Active Orders',   value: '3',       color: '#FF6B9D', sub: 'In progress'    },
+          { label: 'This Month',      value: '₦1.73M', color: '#F72585', sub: 'March 2025'     },
+          { label: 'Active Orders',   value: '3',       color: '#F72585', sub: 'In progress'    },
         ].map((s, i) => (
           <div key={i} className="rounded-2xl p-4" style={{ backgroundColor: `${s.color}10`, border: `1px solid ${s.color}25` }}>
             <p className="text-xs text-brand-dark/40 mb-1">{s.label}</p>
@@ -210,9 +210,9 @@ function TransactionsPanel() {
 const notifications = [
   { icon: CheckCircle2, color: '#22c55e', title: 'Payment Released!',        body: 'GlowLab has approved your Reel. ₦350,000 sent to your wallet.',       time: '2m ago',  unread: true  },
   { icon: Package,      color: '#c084fc', title: 'New Campaign Match',        body: 'PeakFit Nigeria — your profile matches their new Fitness campaign.',   time: '15m ago', unread: true  },
-  { icon: MessageSquare,color: '#FF6B9D', title: 'Message from UrbanThread',  body: '"Hey Amara, can we adjust the brief slightly? Check your inbox."',     time: '1h ago',  unread: true  },
+  { icon: MessageSquare,color: '#F72585', title: 'Message from UrbanThread',  body: '"Hey Amara, can we adjust the brief slightly? Check your inbox."',     time: '1h ago',  unread: true  },
   { icon: AlertCircle,  color: '#D4AF37', title: 'Deadline Reminder',         body: 'Your Eid Lookbook content is due in 3 days. Stay on track!',           time: '3h ago',  unread: false },
-  { icon: Zap,          color: '#FF6B9D', title: 'Profile Milestone!',        body: "You've hit 284K followers. Your reach badge has been upgraded.",        time: '1d ago',  unread: false },
+  { icon: Zap,          color: '#F72585', title: 'Profile Milestone!',        body: "You've hit 284K followers. Your reach badge has been upgraded.",        time: '1d ago',  unread: false },
   { icon: TrendingUp,   color: '#c084fc', title: 'Campaign Performance',      body: 'Your GlowLab Reel is trending — 2.1M views in 48 hours.',              time: '2d ago',  unread: false },
 ]
 
@@ -334,7 +334,7 @@ function SupportPanel() {
             <div key={i} className={`flex gap-3 ${m.from === 'user' ? 'flex-row-reverse' : ''}`}
               style={{ animation: 'fadeSlideIn 0.3s ease-out' }}>
               <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
-                style={{ backgroundColor: m.from === 'user' ? '#FF6B9D' : '#4c1d95' }}>
+                style={{ backgroundColor: m.from === 'user' ? '#F72585' : '#4c1d95' }}>
                 {m.from === 'user' ? 'AO' : 'TS'}
               </div>
               <div className={`max-w-xs rounded-2xl px-4 py-2.5 ${m.from === 'user' ? 'rounded-tr-sm' : 'rounded-tl-sm'}`}
@@ -350,7 +350,7 @@ function SupportPanel() {
             <div className={`flex gap-3 ${nextFrom === 'user' ? 'flex-row-reverse' : ''}`}
               style={{ animation: 'fadeSlideIn 0.2s ease-out' }}>
               <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
-                style={{ backgroundColor: nextFrom === 'user' ? '#FF6B9D' : '#4c1d95' }}>
+                style={{ backgroundColor: nextFrom === 'user' ? '#F72585' : '#4c1d95' }}>
                 {nextFrom === 'user' ? 'AO' : 'TS'}
               </div>
               <div className="rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-1"
@@ -376,7 +376,7 @@ export default function PlatformPreview() {
       <div className="max-w-6xl mx-auto px-6">
 
         <div className="text-center mb-16">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#FF6B9D' }}>Platform Features</p>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#F72585' }}>Platform Features</p>
           <h2 className="text-4xl lg:text-5xl font-black text-brand-dark mb-4">
             Built for the full<br />
             <span style={{ color: '#4c1d95' }}>talent journey</span>

@@ -4,7 +4,7 @@ const testimonials = [
   {
     quote: "Brandior completely changed how I work with brands. I went from cold DMs to having a full pipeline of quality campaigns. The escrow system means I never stress about payment anymore.",
     name: 'Amara Osei', role: 'Beauty Talent · 284K followers', initials: 'AO', rating: 5, tag: 'Talent',
-    tagStyle: 'text-[#FF6B9D] border border-[#FF6B9D]/30 bg-[#FF6B9D]/5',
+    tagStyle: 'text-[#F72585] border border-[#F72585]/30 bg-[#F72585]/5',
   },
   {
     quote: "We're a small skincare brand and couldn't afford big agency fees. Brandior lets us run professional influencer campaigns on our own terms. Our last campaign hit 4.2x ROI.",
@@ -14,7 +14,7 @@ const testimonials = [
   {
     quote: "The content approval workflow is a game-changer. Before Brandior, managing talent briefs was a WhatsApp nightmare. Now everything is structured, tracked, and professional.",
     name: 'Priya Kapoor', role: 'Food & Travel Talent · 97K followers', initials: 'PK', rating: 5, tag: 'Talent',
-    tagStyle: 'text-[#FF6B9D] border border-[#FF6B9D]/30 bg-[#FF6B9D]/5',
+    tagStyle: 'text-[#F72585] border border-[#F72585]/30 bg-[#F72585]/5',
   },
 ]
 
@@ -23,7 +23,7 @@ export default function Testimonials() {
     <section className="bg-white py-28">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#FF6B9D' }}>What People Say</p>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#F72585' }}>What People Say</p>
           <h2 className="text-4xl lg:text-5xl font-black text-brand-dark mb-5">Real results, real people</h2>
           <p className="text-brand-dark/50 max-w-lg mx-auto text-lg">
             Don't take our word for it — here's what talents and brands are saying.

@@ -7,7 +7,7 @@ export const THEME_VARS = {
   navbarBg:       { key: 'theme_navbar_bg',        label: 'Navbar Background (logged in)',   default: '#e9d5ff', desc: 'Header strip when a user is logged in' },
   dark:           { key: 'theme_dark',             label: 'Dark Purple',                     default: '#4c1d95', desc: '"Get Started" button, deep accent fills' },
   cta:            { key: 'theme_cta',              label: 'CTA / Orange',                    default: '#FA8112', desc: '"Post a Job" and main call-to-action buttons' },
-  pink:           { key: 'theme_pink',             label: 'Creator / Pink',                  default: '#FF6B9D', desc: 'Creator highlights, talent accent colour' },
+  pink:           { key: 'theme_pink',             label: 'Creator / Pink',                  default: '#F72585', desc: 'Creator highlights, talent accent colour' },
   bodyBg:         { key: 'theme_body_bg',          label: 'Page Background',                 default: '#222222', desc: 'Site-wide body background colour' },
   bodyText:       { key: 'theme_body_text',        label: 'Body Text',                       default: '#FAF3E1', desc: 'Default text colour on dark backgrounds' },
   creatorDashBg:  { key: 'theme_creator_dash_bg',  label: 'Creator Dashboard Sidebar',       default: '#0d0020', desc: 'Creator (talent) dashboard sidebar & nav background' },

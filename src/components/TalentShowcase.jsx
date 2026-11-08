@@ -3,11 +3,11 @@ import { Play, BadgeCheck } from 'lucide-react'
 import { getSectionContent } from '../utils/cmsContent'
 
 const talents = [
-  { name: 'Amara Osei',   handle: '@amaraosei',  niche: 'Beauty & Skincare', location: 'Lagos, NG',   followers: '284K', engagement: '6.4%', verified: true,  initials: 'AO', accent: '#FF6B9D', video: null },
-  { name: 'Jordan Malik', handle: '@jordanmalik', niche: 'Fitness & Health',  location: 'Accra, GH',   followers: '512K', engagement: '4.8%', verified: true,  initials: 'JM', accent: '#FF6B9D', video: null },
+  { name: 'Amara Osei',   handle: '@amaraosei',  niche: 'Beauty & Skincare', location: 'Lagos, NG',   followers: '284K', engagement: '6.4%', verified: true,  initials: 'AO', accent: '#F72585', video: null },
+  { name: 'Jordan Malik', handle: '@jordanmalik', niche: 'Fitness & Health',  location: 'Accra, GH',   followers: '512K', engagement: '4.8%', verified: true,  initials: 'JM', accent: '#F72585', video: null },
   { name: 'Priya Kapoor', handle: '@priyakapoor', niche: 'Food & Travel',     location: 'Nairobi, KE', followers: '97K',  engagement: '9.1%', verified: false, initials: 'PK', accent: '#D4AF37', video: null },
-  { name: 'Leon Dubois',  handle: '@leondubois',  niche: 'Tech & Gaming',     location: 'Nairobi, KE', followers: '1.2M', engagement: '3.2%', verified: true,  initials: 'LD', accent: '#FF6B9D', video: null },
-  { name: 'Sofia Reyes',  handle: '@sofiareyes',  niche: 'Fashion & Style',   location: 'Accra, GH',   followers: '178K', engagement: '7.6%', verified: true,  initials: 'SR', accent: '#FF6B9D', video: null },
+  { name: 'Leon Dubois',  handle: '@leondubois',  niche: 'Tech & Gaming',     location: 'Nairobi, KE', followers: '1.2M', engagement: '3.2%', verified: true,  initials: 'LD', accent: '#F72585', video: null },
+  { name: 'Sofia Reyes',  handle: '@sofiareyes',  niche: 'Fashion & Style',   location: 'Accra, GH',   followers: '178K', engagement: '7.6%', verified: true,  initials: 'SR', accent: '#F72585', video: null },
   { name: 'Kwame Asante', handle: '@kwameasante', niche: 'Comedy & Skits',    location: 'Kumasi, GH',  followers: '890K', engagement: '8.3%', verified: true,  initials: 'KA', accent: '#D4AF37', video: null },
 ]
 
@@ -97,7 +97,7 @@ export default function TalentShowcase() {
       <div className="max-w-7xl mx-auto px-6 mb-14">
         <div className="flex flex-col items-center">
           <div className="w-fit">
-            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#FF6B9D' }}>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#F72585' }}>
               {cms.section_label}
             </p>
             <h2 className="text-4xl lg:text-5xl font-black leading-tight" style={{ color: '#1a0030' }}>

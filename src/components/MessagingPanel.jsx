@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '');
 const purple = '#7c3aed'
 const darkPurple = '#4c1d95'
-const pink = '#FF6B9D'
+const pink = '#F72585'
 
 function timeAgo(dateStr) {
   if (!dateStr) return ''

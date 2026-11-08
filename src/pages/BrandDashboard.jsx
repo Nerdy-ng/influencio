@@ -24,7 +24,7 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContai
 import OnboardingTour from '../components/OnboardingTour'
 import OnboardingChecklist from '../components/OnboardingChecklist'
 
-const pink = '#FF6B9D'
+const pink = '#F72585'
 const darkPurple = '#4c1d95'
 const purple = '#7c3aed'
 
