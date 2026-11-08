@@ -617,6 +617,9 @@ function initials(name) {
 function FindTalentsTab() {
   const [search, setSearch] = useState('')
   const [nicheFilter, setNicheFilter] = useState('All')
+  const [locationFilter, setLocationFilter] = useState('')
+  const [locationSearch, setLocationSearch] = useState('')
+  const [locationFocused, setLocationFocused] = useState(false)
   const [talents, setTalents] = useState([])
   const [loading, setLoading] = useState(true)
   const niches = ['All', 'Beauty & Skincare', 'Fashion & Style', 'Food & Cooking', 'Tech & Gadgets', 'Fitness & Wellness', 'Comedy', 'Finance & Business']
@@ -634,9 +637,16 @@ function FindTalentsTab() {
     })()
   }, [])
 
+  const availableLocations = [...new Set(talents.map(t => t.location).filter(Boolean))].sort()
+
+  const locationSuggestions = locationSearch.trim()
+    ? availableLocations.filter(l => l.toLowerCase().includes(locationSearch.toLowerCase()) && l !== locationFilter).slice(0, 8)
+    : availableLocations.filter(l => l !== locationFilter).slice(0, 6)
+
   const filtered = talents.filter(t => {
     if (search && !t.full_name?.toLowerCase().includes(search.toLowerCase()) && !t.handle?.toLowerCase().includes(search.toLowerCase())) return false
     if (nicheFilter !== 'All' && !(t.niches || []).includes(nicheFilter)) return false
+    if (locationFilter && t.location !== locationFilter) return false
     return true
   })
 
@@ -672,6 +682,65 @@ function FindTalentsTab() {
             {n}
           </button>
         ))}
+      </div>
+
+      {/* Location filter */}
+      <div className="relative">
+        {locationFilter ? (
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold w-fit"
+            style={{ backgroundColor: '#f3eeff', color: '#7c3aed', border: '1px solid #e9d5ff' }}>
+            <MapPin className="w-3 h-3" />
+            {locationFilter}
+            <button onClick={() => { setLocationFilter(''); setLocationSearch('') }} className="ml-0.5 hover:opacity-70 transition-opacity">
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-dark/30" />
+              <input
+                value={locationSearch}
+                onChange={e => setLocationSearch(e.target.value)}
+                onFocus={() => setLocationFocused(true)}
+                onBlur={() => setTimeout(() => setLocationFocused(false), 150)}
+                placeholder="Filter by location…"
+                className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300"
+                style={{ border: '1px solid #e9d5ff', backgroundColor: '#faf5ff' }}
+              />
+              {locationSearch && (
+                <button onClick={() => setLocationSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 hover:opacity-70">
+                  <X className="w-3.5 h-3.5 text-brand-dark/30" />
+                </button>
+              )}
+            </div>
+            {locationFocused && locationSuggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 rounded-xl overflow-hidden z-50"
+                style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 4px 16px rgba(124,58,237,0.08)' }}>
+                {!locationSearch.trim() && (
+                  <p className="px-3 pt-2.5 pb-1 text-[10px] font-bold uppercase tracking-widest" style={{ color: '#a78bfa' }}>
+                    Popular locations
+                  </p>
+                )}
+                {locationSuggestions.map(l => (
+                  <button key={l}
+                    onMouseDown={() => { setLocationFilter(l); setLocationSearch(''); setLocationFocused(false) }}
+                    className="w-full text-left px-3 py-2.5 text-sm flex items-center gap-2 transition-colors hover:bg-purple-50"
+                    style={{ color: '#1e0040' }}>
+                    <MapPin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#a78bfa' }} />
+                    {l}
+                  </button>
+                ))}
+              </div>
+            )}
+            {locationFocused && locationSearch.trim() && locationSuggestions.length === 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 rounded-xl py-3 z-50"
+                style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff' }}>
+                <p className="text-sm text-center" style={{ color: '#9ca3af' }}>No matching locations</p>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Talent cards */}
