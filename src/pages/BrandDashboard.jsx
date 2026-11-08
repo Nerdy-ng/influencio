@@ -9,7 +9,7 @@ import {
   Bell, ChevronDown, ChevronRight, X, AlertCircle, Shield, Loader2,
   ExternalLink, Download, RotateCcw, Zap, Award, Lock, Menu, Mail, Heart, MapPin, Star, Users, Search, UserPlus, LogOut,
   Inbox, Clock, ThumbsUp, ThumbsDown, MessageSquare, FileText, TrendingUp, Send, ArrowLeftRight,
-  Plus, CreditCard, Building2, ArrowUpRight,
+  Plus, CreditCard, Building2, ArrowUpRight, Megaphone, ChevronLeft,
 } from 'lucide-react'
 import MessagingPanel from '../components/MessagingPanel'
 import AnnouncementBanner from '../components/AnnouncementBanner'
@@ -592,17 +592,19 @@ function StatCard({ label, value, icon: Icon, color }) {
 }
 
 const NAV_ITEMS = [
-  { id: 'talents',        label: 'Find Creators',   icon: Search },
-  { id: 'overview',       label: 'Overview',        icon: LayoutDashboard },
-  { id: 'analytics',      label: 'Analytics',       icon: TrendingUp },
-  { id: 'notifications',  label: 'Notifications',   icon: Bell },
-  { id: 'collabs',        label: 'Collabs',         icon: ShoppingBag },
-  { id: 'favorites',      label: 'Saved Talents',   icon: Heart },
-  { id: 'messages',       label: 'Messages',        icon: Mail },
-  { id: 'wallet',         label: 'Wallet',          icon: Wallet },
-  { id: 'payments',       label: 'Transactions',    icon: ArrowLeftRight },
-  { id: 'invite',         label: 'Invite Creators', icon: UserPlus },
-  { id: 'settings',       label: 'Settings',        icon: Settings },
+  { id: 'talents',         label: 'Find Creators',   icon: Search },
+  { id: 'post-campaign',   label: 'Post Campaign',   icon: Plus },
+  { id: 'my-campaigns',    label: 'My Campaigns',    icon: Megaphone },
+  { id: 'collabs',         label: 'Collabs',         icon: ShoppingBag },
+  { id: 'overview',        label: 'Overview',        icon: LayoutDashboard },
+  { id: 'favorites',       label: 'Saved Talents',   icon: Heart },
+  { id: 'messages',        label: 'Messages',        icon: Mail },
+  { id: 'analytics',       label: 'Analytics',       icon: TrendingUp },
+  { id: 'wallet',          label: 'Wallet',          icon: Wallet },
+  { id: 'payments',        label: 'Transactions',    icon: ArrowLeftRight },
+  { id: 'notifications',   label: 'Notifications',   icon: Bell },
+  { id: 'invite',          label: 'Invite Creators', icon: UserPlus },
+  { id: 'settings',        label: 'Settings',        icon: Settings },
 ]
 
 const TIER_INFO = {
@@ -1098,7 +1100,7 @@ export default function BrandDashboard() {
 
         <AnnouncementBanner role="brand" />
         {/* Content */}
-        <main className="flex-1 p-4 sm:p-6">
+        <main className="flex-1 p-4 sm:p-6 pb-24 md:pb-6">
           <div className="max-w-screen-xl mx-auto">
           {loading ? (
             <div className="flex items-center justify-center py-20">
@@ -1107,6 +1109,8 @@ export default function BrandDashboard() {
           ) : (
             <>
               {activeTab === 'talents' && <FindTalentsTab />}
+              {activeTab === 'post-campaign' && <PostCampaignTab onCreated={() => setActiveTab('my-campaigns')} />}
+              {activeTab === 'my-campaigns' && <MyCampaignsTab />}
               {activeTab === 'overview' && (
                 <OverviewTab
                   activeOrders={activeOrders}
@@ -1146,6 +1150,35 @@ export default function BrandDashboard() {
           )}
           </div>
         </main>
+
+        {/* ── Mobile bottom tab bar ── */}
+        <nav className="fixed bottom-0 left-0 right-0 md:hidden z-40 flex"
+          style={{
+            backgroundColor: 'var(--b-brandDashBg)',
+            borderTop: '1px solid rgba(196,181,253,0.15)',
+            paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          }}>
+          {[
+            { id: 'talents',   label: 'Discover',  Icon: Search },
+            { id: 'collabs',   label: 'Collabs',   Icon: ShoppingBag },
+            { id: 'messages',  label: 'Messages',  Icon: Mail },
+            { id: 'wallet',    label: 'Wallet',    Icon: Wallet },
+          ].map(({ id, label, Icon }) => (
+            <button key={id} onClick={() => setActiveTab(id)}
+              className="flex-1 flex flex-col items-center gap-1 py-2.5 text-[10px] font-bold transition-colors"
+              style={{ color: activeTab === id ? '#c084fc' : 'rgba(196,181,253,0.4)' }}>
+              <Icon className="w-5 h-5" />
+              {label}
+            </button>
+          ))}
+          {/* Menu — opens sidebar overlay */}
+          <button onClick={() => setSidebarOpen(true)}
+            className="flex-1 flex flex-col items-center gap-1 py-2.5 text-[10px] font-bold transition-colors"
+            style={{ color: ['post-campaign','my-campaigns','overview','favorites','analytics','payments','notifications','invite','settings'].includes(activeTab) ? '#c084fc' : 'rgba(196,181,253,0.4)' }}>
+            <Menu className="w-5 h-5" />
+            More
+          </button>
+        </nav>
       </div>
 
       {/* Modals */}
@@ -1412,6 +1445,363 @@ function TalentMiniCard({ talent }) {
         style={{ backgroundColor: darkPurple }}>
         View Profile
       </Link>
+    </div>
+  )
+}
+
+// ── Post Campaign ─────────────────────────────────────────────────────────────
+const CAMPAIGN_NICHES = ['Fashion','Beauty','Tech','Food','Fitness','Lifestyle','Comedy','Travel','Fintech','Business','Voiceover','Gaming']
+const COLLAB_TYPES    = ['UGC', 'Instagram Reel', 'TikTok', 'YouTube', 'Twitter/X', 'Podcast', 'Blog', 'Other']
+
+function PostCampaignTab({ onCreated }) {
+  const [title,    setTitle]    = useState('')
+  const [niche,    setNiche]    = useState('')
+  const [type,     setType]     = useState('UGC')
+  const [brief,    setBrief]    = useState('')
+  const [budget,   setBudget]   = useState('')
+  const [timeline, setTimeline] = useState('')
+  const [saving,   setSaving]   = useState(false)
+  const [error,    setError]    = useState('')
+  const [done,     setDone]     = useState(false)
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setError('')
+    if (!title.trim())   { setError('Campaign title is required.'); return }
+    if (!niche)          { setError('Please choose a niche.'); return }
+    if (!brief.trim())   { setError('Brief is required.'); return }
+    const budgetNum = Number(budget)
+    if (!budget || budgetNum < 20000) { setError('Budget must be at least ₦20,000.'); return }
+    if (!timeline.trim()) { setError('Timeline is required.'); return }
+
+    setSaving(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+      const { error: dbErr } = await supabase.from('public_jobs').insert({
+        brand_id:       user.id,
+        status:         'open',
+        campaign_name:  title.trim(),
+        niche,
+        collab_type:    type,
+        brief:          brief.trim(),
+        budget:         budgetNum,
+        timeline:       timeline.trim(),
+        applicants_count: 0,
+      })
+      if (dbErr) throw dbErr
+      setDone(true)
+      onCreated?.()
+    } catch (err) {
+      setError(err.message || 'Could not post campaign. Try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (done) {
+    return (
+      <div className="max-w-xl mx-auto text-center py-20 space-y-4">
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto" style={{ background: '#dcfce7' }}>
+          <CheckCircle className="w-8 h-8 text-green-600" />
+        </div>
+        <h2 className="text-2xl font-black" style={{ color: '#1e0040' }}>Campaign Posted!</h2>
+        <p className="text-gray-500 text-sm">Creators can now discover and pitch for your campaign. Check <strong>My Campaigns</strong> to see applicants.</p>
+        <button onClick={() => { setDone(false); setTitle(''); setNiche(''); setBrief(''); setBudget(''); setTimeline('') }}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white"
+          style={{ background: '#4c1d95' }}>
+          <Plus className="w-4 h-4" /> Post another
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <div className="mb-6">
+        <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#7c3aed' }}>New Campaign</p>
+        <h2 className="text-2xl font-black" style={{ color: '#1e0040' }}>Post a Campaign</h2>
+        <p className="text-sm text-gray-500 mt-1">Creators on Brandior will discover your campaign and pitch for it. You choose who to hire.</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Campaign name */}
+        <div>
+          <label className="text-xs font-bold uppercase tracking-widest block mb-2" style={{ color: '#374151' }}>Campaign Title</label>
+          <input value={title} onChange={e => setTitle(e.target.value)}
+            placeholder="e.g. Ramadan campaign — Instagram Reel"
+            className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+            style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff', color: '#1e0040' }} />
+        </div>
+
+        {/* Niche + Type row */}
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-bold uppercase tracking-widest block mb-2" style={{ color: '#374151' }}>Niche</label>
+            <div className="flex flex-wrap gap-2">
+              {CAMPAIGN_NICHES.map(n => (
+                <button key={n} type="button" onClick={() => setNiche(n)}
+                  className="text-xs font-bold px-3 py-1.5 rounded-full transition-all"
+                  style={{
+                    backgroundColor: niche === n ? '#7c3aed' : '#f3eeff',
+                    color: niche === n ? '#fff' : '#6d28d9',
+                    border: niche === n ? 'none' : '1px solid #e9d5ff',
+                  }}>
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-bold uppercase tracking-widest block mb-2" style={{ color: '#374151' }}>Content Type</label>
+            <div className="flex flex-wrap gap-2">
+              {COLLAB_TYPES.map(t => (
+                <button key={t} type="button" onClick={() => setType(t)}
+                  className="text-xs font-bold px-3 py-1.5 rounded-full transition-all"
+                  style={{
+                    backgroundColor: type === t ? '#4c1d95' : '#f3eeff',
+                    color: type === t ? '#fff' : '#6d28d9',
+                    border: type === t ? 'none' : '1px solid #e9d5ff',
+                  }}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Brief */}
+        <div>
+          <label className="text-xs font-bold uppercase tracking-widest block mb-2" style={{ color: '#374151' }}>Campaign Brief</label>
+          <textarea value={brief} onChange={e => setBrief(e.target.value)} rows={5} placeholder="Describe what you need. Include product details, messaging, dos/don'ts, hashtags, etc."
+            className="w-full px-4 py-3 rounded-xl text-sm outline-none resize-none"
+            style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff', color: '#1e0040' }} />
+        </div>
+
+        {/* Budget + Timeline row */}
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-bold uppercase tracking-widest block mb-2" style={{ color: '#374151' }}>Budget (₦)</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold" style={{ color: '#9ca3af' }}>₦</span>
+              <input value={budget} onChange={e => setBudget(e.target.value.replace(/\D/g, ''))} inputMode="numeric"
+                placeholder="50000"
+                className="w-full pl-8 pr-4 py-3 rounded-xl text-sm outline-none"
+                style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff', color: '#1e0040' }} />
+            </div>
+            <p className="text-xs text-gray-400 mt-1">Minimum ₦20,000</p>
+          </div>
+          <div>
+            <label className="text-xs font-bold uppercase tracking-widest block mb-2" style={{ color: '#374151' }}>Timeline / Deadline</label>
+            <input value={timeline} onChange={e => setTimeline(e.target.value)}
+              placeholder="e.g. 7 days, Dec 31 2026"
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+              style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff', color: '#1e0040' }} />
+          </div>
+        </div>
+
+        {error && <p className="text-sm font-semibold text-red-500">{error}</p>}
+
+        <button type="submit" disabled={saving}
+          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-white text-sm disabled:opacity-50"
+          style={{ backgroundColor: '#4c1d95' }}>
+          {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Posting…</> : <><Megaphone className="w-4 h-4" /> Post Campaign</>}
+        </button>
+      </form>
+    </div>
+  )
+}
+
+// ── My Campaigns ──────────────────────────────────────────────────────────────
+function MyCampaignsTab() {
+  const [campaigns, setCampaigns]       = useState([])
+  const [loading, setLoading]           = useState(true)
+  const [selected, setSelected]         = useState(null) // campaign with applicants view
+  const [applicants, setApplicants]     = useState([])
+  const [appsLoading, setAppsLoading]   = useState(false)
+  const [toggling, setToggling]         = useState(null)
+
+  async function load() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setLoading(false); return }
+    const { data } = await supabase
+      .from('public_jobs')
+      .select('*, applications:job_applications(count)')
+      .eq('brand_id', user.id)
+      .order('created_at', { ascending: false })
+    setCampaigns(data || [])
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [])
+
+  async function viewApplicants(campaign) {
+    setSelected(campaign)
+    setAppsLoading(true)
+    const { data } = await supabase
+      .from('job_applications')
+      .select('*, creator:profiles!creator_id(id, full_name, avatar_url, username, niches, tier, avg_rating, min_price)')
+      .eq('job_id', campaign.id)
+      .order('created_at', { ascending: false })
+    setApplicants(data || [])
+    setAppsLoading(false)
+  }
+
+  async function toggleStatus(campaign) {
+    setToggling(campaign.id)
+    const newStatus = campaign.status === 'open' ? 'closed' : 'open'
+    await supabase.from('public_jobs').update({ status: newStatus }).eq('id', campaign.id)
+    setCampaigns(prev => prev.map(c => c.id === campaign.id ? { ...c, status: newStatus } : c))
+    if (selected?.id === campaign.id) setSelected(prev => ({ ...prev, status: newStatus }))
+    setToggling(null)
+  }
+
+  if (selected) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <button onClick={() => setSelected(null)}
+          className="flex items-center gap-1.5 text-sm font-semibold mb-5"
+          style={{ color: '#7c3aed', background: 'none', border: 'none', cursor: 'pointer' }}>
+          <ChevronLeft className="w-4 h-4" /> Back to My Campaigns
+        </button>
+
+        <div className="rounded-2xl p-5 mb-5" style={{ background: 'linear-gradient(135deg, #1a0035, #3d0080)', border: '1px solid rgba(196,181,253,0.2)' }}>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#c084fc' }}>{selected.niche} · {selected.collab_type}</p>
+              <h2 className="text-xl font-black text-white">{selected.campaign_name}</h2>
+              <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.55)' }}>₦{Number(selected.budget).toLocaleString()} · {selected.timeline}</p>
+            </div>
+            <span className="text-[11px] font-bold px-3 py-1 rounded-full flex-shrink-0 mt-1"
+              style={{ backgroundColor: selected.status === 'open' ? 'rgba(34,197,94,0.2)' : 'rgba(156,163,175,0.2)', color: selected.status === 'open' ? '#86efac' : '#d1d5db' }}>
+              {selected.status === 'open' ? 'Open' : 'Closed'}
+            </span>
+          </div>
+          {selected.brief && <p className="text-sm mt-3 leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)' }}>{selected.brief}</p>}
+        </div>
+
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-black text-lg" style={{ color: '#1e0040' }}>
+            {appsLoading ? 'Loading pitches…' : `${applicants.length} Pitch${applicants.length !== 1 ? 'es' : ''}`}
+          </h3>
+          <button onClick={() => toggleStatus(selected)} disabled={toggling === selected.id}
+            className="text-xs font-bold px-4 py-2 rounded-xl border transition-colors disabled:opacity-40"
+            style={{ borderColor: '#e9d5ff', color: '#7c3aed', background: '#fff' }}>
+            {toggling === selected.id ? 'Updating…' : selected.status === 'open' ? 'Close Campaign' : 'Reopen Campaign'}
+          </button>
+        </div>
+
+        {appsLoading ? (
+          <div className="flex justify-center py-16"><div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" /></div>
+        ) : applicants.length === 0 ? (
+          <div className="text-center py-16 text-gray-400">
+            <Users className="w-10 h-10 mx-auto mb-3 opacity-20" />
+            <p className="text-sm font-semibold">No pitches yet — your campaign is live and visible to creators.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {applicants.map(app => {
+              const c = app.creator || {}
+              const tier = c.tier || 'fast-rising'
+              const tierColors = { 'fast-rising': { bg: '#f0fdf4', color: '#16a34a' }, 'next-rated': { bg: '#f5f3ff', color: '#7c3aed' }, 'top-rated': { bg: '#fefce8', color: '#d97706' } }
+              const tc = tierColors[tier] || tierColors['fast-rising']
+              return (
+                <div key={app.id} className="rounded-2xl p-5 bg-white" style={{ border: '1px solid #e9d5ff' }}>
+                  <div className="flex items-start gap-3 mb-3">
+                    {c.avatar_url
+                      ? <img src={c.avatar_url} alt={c.full_name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                      : <div className="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-white flex-shrink-0" style={{ background: '#4c1d95' }}>{(c.full_name || '?')[0]}</div>}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-sm" style={{ color: '#1e0040' }}>{c.full_name || 'Creator'}</span>
+                        {c.username && <span className="text-xs text-gray-400">@{c.username}</span>}
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: tc.bg, color: tc.color }}>
+                          {tier.replace('-', ' ')}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
+                        {c.niches?.length > 0 && <span>{c.niches[0]}</span>}
+                        {c.avg_rating > 0 && <span>⭐ {c.avg_rating}</span>}
+                        {c.min_price > 0 && <span style={{ color: '#7c3aed' }}>From ₦{Number(c.min_price).toLocaleString()}</span>}
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: '#f3eeff', color: '#7c3aed' }}>
+                      {timeAgo(app.created_at)}
+                    </span>
+                  </div>
+                  <p className="text-sm leading-relaxed mb-3" style={{ color: '#374151', background: '#faf5ff', borderRadius: 10, padding: '10px 14px' }}>"{app.pitch}"</p>
+                  <Link to={`/creators/${c.username || c.id}`}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl text-white"
+                    style={{ backgroundColor: '#4c1d95' }}>
+                    View Profile <ArrowUpRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  if (loading) return <div className="flex justify-center py-20"><div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" /></div>
+
+  return (
+    <div className="max-w-3xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#7c3aed' }}>Campaigns</p>
+          <h2 className="text-2xl font-black" style={{ color: '#1e0040' }}>My Campaigns</h2>
+        </div>
+      </div>
+
+      {campaigns.length === 0 ? (
+        <div className="text-center py-20 text-gray-400">
+          <Megaphone className="w-10 h-10 mx-auto mb-3 opacity-20" />
+          <p className="font-semibold text-sm mb-4">No campaigns posted yet.</p>
+          <p className="text-sm mb-6">Post a campaign and creators will apply directly to it.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {campaigns.map(c => {
+            const appCount = c.applications?.[0]?.count ?? 0
+            return (
+              <div key={c.id} className="rounded-2xl p-5 bg-white" style={{ border: '1px solid #e9d5ff' }}>
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold mb-1" style={{ color: '#7c3aed' }}>{c.niche} · {c.collab_type}</p>
+                    <h3 className="font-black text-base" style={{ color: '#1e0040' }}>{c.campaign_name}</h3>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full"
+                      style={{ backgroundColor: c.status === 'open' ? '#dcfce7' : '#f3f4f6', color: c.status === 'open' ? '#16a34a' : '#6b7280' }}>
+                      {c.status === 'open' ? 'Open' : 'Closed'}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-4 text-xs font-semibold mb-4" style={{ color: '#374151' }}>
+                  <span style={{ color: '#7c3aed' }}>₦{Number(c.budget).toLocaleString()}</span>
+                  <span>📅 {c.timeline}</span>
+                  <span>👥 {appCount} pitch{appCount !== 1 ? 'es' : ''}</span>
+                  <span style={{ color: '#9ca3af' }}>{timeAgo(c.created_at)}</span>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => viewApplicants(c)}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
+                    style={{ backgroundColor: '#4c1d95' }}>
+                    View Pitches ({appCount})
+                  </button>
+                  <button onClick={() => toggleStatus(c)} disabled={toggling === c.id}
+                    className="px-4 py-2.5 rounded-xl text-sm font-bold border disabled:opacity-40"
+                    style={{ borderColor: '#e9d5ff', color: '#7c3aed', background: '#fff' }}>
+                    {toggling === c.id ? '…' : c.status === 'open' ? 'Close' : 'Reopen'}
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

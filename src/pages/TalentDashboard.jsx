@@ -332,7 +332,7 @@ function AvatarMenu({ profile, activeTab, setActiveTab, onSwitchToBrand }) {
 
 function Sidebar({ active, setActive, dashLogo, onSwitchToBrand }) {
   const nav = [
-    { id: 'browse',       label: 'Campaigns',        icon: Briefcase },
+    { id: 'browse',       label: 'Find Work',         icon: Briefcase },
     { id: 'collabs',      label: 'My Collabs',       icon: Inbox },
     { id: 'notifications',label: 'Notifications',    icon: Bell },
     { id: 'rate-card',    label: 'Rate Card',         icon: CreditCard },
@@ -416,6 +416,7 @@ function BrowseTab({ setActiveTab }) {
   const [pitching, setPitching] = useState(false)
   const [pitchSuccess, setPitchSuccess] = useState(null)
   const [search, setSearch] = useState('')
+  const [nicheFilter, setNicheFilter] = useState('All')
 
   // Setup wizard
   const [setupSteps, setSetupSteps] = useState([
@@ -548,8 +549,8 @@ function BrowseTab({ setActiveTab }) {
       setStepsDone(newDone)
 
       if (key === 'rate') {
-        // last step — go to portfolio
-        setActiveTab('portfolio')
+        // last step — go to Find Work so the creator can start pitching
+        setActiveTab('browse')
         return
       }
       slideTransition(() => { setCardMode('prompt'); setFormName(''); setFormPhoto(null); setFormNiches([]); setFormRate(''); setFormError('') })
@@ -606,7 +607,9 @@ function BrowseTab({ setActiveTab }) {
 
   const visible = jobs.filter(j => {
     const q = search.toLowerCase()
-    return !q || j.title.toLowerCase().includes(q) || j.brand.toLowerCase().includes(q)
+    const matchesSearch = !q || j.title.toLowerCase().includes(q) || j.brand.toLowerCase().includes(q)
+    const matchesNiche = nicheFilter === 'All' || (j.tags || []).some(t => t.toLowerCase() === nicheFilter.toLowerCase())
+    return matchesSearch && matchesNiche
   })
 
   const cardStyle = {
@@ -734,10 +737,31 @@ function BrowseTab({ setActiveTab }) {
 
       {/* ── Search ── */}
       <div style={{ position: 'relative' }}>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search campaigns or opportunities…"
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search opportunities…"
           className="w-full rounded-xl px-4 py-3 text-sm outline-none"
           style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff', color: '#1e0040' }} />
         {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}>✕</button>}
+      </div>
+
+      {/* ── Niche filter chips ── */}
+      <div style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 2, scrollbarWidth: 'none' }}>
+        {['All', ...BROWSE_NICHES].map(n => (
+          <button key={n} onClick={() => setNicheFilter(n)}
+            style={{
+              flexShrink: 0,
+              padding: '6px 14px',
+              borderRadius: 20,
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: 'pointer',
+              border: nicheFilter === n ? 'none' : '1px solid #e9d5ff',
+              backgroundColor: nicheFilter === n ? purple : '#fff',
+              color: nicheFilter === n ? '#fff' : '#6d28d9',
+              transition: 'all 0.15s',
+            }}>
+            {n}
+          </button>
+        ))}
       </div>
 
       {/* ── Campaign cards ── */}
@@ -2287,15 +2311,17 @@ export default function TalentDashboard() {
     setTimeout(() => setSaved(false), 2500)
   }
 
-  const tabs = ['browse', 'profile', 'collabs', 'overview', 'transactions', 'settings', 'support']
+  const tabs = ['browse', 'collabs', 'messages', 'rate-card', 'profile']
   const TAB_LABELS = {
-    browse:       'Campaigns',
-    profile:      'My Profile',
-    collabs:      'My Collabs',
-    overview:     'Overview',
-    transactions: 'Transactions',
-    settings:     'Profile Settings',
-    support:      'Support',
+    browse:        'Find Work',
+    collabs:       'My Collabs',
+    messages:      'Messages',
+    'rate-card':   'Rate Card',
+    profile:       'My Profile',
+    overview:      'Overview',
+    transactions:  'Transactions',
+    settings:      'Profile Settings',
+    support:       'Support',
   }
 
   return (
@@ -2409,7 +2435,7 @@ export default function TalentDashboard() {
           style={{ backgroundColor: 'rgba(249,245,255,0.95)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #e9d5ff' }}>
           <div>
             <h1 className="font-black text-brand-dark text-lg capitalize">
-              {activeTab === 'browse' ? 'Campaigns' : activeTab === 'collabs' ? 'My Collabs' : activeTab === 'profile' ? 'My Profile' : activeTab === 'settings' ? 'Profile Settings' : activeTab === 'portfolio' ? 'Portfolio' : activeTab}
+              {TAB_LABELS[activeTab] ?? (activeTab === 'portfolio' ? 'Portfolio' : activeTab)}
             </h1>
             <p className="text-brand-dark/40 text-xs">Manage your talent presence on Brandior</p>
           </div>
