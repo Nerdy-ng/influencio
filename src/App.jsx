@@ -259,6 +259,7 @@ export default function App() {
         const wasLoggedIn = !!localStorage.getItem('brandiór_user')
         localStorage.removeItem('brandiór_user')
         localStorage.removeItem('brandiór_role')
+        localStorage.removeItem('brandiór_workspace')
         setIsRecoverySession(false)
         if (wasLoggedIn) navigate('/login', { replace: true })
       }
