@@ -83,9 +83,9 @@ export default function WorkspaceSelectorPage() {
               onClick={() => selectWorkspace('creator')}
               disabled={!!selecting}
               className="w-full p-5 rounded-2xl text-left transition-opacity hover:opacity-90 disabled:opacity-60"
-              style={{ background: 'linear-gradient(135deg, #001535 0%, #003580 100%)', border: '1px solid rgba(96,165,250,0.3)' }}
+              style={{ background: 'linear-gradient(135deg, #0d0020 0%, #3b0764 100%)', border: '1px solid rgba(192,132,252,0.3)' }}
             >
-              <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: '#60a5fa' }}>
+              <div className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: '#F72585' }}>
                 {selecting === 'creator' ? 'Loading…' : 'Creator'}
               </div>
               <div className="text-white font-bold text-base">Creator Workspace</div>

@@ -130,7 +130,7 @@ function PaymentModal({ order, onClose, onSuccess }) {
         {step === 'confirm' && (
           <>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Complete Payment</h2>
+              <h2 className="text-xl font-black text-brand-dpurple">Complete Payment</h2>
               <button onClick={onClose}><X className="w-5 h-5 text-gray-400" /></button>
             </div>
             <div className="bg-gray-50 rounded-2xl p-4 mb-6">
@@ -205,7 +205,7 @@ function RevisionModal({ order, onClose, onSubmit }) {
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-xl font-bold text-gray-900">Request Revision</h2>
+          <h2 className="text-xl font-black text-brand-dpurple">Request Revision</h2>
           <button onClick={onClose}><X className="w-5 h-5 text-gray-400" /></button>
         </div>
         <p className="text-sm text-gray-500 mb-4">Describe what you'd like the talent to change or improve.</p>
@@ -579,14 +579,14 @@ function Toast({ message, type, onClose }) {
 
 function StatCard({ label, value, icon: Icon, color }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+    <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #e9d5ff', boxShadow: '0 1px 4px rgba(124,58,237,0.06)' }}>
       <div className="flex items-center justify-between mb-3">
-        <p className="text-sm text-gray-500">{label}</p>
+        <p className="text-sm font-medium" style={{ color: 'rgba(28,0,64,0.5)' }}>{label}</p>
         <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: color + '18' }}>
           <Icon className="w-4.5 h-4.5" style={{ color, width: '18px', height: '18px' }} />
         </div>
       </div>
-      <p className="text-2xl font-extrabold text-gray-900">{value}</p>
+      <p className="text-2xl font-extrabold" style={{ color: '#1e0040' }}>{value}</p>
     </div>
   )
 }
@@ -1014,7 +1014,7 @@ export default function BrandDashboard() {
   const recentOrders = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5)
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen flex" style={{ backgroundColor: '#f9f5ff' }}>
       {showTour && (
         <OnboardingTour
           role="brand"
@@ -1046,36 +1046,47 @@ export default function BrandDashboard() {
       {/* Main */}
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Top bar */}
-        <header className="bg-white border-b border-gray-100 sticky top-0 z-40">
+        <header className="sticky top-0 z-40" style={{ backgroundColor: 'rgba(249,245,255,0.95)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid #e9d5ff' }}>
           <div className="px-4 sm:px-6 h-16 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <button className="md:hidden p-1.5 rounded-lg text-gray-500 hover:bg-gray-100" onClick={() => setSidebarOpen(true)}>
+              <button className="md:hidden p-1.5 rounded-lg transition-colors" style={{ color: '#7c3aed' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = '#ede9fe'} onMouseLeave={e => e.currentTarget.style.backgroundColor = ''} onClick={() => setSidebarOpen(true)}>
                 <Menu className="w-5 h-5" />
               </button>
-              <h1 className="text-lg font-bold text-gray-900">Brand Dashboard</h1>
+              <h1 className="text-lg font-black" style={{ color: '#1e0040' }}>Brand Dashboard</h1>
             </div>
             <div className="flex items-center gap-3">
               <Link
                 to="/marketplace"
-                className="hidden sm:flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                className="hidden sm:flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full transition-colors"
+                style={{ border: '1px solid #e9d5ff', color: '#7c3aed' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#ede9fe'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}
               >
                 <ExternalLink className="w-3.5 h-3.5" />
                 Browse Talents
               </Link>
-              {/* Mobile-only: Find Creators shortcut */}
               <button
                 onClick={() => setActiveTab('talents')}
-                className="sm:hidden p-2 rounded-xl hover:bg-gray-100 transition-colors"
+                className="sm:hidden p-2 rounded-xl transition-colors"
+                style={{ color: 'rgba(28,0,64,0.4)' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'white'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}
                 title="Find Creators"
               >
-                <Search className="w-5 h-5 text-gray-500" />
+                <Search className="w-5 h-5" />
               </button>
-              <button onClick={() => setActiveTab('messages')} className="relative p-2 rounded-xl hover:bg-gray-100 transition-colors">
-                <Mail className="w-5 h-5 text-gray-500" />
+              <button onClick={() => setActiveTab('messages')} className="relative p-2 rounded-xl transition-colors"
+                style={{ color: 'rgba(28,0,64,0.4)' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'white'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
+                <Mail className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
               </button>
-              <button className="relative p-2 rounded-xl hover:bg-gray-100 transition-colors">
-                <Bell className="w-5 h-5 text-gray-500" />
+              <button className="relative p-2 rounded-xl transition-colors"
+                style={{ color: 'rgba(28,0,64,0.4)' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'white'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
+                <Bell className="w-5 h-5" />
                 {pendingReview.length > 0 && (
                   <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
                 )}
@@ -1428,7 +1439,7 @@ function BrandAnalyticsTab() {
 
   return (
     <div className="space-y-5">
-      <h2 className="text-xl font-bold text-gray-900">Analytics</h2>
+      <h2 className="text-xl font-black text-brand-dpurple">Analytics</h2>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -1541,7 +1552,7 @@ function OverviewTab({ activeOrders, pendingReview, completedOrders, setActiveTa
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-gray-900">Overview</h2>
+      <h2 className="text-xl font-black" style={{ color: '#1e0040' }}>Overview</h2>
 
       {/* New-brand hero — visible only when no activity yet */}
       {isNewAccount && (
@@ -1572,7 +1583,7 @@ function OverviewTab({ activeOrders, pendingReview, completedOrders, setActiveTa
       {featuredCreators.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-gray-900">Top Creators</h3>
+            <h3 className="font-black" style={{ color: '#1e0040' }}>Top Creators</h3>
             <Link to="/marketplace" className="text-sm font-medium flex items-center gap-1" style={{ color: purple }}>
               Browse all <ChevronRight className="w-4 h-4" />
             </Link>
@@ -1660,7 +1671,7 @@ function OrdersTab({ title, orders, emptyMsg, onPayNow, onApprove, onRevision, o
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+        <h2 className="text-xl font-black text-brand-dpurple">{title}</h2>
         <span className="text-sm text-gray-500">{filtered.length} of {orders.length} order{orders.length !== 1 ? 's' : ''}</span>
       </div>
 
@@ -1741,7 +1752,7 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-gray-900">Transactions</h2>
+      <h2 className="text-xl font-black text-brand-dpurple">Transactions</h2>
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -1961,7 +1972,7 @@ function WalletTab() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <h2 className="text-xl font-bold text-gray-900">Wallet</h2>
+      <h2 className="text-xl font-black text-brand-dpurple">Wallet</h2>
 
       {/* Balance card */}
       <div className="rounded-2xl p-6 text-white" style={{ background: 'linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%)' }}>
@@ -2149,7 +2160,7 @@ function FavoritesTab() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">Saved Talents</h2>
+        <h2 className="text-xl font-black text-brand-dpurple">Saved Talents</h2>
         <span className="text-sm text-gray-400">{favorites.length} saved</span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

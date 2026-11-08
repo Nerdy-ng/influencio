@@ -211,7 +211,7 @@ function RateCardOrder({ talent, isPreview, navigate }) {
   }
 
   return (
-    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-3xl border border-brand-lav shadow-sm overflow-hidden">
       <div className="px-5 py-4 border-b border-gray-100">
         <h2 className="font-bold text-gray-900">Rate Card</h2>
       </div>
@@ -372,7 +372,7 @@ function QuickStats({ talent: c }) {
   const isVerified = c.tier === 'top-rated' || c.tier === 'next-rated' || (c.completedCampaigns || 0) >= 5
 
   return (
-    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-5">
+    <div className="bg-white rounded-3xl border border-brand-lav shadow-sm p-5">
       <h3 className="font-bold text-gray-900 mb-4">Quick Stats</h3>
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -476,14 +476,14 @@ function ReviewsSection({ talentId }) {
   }
 
   if (loading) return (
-    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 animate-pulse">
+    <div className="bg-white rounded-3xl border border-brand-lav shadow-sm p-6 animate-pulse">
       <div className="h-5 bg-gray-100 rounded w-40 mb-4" />
       {[1,2].map(i => <div key={i} className="h-24 bg-gray-50 rounded-2xl mb-3" />)}
     </div>
   )
 
   return (
-    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+    <div className="bg-white rounded-3xl border border-brand-lav shadow-sm p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
@@ -909,7 +909,7 @@ export default function TalentProfilePage() {
         )}
 
         {/* Profile header — clean card */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+        <div className="bg-white rounded-3xl shadow-sm border border-brand-lav overflow-hidden mb-6">
           {/* Top strip */}
           <div className="h-24 w-full" style={{ background: 'linear-gradient(135deg, #0d0020 0%, #3b0764 100%)' }} />
 
@@ -1005,7 +1005,7 @@ export default function TalentProfilePage() {
 
         {/* Portfolio */}
         {c.portfolio?.length > 0 && (
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-6 p-6">
+          <div className="bg-white rounded-3xl shadow-sm border border-brand-lav overflow-hidden mb-6 p-6">
             <h2 className="font-bold text-gray-900 text-base mb-4">Portfolio</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {c.portfolio.map((item, i) => (
@@ -1066,7 +1066,7 @@ export default function TalentProfilePage() {
 
             {/* Inline chat box */}
             {!isPreview && (
-              <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="bg-white rounded-3xl border border-brand-lav shadow-sm overflow-hidden">
                 <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100" style={{ background: 'linear-gradient(135deg, #0d0020, #3b0764)' }}>
                   <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden">
                     {c.avatar ? <img src={c.avatar} alt={c.name} className="w-full h-full object-cover" /> : c.name?.[0]}

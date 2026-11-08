@@ -8,10 +8,14 @@ export default {
       },
       colors: {
         brand: {
-          cream: '#FAF3E1',
-          sand:  '#F5E7C6',
-          orange:'#FA8112',
-          dark:  '#0a0a0a',
+          cream:  '#FAF3E1',
+          sand:   '#F5E7C6',
+          orange: '#FA8112',
+          dark:   '#0a0a0a',
+          purple: '#7c3aed',
+          dpurple:'#1e0040',
+          pink:   '#F72585',
+          lav:    '#e9d5ff',
         },
       },
       animation: {
