@@ -365,7 +365,27 @@ export default function MessagingPanel({ userId, userType, initialConvId, onUnre
       .eq(col, userId)
       .not('last_message', 'is', null)
       .order('last_message_at', { ascending: false })
-    if (!error && data) setConversations(data.map(mapConv))
+    if (!error && data) {
+      // For creator-side views: resolve brand owner name from profiles so creators
+      // see the brand owner's full_name rather than the denormalized company_name.
+      if (userType !== 'brand') {
+        const brandIds = [...new Set(data.map(c => c.brand_id).filter(Boolean))]
+        if (brandIds.length > 0) {
+          const { data: brandProfiles } = await supabase
+            .from('profiles')
+            .select('id, full_name, company_name')
+            .in('id', brandIds)
+          if (brandProfiles) {
+            const ownerNameMap = Object.fromEntries(
+              brandProfiles.map(p => [p.id, p.full_name || p.company_name || null])
+            )
+            setConversations(data.map(c => mapConv({ ...c, brand_name: ownerNameMap[c.brand_id] ?? c.brand_name })))
+            return
+          }
+        }
+      }
+      setConversations(data.map(mapConv))
+    }
   }, [userId, userType])
 
   useEffect(() => {
