@@ -734,7 +734,7 @@ function BrowseTab({ setActiveTab }) {
 
       {/* ── Search ── */}
       <div style={{ position: 'relative' }}>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search campaigns or brands…"
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search campaigns or opportunities…"
           className="w-full rounded-xl px-4 py-3 text-sm outline-none"
           style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff', color: '#1e0040' }} />
         {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}>✕</button>}
@@ -2426,7 +2426,7 @@ export default function TalentDashboard() {
           </div>
         </div>
 
-        <div className="p-6 max-w-4xl mx-auto">
+        <div className="p-6">
 
           {/* Mobile tab bar */}
           <div className="flex gap-1 mb-6 md:hidden overflow-x-auto pb-1">
@@ -2445,20 +2445,22 @@ export default function TalentDashboard() {
 
           {/* ── BROWSE TAB ── */}
           {activeTab === 'browse' && (
-            <BrowseTab setActiveTab={setActiveTab} />
+            <div className="max-w-5xl mx-auto">
+              <BrowseTab setActiveTab={setActiveTab} />
+            </div>
           )}
 
           {/* ── COLLABS TAB ── */}
           {activeTab === 'collabs' && (
-            <>
+            <div className="max-w-5xl mx-auto">
               <OnboardingChecklist role="creator" setActiveTab={setActiveTab} />
               <MyCollabsTab completion={completion} setActiveTab={setActiveTab} />
-            </>
+            </div>
           )}
 
           {/* ── PROFILE TAB ── */}
           {activeTab === 'profile' && (
-            <div className="space-y-5">
+            <div className="max-w-4xl mx-auto space-y-5">
               <ProfileSetupBanner completion={completion} />
 
               {/* ── Header card ── */}
@@ -2643,7 +2645,7 @@ export default function TalentDashboard() {
 
           {/* ── PORTFOLIO TAB ── */}
           {activeTab === 'portfolio' && (
-            <div className="space-y-5">
+            <div className="max-w-5xl mx-auto space-y-5">
               {/* Header bar */}
               <div className="flex items-center justify-between">
                 <div>
@@ -2899,7 +2901,7 @@ export default function TalentDashboard() {
 
           {/* ── ANALYTICS TAB ── */}
           {activeTab === 'overview' && (
-            <div className="space-y-5">
+            <div className="max-w-5xl mx-auto space-y-5">
 
               {/* Engagement Metrics */}
               <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
@@ -3139,12 +3141,14 @@ export default function TalentDashboard() {
 
           {/* ── TRANSACTIONS TAB ── */}
           {activeTab === 'transactions' && (
-            <TransactionsTab showWithdraw={showWithdraw} setShowWithdraw={setShowWithdraw} />
+            <div className="max-w-5xl mx-auto">
+              <TransactionsTab showWithdraw={showWithdraw} setShowWithdraw={setShowWithdraw} />
+            </div>
           )}
 
           {/* ── SETTINGS TAB ── */}
           {activeTab === 'settings' && (
-            <div className="space-y-5">
+            <div className="max-w-3xl mx-auto space-y-5">
 
               {/* Edit / Save bar */}
               <div className="flex items-center justify-between">
@@ -3731,13 +3735,25 @@ export default function TalentDashboard() {
           )}
 
           {/* ── INVITE TAB ── */}
-          {activeTab === 'invite' && <InviteTab userType="talent" />}
+          {activeTab === 'invite' && (
+            <div className="max-w-2xl mx-auto">
+              <InviteTab userType="talent" />
+            </div>
+          )}
 
           {/* ── ANALYTICS TAB ── */}
-          {activeTab === 'analytics' && <TalentAnalyticsTab />}
+          {activeTab === 'analytics' && (
+            <div className="max-w-5xl mx-auto">
+              <TalentAnalyticsTab />
+            </div>
+          )}
 
           {/* ── SUPPORT TAB ── */}
-          {activeTab === 'support' && <SupportTab />}
+          {activeTab === 'support' && (
+            <div className="max-w-3xl mx-auto">
+              <SupportTab />
+            </div>
+          )}
 
           {/* ── NOTIFICATIONS TAB ── */}
           {activeTab === 'notifications' && <NotificationsTab />}
@@ -3746,7 +3762,11 @@ export default function TalentDashboard() {
           {activeTab === 'rate-card' && <RateCardTab />}
 
           {/* ── PAYOUT SETTINGS TAB ── */}
-          {activeTab === 'payout-settings' && <PayoutSettingsTab />}
+          {activeTab === 'payout-settings' && (
+            <div className="max-w-2xl mx-auto">
+              <PayoutSettingsTab />
+            </div>
+          )}
 
         </div>
       </main>
@@ -4665,7 +4685,7 @@ function NotificationsTab() {
   if (loading) return <div className="flex justify-center py-20"><div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" /></div>
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-black" style={{ color: darkPurple }}>Notifications</h2>
         {notifs.length > 0 && (
@@ -4785,7 +4805,7 @@ function RateCardTab() {
   if (loading) return <div className="flex justify-center py-20"><div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" /></div>
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-20">
+    <div className="max-w-4xl mx-auto space-y-6 pb-20">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -4808,6 +4828,8 @@ function RateCardTab() {
         <p className="text-xs text-white/80 mt-2 font-medium">Platform min {fmt(MIN_RATE)} · {enabledPlatforms.length} posting platforms</p>
       </div>
 
+      <div className="lg:grid lg:grid-cols-2 lg:gap-6 space-y-6 lg:space-y-0">
+      <div className="space-y-6">
       {/* Content Types */}
       <RCSection label="Content Type" hint="Types of content you offer">
         <div className="grid grid-cols-2 gap-3">
@@ -4850,7 +4872,8 @@ function RateCardTab() {
           ))}
         </div>
       </RCSection>
-
+      </div>
+      <div className="space-y-6">
       {/* Platform Posting */}
       <RCSection label="Platform Posting" hint="For Influencer Post only — flat fee per platform, added on top of production">
         <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #e9d5ff' }}>
@@ -4951,6 +4974,8 @@ function RateCardTab() {
           </button>
         </div>
       </RCSection>
+      </div>
+      </div>
 
       {/* Custom add-on modal */}
       {showCustom && (
