@@ -20,7 +20,6 @@ import PushNotificationPanel from "../../components/admin/PushNotificationPanel"
 import AuditLogPanel from "../../components/admin/AuditLogPanel";
 import UserDetailModal from "../../components/admin/UserDetailModal";
 import RateCardModerationPanel from "../../components/admin/RateCardModerationPanel";
-import BadgeManagementPanel from "../../components/admin/BadgeManagementPanel";
 import CollaborationPanel     from "../../components/admin/CollaborationPanel";
 import MessagingModerationPanel from "../../components/admin/MessagingModerationPanel";
 import DisputeCenterPanel     from "../../components/admin/DisputeCenterPanel";
@@ -183,7 +182,6 @@ const NAV_ITEMS = [
   { id: "sla",        label: "SLA Tracker", Icon: Timer },
   { id: "exports",    label: "Exports",     Icon: Download },
   { id: "users",     label: "Users",      Icon: Users },
-  { id: "badges",    label: "Badges",     Icon: BadgeCheck },
   { id: "algo-control", label: "Algorithm Control", Icon: SlidersHorizontal },
   { id: "jobs",           label: "Collabs",       Icon: Briefcase },
   { id: "pitches",        label: "Pitches",       Icon: Send },
@@ -236,7 +234,7 @@ const NAV_ITEMS = [
 
 const NAV_GROUPS = [
   { title: "Dashboard", items: ["overview", "analytics", "funnel", "earnings", "sla", "exports", "health"] },
-  { title: "Community", items: ["users", "badges", "rankings", "jobs", "pitches", "messaging"] },
+  { title: "Community", items: ["users", "rankings", "jobs", "pitches", "messaging"] },
   { title: "Finance",   items: ["wallets", "withdrawals", "payout-approvals", "escrow", "financials2", "rubies", "pay-config", "pitch-settings", "payments", "refunds", "commission"] },
   { title: "Trust",     items: ["disputes2", "reviews", "ai-police", "trust-safety", "kyc", "fraud", "marketplace", "referrals2"] },
   { title: "Platform",  items: ["announcements", "promo-codes", "notifications2", "cms2", "push", "ai-controls", "discovery", "categories", "support2", "rate-cards", "email-log", "email-notifs"] },
@@ -247,7 +245,7 @@ const NAV_GROUPS = [
 
 const NAV_DOMAINS = [
   { id: "overview",     label: "Overview",        items: ["overview", "analytics", "funnel", "earnings", "sla", "exports", "health"] },
-  { id: "users",        label: "Users",           items: ["users", "badges", "kyc", "referrals2"] },
+  { id: "users",        label: "Users",           items: ["users", "kyc", "referrals2"] },
   { id: "collabs",      label: "Collabs",         items: ["jobs", "pitches", "messaging", "disputes2"] },
   { id: "finance",      label: "Finance",         items: ["wallets", "withdrawals", "payout-approvals", "escrow", "financials2", "commission", "rubies", "refunds", "pay-config", "payments"] },
   { id: "marketplace",  label: "Marketplace",     items: ["marketplace", "rate-cards", "categories", "algo-control", "reviews"] },
@@ -712,7 +710,7 @@ export default function AdminPanel() {
           name: p.full_name || p.handle || 'Unknown',
           email: p.handle || '',
           role: p.role || 'Talent',
-          tier: p.tier || 'fast-rising',
+          tier: p.tier || null,
           location: p.location || '—',
           joined: p.created_at ? new Date(p.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }) : '—',
           status: p.status || 'active',
@@ -1146,18 +1144,11 @@ export default function AdminPanel() {
     showToast("User verified successfully.");
   };
 
-  const handleChangeTier = async (userId, tier) => {
-    setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, tier } : u));
-    await saveProfile(userId, { tier })
-    showToast("Tier updated.");
-  };
-
   const handleSaveUser = async () => {
     setUsers(prev => prev.map(u => u.id === editUser.id ? editUser : u));
     await saveProfile(editUser.id, {
       full_name: editUser.name,
       location: editUser.location,
-      tier: editUser.tier,
       status: editUser.status,
       verified: editUser.verified,
     })
@@ -2903,7 +2894,6 @@ export default function AdminPanel() {
     overview:         renderOverview,
     analytics:        renderAnalytics,
     users:            renderUsers,
-    badges:           () => <BadgeManagementPanel showToast={showToast} />,
     jobs:             () => <CollaborationPanel showToast={showToast} auditLog={auditLog} />,
     pitches:          () => <PitchesPanel showToast={showToast} auditLog={auditLog} />,
     messaging:        () => <MessagingModerationPanel showToast={showToast} auditLog={auditLog} />,
@@ -3418,17 +3408,6 @@ export default function AdminPanel() {
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Location</label>
                 <input value={editUser.location} onChange={e => setEditUser(u => ({ ...u, location: stripInjection(e.target.value) }))}
                   className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Tier / Plan</label>
-                <select value={editUser.tier} onChange={e => setEditUser(u => ({ ...u, tier: stripInjection(e.target.value) }))}
-                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-400">
-                  <option value="fast-rising">Fast Rising</option>
-                  <option value="next-rated">Next Rated</option>
-                  <option value="top-rated">Top Rated</option>
-                  <option value="premium">Premium</option>
-                  <option value="standard">Standard</option>
-                </select>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Account Status</label>

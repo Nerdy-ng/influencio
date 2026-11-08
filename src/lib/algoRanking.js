@@ -10,9 +10,10 @@ export const ALGO_DEFAULTS = {
 }
 
 const TIER_NORM = {
-  'top-rated': 1.0,
-  'next-rated': 0.60,
-  'fast-rising': 0.25,
+  'champion': 1.00,
+  'pro':      0.65,
+  'rising':   0.30,
+  'spark':    0.10,
 }
 
 export function validateWeights(w) {
@@ -45,7 +46,7 @@ export function parseAlgoConfig(raw) {
 }
 
 // creator shape expected:
-//   avgRating (0-5), tier (null|'fast-rising'|'next-rated'|'top-rated'),
+//   avgRating (0-5), tier (null|'spark'|'rising'|'pro'|'champion'),
 //   identityVerified (bool), sparkEarned (bool),
 //   updatedAt (ISO string|null), createdAt (ISO string|null)
 export function calcScore(creator, config) {

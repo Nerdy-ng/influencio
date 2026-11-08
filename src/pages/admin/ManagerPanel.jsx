@@ -169,7 +169,7 @@ export default function ManagerPanel() {
           name: p.full_name || p.company_name || p.handle || 'Unknown',
           email: p.handle || '',
           role: ['brand'].includes((p.role||'').toLowerCase()) ? 'Brand' : 'Talent',
-          tier: p.tier || 'fast-rising',
+          tier: p.tier || null,
           location: p.location || '—',
           joined: p.created_at ? new Date(p.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }) : '—',
           status: p.status || 'active',
