@@ -1272,9 +1272,9 @@ function BrandAvatarMenu({ onSwitchToCreator }) {
           <button
             onClick={() => { setOpen(false); onSwitchToCreator() }}
             className="flex items-center gap-2.5 px-4 py-3 text-sm font-medium w-full transition-colors text-left"
-            style={{ color: '#F72585' }}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(247,37,133,0.08)'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
+            style={{ color: 'rgba(255,255,255,0.45)' }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(255,255,255,0.75)' }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.45)' }}>
             <ArrowLeftRight className="w-4 h-4" /> Switch to Creator Account
           </button>
           <button
@@ -1337,9 +1337,9 @@ function SidebarContent({ activeTab, setActiveTab, dashLogo, onSwitchToCreator }
         </Link>
         <button onClick={onSwitchToCreator}
           className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors text-left"
-          style={{ color: '#F72585' }}
-          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(247,37,133,0.08)'}
-          onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
+          style={{ color: 'rgba(255,255,255,0.45)' }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(255,255,255,0.75)' }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.45)' }}>
           <ArrowLeftRight className="w-4 h-4 flex-shrink-0" />
           Switch to Creator Account
         </button>
@@ -1405,7 +1405,7 @@ function TalentMiniCard({ talent }) {
           ))}
           <span className="ml-1 text-xs font-semibold text-gray-600">{talent.rating}</span>
         </div>
-        <span className="text-xs font-bold" style={{ color: pink }}>From ₦{talent.from.toLocaleString('en')}</span>
+        <span className="text-xs font-bold" style={{ color: '#7c3aed' }}>From ₦{talent.from.toLocaleString('en')}</span>
       </div>
       <Link to={`/creators/${talent.handle || talent.id}`}
         className="w-full text-center text-xs font-semibold py-2 rounded-xl text-white transition-opacity hover:opacity-90"
@@ -1758,7 +1758,7 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-5">
           <p className="text-sm text-gray-500 mb-1">Total Spent</p>
-          <p className="text-2xl font-extrabold" style={{ color: pink }}>{formatNGN(totalSpent)}</p>
+          <p className="text-2xl font-extrabold" style={{ color: '#7c3aed' }}>{formatNGN(totalSpent)}</p>
         </div>
         <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-5">
           <p className="text-sm text-gray-500 mb-1">Platform Fees Paid</p>

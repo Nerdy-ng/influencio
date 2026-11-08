@@ -412,9 +412,9 @@ function RegistrationModal({ onClose }) {
           <Link
             to="/signup"
             className="w-full py-3 rounded-full font-bold text-white text-sm transition-colors text-center"
-            style={{ backgroundColor: pink }}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#e85d8a'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = pink}
+            style={{ backgroundColor: '#4c1d95' }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#3b0764'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = '#4c1d95'}
           >
             Create Free Account
           </Link>

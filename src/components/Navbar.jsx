@@ -47,7 +47,7 @@ function UserAvatar({ profile, size = 'md' }) {
   }
   const initials = profile?.nickname ? profile.nickname.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?'
   return (
-    <div className={`${sz} rounded-full flex items-center justify-center text-white font-bold flex-shrink-0`} style={{ backgroundColor: '#F72585' }}>
+    <div className={`${sz} rounded-full flex items-center justify-center text-white font-bold flex-shrink-0`} style={{ backgroundColor: '#7c3aed' }}>
       {initials !== '?' ? initials : (
         <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white/80"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
       )}
@@ -496,7 +496,7 @@ export default function Navbar() {
             <>
               <Link to="/signup?role=talent" onClick={() => setMobileOpen(false)}
                 className="flex items-center gap-3 font-bold text-white py-3 px-4 rounded-xl mb-2"
-                style={{ backgroundColor: '#F72585' }}>
+                style={{ backgroundColor: '#7c3aed' }}>
                 <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                 </svg>

@@ -249,7 +249,7 @@ function AvatarMenu({ profile, activeTab, setActiveTab, onSwitchToBrand }) {
         {profile.avatar ? (
           <img src={profile.avatar} alt={profile.nickname || 'Profile'} className="w-10 h-10 rounded-full object-cover ring-2 ring-white/20" />
         ) : (
-          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ring-2 ring-white/20" style={{ backgroundColor: pink }}>
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ring-2 ring-white/20" style={{ backgroundColor: '#7c3aed' }}>
             {profile.initials !== '?' ? profile.initials : (
               <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white/80"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
             )}
@@ -360,8 +360,8 @@ function Sidebar({ active, setActive, dashLogo, onSwitchToBrand }) {
       {/* Account type label */}
       <div className="px-3 mb-8">
         <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full"
-          style={{ backgroundColor: `${pink}20`, color: pink, border: `1px solid ${pink}40` }}>
-          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: pink }} />
+          style={{ backgroundColor: 'rgba(124,58,237,0.2)', color: '#c4b5fd', border: '1px solid rgba(124,58,237,0.35)' }}>
+          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-violet-400" />
           Talent Account
         </span>
       </div>
@@ -394,9 +394,9 @@ function Sidebar({ active, setActive, dashLogo, onSwitchToBrand }) {
       <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <button onClick={switchToBrand}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left"
-          style={{ color: '#F72585' }}
-          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(247,37,133,0.08)'}
-          onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
+          style={{ color: 'rgba(255,255,255,0.45)' }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(255,255,255,0.75)' }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.45)' }}>
           <ArrowLeftRight className="w-4 h-4 flex-shrink-0" />
           Switch to Brand Account
         </button>
@@ -2338,7 +2338,7 @@ export default function TalentDashboard() {
 
             <button onClick={activateBrandMode} disabled={!bsCompanyName.trim() || !bsIndustry || bsActivating}
               className="w-full py-3 rounded-xl text-white font-bold text-sm transition-opacity disabled:opacity-40"
-              style={{ backgroundColor: '#F72585' }}>
+              style={{ backgroundColor: '#4c1d95' }}>
               {bsActivating ? 'Activating…' : 'Activate Brand Mode →'}
             </button>
             <button onClick={() => setShowBrandSetup(false)} disabled={bsActivating}

@@ -439,7 +439,7 @@ export default function SignupPage() {
 
               <button type="submit" disabled={loading}
                 className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-60"
-                style={{ backgroundColor: pink }}>
+                style={{ backgroundColor: darkPurple }}>
                 {loading ? <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                   : <>Create Talent Account <ArrowRight className="w-4 h-4" /></>}
               </button>
