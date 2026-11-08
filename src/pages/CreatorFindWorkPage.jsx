@@ -26,6 +26,7 @@ export default function CreatorFindWorkPage() {
   ])
   const [stepsDone, setStepsDone]       = useState([false, false, false])
   const [setupLoaded, setSetupLoaded]   = useState(false)
+  const [wizardOpen, setWizardOpen]     = useState(false)
   const [cardMode, setCardMode]         = useState('prompt')
   const [sliding, setSliding]           = useState(false)
   const [slideIn, setSlideIn]           = useState(false)
@@ -170,10 +171,26 @@ export default function CreatorFindWorkPage() {
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 pb-24 space-y-4">
 
-        {/* Setup wizard */}
+        {/* Setup wizard — compact collapsible strip */}
         {setupLoaded && !profileReady && currentStep && (
-          <div ref={setupWizardRef} style={{ overflow: 'hidden' }}>
-            <div style={{ background: 'linear-gradient(135deg, #3b0764 0%, #6d28d9 60%, #a855f7 100%)', borderRadius: 20, padding: 24, ...cardStyle }}>
+          <div ref={setupWizardRef}>
+            {/* Collapsed strip */}
+            <button
+              onClick={() => setWizardOpen(o => !o)}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, background: 'linear-gradient(90deg, #3b0764, #6d28d9)', borderRadius: wizardOpen ? '16px 16px 0 0' : 16, padding: '10px 16px', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+              <span style={{ fontSize: 14 }}>🎯</span>
+              <span style={{ flex: 1, fontSize: 12, fontWeight: 700, color: '#fff' }}>Complete your profile to unlock pitching</span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: 'rgba(255,255,255,0.6)', marginRight: 4 }}>{doneCount}/{totalSteps}</span>
+              <div style={{ width: 60, height: 4, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 2, overflow: 'hidden', marginRight: 6 }}>
+                <div style={{ height: '100%', width: `${Math.round((doneCount / totalSteps) * 100)}%`, backgroundColor: '#fff', borderRadius: 2, transition: 'width 0.4s ease' }} />
+              </div>
+              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>{wizardOpen ? '▲' : '▼'}</span>
+            </button>
+
+            {/* Expanded wizard card */}
+            {wizardOpen && (
+            <div style={{ overflow: 'hidden' }}>
+            <div style={{ background: 'linear-gradient(135deg, #3b0764 0%, #6d28d9 60%, #a855f7 100%)', borderRadius: '0 0 16px 16px', padding: 24, ...cardStyle }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <p style={{ fontSize: 11, fontWeight: 800, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   Step {currentIdx + 1} of {totalSteps}
@@ -260,6 +277,8 @@ export default function CreatorFindWorkPage() {
                 <span style={{ fontSize: 12, fontWeight: 800, color: 'rgba(255,255,255,0.7)' }}>{doneCount}/{totalSteps}</span>
               </div>
             </div>
+            </div>
+            )}
           </div>
         )}
 

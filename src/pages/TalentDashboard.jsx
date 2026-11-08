@@ -1739,7 +1739,12 @@ function KYCUploadSlot({ label, file, onChange }) {
 
 export default function TalentDashboard() {
   const [searchParams] = useSearchParams()
-  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'browse')
+  const [activeTab, setActiveTab] = useState(() => {
+    const t = searchParams.get('tab')
+    // 'browse' is now a first-class route; treat it as unset
+    if (!t || t === 'browse') return 'collabs'
+    return t
+  })
   const initialConvId = searchParams.get('conv')
   const [profile, setProfile] = useState(emptyProfile)
   const [dashLogo, setDashLogo] = useState(() => getLogo('dashboard'))
@@ -1949,6 +1954,11 @@ export default function TalentDashboard() {
       setBsActivating(false)
     }
   }
+
+  // /dashboard?tab=browse now lives at /creator/find-work
+  useEffect(() => {
+    if (searchParams.get('tab') === 'browse') navigateTo('/creator/find-work', { replace: true })
+  }, [])
 
   // Server-authoritative capability check: redirect if user lacks creator access
   useEffect(() => {
@@ -2471,13 +2481,6 @@ export default function TalentDashboard() {
               </button>
             ))}
           </div>
-
-          {/* ── BROWSE TAB ── */}
-          {activeTab === 'browse' && (
-            <div className="max-w-5xl mx-auto">
-              <BrowseTab setActiveTab={setActiveTab} />
-            </div>
-          )}
 
           {/* ── COLLABS TAB ── */}
           {activeTab === 'collabs' && (
