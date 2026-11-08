@@ -49,6 +49,7 @@ const ConfirmedPage           = lazy(() => import('./pages/ConfirmedPage'))
 const ForgotPasswordPage      = lazy(() => import('./pages/ForgotPasswordPage'))
 const ResetPasswordPage       = lazy(() => import('./pages/ResetPasswordPage'))
 const WorkspaceSelectorPage   = lazy(() => import('./pages/WorkspaceSelectorPage'))
+const AuthDiagnosticPage      = lazy(() => import('./pages/AuthDiagnosticPage'))
 
 function PageLoader() {
   return (
@@ -392,6 +393,12 @@ export default function App() {
         <Route path="/admin"         element={<AdminPanel />} />
         <Route path="/admin/manager" element={<ManagerPanel />} />
         <Route path="/admin/staff"   element={<StaffPanel />} />
+
+        {/* ── Temporary auth diagnostic (read-only, auth-gated) ──────────────── */}
+        <Route path="/auth-diagnostic"
+          element={authReady
+            ? <PrivateRoute isRecoverySession={isRecoverySession}><AuthDiagnosticPage /></PrivateRoute>
+            : <PageLoader />} />
 
         {/* ── Legal — available on both domains ──────────────────────────────── */}
         <Route path="/terms"          element={<LegalPage />} />
