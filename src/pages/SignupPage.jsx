@@ -162,6 +162,10 @@ export default function SignupPage() {
   async function handleOAuthRoleSave() {
     setLoading(true)
     await supabase.auth.updateUser({ data: { role } })
+    // lock_role_on_signup only fires on auth.users INSERT, not on updateUser.
+    // Google users who pick 'brand' would keep app_metadata.role='creator' without this.
+    const workspace = role === 'talent' ? 'creator' : role
+    await supabase.functions.invoke('sync-workspace', { body: { workspace } })
     localStorage.setItem('brandiór_role', role)
     setLoading(false)
     // Go to profile completion for new users, otherwise dashboard
@@ -238,6 +242,12 @@ export default function SignupPage() {
             },
           }).catch(() => {})
         }
+
+        // Atomically set app_metadata.role + capabilities to match the chosen role.
+        // Critical for Google users: app_metadata.role defaults to 'creator' at OAuth
+        // creation time (lock_role_on_signup fires then with null user_metadata.role).
+        const workspace = role === 'talent' ? 'creator' : role
+        await supabase.functions.invoke('sync-workspace', { body: { workspace } })
       }
     } catch (_) {}
 
