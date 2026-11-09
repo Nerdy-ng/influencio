@@ -522,7 +522,7 @@ export default function LoginPage() {
               }}
               disabled={loading}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-brand-dark text-sm border transition-all hover:bg-gray-50 disabled:opacity-60"
-              style={{ borderColor: '#e9d5ff' }}
+              style={{ borderColor: 'rgba(124,58,237,0.15)' }}
             >
               <GoogleIcon />
               Continue with Google
@@ -568,7 +568,7 @@ export default function LoginPage() {
                     placeholder="Email address"
                     autoComplete="email"
                     className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-brand-dark placeholder-brand-dark/25 outline-none transition-all"
-                    style={{ border: errors.identifier ? `1.5px solid ${pink}` : '1.5px solid #e9d5ff' }}
+                    style={{ border: errors.identifier ? `1.5px solid ${pink}` : '1.5px solid rgba(124,58,237,0.15)' }}
                   />
                 </div>
               ) : (
@@ -576,14 +576,14 @@ export default function LoginPage() {
                   <div className="relative flex-shrink-0">
                     <button type="button" onClick={() => setShowCodes(v => !v)}
                       className="h-full flex items-center gap-1.5 px-3 rounded-xl text-sm transition-all"
-                      style={{ border: '1.5px solid #e9d5ff', minWidth: 82, backgroundColor: '#fff' }}>
+                      style={{ border: '1.5px solid rgba(124,58,237,0.15)', minWidth: 82, backgroundColor: '#fff' }}>
                       <span>{countryCode.flag}</span>
                       <span className="text-brand-dark/50 text-xs">{countryCode.code}</span>
                       <ChevronDown className="w-3 h-3 text-brand-dark/25" />
                     </button>
                     {showCodes && (
                       <div className="absolute top-full left-0 mt-1 rounded-xl overflow-hidden shadow-lg z-20 bg-white"
-                        style={{ border: '1px solid #e9d5ff', minWidth: 150 }}>
+                        style={{ border: '1px solid rgba(124,58,237,0.1)', minWidth: 150 }}>
                         {countryCodes.map(c => (
                           <button key={c.code} type="button"
                             onClick={() => { setCountryCode(c); setShowCodes(false) }}
@@ -605,7 +605,7 @@ export default function LoginPage() {
                       placeholder="Phone number"
                       autoComplete="tel"
                       className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-brand-dark placeholder-brand-dark/25 outline-none"
-                      style={{ border: errors.identifier ? `1.5px solid ${pink}` : '1.5px solid #e9d5ff' }}
+                      style={{ border: errors.identifier ? `1.5px solid ${pink}` : '1.5px solid rgba(124,58,237,0.15)' }}
                     />
                   </div>
                 </div>
@@ -623,7 +623,7 @@ export default function LoginPage() {
                   placeholder="Password"
                   autoComplete="current-password"
                   className="w-full pl-10 pr-11 py-3 rounded-xl text-sm text-brand-dark placeholder-brand-dark/25 outline-none"
-                  style={{ border: errors.password ? `1.5px solid ${pink}` : '1.5px solid #e9d5ff' }}
+                  style={{ border: errors.password ? `1.5px solid ${pink}` : '1.5px solid rgba(124,58,237,0.15)' }}
                 />
                 <button type="button" onClick={() => setShowPass(v => !v)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-brand-dark/25 hover:text-brand-dark/50 transition-colors">

@@ -124,7 +124,7 @@ export default function CampaignDetailPage() {
   // ── Loading ──────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f9f5ff' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f7f4ff' }}>
         <div className="w-8 h-8 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" />
       </div>
     )
@@ -133,7 +133,7 @@ export default function CampaignDetailPage() {
   // ── Not found ────────────────────────────────────────────────────────────────
   if (notFound || !campaign) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ backgroundColor: '#f9f5ff' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ backgroundColor: '#f7f4ff' }}>
         <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5" style={{ backgroundColor: '#f3eeff' }}>
           <span className="text-3xl">🔍</span>
         </div>
@@ -151,10 +151,10 @@ export default function CampaignDetailPage() {
   const isClosed = campaign.status !== 'open'
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f9f5ff' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#f7f4ff' }}>
       {/* Top bar */}
       <header className="sticky top-0 z-30 px-4 sm:px-6 py-3 flex items-center gap-3"
-        style={{ backgroundColor: '#f9f5ff', borderBottom: '1px solid rgba(124,58,237,0.1)' }}>
+        style={{ backgroundColor: '#f7f4ff', borderBottom: '1px solid rgba(124,58,237,0.1)' }}>
         <button onClick={() => navigate(-1)}
           className="flex items-center gap-1.5 text-sm font-semibold transition-opacity hover:opacity-70 flex-shrink-0"
           style={{ color: purple }}>
@@ -225,7 +225,7 @@ export default function CampaignDetailPage() {
             <h2 className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#9ca3af' }}>Content Types</h2>
             <div className="flex flex-wrap gap-2">
               {campaign.content_types.map(ct => (
-                <span key={ct} className="text-xs font-semibold px-3 py-1.5 rounded-full" style={{ backgroundColor: '#f3eeff', color: purple }}>
+                <span key={ct} className="text-xs font-semibold px-3 py-1.5 rounded-full" style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple }}>
                   {ct}
                 </span>
               ))}
@@ -237,7 +237,7 @@ export default function CampaignDetailPage() {
         {campaign.brief && (
           <div className="mb-6">
             <h2 className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#9ca3af' }}>Campaign Brief</h2>
-            <div className="rounded-2xl p-5" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff' }}>
+            <div className="rounded-2xl p-5" style={{ backgroundColor: '#fff', border: '1px solid rgba(124,58,237,0.1)', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
               <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: '#374151' }}>{campaign.brief}</p>
             </div>
           </div>
@@ -245,7 +245,7 @@ export default function CampaignDetailPage() {
 
         {/* CTA */}
         <div className="fixed bottom-0 left-0 right-0 p-4 sm:static sm:p-0 sm:mt-6 sm:border-0"
-          style={{ backgroundColor: '#f9f5ff', borderTop: '1px solid rgba(124,58,237,0.08)' }}>
+          style={{ backgroundColor: '#f7f4ff', borderTop: '1px solid rgba(124,58,237,0.08)' }}>
 
           {pitchSuccess ? (
             <div className="rounded-2xl p-4 text-center" style={{ backgroundColor: '#dcfce7', border: '1px solid #bbf7d0' }}>
@@ -302,7 +302,7 @@ export default function CampaignDetailPage() {
               rows={4}
               placeholder="Briefly introduce yourself and why you're a great fit…"
               className="w-full rounded-xl px-4 py-3 text-sm outline-none resize-none mb-1"
-              style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf9ff', color: '#1e0040' }}
+              style={{ border: '1.5px solid rgba(124,58,237,0.15)', backgroundColor: '#faf9ff', color: '#1e0040' }}
             />
             {pitchNote.length > 0 && pitchNote.trim().length < 20 && (
               <p className="text-xs mb-3" style={{ color: '#ef4444' }}>At least 20 characters required ({pitchNote.trim().length}/20)</p>

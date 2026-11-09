@@ -82,7 +82,7 @@ function CampaignList() {
               <div key={c.id}
                 onClick={() => navigate(`/brand/my-campaigns/${c.id}`)}
                 className="rounded-2xl p-5 bg-white cursor-pointer transition-all hover:-translate-y-0.5"
-                style={{ border: '1px solid #e9d5ff', boxShadow: '0 2px 8px rgba(192,132,252,0.06)' }}>
+                style={{ border: '1px solid rgba(124,58,237,0.1)', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold mb-1" style={{ color: purple }}>{c.niche} · {c.collab_type}</p>
@@ -108,7 +108,7 @@ function CampaignList() {
                   </button>
                   <button onClick={e => toggleStatus(e, c)} disabled={toggling === c.id}
                     className="px-4 py-2.5 rounded-xl text-sm font-bold border disabled:opacity-40"
-                    style={{ borderColor: '#e9d5ff', color: purple, background: '#fff' }}>
+                    style={{ borderColor: 'rgba(124,58,237,0.15)', color: purple, background: '#fff' }}>
                     {toggling === c.id ? '…' : c.status === 'open' ? 'Close' : 'Reopen'}
                   </button>
                 </div>
@@ -204,7 +204,7 @@ function CampaignDetail({ id }) {
         </button>
         <button onClick={toggleStatus} disabled={toggling}
           className="px-5 py-3 rounded-xl text-sm font-bold border disabled:opacity-40"
-          style={{ borderColor: '#e9d5ff', color: purple, background: '#fff' }}>
+          style={{ borderColor: 'rgba(124,58,237,0.15)', color: purple, background: '#fff' }}>
           {toggling ? '…' : campaign.status === 'open' ? 'Close Campaign' : 'Reopen Campaign'}
         </button>
       </div>
@@ -274,7 +274,7 @@ function CampaignPitches({ id }) {
             }
             const tc = tierColors[c.tier] || tierColors['fast-rising']
             return (
-              <div key={app.id} className="rounded-2xl p-5 bg-white" style={{ border: '1px solid #e9d5ff' }}>
+              <div key={app.id} className="rounded-2xl p-5 bg-white" style={{ border: '1px solid rgba(124,58,237,0.1)', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
                 <div className="flex items-start gap-3 mb-3">
                   {c.avatar_url
                     ? <img src={c.avatar_url} alt={c.full_name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
@@ -299,7 +299,7 @@ function CampaignPitches({ id }) {
                     {timeAgo(app.created_at)}
                   </span>
                 </div>
-                <p className="text-sm leading-relaxed mb-3" style={{ color: '#374151', background: '#faf5ff', borderRadius: 10, padding: '10px 14px' }}>"{app.pitch}"</p>
+                <p className="text-sm leading-relaxed mb-3" style={{ color: '#374151', background: 'rgba(124,58,237,0.04)', borderRadius: 10, padding: '10px 14px' }}>"{app.pitch}"</p>
                 <Link to={`/creators/${c.username || c.id}`}
                   className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl text-white"
                   style={{ backgroundColor: darkPurple }}>
@@ -356,10 +356,10 @@ export default function BrandCampaignsPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--b-brandDashBg, #f9f5ff)' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--b-brandDashBg, #f7f4ff)' }}>
       {/* Top bar */}
       <header className="sticky top-0 z-30 px-4 sm:px-6 py-3 flex items-center gap-3"
-        style={{ backgroundColor: 'var(--b-brandDashBg, #f9f5ff)', borderBottom: '1px solid rgba(124,58,237,0.1)' }}>
+        style={{ backgroundColor: 'var(--b-brandDashBg, #f7f4ff)', borderBottom: '1px solid rgba(124,58,237,0.1)' }}>
         <button onClick={() => navigate(-1)}
           className="flex items-center gap-1 text-sm font-semibold transition-opacity hover:opacity-70 flex-shrink-0"
           style={{ color: purple }}>

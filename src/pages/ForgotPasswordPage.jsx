@@ -30,7 +30,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: '#f3eeff' }}>
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: '#f7f4ff' }}>
       <div className="w-full max-w-sm">
 
         {/* Logo */}
@@ -40,7 +40,7 @@ export default function ForgotPasswordPage() {
             : <span className="text-xl font-black" style={{ color: darkPurple }}>Brandior</span>}
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm p-8" style={{ border: '1px solid #e9d5ff' }}>
+        <div className="bg-white rounded-2xl p-8" style={{ border: '1px solid rgba(124,58,237,0.1)', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
 
           {sent ? (
             /* Success state */
@@ -90,7 +90,7 @@ export default function ForgotPasswordPage() {
                       autoFocus
                       autoComplete="email"
                       className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none"
-                      style={{ border: error ? `1.5px solid ${pink}` : '1.5px solid #e9d5ff', color: '#1a1a2e' }}
+                      style={{ border: error ? `1.5px solid ${pink}` : '1.5px solid rgba(124,58,237,0.15)', color: '#1a1a2e' }}
                     />
                   </div>
                   {error && <p className="text-xs mt-1.5" style={{ color: pink }}>{error}</p>}
