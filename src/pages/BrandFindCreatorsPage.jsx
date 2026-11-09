@@ -25,7 +25,7 @@ export default function BrandFindCreatorsPage() {
   } = hook
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#faf5ff' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#f3eeff' }}>
       {/* Brand breadcrumb header */}
       <div
         className="sticky top-0 z-30 px-4 sm:px-6 py-3 flex items-center gap-3"

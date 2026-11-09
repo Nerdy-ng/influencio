@@ -22,7 +22,7 @@ export default function CollabReviewPage() {
 
   if (!collab) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6 text-center" style={{ backgroundColor: '#f7f4ff' }}>
+      <div className="min-h-screen flex items-center justify-center px-6 text-center" style={{ backgroundColor: '#f3eeff' }}>
         <div>
           <p className="text-gray-500 mb-4">No collab in progress.</p>
           <button onClick={() => navigate('/marketplace')} className="px-6 py-2.5 rounded-full text-white text-sm font-semibold" style={{ backgroundColor: darkPurple }}>
@@ -96,7 +96,7 @@ export default function CollabReviewPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f7f4ff' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#f3eeff' }}>
       <Helmet><title>Review Collab | Brandior</title></Helmet>
       <Navbar />
 
@@ -114,7 +114,7 @@ export default function CollabReviewPage() {
 
         {/* Creator pill */}
         <div className="flex items-center gap-3 rounded-2xl p-4 mb-4"
-          style={{ backgroundColor: '#fff', border: '1px solid rgba(124,58,237,0.1)', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
+          style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
           <div className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
             style={{ backgroundColor: (creator?.color || '#7c3aed') + '22', color: creator?.color || '#7c3aed' }}>
             {creator?.initials || creator?.name?.[0] || 'C'}
@@ -130,7 +130,7 @@ export default function CollabReviewPage() {
 
         {/* Collab details */}
         <div className="rounded-2xl p-5 mb-4"
-          style={{ backgroundColor: '#fff', border: '1px solid rgba(124,58,237,0.1)', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
+          style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
           <p className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: 'rgba(76,29,149,0.5)' }}>Collab Details</p>
           <Row label="Content Type" value={typeLabel || '—'} />
           <Row label="Duration" value={durationLabel || '—'} />
@@ -148,7 +148,7 @@ export default function CollabReviewPage() {
 
         {/* Price breakdown */}
         <div className="rounded-2xl p-5 mb-4"
-          style={{ backgroundColor: '#fff', border: '1px solid rgba(124,58,237,0.1)', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
+          style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
           <p className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: 'rgba(76,29,149,0.5)' }}>Price Breakdown</p>
           {breakdown?.length > 0 ? (
             breakdown.map((line, i) => (
@@ -157,7 +157,7 @@ export default function CollabReviewPage() {
           ) : (
             <Row label={typeLabel || 'Collab'} value={fmt(total)} last />
           )}
-          <div className="flex justify-between items-center pt-3 mt-2" style={{ borderTop: '2px solid rgba(124,58,237,0.1)' }}>
+          <div className="flex justify-between items-center pt-3 mt-2" style={{ borderTop: '2px solid #e9d5ff' }}>
             <span className="text-sm font-extrabold" style={{ color: '#1e0040' }}>Total</span>
             <span className="text-lg font-extrabold" style={{ color: darkPurple }}>{fmt(total)}</span>
           </div>
@@ -174,7 +174,7 @@ export default function CollabReviewPage() {
 
         {/* T&C */}
         <label className="flex items-start gap-3 rounded-2xl p-4 cursor-pointer mb-4"
-          style={{ backgroundColor: '#fff', border: '1px solid rgba(124,58,237,0.1)' }}>
+          style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff' }}>
           <input
             type="checkbox"
             checked={agreed}

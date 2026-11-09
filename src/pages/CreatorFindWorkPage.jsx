@@ -167,12 +167,12 @@ export default function CreatorFindWorkPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f7f4ff' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#f3eeff' }}>
 
       {/* ── Sticky top bar ── */}
       <header
         className="sticky top-0 z-30 px-4 sm:px-6 py-3 flex items-center gap-3"
-        style={{ backgroundColor: 'rgba(247,244,255,0.92)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(124,58,237,0.08)' }}
+        style={{ backgroundColor: 'rgba(243,238,255,0.92)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #e9d5ff' }}
       >
         <button
           onClick={() => navigate('/dashboard')}
@@ -200,7 +200,7 @@ export default function CreatorFindWorkPage() {
         <div className="relative max-w-2xl mx-auto">
           <span
             className="inline-block text-xs font-bold tracking-widest uppercase mb-3 px-3 py-1 rounded-full"
-            style={{ backgroundColor: 'rgba(124,58,237,0.1)', color: purple, border: '1px solid rgba(124,58,237,0.2)' }}
+            style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple, border: '1px solid #e9d5ff' }}
           >
             Find Work
           </span>
@@ -221,7 +221,7 @@ export default function CreatorFindWorkPage() {
               className="w-full rounded-2xl pl-11 pr-10 py-3.5 text-sm focus:outline-none transition-shadow"
               style={{
                 backgroundColor: '#fff',
-                border: '1.5px solid rgba(124,58,237,0.15)',
+                border: '1.5px solid #e9d5ff',
                 color: '#1e0040',
                 boxShadow: '0 2px 12px rgba(124,58,237,0.08)',
               }}
@@ -368,7 +368,7 @@ export default function CreatorFindWorkPage() {
               style={
                 nicheFilter === n
                   ? { backgroundColor: purple, color: '#fff', border: '1.5px solid transparent', boxShadow: '0 2px 8px rgba(124,58,237,0.3)' }
-                  : { backgroundColor: '#fff', color: purple, border: '1.5px solid rgba(124,58,237,0.18)' }
+                  : { backgroundColor: '#fff', color: purple, border: '1.5px solid #e9d5ff' }
               }
             >
               {n}
@@ -412,11 +412,11 @@ export default function CreatorFindWorkPage() {
               className="rounded-2xl overflow-hidden transition-all duration-200"
               style={{
                 backgroundColor: '#fff',
-                border: '1px solid rgba(124,58,237,0.1)',
+                border: '1px solid #e9d5ff',
                 boxShadow: '0 2px 12px rgba(124,58,237,0.06)',
               }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 6px 24px rgba(124,58,237,0.12)'; e.currentTarget.style.borderColor = 'rgba(124,58,237,0.2)' }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 12px rgba(124,58,237,0.06)'; e.currentTarget.style.borderColor = 'rgba(124,58,237,0.1)' }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 6px 24px rgba(124,58,237,0.12)'; e.currentTarget.style.borderColor = '#c4b5fd' }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 12px rgba(124,58,237,0.06)'; e.currentTarget.style.borderColor = '#e9d5ff' }}
             >
               <div className="p-5">
                 {/* ── Brand row ── */}
