@@ -1,58 +1,24 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '');
 import { Helmet } from 'react-helmet-async'
 import {
-  Search, MapPin, Users, Heart, CheckCircle, Star, Filter,
-  Zap, X, SlidersHorizontal,
-  Lock, BadgeCheck, ArrowRight, Play,
+  Search, Heart, CheckCircle, Star, Filter,
+  X, SlidersHorizontal,
+  Lock, BadgeCheck, Play, Users,
 } from 'lucide-react'
 import { useFavorites } from '../hooks/useFavorites'
 import Navbar from '../components/Navbar'
-import { supabase } from '../lib/supabase'
-import { calcScore, loadAlgoConfig, ALGO_DEFAULTS } from '../lib/algoRanking'
+import { useCreatorSearch, PAGE_SIZE } from '../hooks/useCreatorSearch'
+import {
+  NICHES, NICHE_LABELS, LOCATIONS, GENDERS, AGE_RANGES,
+  FOLLOWER_RANGES, CONTENT_TYPES, LANGUAGES, SORT_OPTIONS,
+  formatNGN, formatFollowers,
+} from '../lib/creatorFilters'
 
 const pink = '#F72585'
 const darkPurple = '#4c1d95'
 const purple = '#7c3aed'
-
-const NICHES = [
-  { label: 'Beauty & Skincare', emoji: '💄' },
-  { label: 'Fashion & Style',   emoji: '👗' },
-  { label: 'Food & Cooking',    emoji: '🍳' },
-  { label: 'Tech & Gadgets',    emoji: '💻' },
-  { label: 'Fitness & Wellness',emoji: '💪' },
-  { label: 'Travel & Lifestyle',emoji: '✈️'  },
-  { label: 'Entertainment',     emoji: '🎬' },
-  { label: 'Comedy',            emoji: '😂' },
-  { label: 'Music',             emoji: '🎵' },
-  { label: 'Finance & Business',emoji: '💼' },
-]
-
-const NICHE_LABELS = NICHES.map(n => n.label)
-
-const LOCATIONS = ['Lagos', 'Abuja', 'Accra, Ghana', 'Kumasi, Ghana', 'Nairobi, Kenya', 'Mombasa, Kenya']
-
-const GENDERS = ['Male', 'Female', 'Non-binary']
-
-const AGE_RANGES = [
-  { label: '18–24', min: 18, max: 24 },
-  { label: '25–34', min: 25, max: 34 },
-  { label: '35–44', min: 35, max: 44 },
-  { label: '45+',   min: 45, max: 99 },
-]
-
-const FOLLOWER_RANGES = [
-  { label: 'Nano  · < 10K',    min: 0,      max: 9999   },
-  { label: 'Micro · 10K–50K',  min: 10000,  max: 50000  },
-  { label: 'Mid   · 50K–200K', min: 50001,  max: 200000 },
-  { label: 'Macro · 200K–1M',  min: 200001, max: 1000000},
-  { label: 'Mega  · 1M+',      min: 1000001,max: Infinity},
-]
-
-const CONTENT_TYPES = ['Photo', 'Video', 'Reels', 'Stories', 'Podcast', 'Tutorial', 'Music']
-
-const LANGUAGES = ['English', 'French', 'Swahili', 'Hausa', 'Yoruba', 'Igbo', 'Twi', 'Amharic']
 
 const TIERS = [
   { value: 'fast-rising', label: 'Fast Rising', color: '#22c55e', diamond: false, desc: 'New & climbing. Entry-level creators building their presence.' },
@@ -139,26 +105,7 @@ const PLATFORMS = [
   },
 ]
 
-const SORT_OPTIONS = [
-  { value: 'relevant',       label: 'Most Relevant'   },
-  { value: 'highest-rated',  label: 'Highest Rated'   },
-  { value: 'lowest-price',   label: 'Lowest Price'    },
-  { value: 'most-campaigns', label: 'Most Campaigns'  },
-]
-
-function formatNGN(amount) {
-  if (!amount && amount !== 0) return '₦0'
-  return '₦' + Number(amount).toLocaleString('en')
-}
-
-function formatFollowers(n) {
-  if (!n) return '0'
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
-  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K'
-  return String(n)
-}
-
-function TierBadge({ tier }) {
+export function TierBadge({ tier }) {
   const t = TIERS.find(x => x.value === tier) || TIERS[0]
   return (
     <span
@@ -173,7 +120,7 @@ function TierBadge({ tier }) {
   )
 }
 
-function StarRating({ rating }) {
+export function StarRating({ rating }) {
   const display = rating || 5
   return (
     <div className="flex items-center gap-0.5">
@@ -192,7 +139,7 @@ function StarRating({ rating }) {
   )
 }
 
-export function TalentCard({ talent, onGate }) {
+export function TalentCard({ talent, onGate, from = '/marketplace' }) {
   const navigate = useNavigate()
   const { toggle, isFav } = useFavorites()
   const faved = isFav(talent._id || talent.id)
@@ -204,12 +151,12 @@ export function TalentCard({ talent, onGate }) {
   const handleView = (e) => {
     e.stopPropagation()
     if (!isRegistered) { onGate && onGate(); return }
-    navigate(`/creators/${talent.handle || talent._id || talent.id}`)
+    navigate(`/creators/${talent.handle || talent._id || talent.id}`, { state: { from } })
   }
 
   const handleCardClick = () => {
     if (!isRegistered) { onGate && onGate(); return }
-    navigate(`/creators/${talent.handle || talent._id || talent.id}`)
+    navigate(`/creators/${talent.handle || talent._id || talent.id}`, { state: { from } })
   }
 
   const handleMouseEnter = (e) => {
@@ -258,7 +205,6 @@ export function TalentCard({ talent, onGate }) {
             preload="metadata"
             poster={avatarSrc}
           />
-          {/* Play hint shown before first hover */}
           {!videoPlaying && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}>
@@ -276,7 +222,7 @@ export function TalentCard({ talent, onGate }) {
         />
       )}
 
-      {/* ── Scrim so text is readable ── */}
+      {/* ── Scrim ── */}
       <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, transparent 35%, transparent 48%, rgba(10,0,30,0.82) 75%, rgba(10,0,30,0.97) 100%)' }} />
 
       {/* ── Top row: tier badge + heart ── */}
@@ -292,9 +238,8 @@ export function TalentCard({ talent, onGate }) {
         </button>
       </div>
 
-      {/* ── Bottom overlay: identity + metrics ── */}
+      {/* ── Bottom overlay ── */}
       <div className="absolute bottom-0 left-0 right-0 px-4 pt-3 pb-4 flex flex-col gap-2">
-        {/* Name + handle */}
         <div>
           <div className="flex items-center gap-1.5">
             <p className="font-bold text-white text-sm leading-tight truncate">{talent.name}</p>
@@ -305,7 +250,6 @@ export function TalentCard({ talent, onGate }) {
           <p className="text-xs" style={{ color: '#d8b4fe' }}>@{talent.handle}</p>
         </div>
 
-        {/* Niche pills */}
         <div className="flex flex-wrap gap-1">
           {(talent.niches || []).slice(0, 2).map(n => {
             const nicheObj = NICHES.find(x => x.label === n)
@@ -322,7 +266,6 @@ export function TalentCard({ talent, onGate }) {
           )}
         </div>
 
-        {/* Stats row */}
         <div className="grid grid-cols-3 gap-1.5 text-center">
           <div className="rounded-xl py-1.5 px-1" style={{ backgroundColor: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(6px)' }}>
             <p className="text-xs font-bold text-white">{formatFollowers(talent.totalFollowers)}</p>
@@ -338,7 +281,6 @@ export function TalentCard({ talent, onGate }) {
           </div>
         </div>
 
-        {/* Rating + available + price/CTA */}
         <div className="flex items-center justify-between pt-1" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
           <div className="flex flex-col gap-0.5">
             <StarRating rating={talent.avgRating} />
@@ -367,7 +309,7 @@ export function TalentCard({ talent, onGate }) {
   )
 }
 
-function SkeletonCard() {
+export function SkeletonCard() {
   return (
     <div className="rounded-2xl overflow-hidden animate-pulse" style={{ aspectRatio: '3/4', backgroundColor: '#e9d5ff' }}>
       <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%)' }} />
@@ -387,7 +329,6 @@ function RegistrationModal({ onClose }) {
         style={{ backgroundColor: '#0d0020', border: '1px solid rgba(192,132,252,0.2)' }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Close button */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
@@ -398,7 +339,6 @@ function RegistrationModal({ onClose }) {
           <X className="w-4 h-4 text-white" />
         </button>
 
-        {/* Lock icon */}
         <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5" style={{ backgroundColor: 'rgba(124,58,237,0.2)', border: '1px solid rgba(192,132,252,0.3)' }}>
           <Lock className="w-8 h-8" style={{ color: '#c084fc' }} />
         </div>
@@ -433,272 +373,17 @@ function RegistrationModal({ onClose }) {
   )
 }
 
-// Mock data fallback when API is unavailable
-const MOCK_CREATORS = Array.from({ length: 12 }, (_, i) => ({
-  _id: `talent_${i + 1}`,
-  name: ['Adaeze Okafor', 'Chidi Nwosu', 'Fatimah Abdullahi', 'Emeka Eze', 'Ngozi Obi', 'Tunde Bakare',
-    'Amaka Igwe', 'Femi Adeyemi', 'Chisom Okonkwo', 'Uche Nwachukwu', 'Bisi Alabi', 'Kemi Adeleke'][i],
-  handle: ['adaeze_glam', 'chidi_tech', 'fatimah_style', 'emeka_eats', 'ngozi_fit', 'tunde_comedy',
-    'amaka_luxe', 'femi_finance', 'chisom_travel', 'uche_music', 'bisi_beauty', 'kemi_hustle'][i],
-  location: ['Lagos', 'Accra, Ghana', 'Nairobi, Kenya', 'Abuja', 'Nairobi, Kenya', 'Kumasi, Ghana',
-    'Lagos', 'Accra, Ghana', 'Nairobi, Kenya', 'Lagos', 'Mombasa, Kenya', 'Accra, Ghana'][i],
-  niches: [
-    ['Beauty & Skincare', 'Fashion & Style'],
-    ['Tech & Gadgets', 'Finance & Business'],
-    ['Fashion & Style', 'Travel & Lifestyle'],
-    ['Food & Cooking', 'Entertainment'],
-    ['Fitness & Wellness'],
-    ['Comedy', 'Entertainment'],
-    ['Fashion & Style', 'Beauty & Skincare'],
-    ['Finance & Business'],
-    ['Travel & Lifestyle', 'Entertainment'],
-    ['Music', 'Entertainment'],
-    ['Beauty & Skincare'],
-    ['Finance & Business', 'Fitness & Wellness'],
-  ][i],
-  tier: ['fast-rising', 'next-rated', 'top-rated', 'next-rated', 'top-rated', 'next-rated',
-    'top-rated', 'fast-rising', 'next-rated', 'top-rated', 'fast-rising', 'next-rated'][i],
-  avgRating: [4.8, 4.5, 4.9, 4.3, 4.7, 4.6, 5.0, 4.1, 4.4, 4.8, 3.9, 4.2][i],
-  totalFollowers: [125000, 45000, 280000, 62000, 189000, 310000, 95000, 28000, 74000, 420000, 18000, 55000][i],
-  avgEngagement: [4.2, 5.1, 3.8, 6.3, 4.9, 5.5, 3.2, 7.1, 4.7, 3.1, 8.2, 5.8][i],
-  completedCampaigns: [47, 23, 89, 31, 64, 112, 38, 11, 29, 143, 7, 19][i],
-  minPrice: [25000, 15000, 75000, 18000, 45000, 100000, 55000, 10000, 22000, 150000, 8000, 20000][i],
-  availableForHire: [true, true, false, true, true, false, true, true, true, false, true, true][i],
-  gender: ['Female', 'Male', 'Female', 'Male', 'Female', 'Male', 'Female', 'Male', 'Female', 'Male', 'Female', 'Female'][i],
-  age: [24, 28, 31, 26, 29, 33, 27, 35, 23, 32, 22, 30][i],
-  languages: [
-    ['English', 'Yoruba'], ['English', 'Igbo'], ['English', 'Swahili'], ['English', 'Igbo'],
-    ['English', 'Swahili'], ['English', 'Twi'], ['English', 'Yoruba'], ['English', 'Yoruba'],
-    ['English', 'Igbo'], ['English', 'Igbo'], ['English', 'Swahili'], ['English', 'Twi'],
-  ][i],
-  contentTypes: [
-    ['Reels', 'Photo'], ['Video', 'Tutorial'], ['Photo', 'Stories'], ['Video', 'Reels'],
-    ['Video', 'Stories'], ['Video', 'Reels'], ['Photo', 'Reels', 'Stories'], ['Video', 'Podcast'],
-    ['Photo', 'Stories', 'Video'], ['Video', 'Music'], ['Reels', 'Photo'], ['Video', 'Podcast'],
-  ][i],
-  platforms: [
-    ['Instagram', 'TikTok'],
-    ['YouTube', 'Twitter/X', 'LinkedIn'],
-    ['Instagram', 'TikTok', 'YouTube'],
-    ['TikTok', 'Instagram'],
-    ['Instagram', 'YouTube'],
-    ['TikTok', 'YouTube', 'Facebook'],
-    ['Instagram', 'Snapchat'],
-    ['LinkedIn', 'Twitter/X'],
-    ['Instagram', 'TikTok', 'Snapchat'],
-    ['YouTube', 'Instagram', 'Twitter/X'],
-    ['TikTok', 'Instagram'],
-    ['LinkedIn', 'Twitter/X', 'Instagram'],
-  ][i],
-  featuredVideo: [
-    'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-    'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-    'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-    'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
-    'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
-    'https://storage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
-    'https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
-    'https://storage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4',
-    'https://storage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
-    'https://storage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4',
-    'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-    'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-  ][i], // set by talent via dashboard
-}))
-
-export default function Marketplace() {
-  const [talents, setTalents] = useState([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [gateOpen, setGateOpen] = useState(false)
-
-  const [search, setSearch] = useState('')
-  const [selectedNiches, setSelectedNiches] = useState([])
-  const [selectedPlatforms, setSelectedPlatforms] = useState([])
-  const [minPrice, setMinPrice] = useState('')
-  const [maxPrice, setMaxPrice] = useState('')
-  const [selectedTiers, setSelectedTiers] = useState([])
-  const [availableOnly, setAvailableOnly] = useState(false)
-  const [selectedLocations, setSelectedLocations] = useState([])
-  const [selectedGenders, setSelectedGenders] = useState([])
-  const [selectedAgeRanges, setSelectedAgeRanges] = useState([])
-  const [selectedFollowerRanges, setSelectedFollowerRanges] = useState([])
-  const [selectedContentTypes, setSelectedContentTypes] = useState([])
-  const [selectedLanguages, setSelectedLanguages] = useState([])
-  const [sort, setSort] = useState('relevant')
-  const [visibleCount, setVisibleCount] = useState(9)
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
-  const sentinelRef = useRef(null)
-  const algoConfigRef = useRef(ALGO_DEFAULTS)
-
-  const PAGE_SIZE = 9
-
-  useEffect(() => {
-    loadAlgoConfig(supabase).then(cfg => { algoConfigRef.current = cfg })
-  }, [])
-
-  const fetchTalents = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      let query = supabase.from('profiles').select('*')
-
-      if (availableOnly) query = query.eq('available_for_hire', true)
-      if (selectedTiers.length) query = query.in('tier', selectedTiers)
-      if (selectedLocations.length) query = query.in('location', selectedLocations)
-      if (selectedGenders.length) query = query.in('gender', selectedGenders)
-      if (selectedNiches.length) query = query.overlaps('niches', selectedNiches)
-      if (selectedPlatforms.length) query = query.overlaps('platforms', selectedPlatforms)
-      if (selectedContentTypes.length) query = query.overlaps('content_types', selectedContentTypes)
-      if (selectedLanguages.length) query = query.overlaps('languages', selectedLanguages)
-      if (search) query = query.or(`full_name.ilike.%${search}%,handle.ilike.%${search}%`)
-
-      const { data, error: err } = await query
-      if (err) throw err
-
-      const creatorIds = (data || []).map(p => p.id)
-      let cheapestByCreator = {}
-      if (creatorIds.length > 0) {
-        const { data: rateCards } = await supabase
-          .from('rate_cards')
-          .select('creator_id, durations')
-          .in('creator_id', creatorIds)
-        ;(rateCards || []).forEach(rc => {
-          const prices = (rc.durations || []).map(d => d.price).filter(p => typeof p === 'number')
-          if (prices.length) cheapestByCreator[rc.creator_id] = Math.min(...prices)
-        })
-      }
-
-      let mapped = (data || []).map(p => ({
-        _id: p.id,
-        name: p.full_name,
-        handle: p.handle,
-        location: p.location,
-        bio: p.bio,
-        avatar_url: p.avatar_url,
-        niches: p.niches || [],
-        platforms: p.platforms || [],
-        contentTypes: p.content_types || [],
-        languages: p.languages || [],
-        tier: p.tier || null,
-        avgRating: p.avg_rating || 0,
-        totalFollowers: p.total_followers || 0,
-        avgEngagement: p.avg_engagement || 0,
-        completedCampaigns: p.completed_campaigns || 0,
-        identityVerified: p.identity_verified || false,
-        sparkEarned: p.spark_earned || false,
-        updatedAt: p.updated_at || null,
-        createdAt: p.created_at || null,
-        minPrice: cheapestByCreator[p.id] ?? (p.min_price || 0),
-        availableForHire: p.available_for_hire,
-        gender: p.gender,
-        age: p.age,
-        featuredVideo: p.featured_video,
-        socials: p.socials || [],
-      }))
-
-      // Client-side filters not supported by Supabase array operators
-      if (minPrice) mapped = mapped.filter(c => c.minPrice >= Number(minPrice))
-      if (maxPrice) mapped = mapped.filter(c => c.minPrice <= Number(maxPrice))
-      if (selectedFollowerRanges.length)
-        mapped = mapped.filter(c => selectedFollowerRanges.some(r => c.totalFollowers >= r.min && c.totalFollowers <= r.max))
-      if (selectedAgeRanges.length)
-        mapped = mapped.filter(c => c.age && selectedAgeRanges.some(r => c.age >= r.min && c.age <= r.max))
-
-      // Sort
-      if (sort === 'relevant')            mapped = [...mapped].sort((a, b) => calcScore(b, algoConfigRef.current) - calcScore(a, algoConfigRef.current))
-      else if (sort === 'highest-rated')  mapped.sort((a, b) => b.avgRating - a.avgRating)
-      else if (sort === 'lowest-price')   mapped.sort((a, b) => a.minPrice - b.minPrice)
-      else if (sort === 'most-campaigns') mapped.sort((a, b) => b.completedCampaigns - a.completedCampaigns)
-
-      // Fall back to mock data if no real profiles yet
-      if (mapped.length === 0) {
-        let filtered = MOCK_CREATORS.filter(c => {
-          if (search && !c.name.toLowerCase().includes(search.toLowerCase()) && !c.handle.toLowerCase().includes(search.toLowerCase())) return false
-          if (selectedNiches.length && !selectedNiches.some(n => c.niches.includes(n))) return false
-          if (selectedPlatforms.length && !selectedPlatforms.some(p => (c.platforms || []).includes(p))) return false
-          if (minPrice && c.minPrice < Number(minPrice)) return false
-          if (maxPrice && c.minPrice > Number(maxPrice)) return false
-          if (selectedTiers.length && !selectedTiers.includes(c.tier)) return false
-          if (availableOnly && !c.availableForHire) return false
-          if (selectedLocations.length && !selectedLocations.includes(c.location)) return false
-          if (selectedGenders.length && !selectedGenders.includes(c.gender)) return false
-          if (selectedAgeRanges.length && !selectedAgeRanges.some(r => c.age >= r.min && c.age <= r.max)) return false
-          if (selectedFollowerRanges.length && !selectedFollowerRanges.some(r => c.totalFollowers >= r.min && c.totalFollowers <= r.max)) return false
-          if (selectedContentTypes.length && !selectedContentTypes.some(ct => (c.contentTypes || []).includes(ct))) return false
-          if (selectedLanguages.length && !selectedLanguages.some(l => (c.languages || []).includes(l))) return false
-          return true
-        })
-        if (sort === 'relevant')            filtered = [...filtered].sort((a, b) => calcScore(b, algoConfigRef.current) - calcScore(a, algoConfigRef.current))
-        else if (sort === 'highest-rated')  filtered.sort((a, b) => b.avgRating - a.avgRating)
-        else if (sort === 'lowest-price')   filtered.sort((a, b) => a.minPrice - b.minPrice)
-        else if (sort === 'most-campaigns') filtered.sort((a, b) => b.completedCampaigns - a.completedCampaigns)
-        setTotal(filtered.length)
-        setTalents(filtered)
-        return
-      }
-
-      setTotal(mapped.length)
-      setTalents(mapped)
-    } catch {
-      setError(true)
-    } finally {
-      setLoading(false)
-    }
-  }, [search, selectedNiches, selectedPlatforms, minPrice, maxPrice, selectedTiers, availableOnly,
-      selectedLocations, selectedGenders, selectedAgeRanges, selectedFollowerRanges, selectedContentTypes, selectedLanguages,
-      sort])
-
-  useEffect(() => { fetchTalents() }, [fetchTalents])
-
-  // Reset visible count when filters/sort change
-  useEffect(() => { setVisibleCount(PAGE_SIZE) }, [
-    search, selectedNiches, selectedPlatforms, minPrice, maxPrice,
-    selectedTiers, availableOnly, selectedLocations, selectedGenders,
-    selectedAgeRanges, selectedFollowerRanges, selectedContentTypes, selectedLanguages, sort,
-  ])
-
-  // Infinite scroll via IntersectionObserver
-  useEffect(() => {
-    const sentinel = sentinelRef.current
-    if (!sentinel) return
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !loading && visibleCount < talents.length) {
-        setVisibleCount(c => c + PAGE_SIZE)
-      }
-    }, { threshold: 0.1 })
-    observer.observe(sentinel)
-    return () => observer.disconnect()
-  }, [loading, visibleCount, talents.length])
-
-  const toggleNiche    = n => setSelectedNiches(prev => prev.includes(n) ? prev.filter(x => x !== n) : [...prev, n])
-  const toggleTier     = t => setSelectedTiers(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
-  const togglePlatform = p => setSelectedPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p])
-  const toggleLocation = l => setSelectedLocations(prev => prev.includes(l) ? prev.filter(x => x !== l) : [...prev, l])
-  const toggleGender   = g => setSelectedGenders(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])
-  const toggleAge      = a => setSelectedAgeRanges(prev => prev.some(r => r.label === a.label) ? prev.filter(r => r.label !== a.label) : [...prev, a])
-  const toggleFollower = f => setSelectedFollowerRanges(prev => prev.some(r => r.label === f.label) ? prev.filter(r => r.label !== f.label) : [...prev, f])
-  const toggleContent  = c => setSelectedContentTypes(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])
-  const toggleLanguage = l => setSelectedLanguages(prev => prev.includes(l) ? prev.filter(x => x !== l) : [...prev, l])
-
-  const resetFilters = () => {
-    setSelectedNiches([])
-    setSelectedPlatforms([])
-    setMinPrice('')
-    setMaxPrice('')
-    setSelectedTiers([])
-    setAvailableOnly(false)
-    setSelectedLocations([])
-    setSelectedGenders([])
-    setSelectedAgeRanges([])
-    setSelectedFollowerRanges([])
-    setSelectedContentTypes([])
-    setSelectedLanguages([])
-    setVisibleCount(PAGE_SIZE)
-  }
-
-  const FilterSidebar = ({ hideReset = false }) => (
+export function FilterSidebar({
+  selectedNiches, selectedPlatforms, minPrice, setMinPrice, maxPrice, setMaxPrice,
+  selectedTiers, availableOnly, setAvailableOnly,
+  selectedLocations, selectedGenders, selectedAgeRanges, selectedFollowerRanges,
+  selectedContentTypes, selectedLanguages,
+  toggleNiche, toggleTier, togglePlatform, toggleLocation, toggleGender,
+  toggleAge, toggleFollower, toggleContent, toggleLanguage,
+  resetFilters, fetchTalents, setVisibleCount,
+  hideReset = false,
+}) {
+  return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <h3 className="font-bold text-white">Filters</h3>
@@ -797,7 +482,6 @@ export default function Marketplace() {
                   backgroundColor: active ? `${t.color}18` : 'rgba(255,255,255,0.04)',
                   border: `1px solid ${active ? t.color + '55' : 'rgba(192,132,252,0.15)'}`,
                 }}>
-                {/* Colour dot / diamond */}
                 <span className="mt-0.5 flex-shrink-0">
                   {t.diamond
                     ? <svg width="11" height="11" viewBox="0 0 24 24" fill={t.color}><path d="M12 2L2 9l10 13L22 9z"/></svg>
@@ -939,6 +623,21 @@ export default function Marketplace() {
       </button>
     </div>
   )
+}
+
+export default function Marketplace() {
+  const [gateOpen, setGateOpen] = useState(false)
+  const hook = useCreatorSearch()
+  const {
+    talents, total, loading, error,
+    search, setSearch,
+    sort, setSort,
+    visibleCount, setVisibleCount,
+    mobileFiltersOpen, setMobileFiltersOpen,
+    sentinelRef,
+    resetFilters, fetchTalents,
+    activeFilterCount,
+  } = hook
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#faf5ff' }}>
@@ -958,7 +657,6 @@ export default function Marketplace() {
         className="pt-28 pb-14 px-4 relative overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #000000 0%, #150030 50%, #3d0080 100%)' }}
       >
-        {/* Dot grid overlay */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -1000,7 +698,6 @@ export default function Marketplace() {
                 color: '#1a0040',
               }}
             />
-            {/* Filter hamburger inside search bar */}
             <button
               onClick={() => setMobileFiltersOpen(true)}
               className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-10 h-10 rounded-full transition-colors"
@@ -1008,22 +705,17 @@ export default function Marketplace() {
               title="Open filters"
             >
               <SlidersHorizontal className="w-4 h-4 text-white" />
-              {(selectedNiches.length + selectedPlatforms.length + selectedTiers.length + selectedLocations.length +
-                selectedGenders.length + selectedAgeRanges.length + selectedFollowerRanges.length +
-                selectedContentTypes.length + selectedLanguages.length + (availableOnly ? 1 : 0)) > 0 && (
+              {activeFilterCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white flex items-center justify-center text-[9px] font-bold" style={{ backgroundColor: pink }}>
-                  {selectedNiches.length + selectedPlatforms.length + selectedTiers.length + selectedLocations.length +
-                   selectedGenders.length + selectedAgeRanges.length + selectedFollowerRanges.length +
-                   selectedContentTypes.length + selectedLanguages.length + (availableOnly ? 1 : 0)}
+                  {activeFilterCount}
                 </span>
               )}
             </button>
           </div>
-
         </div>
       </div>
 
-      {/* Filter drawer — slides in from the right */}
+      {/* Filter drawer */}
       {mobileFiltersOpen && (
         <div
           className="fixed inset-0 z-50 flex justify-end"
@@ -1047,7 +739,7 @@ export default function Marketplace() {
                 <X className="w-4 h-4" style={{ color: '#a78bfa' }} />
               </button>
             </div>
-            <FilterSidebar hideReset />
+            <FilterSidebar {...hook} hideReset />
           </div>
         </div>
       )}
@@ -1055,7 +747,6 @@ export default function Marketplace() {
       {/* Main content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8" style={{ backgroundColor: '#faf5ff' }}>
         <div className="flex gap-6">
-          {/* Talent grid — full width, no sidebar */}
           <div className="flex-1 min-w-0">
             {/* Sort bar */}
             <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
@@ -1091,7 +782,7 @@ export default function Marketplace() {
               {loading && visibleCount === PAGE_SIZE
                 ? Array.from({ length: 9 }).map((_, i) => <SkeletonCard key={i} />)
                 : talents.slice(0, visibleCount).map(c => (
-                  <TalentCard key={c._id || c.id} talent={c} onGate={() => setGateOpen(true)} />
+                  <TalentCard key={c._id || c.id} talent={c} onGate={() => setGateOpen(true)} from="/marketplace" />
                 ))
               }
             </div>

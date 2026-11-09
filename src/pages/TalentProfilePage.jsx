@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '');
 import { supabase } from '../lib/supabase'
 import { normalizePortfolio } from '../lib/portfolioItem'
@@ -644,6 +644,7 @@ export default function TalentProfilePage() {
   const { talentId, handle } = useParams()
   const profileId = handle || talentId
   const navigate = useNavigate()
+  const location = useLocation()
   const [talent, setTalent] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -900,7 +901,7 @@ export default function TalentProfilePage() {
         {/* Back */}
         {!isPreview && (
           <button
-            onClick={() => navigate('/marketplace')}
+            onClick={() => navigate(location.state?.from || '/marketplace')}
             className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 mb-6 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
