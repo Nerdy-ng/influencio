@@ -1,13 +1,24 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { Briefcase, ChevronLeft } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Search, Briefcase, ChevronLeft, X, Users, Calendar, CheckCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
-const purple   = '#7c3aed'
+const purple     = '#7c3aed'
 const darkPurple = '#4c1d95'
-const pink     = '#F72585'
+const pink       = '#F72585'
 
 const BROWSE_NICHES = ['Fashion','Beauty','Tech','Food','Fitness','Lifestyle','Comedy','Travel','Fintech','Business','Voiceover','Gaming']
+
+function brandInitials(name) {
+  return (name || '?').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
+}
+
+const BRAND_COLORS = ['#7c3aed','#4c1d95','#db2777','#0891b2','#059669','#d97706','#dc2626','#7c3aed']
+function brandColor(name) {
+  let hash = 0
+  for (const c of (name || '')) hash = (hash * 31 + c.charCodeAt(0)) & 0xffff
+  return BRAND_COLORS[hash % BRAND_COLORS.length]
+}
 
 export default function CreatorFindWorkPage() {
   const navigate = useNavigate()
@@ -134,7 +145,7 @@ export default function CreatorFindWorkPage() {
       const newDone = [...stepsDone]
       newDone[currentIdx] = true
       setStepsDone(newDone)
-      if (key === 'rate') return // last step — stay on this page
+      if (key === 'rate') return
       slideTransition(() => { setCardMode('prompt'); setFormName(''); setFormPhoto(null); setFormNiches([]); setFormRate(''); setFormError('') })
     } catch (err) {
       setFormError(err.message || 'Could not save, try again.')
@@ -156,28 +167,97 @@ export default function CreatorFindWorkPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f9f5ff' }}>
-      {/* Top bar */}
-      <header className="sticky top-0 z-30 px-4 sm:px-6 py-3 flex items-center gap-3"
-        style={{ backgroundColor: '#f9f5ff', borderBottom: '1px solid rgba(124,58,237,0.1)' }}>
-        <button onClick={() => navigate('/dashboard')}
+    <div className="min-h-screen" style={{ backgroundColor: '#f7f4ff' }}>
+
+      {/* ── Sticky top bar ── */}
+      <header
+        className="sticky top-0 z-30 px-4 sm:px-6 py-3 flex items-center gap-3"
+        style={{ backgroundColor: 'rgba(247,244,255,0.92)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(124,58,237,0.08)' }}
+      >
+        <button
+          onClick={() => navigate('/dashboard')}
           className="flex items-center gap-1.5 text-sm font-semibold transition-opacity hover:opacity-70"
-          style={{ color: purple }}>
+          style={{ color: purple }}
+        >
           <ChevronLeft className="w-4 h-4" /> Dashboard
         </button>
         <span style={{ color: 'rgba(124,58,237,0.3)' }}>/</span>
         <span className="text-sm font-bold" style={{ color: darkPurple }}>Find Work</span>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 pb-24 space-y-4">
+      {/* ── Hero ── */}
+      <div
+        className="px-4 sm:px-6 pt-10 pb-10 relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #f5f0ff 0%, #ede9fe 50%, #f0ebff 100%)',
+          borderBottom: '1px solid rgba(124,58,237,0.08)',
+        }}
+      >
+        {/* Decorative blobs */}
+        <div className="absolute top-0 right-0 w-72 h-72 pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(167,139,250,0.18) 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
+        <div className="absolute bottom-0 left-0 w-56 h-56 pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.10) 0%, transparent 70%)', transform: 'translate(-30%, 30%)' }} />
 
-        {/* Setup wizard — compact collapsible strip */}
+        <div className="relative max-w-2xl mx-auto">
+          <span
+            className="inline-block text-xs font-bold tracking-widest uppercase mb-3 px-3 py-1 rounded-full"
+            style={{ backgroundColor: 'rgba(124,58,237,0.1)', color: purple, border: '1px solid rgba(124,58,237,0.2)' }}
+          >
+            Find Work
+          </span>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 leading-tight" style={{ color: darkPurple }}>
+            Find opportunities that fit you
+          </h1>
+          <p className="text-sm sm:text-base mb-7" style={{ color: 'rgba(76,29,149,0.6)' }}>
+            Discover brand campaigns and collaborations tailored to your niche and audience.
+          </p>
+
+          {/* Search bar */}
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none" style={{ color: 'rgba(124,58,237,0.45)' }} />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search by brand, campaign or niche…"
+              className="w-full rounded-2xl pl-11 pr-10 py-3.5 text-sm focus:outline-none transition-shadow"
+              style={{
+                backgroundColor: '#fff',
+                border: '1.5px solid rgba(124,58,237,0.15)',
+                color: '#1e0040',
+                boxShadow: '0 2px 12px rgba(124,58,237,0.08)',
+              }}
+              onFocus={e => e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.12), 0 2px 12px rgba(124,58,237,0.08)'}
+              onBlur={e => e.target.style.boxShadow = '0 2px 12px rgba(124,58,237,0.08)'}
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+                style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple }}
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main area ── */}
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 pb-24 space-y-5">
+
+        {/* Setup wizard */}
         {setupLoaded && !profileReady && currentStep && (
           <div ref={setupWizardRef}>
-            {/* Collapsed strip */}
             <button
               onClick={() => setWizardOpen(o => !o)}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, background: 'linear-gradient(90deg, #3b0764, #6d28d9)', borderRadius: wizardOpen ? '16px 16px 0 0' : 16, padding: '10px 16px', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+              className="w-full flex items-center gap-3 text-left"
+              style={{
+                background: 'linear-gradient(90deg, #3b0764, #6d28d9)',
+                borderRadius: wizardOpen ? '14px 14px 0 0' : 14,
+                padding: '10px 16px',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
               <span style={{ fontSize: 14 }}>🎯</span>
               <span style={{ flex: 1, fontSize: 12, fontWeight: 700, color: '#fff' }}>Complete your profile to unlock pitching</span>
               <span style={{ fontSize: 11, fontWeight: 800, color: 'rgba(255,255,255,0.6)', marginRight: 4 }}>{doneCount}/{totalSteps}</span>
@@ -186,167 +266,275 @@ export default function CreatorFindWorkPage() {
               </div>
               <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>{wizardOpen ? '▲' : '▼'}</span>
             </button>
-
-            {/* Expanded wizard card */}
             {wizardOpen && (
-            <div style={{ overflow: 'hidden' }}>
-            <div style={{ background: 'linear-gradient(135deg, #3b0764 0%, #6d28d9 60%, #a855f7 100%)', borderRadius: '0 0 16px 16px', padding: 24, ...cardStyle }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <p style={{ fontSize: 11, fontWeight: 800, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  Step {currentIdx + 1} of {totalSteps}
-                </p>
-                {cardMode === 'form' && (
-                  <button onClick={goBack} style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.7)', background: 'none', border: 'none', cursor: 'pointer' }}>← Back</button>
-                )}
-              </div>
-
-              {cardMode === 'prompt' ? (
-                <>
-                  <h3 style={{ fontSize: 20, fontWeight: 900, color: '#fff', marginBottom: 4 }}>{currentStep.label}</h3>
-                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', marginBottom: 20 }}>{currentStep.sub}</p>
-                  <div style={{ display: 'flex', gap: 5, marginBottom: 20 }}>
-                    {setupSteps.map((_, i) => <div key={i} style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: i <= currentIdx ? '#fff' : 'rgba(255,255,255,0.25)' }} />)}
+              <div style={{ overflow: 'hidden' }}>
+                <div style={{ background: 'linear-gradient(135deg, #3b0764 0%, #6d28d9 60%, #a855f7 100%)', borderRadius: '0 0 14px 14px', padding: 24, ...cardStyle }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <p style={{ fontSize: 11, fontWeight: 800, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      Step {currentIdx + 1} of {totalSteps}
+                    </p>
+                    {cardMode === 'form' && (
+                      <button onClick={goBack} style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.7)', background: 'none', border: 'none', cursor: 'pointer' }}>← Back</button>
+                    )}
                   </div>
-                  <button onClick={openForm} style={{ width: '100%', backgroundColor: '#fff', borderRadius: 12, padding: '12px 0', fontWeight: 900, fontSize: 14, color: '#6d28d9', border: 'none', cursor: 'pointer' }}>
-                    {currentStep.cta}
-                  </button>
-                </>
-              ) : (
-                <>
-                  {currentStep.key === 'profile' && (
-                    <div style={{ marginBottom: 12 }}>
-                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
-                        <div onClick={() => photoRef.current?.click()} style={{ cursor: 'pointer', width: 72, height: 72, borderRadius: 36, overflow: 'hidden', border: '2px solid rgba(255,255,255,0.4)', backgroundColor: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {formPhoto?.preview
-                            ? <img src={formPhoto.preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            : <span style={{ fontSize: 22 }}>📷</span>}
-                        </div>
-                        <input ref={photoRef} type="file" accept="image/*" style={{ display: 'none' }}
-                          onChange={e => { const f = e.target.files?.[0]; if (f) setFormPhoto({ file: f, preview: URL.createObjectURL(f) }) }} />
+                  {cardMode === 'prompt' ? (
+                    <>
+                      <h3 style={{ fontSize: 20, fontWeight: 900, color: '#fff', marginBottom: 4 }}>{currentStep.label}</h3>
+                      <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', marginBottom: 20 }}>{currentStep.sub}</p>
+                      <div style={{ display: 'flex', gap: 5, marginBottom: 20 }}>
+                        {setupSteps.map((_, i) => <div key={i} style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: i <= currentIdx ? '#fff' : 'rgba(255,255,255,0.25)' }} />)}
                       </div>
-                      <input value={formName} onChange={e => setFormName(e.target.value)} placeholder="Your full name"
-                        style={{ width: '100%', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 10, padding: '11px 14px', fontSize: 14, color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-                    </div>
-                  )}
-                  {currentStep.key === 'niche' && (
-                    <div style={{ marginBottom: 12 }}>
-                      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginBottom: 10 }}>Pick up to 3 niches</p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-                        {BROWSE_NICHES.map(n => (
-                          <button key={n} onClick={() => setFormNiches(prev => prev.includes(n) ? prev.filter(x => x !== n) : prev.length < 3 ? [...prev, n] : prev)}
-                            style={{ padding: '7px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: formNiches.includes(n) ? 'none' : '1px solid rgba(255,255,255,0.2)', backgroundColor: formNiches.includes(n) ? '#fff' : 'rgba(255,255,255,0.1)', color: formNiches.includes(n) ? '#6d28d9' : 'rgba(255,255,255,0.8)' }}>
-                            {n}
-                          </button>
-                        ))}
-                      </div>
-                      {formNiches.length < 3 && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '6px 10px', border: '1px solid rgba(255,255,255,0.15)' }}>
-                          <input placeholder="Add your own niche…" style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 12, color: '#fff' }}
-                            onKeyDown={e => { if (e.key === 'Enter') { const val = e.target.value.trim(); if (val && !formNiches.includes(val) && formNiches.length < 3) { setFormNiches(prev => [...prev, val]); e.target.value = '' } } }} />
-                          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Enter ↵</span>
+                      <button onClick={openForm} style={{ width: '100%', backgroundColor: '#fff', borderRadius: 12, padding: '12px 0', fontWeight: 900, fontSize: 14, color: '#6d28d9', border: 'none', cursor: 'pointer' }}>
+                        {currentStep.cta}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {currentStep.key === 'profile' && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+                            <div onClick={() => photoRef.current?.click()} style={{ cursor: 'pointer', width: 72, height: 72, borderRadius: 36, overflow: 'hidden', border: '2px solid rgba(255,255,255,0.4)', backgroundColor: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              {formPhoto?.preview
+                                ? <img src={formPhoto.preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                : <span style={{ fontSize: 22 }}>📷</span>}
+                            </div>
+                            <input ref={photoRef} type="file" accept="image/*" style={{ display: 'none' }}
+                              onChange={e => { const f = e.target.files?.[0]; if (f) setFormPhoto({ file: f, preview: URL.createObjectURL(f) }) }} />
+                          </div>
+                          <input value={formName} onChange={e => setFormName(e.target.value)} placeholder="Your full name"
+                            style={{ width: '100%', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 10, padding: '11px 14px', fontSize: 14, color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
                         </div>
                       )}
-                    </div>
-                  )}
-                  {currentStep.key === 'rate' && (
-                    <div style={{ marginBottom: 12 }}>
-                      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginBottom: 10 }}>What's your minimum rate?</p>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 20, fontWeight: 900, color: '#fff' }}>₦</span>
-                        <input value={formRate} onChange={e => setFormRate(e.target.value.replace(/\D/g, ''))} placeholder="e.g. 50000" type="text" inputMode="numeric"
-                          style={{ flex: 1, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 10, padding: '11px 14px', fontSize: 14, color: '#fff', outline: 'none' }} />
+                      {currentStep.key === 'niche' && (
+                        <div style={{ marginBottom: 12 }}>
+                          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginBottom: 10 }}>Pick up to 3 niches</p>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                            {BROWSE_NICHES.map(n => (
+                              <button key={n} onClick={() => setFormNiches(prev => prev.includes(n) ? prev.filter(x => x !== n) : prev.length < 3 ? [...prev, n] : prev)}
+                                style={{ padding: '7px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: formNiches.includes(n) ? 'none' : '1px solid rgba(255,255,255,0.2)', backgroundColor: formNiches.includes(n) ? '#fff' : 'rgba(255,255,255,0.1)', color: formNiches.includes(n) ? '#6d28d9' : 'rgba(255,255,255,0.8)' }}>
+                                {n}
+                              </button>
+                            ))}
+                          </div>
+                          {formNiches.length < 3 && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '6px 10px', border: '1px solid rgba(255,255,255,0.15)' }}>
+                              <input placeholder="Add your own niche…" style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 12, color: '#fff' }}
+                                onKeyDown={e => { if (e.key === 'Enter') { const val = e.target.value.trim(); if (val && !formNiches.includes(val) && formNiches.length < 3) { setFormNiches(prev => [...prev, val]); e.target.value = '' } } }} />
+                              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Enter ↵</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {currentStep.key === 'rate' && (
+                        <div style={{ marginBottom: 12 }}>
+                          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginBottom: 10 }}>What's your minimum rate?</p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ fontSize: 20, fontWeight: 900, color: '#fff' }}>₦</span>
+                            <input value={formRate} onChange={e => setFormRate(e.target.value.replace(/\D/g, ''))} placeholder="e.g. 50000" type="text" inputMode="numeric"
+                              style={{ flex: 1, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 10, padding: '11px 14px', fontSize: 14, color: '#fff', outline: 'none' }} />
+                          </div>
+                          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 6 }}>You can set detailed pricing in your Rate Card later.</p>
+                        </div>
+                      )}
+                      {formError && <p style={{ fontSize: 12, color: '#fca5a5', fontWeight: 700, marginBottom: 8, textAlign: 'center' }}>{formError}</p>}
+                      <div style={{ display: 'flex', gap: 5, marginBottom: 16 }}>
+                        {setupSteps.map((_, i) => <div key={i} style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: i <= currentIdx ? '#fff' : 'rgba(255,255,255,0.25)' }} />)}
                       </div>
-                      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 6 }}>You can set detailed pricing in your Rate Card later.</p>
-                    </div>
+                      <button onClick={saveAndNext} disabled={formSaving}
+                        style={{ width: '100%', backgroundColor: '#fff', borderRadius: 12, padding: '12px 0', fontWeight: 900, fontSize: 14, color: '#6d28d9', border: 'none', cursor: 'pointer', opacity: formSaving ? 0.6 : 1 }}>
+                        {formSaving ? 'Saving…' : currentIdx === totalSteps - 1 ? 'Finish ✓' : 'Save & continue →'}
+                      </button>
+                    </>
                   )}
-                  {formError && <p style={{ fontSize: 12, color: '#fca5a5', fontWeight: 700, marginBottom: 8, textAlign: 'center' }}>{formError}</p>}
-                  <div style={{ display: 'flex', gap: 5, marginBottom: 16 }}>
-                    {setupSteps.map((_, i) => <div key={i} style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: i <= currentIdx ? '#fff' : 'rgba(255,255,255,0.25)' }} />)}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 16 }}>
+                    <div style={{ flex: 1, height: 5, backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${Math.round((doneCount / totalSteps) * 100)}%`, backgroundColor: '#fff', borderRadius: 3, transition: 'width 0.4s ease' }} />
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: 'rgba(255,255,255,0.7)' }}>{doneCount}/{totalSteps}</span>
                   </div>
-                  <button onClick={saveAndNext} disabled={formSaving}
-                    style={{ width: '100%', backgroundColor: '#fff', borderRadius: 12, padding: '12px 0', fontWeight: 900, fontSize: 14, color: '#6d28d9', border: 'none', cursor: 'pointer', opacity: formSaving ? 0.6 : 1 }}>
-                    {formSaving ? 'Saving…' : currentIdx === totalSteps - 1 ? 'Finish ✓' : 'Save & continue →'}
-                  </button>
-                </>
-              )}
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 16 }}>
-                <div style={{ flex: 1, height: 5, backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 3, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${Math.round((doneCount / totalSteps) * 100)}%`, backgroundColor: '#fff', borderRadius: 3, transition: 'width 0.4s ease' }} />
                 </div>
-                <span style={{ fontSize: 12, fontWeight: 800, color: 'rgba(255,255,255,0.7)' }}>{doneCount}/{totalSteps}</span>
               </div>
-            </div>
-            </div>
             )}
           </div>
         )}
 
-        {/* Search */}
-        <div style={{ position: 'relative' }}>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search opportunities…"
-            className="w-full rounded-xl px-4 py-3 text-sm outline-none"
-            style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff', color: '#1e0040' }} />
-          {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}>✕</button>}
-        </div>
-
-        {/* Niche chips */}
-        <div style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 2, scrollbarWidth: 'none' }}>
+        {/* ── Niche filter chips ── */}
+        <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
           {['All', ...BROWSE_NICHES].map(n => (
-            <button key={n} onClick={() => setNicheFilter(n)}
-              style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: nicheFilter === n ? 'none' : '1px solid #e9d5ff', backgroundColor: nicheFilter === n ? purple : '#fff', color: nicheFilter === n ? '#fff' : '#6d28d9', transition: 'all 0.15s' }}>
+            <button
+              key={n}
+              onClick={() => setNicheFilter(n)}
+              className="flex-shrink-0 text-xs font-bold px-4 py-2 rounded-full transition-all"
+              style={
+                nicheFilter === n
+                  ? { backgroundColor: purple, color: '#fff', border: '1.5px solid transparent', boxShadow: '0 2px 8px rgba(124,58,237,0.3)' }
+                  : { backgroundColor: '#fff', color: purple, border: '1.5px solid rgba(124,58,237,0.18)' }
+              }
+            >
               {n}
             </button>
           ))}
         </div>
 
-        {/* Campaign cards */}
-        {loading ? (
+        {/* ── Results header ── */}
+        {!loading && (
+          <p className="text-sm font-semibold" style={{ color: 'rgba(76,29,149,0.5)' }}>
+            {visible.length} {visible.length === 1 ? 'opportunity' : 'opportunities'} found
+          </p>
+        )}
+
+        {/* ── Loading ── */}
+        {loading && (
           <div className="flex justify-center py-16">
             <div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" />
           </div>
-        ) : visible.length === 0 ? (
+        )}
+
+        {/* ── Empty state ── */}
+        {!loading && visible.length === 0 && (
           <div className="text-center py-16">
-            <Briefcase className="w-10 h-10 mx-auto mb-3 opacity-20" style={{ color: purple }} />
-            <p className="font-semibold text-sm" style={{ color: darkPurple }}>No campaigns found</p>
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'rgba(124,58,237,0.08)' }}>
+              <Briefcase className="w-7 h-7" style={{ color: purple, opacity: 0.5 }} />
+            </div>
+            <p className="font-bold text-sm mb-1" style={{ color: darkPurple }}>No campaigns found</p>
+            <p className="text-xs" style={{ color: 'rgba(76,29,149,0.5)' }}>Try adjusting your search or niche filter</p>
           </div>
-        ) : visible.map(job => (
-          <div key={job.id} className="rounded-2xl p-5" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff' }}>
-            <div className="flex items-start justify-between gap-3 mb-1">
-              <h3 className="font-black text-base" style={{ color: '#1e0040' }}>{job.title}</h3>
-              {job.isNew && <span className="flex-shrink-0 text-[10px] font-black px-2 py-0.5 rounded-full" style={{ backgroundColor: '#F7258518', color: pink }}>New</span>}
-            </div>
-            <p className="text-xs font-semibold mb-3" style={{ color: '#4b5563' }}>{job.brand} · {job.type}</p>
-            <p className="text-sm mb-3 leading-relaxed line-clamp-3" style={{ color: '#1e0040' }}>{job.description}</p>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {job.tags.map(t => <span key={t} className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: '#f5f3ff', color: purple }}>{t}</span>)}
-            </div>
-            <div className="flex flex-wrap gap-4 mb-4 text-xs font-semibold" style={{ color: '#374151' }}>
-              <span style={{ color: purple }}>₦ {job.budget.replace('₦','')}</span>
-              <span>📅 {job.deadline}</span>
-              <span>👥 {job.applicants} applied</span>
-            </div>
-            {applied.includes(job.id) ? (
-              <div className="w-full py-3 rounded-xl text-sm font-bold text-center" style={{ backgroundColor: '#dcfce7', color: '#166534' }}>
-                ✓ Pitched
+        )}
+
+        {/* ── Opportunity cards ── */}
+        {!loading && visible.map(job => {
+          const bgColor = brandColor(job.brand)
+          const isPitched = applied.includes(job.id)
+
+          return (
+            <div
+              key={job.id}
+              className="rounded-2xl overflow-hidden transition-all duration-200"
+              style={{
+                backgroundColor: '#fff',
+                border: '1px solid rgba(124,58,237,0.1)',
+                boxShadow: '0 2px 12px rgba(124,58,237,0.06)',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 6px 24px rgba(124,58,237,0.12)'; e.currentTarget.style.borderColor = 'rgba(124,58,237,0.2)' }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 12px rgba(124,58,237,0.06)'; e.currentTarget.style.borderColor = 'rgba(124,58,237,0.1)' }}
+            >
+              <div className="p-5">
+                {/* ── Brand row ── */}
+                <div className="flex items-center gap-3 mb-3">
+                  {/* Brand monogram */}
+                  <div
+                    className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-sm text-white"
+                    style={{ backgroundColor: bgColor }}
+                  >
+                    {brandInitials(job.brand)}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold truncate" style={{ color: darkPurple }}>{job.brand}</p>
+                      {/* Verified dot — all public_jobs brands are vetted */}
+                      <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: purple }}>
+                        <CheckCircle className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                      </span>
+                    </div>
+                    <p className="text-xs" style={{ color: 'rgba(76,29,149,0.45)' }}>{job.type}</p>
+                  </div>
+
+                  {job.isNew && (
+                    <span
+                      className="flex-shrink-0 text-[10px] font-black px-2.5 py-0.5 rounded-full"
+                      style={{ backgroundColor: `${pink}15`, color: pink, border: `1px solid ${pink}30` }}
+                    >
+                      New
+                    </span>
+                  )}
+                </div>
+
+                {/* ── Campaign title ── */}
+                <h3 className="font-black text-base mb-1.5 leading-snug" style={{ color: '#1e0040' }}>
+                  {job.title}
+                </h3>
+
+                {/* ── Description ── */}
+                {job.description && (
+                  <p className="text-sm mb-3 leading-relaxed line-clamp-2" style={{ color: 'rgba(30,0,64,0.6)' }}>
+                    {job.description}
+                  </p>
+                )}
+
+                {/* ── Tags ── */}
+                {job.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-4">
+                    {job.tags.map(t => (
+                      <span
+                        key={t}
+                        className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                        style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple }}
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* ── Metrics row ── */}
+                <div
+                  className="flex flex-wrap items-center gap-x-5 gap-y-1.5 mb-4 py-3 px-4 rounded-xl"
+                  style={{ backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid rgba(124,58,237,0.08)' }}
+                >
+                  {/* Budget — most important, so first */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-black" style={{ color: purple }}>
+                      {job.budget}
+                    </span>
+                  </div>
+
+                  {job.deadline && (
+                    <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: 'rgba(30,0,64,0.5)' }}>
+                      <Calendar className="w-3.5 h-3.5" style={{ color: 'rgba(124,58,237,0.5)' }} />
+                      {job.deadline}
+                    </div>
+                  )}
+
+                  {job.applicants > 0 && (
+                    <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: 'rgba(30,0,64,0.5)' }}>
+                      <Users className="w-3.5 h-3.5" style={{ color: 'rgba(124,58,237,0.5)' }} />
+                      {job.applicants} applied
+                    </div>
+                  )}
+                </div>
+
+                {/* ── CTA ── */}
+                {isPitched ? (
+                  <div
+                    className="w-full py-3 rounded-xl text-sm font-bold text-center flex items-center justify-center gap-2"
+                    style={{ backgroundColor: '#dcfce7', color: '#166534' }}
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    Pitched
+                  </div>
+                ) : !profileReady ? (
+                  <button
+                    onClick={() => setupWizardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                    className="w-full py-3 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
+                    style={{ backgroundColor: '#94a3b8' }}
+                  >
+                    🔒 Complete profile to pitch
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => navigate(`/campaigns/${job.id}`)}
+                    className="w-full py-3 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
+                    style={{ backgroundColor: purple }}
+                  >
+                    View Campaign →
+                  </button>
+                )}
               </div>
-            ) : !profileReady ? (
-              <button
-                onClick={() => setupWizardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                className="w-full py-3 rounded-xl text-sm font-bold text-white"
-                style={{ backgroundColor: '#94a3b8' }}>
-                🔒 Complete profile to pitch
-              </button>
-            ) : (
-              <button
-                onClick={() => navigate(`/campaigns/${job.id}`)}
-                className="w-full py-3 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
-                style={{ backgroundColor: purple }}>
-                View Campaign →
-              </button>
-            )}
-          </div>
-        ))}
+            </div>
+          )
+        })}
+
       </main>
     </div>
   )
