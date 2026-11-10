@@ -685,7 +685,7 @@ export default function Marketplace() {
       {/* Page header — compact */}
       <div
         className="pt-24 pb-8 px-4 relative overflow-hidden"
-        style={{ background: 'linear-gradient(160deg, #f5f0ff 0%, #ede9fe 55%, #f0ebff 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #f5f0ff 0%, #ede9fe 55%, #f0ebff 100%)' }}
       >
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full" style={{ background: 'radial-gradient(circle, rgba(192,132,252,0.18) 0%, transparent 70%)' }} />
@@ -694,7 +694,7 @@ export default function Marketplace() {
         <div className="relative max-w-7xl mx-auto">
           <span
             className="inline-block text-xs font-bold tracking-widest uppercase mb-3 px-3 py-1 rounded-full"
-            style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple, border: '1px solid rgba(124,58,237,0.18)' }}
+            style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple, border: '1px solid #e9d5ff' }}
           >
             Talent Marketplace
           </span>
@@ -719,9 +719,9 @@ export default function Marketplace() {
               value={search}
               onChange={e => { setSearch(stripInjection(e.target.value)); setVisibleCount(PAGE_SIZE) }}
               className="w-full text-sm focus:outline-none transition-all"
-              style={{ paddingLeft: '2.75rem', paddingRight: '1rem', paddingTop: '0.625rem', paddingBottom: '0.625rem', borderRadius: '0.75rem', border: '1px solid #e9d5ff', color: '#1e0040', backgroundColor: '#faf8ff' }}
-              onFocus={e => { e.target.style.borderColor = '#c4b5fd'; e.target.style.boxShadow = '0 0 0 3px rgba(196,181,253,0.2)' }}
-              onBlur={e => { e.target.style.borderColor = '#e9d5ff'; e.target.style.boxShadow = 'none' }}
+              style={{ paddingLeft: '2.75rem', paddingRight: '1rem', paddingTop: '0.625rem', paddingBottom: '0.625rem', borderRadius: '0.75rem', border: '1.5px solid #e9d5ff', color: '#1e0040', backgroundColor: '#fff', boxShadow: '0 2px 12px rgba(124,58,237,0.08)' }}
+              onFocus={e => { e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.12), 0 2px 12px rgba(124,58,237,0.08)' }}
+              onBlur={e => { e.target.style.boxShadow = '0 2px 12px rgba(124,58,237,0.08)' }}
             />
           </div>
           <button
