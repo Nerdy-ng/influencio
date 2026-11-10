@@ -783,12 +783,12 @@ function BrowseTab({ setActiveTab }) {
             <h3 className="font-black text-base" style={{ color: '#1e0040' }}>{job.title}</h3>
             {job.isNew && <span className="flex-shrink-0 text-[10px] font-black px-2 py-0.5 rounded-full" style={{ backgroundColor: '#F7258518', color: '#F72585' }}>New</span>}
           </div>
-          <p className="text-xs font-semibold mb-3" style={{ color: '#4b5563' }}>{job.brand} · {job.type}</p>
+          <p className="text-xs font-semibold mb-3" style={{ color: 'rgba(15,0,32,0.6)' }}>{job.brand} · {job.type}</p>
           <p className="text-sm mb-3 leading-relaxed" style={{ color: '#1e0040' }}>{job.description}</p>
           <div className="flex flex-wrap gap-2 mb-3">
             {job.tags.map(t => <span key={t} className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: '#f5f3ff', color: '#7c3aed' }}>{t}</span>)}
           </div>
-          <div className="flex flex-wrap gap-4 mb-4 text-xs font-semibold" style={{ color: '#374151' }}>
+          <div className="flex flex-wrap gap-4 mb-4 text-xs font-semibold" style={{ color: 'rgba(15,0,32,0.6)' }}>
             <span style={{ color: purple }}>₦ {job.budget.replace('₦','')}</span>
             <span>📅 {job.deadline}</span>
             <span>👥 {job.applicants} applied</span>
@@ -811,7 +811,7 @@ function BrowseTab({ setActiveTab }) {
             {applied.includes(job.id) ? '✓ Pitched' : !profileReady ? `🔒 Complete profile to pitch` : 'Pitch →'}
           </button>
           {!applied.includes(job.id) && profileReady && (
-            <p className="text-center text-[11px] mt-1.5" style={{ color: '#9ca3af' }}>Send a proposal to this brand.</p>
+            <p className="text-center text-[11px] mt-1.5" style={{ color: 'rgba(15,0,32,0.4)' }}>Send a proposal to this brand.</p>
           )}
         </div>
       ))}
@@ -822,7 +822,7 @@ function BrowseTab({ setActiveTab }) {
           <div className="w-full max-w-lg rounded-t-3xl p-6 pb-10" style={{ backgroundColor: '#fff' }} onClick={e => e.stopPropagation()}>
             <div className="w-9 h-1 rounded-full mx-auto mb-5" style={{ backgroundColor: '#e9d5ff' }} />
             <h3 className="text-lg font-black mb-1" style={{ color: '#1e0040' }}>Pitch for this collab</h3>
-            <p className="text-sm mb-4" style={{ color: '#9ca3af' }}>{pitchJob.title}</p>
+            <p className="text-sm mb-4" style={{ color: 'rgba(15,0,32,0.4)' }}>{pitchJob.title}</p>
             <textarea value={pitchNote} onChange={e => setPitchNote(e.target.value)} rows={4}
               placeholder="Briefly introduce yourself and why you're a great fit…"
               className="w-full rounded-xl px-4 py-3 text-sm outline-none resize-none mb-1"
@@ -835,7 +835,7 @@ function BrowseTab({ setActiveTab }) {
               style={{ backgroundColor: purple }}>
               {pitching ? 'Sending…' : 'Send Pitch'}
             </button>
-            <button onClick={() => setPitchJob(null)} className="w-full py-2 text-sm font-semibold" style={{ color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
+            <button onClick={() => setPitchJob(null)} className="w-full py-2 text-sm font-semibold" style={{ color: 'rgba(15,0,32,0.4)', background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
           </div>
         </div>
       )}
@@ -851,7 +851,7 @@ function BrowseTab({ setActiveTab }) {
               </div>
               <h3 className="text-lg font-black mb-1" style={{ color: '#1e0040' }}>Pitch Sent!</h3>
               <p className="text-sm font-semibold mb-2" style={{ color: '#1e0040' }}>Your pitch was sent successfully.</p>
-              <p className="text-sm leading-relaxed" style={{ color: '#9ca3af' }}>You can track your pitch and collaboration status in My Collabs.</p>
+              <p className="text-sm leading-relaxed" style={{ color: 'rgba(15,0,32,0.4)' }}>You can track your pitch and collaboration status in My Collabs.</p>
             </div>
             <button
               onClick={() => { setActiveTab('collabs'); setPitchSuccess(null) }}
@@ -861,7 +861,7 @@ function BrowseTab({ setActiveTab }) {
             </button>
             <button
               onClick={() => setPitchSuccess(null)}
-              className="w-full py-2 text-sm font-semibold" style={{ color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer' }}>
+              className="w-full py-2 text-sm font-semibold" style={{ color: 'rgba(15,0,32,0.4)', background: 'none', border: 'none', cursor: 'pointer' }}>
               Back to Campaigns
             </button>
           </div>
@@ -904,7 +904,7 @@ function EditableField({ label, value, onChange, placeholder, multiline, isEditi
             onChange={e => onChange(stripInjection(e.target.value))}
             rows={3}
             className="w-full px-3 py-2.5 rounded-xl text-sm text-brand-dark outline-none resize-none"
-            style={{ border: `1px solid ${purple}50`, backgroundColor: '#f9f5ff' }}
+            style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}
             placeholder={placeholder}
           />
         ) : (
@@ -913,7 +913,7 @@ function EditableField({ label, value, onChange, placeholder, multiline, isEditi
             value={value}
             onChange={e => onChange(stripInjection(e.target.value))}
             className="w-full px-3 py-2.5 rounded-xl text-sm text-brand-dark outline-none"
-            style={{ border: `1px solid ${purple}50`, backgroundColor: '#f9f5ff' }}
+            style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}
             placeholder={placeholder}
           />
         )
@@ -1062,7 +1062,7 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
       <div className="text-center py-16">
         <Inbox className="w-12 h-12 mx-auto mb-4 opacity-30" style={{ color: purple }} />
         <p className="font-semibold mb-1" style={{ color: darkPurple }}>No collabs yet</p>
-        <p className="text-sm text-gray-400">Brands will be able to hire you directly once your rate card is set up.</p>
+        <p className="text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>Brands will be able to hire you directly once your rate card is set up.</p>
       </div>
     </div>
   )
@@ -1079,15 +1079,15 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="font-black text-gray-900 text-lg">
+              <h3 className="font-black text-lg" style={{ color: '#0F0020' }}>
                 {deliverCollab.status === 'revision_requested' ? 'Resubmit Work' : 'Submit Deliverable'}
               </h3>
-              <button onClick={() => setDeliverCollab(null)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setDeliverCollab(null)} className="" style={{ color: 'rgba(15,0,32,0.4)' }} onMouseEnter={e => e.currentTarget.style.color='rgba(15,0,32,0.7)'} onMouseLeave={e => e.currentTarget.style.color='rgba(15,0,32,0.4)'} >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-sm text-gray-500 mb-4">
-              For: <span className="font-semibold text-gray-800">{deliverCollab.content_type} — {deliverCollab.brand?.company_name || deliverCollab.brand?.full_name || 'Brand'}</span>
+            <p className="text-sm mb-4" style={{ color: 'rgba(15,0,32,0.4)' }}>
+              For: <span className="font-semibold" style={{ color: '#0F0020' }}>{deliverCollab.content_type} — {deliverCollab.brand?.company_name || deliverCollab.brand?.full_name || 'Brand'}</span>
             </p>
 
             {deliverCollab.status === 'revision_requested' && deliverCollab.revision_reason && (
@@ -1095,7 +1095,7 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#ea580c' }} />
                 <div>
                   <p className="text-xs font-bold mb-0.5" style={{ color: '#ea580c' }}>Brand's revision feedback</p>
-                  <p className="text-xs text-gray-700 leading-relaxed">{deliverCollab.revision_reason}</p>
+                  <p className="text-xs leading-relaxed" style={{ color: 'rgba(15,0,32,0.6)' }}>{deliverCollab.revision_reason}</p>
                 </div>
               </div>
             )}
@@ -1103,7 +1103,7 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
             {uploadDone ? (
               <div className="text-center py-8">
                 <CheckCircle className="w-12 h-12 mx-auto mb-3" style={{ color: '#16a34a' }} />
-                <p className="font-bold text-gray-800">{deliverCollab.status === 'revision_requested' ? 'Resubmission sent!' : 'Deliverable uploaded!'}</p>
+                <p className="font-bold" style={{ color: '#0F0020' }}>{deliverCollab.status === 'revision_requested' ? 'Resubmission sent!' : 'Deliverable uploaded!'}</p>
               </div>
             ) : (
               <>
@@ -1112,41 +1112,41 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
 
                 {deliverFile ? (
                   <div className="flex items-center justify-between p-3 rounded-xl mb-3"
-                    style={{ backgroundColor: '#f3e8ff', border: '1px solid #e9d5ff' }}>
+                    style={{ backgroundColor: 'rgba(124,58,237,0.06)', border: '1px solid #e9d5ff' }}>
                     <div className="flex items-center gap-2 min-w-0">
                       <FileText className="w-4 h-4 flex-shrink-0" style={{ color: purple }} />
-                      <p className="text-sm font-medium text-gray-800 truncate">{deliverFile.name}</p>
-                      <p className="text-xs text-gray-400 flex-shrink-0">{(deliverFile.size / (1024*1024)).toFixed(1)} MB</p>
+                      <p className="text-sm font-medium truncate" style={{ color: '#0F0020' }}>{deliverFile.name}</p>
+                      <p className="text-xs flex-shrink-0" style={{ color: 'rgba(15,0,32,0.4)' }}>{(deliverFile.size / (1024*1024)).toFixed(1)} MB</p>
                     </div>
-                    <button onClick={() => setDeliverFile(null)} className="ml-2 text-gray-400 hover:text-red-400">
+                    <button onClick={() => setDeliverFile(null)} className="ml-2" style={{ color: 'rgba(15,0,32,0.4)' }} onMouseEnter={e => e.currentTarget.style.color='#ef4444'} onMouseLeave={e => e.currentTarget.style.color='rgba(15,0,32,0.4)'} >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
                 ) : (
                   <div onClick={() => deliverFileRef.current?.click()}
                     className="cursor-pointer rounded-2xl flex flex-col items-center justify-center gap-2 py-6 mb-3 transition-colors"
-                    style={{ border: '2px dashed #e9d5ff', backgroundColor: '#f9f5ff' }}>
+                    style={{ border: '2px dashed #e9d5ff', backgroundColor: 'rgba(124,58,237,0.04)' }}>
                     <Upload className="w-7 h-7" style={{ color: purple }} />
-                    <p className="text-sm font-semibold text-gray-700">Click to upload file</p>
-                    <p className="text-xs text-gray-400">Images, videos, PDFs, ZIP — any format</p>
+                    <p className="text-sm font-semibold" style={{ color: 'rgba(15,0,32,0.6)' }}>Click to upload file</p>
+                    <p className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>Images, videos, PDFs, ZIP — any format</p>
                   </div>
                 )}
 
                 <div className="flex items-center gap-2 my-3">
-                  <div className="flex-1 h-px bg-gray-200" />
-                  <span className="text-xs font-semibold text-gray-400">or paste a link</span>
-                  <div className="flex-1 h-px bg-gray-200" />
+                  <div className="flex-1 h-px" style={{ backgroundColor: '#e9d5ff' }} />
+                  <span className="text-xs font-semibold" style={{ color: 'rgba(15,0,32,0.4)' }}>or paste a link</span>
+                  <div className="flex-1 h-px" style={{ backgroundColor: '#e9d5ff' }} />
                 </div>
 
                 <input type="url" value={deliverLink} disabled={!!deliverFile}
                   onChange={e => setDeliverLink(stripInjection(e.target.value))}
                   placeholder="Instagram, TikTok, YouTube, Drive…"
-                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none mb-3 disabled:opacity-40"
+                  className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none mb-3 disabled:opacity-40" style={{ border: '1.5px solid #e9d5ff', color: '#0F0020', backgroundColor: '#fff' }}
                   style={{ borderColor: deliverLink && !deliverFile ? '#e9d5ff' : undefined }} />
 
                 <textarea value={deliverNote} onChange={e => setDeliverNote(stripInjection(e.target.value))}
                   placeholder="Add a note for the brand (optional)..."
-                  rows={2} className="w-full rounded-xl border border-gray-200 p-3 text-sm resize-none focus:outline-none mb-4" />
+                  rows={2} className="w-full rounded-xl p-3 text-sm resize-none focus:outline-none mb-4" style={{ border: '1.5px solid #e9d5ff', color: '#0F0020', backgroundColor: '#fff' }} />
 
                 <button onClick={uploadDeliverable} disabled={(!deliverFile && !deliverLink.trim()) || uploading}
                   className="w-full py-3 rounded-2xl font-bold text-white text-sm disabled:opacity-50 flex items-center justify-center gap-2"
@@ -1167,7 +1167,7 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
           <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden" style={{ border: '1px solid #e9d5ff' }}>
             <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: '1px solid #e9d5ff' }}>
               <p className="font-black text-brand-dark">Rate the Brand</p>
-              <button onClick={() => setReviewCollab(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><X className="w-4 h-4 text-brand-dark/40" /></button>
+              <button onClick={() => setReviewCollab(null)} className="p-1.5 rounded-lg" onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(124,58,237,0.06)'} onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}><X className="w-4 h-4 text-brand-dark/40" /></button>
             </div>
             {reviewDone ? (
               <div className="text-center py-10 px-6">
@@ -1199,7 +1199,7 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
                   <textarea rows={4} value={reviewComment} onChange={e => setReviewComment(stripInjection(e.target.value))}
                     placeholder="Describe your experience working with this brand. Was communication clear? Did they provide a detailed brief?"
                     className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark resize-none outline-none"
-                    style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }} />
+                    style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }} />
                   <p className={`text-[10px] mt-0.5 ${reviewComment.length > 0 && reviewComment.length < 20 ? 'text-red-500' : 'text-brand-dark/20'}`}>{reviewComment.length} / 20 min</p>
                 </div>
                 <button onClick={submitBrandReview} disabled={reviewRating === 0 || reviewComment.trim().length < 20 || reviewSubmitting}
@@ -1215,7 +1215,7 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
 
       <div className="mb-6">
         <h2 className="text-xl font-black" style={{ color: darkPurple }}>My Collabs</h2>
-        <p className="text-sm text-gray-400 mt-0.5">{collabs.length} collab{collabs.length !== 1 ? 's' : ''}</p>
+        <p className="text-sm mt-0.5" style={{ color: 'rgba(15,0,32,0.4)' }}>{collabs.length} collab{collabs.length !== 1 ? 's' : ''}</p>
       </div>
       <div className="space-y-3">
         {collabs.map(c => {
@@ -1230,8 +1230,8 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div>
-                    <p className="font-bold text-gray-900">{c.content_type}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{brandName} · {new Date(c.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                    <p className="font-bold" style={{ color: '#0F0020' }}>{c.content_type}</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'rgba(15,0,32,0.4)' }}>{brandName} · {new Date(c.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                   </div>
                   <span className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0"
                     style={{ backgroundColor: sc.bg, color: sc.color }}>
@@ -1249,8 +1249,8 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
                   <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
                 </button>
                 {isOpen && (
-                  <div className="mt-3 p-3 rounded-xl text-sm text-gray-700 leading-relaxed space-y-1"
-                    style={{ backgroundColor: '#faf5ff', border: '1px solid #e9d5ff' }}>
+                  <div className="mt-3 p-3 rounded-xl text-sm leading-relaxed space-y-1" style={{ color: 'rgba(15,0,32,0.6)' }}
+                    style={{ backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid #e9d5ff' }}>
                     <p><span className="font-semibold">Duration:</span> {c.duration_label}</p>
                     {c.brief?.productName && <p><span className="font-semibold">Product:</span> {c.brief.productName}</p>}
                     {c.brief?.goal && <p><span className="font-semibold">Goal:</span> {c.brief.goal}</p>}
@@ -1264,7 +1264,7 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
                 <div className="mx-4 mb-3 flex gap-2 rounded-xl p-3"
                   style={{ backgroundColor: '#fff7ed', border: '1px solid #fed7aa' }}>
                   <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#ea580c' }} />
-                  <p className="text-xs text-gray-700 leading-relaxed">
+                  <p className="text-xs leading-relaxed" style={{ color: 'rgba(15,0,32,0.6)' }}>
                     <span className="font-bold" style={{ color: '#ea580c' }}>Revision requested: </span>
                     {c.revision_reason}
                   </p>
@@ -1279,7 +1279,7 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
                 {canDeliver && (
                   <button onClick={() => { setDeliverCollab(c); setDeliverFile(null); setDeliverLink(''); setDeliverNote(''); setUploadDone(false) }}
                     className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold"
-                    style={{ backgroundColor: c.status === 'revision_requested' ? '#fff7ed' : '#f3e8ff', color: c.status === 'revision_requested' ? '#ea580c' : purple, border: c.status === 'revision_requested' ? '1px solid #fed7aa' : 'none' }}>
+                    style={{ backgroundColor: c.status === 'revision_requested' ? '#fff7ed' : 'rgba(124,58,237,0.06)', color: c.status === 'revision_requested' ? '#ea580c' : purple, border: c.status === 'revision_requested' ? '1px solid #fed7aa' : '1px solid rgba(124,58,237,0.12)' }}>
                     <Upload className="w-4 h-4" />
                     {c.status === 'revision_requested' ? 'Resubmit' : 'Deliverables'}
                   </button>
@@ -1427,7 +1427,7 @@ function AccountSettingsCard({ settingsEditMode, realEmail }) {
   }
 
   return (
-    <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+    <div className="rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
       <p className="font-bold text-brand-dark mb-4">Account Settings</p>
       <div className="space-y-4">
         <div>
@@ -1436,7 +1436,7 @@ function AccountSettingsCard({ settingsEditMode, realEmail }) {
             <input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)}
               placeholder="your@email.com"
               className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none"
-              style={{ border: `1px solid ${purple}50`, backgroundColor: '#f9f5ff' }} />
+              style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }} />
           ) : (
             <p className="text-sm py-1" style={{ color: realEmail ? '#0a0a0a' : 'rgba(10,0,32,0.25)' }}>
               {realEmail || 'your@email.com'}
@@ -1449,7 +1449,7 @@ function AccountSettingsCard({ settingsEditMode, realEmail }) {
             <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
               placeholder="New password (min 8 chars)"
               className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none"
-              style={{ border: `1px solid ${purple}50`, backgroundColor: '#f9f5ff' }} />
+              style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }} />
           ) : (
             <p className="text-sm text-brand-dark/25 italic py-1">••••••••</p>
           )}
@@ -1538,7 +1538,7 @@ function SecurityCard() {
   const usedQs = questions.map(q => q.q).filter(Boolean)
 
   return (
-    <div className="rounded-3xl overflow-hidden shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+    <div className="rounded-2xl overflow-hidden shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
       {/* Header */}
       <div className="flex items-center gap-3 px-6 py-5" style={{ background: 'linear-gradient(135deg, #0d0020 0%, #2d0060 100%)' }}>
         <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(250,129,18,0.15)' }}>
@@ -1594,7 +1594,7 @@ function SecurityCard() {
           ) : !editing ? (
             <div className="space-y-2">
               {questions.filter(q => q.q).map((q, i) => (
-                <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ backgroundColor: '#f9f5ff' }}>
+                <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ backgroundColor: 'rgba(124,58,237,0.04)' }}>
                   <ShieldCheck className="w-4 h-4 flex-shrink-0" style={{ color: '#22c55e' }} />
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-brand-dark truncate">{q.q}</p>
@@ -1606,7 +1606,7 @@ function SecurityCard() {
           ) : (
             <div className="space-y-4">
               {questions.map((q, i) => (
-                <div key={i} className="p-4 rounded-2xl space-y-2" style={{ backgroundColor: '#f9f5ff', border: '1px solid #e9d5ff' }}>
+                <div key={i} className="p-4 rounded-2xl space-y-2" style={{ backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid #e9d5ff' }}>
                   <p className="text-[10px] font-bold text-brand-dark/40 uppercase tracking-widest">Question {i + 1}</p>
                   <select
                     value={q.q}
@@ -1632,7 +1632,7 @@ function SecurityCard() {
           )}
         </div>
 
-        <div style={{ borderTop: '1px solid #f3e8ff' }} />
+        <div style={{ borderTop: '1px solid #e9d5ff' }} />
 
         {/* ── Withdrawal PIN ── */}
         <div>
@@ -1656,7 +1656,7 @@ function SecurityCard() {
                   maxLength={4}
                   placeholder="••••"
                   className="w-full px-4 py-3 rounded-xl text-sm outline-none tracking-[0.5em] font-bold"
-                  style={{ border: '1px solid #e9d5ff', color: '#1a0030', backgroundColor: '#f9f5ff' }} />
+                  style={{ border: '1.5px solid #e9d5ff', color: '#0F0020', backgroundColor: '#fff' }} />
                 <button type="button" onClick={() => setPinVisible(v => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-dark/30 hover:text-brand-dark/60 transition-colors">
                   {pinVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -1672,7 +1672,7 @@ function SecurityCard() {
                 maxLength={4}
                 placeholder="••••"
                 className="w-full px-4 py-3 rounded-xl text-sm outline-none tracking-[0.5em] font-bold"
-                style={{ border: '1px solid #e9d5ff', color: '#1a0030', backgroundColor: '#f9f5ff' }} />
+                style={{ border: '1.5px solid #e9d5ff', color: '#0F0020', backgroundColor: '#fff' }} />
             </div>
           </div>
           {pinError && <p className="text-xs text-red-500 mt-2">{pinError}</p>}
@@ -1683,7 +1683,7 @@ function SecurityCard() {
           </button>
         </div>
 
-        <div style={{ borderTop: '1px solid #f3e8ff' }} />
+        <div style={{ borderTop: '1px solid #e9d5ff' }} />
 
         {/* ── Safety tips ── */}
         <div>
@@ -2338,7 +2338,7 @@ export default function TalentDashboard() {
   }
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#f9f5ff' }}>
+    <div className="min-h-screen flex" style={{ backgroundColor: '#f3eeff' }}>
       {tierUpgradeModal && <TierUpgradeModal tier={tierUpgradeModal} onClose={() => setTierUpgradeModal(null)} />}
       {/* Brand-mode activation modal */}
       {showBrandSetup && (
@@ -2348,27 +2348,27 @@ export default function TalentDashboard() {
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style={{ backgroundColor: '#F7258518' }}>
                 <span className="text-2xl">🏢</span>
               </div>
-              <h2 className="text-lg font-black text-gray-900 text-center">Activate Brand Mode</h2>
-              <p className="text-sm text-gray-500 text-center mt-1">Your existing account gains brand capabilities. No new login needed.</p>
+              <h2 className="text-lg font-black text-center" style={{ color: '#0F0020' }}>Activate Brand Mode</h2>
+              <p className="text-sm text-center mt-1" style={{ color: 'rgba(15,0,32,0.4)' }}>Your existing account gains brand capabilities. No new login needed.</p>
             </div>
 
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Brand / Company name</p>
+            <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: 'rgba(15,0,32,0.4)' }}>Brand / Company name</p>
             <input
-              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-800 mb-4 focus:outline-none focus:border-pink-400 transition-colors"
+              className="w-full rounded-xl px-4 py-3 text-sm font-medium mb-4 focus:outline-none transition-colors" style={{ border: '1.5px solid #e9d5ff', color: '#0F0020', backgroundColor: '#fff' }}
               placeholder="e.g. Zuri Glow, MTN Nigeria"
               value={bsCompanyName}
               onChange={e => setBsCompanyName(e.target.value)}
               autoCapitalize="words"
             />
 
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Industry</p>
+            <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: 'rgba(15,0,32,0.4)' }}>Industry</p>
             <div className="space-y-2 max-h-44 overflow-y-auto mb-4">
               {INDUSTRIES.map(ind => (
                 <button key={ind} onClick={() => setBsIndustry(ind)}
                   className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all text-left"
                   style={bsIndustry === ind
                     ? { borderColor: '#F72585', backgroundColor: '#F7258508', color: '#F72585' }
-                    : { borderColor: '#e5e7eb', color: '#374151' }}>
+                    : { borderColor: '#e5e7eb', color: 'rgba(15,0,32,0.6)' }}>
                   {ind}
                   {bsIndustry === ind && <span style={{ color: '#F72585' }}>✓</span>}
                 </button>
@@ -2381,7 +2381,7 @@ export default function TalentDashboard() {
               {bsActivating ? 'Activating…' : 'Activate Brand Mode →'}
             </button>
             <button onClick={() => setShowBrandSetup(false)} disabled={bsActivating}
-              className="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-40">
+              className="w-full mt-2 py-2 text-sm transition-colors disabled:opacity-40" style={{ color: 'rgba(15,0,32,0.4)' }} onMouseEnter={e => e.currentTarget.style.color='rgba(15,0,32,0.7)'} onMouseLeave={e => e.currentTarget.style.color='rgba(15,0,32,0.4)'} >
               Cancel
             </button>
           </div>
@@ -2474,7 +2474,7 @@ export default function TalentDashboard() {
                 className="flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold capitalize transition-all"
                 style={{
                   backgroundColor: activeTab === t ? darkPurple : 'white',
-                  color: activeTab === t ? 'white' : '#9ca3af',
+                  color: activeTab === t ? 'white' : 'rgba(15,0,32,0.4)',
                   border: activeTab === t ? 'none' : '1px solid #e9d5ff',
                 }}>
                 {TAB_LABELS[t] ?? t}
@@ -2496,7 +2496,7 @@ export default function TalentDashboard() {
               <ProfileSetupBanner completion={completion} />
 
               {/* ── Header card ── */}
-              <div className="rounded-3xl overflow-hidden shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+              <div className="rounded-2xl overflow-hidden shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
                 <div className="h-32 relative group cursor-pointer"
                   style={{ background: 'linear-gradient(135deg, #1a0030 0%, #3b0764 60%, #c084fc 100%)' }}>
                   <div className="absolute inset-0 opacity-10"
@@ -2615,7 +2615,7 @@ export default function TalentDashboard() {
               </div>
 
               {/* ── Social Media Integration ── */}
-              <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+              <div className="rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
                 <div className="flex items-center justify-between mb-5">
                   <p className="font-bold text-brand-dark">Social Media</p>
                   <p className="text-[10px] text-brand-dark/30">Connect to import followers & engagement</p>
@@ -2627,7 +2627,7 @@ export default function TalentDashboard() {
                     return (
                       <div key={i} className="rounded-2xl p-4 flex items-center gap-4 transition-all"
                         style={{
-                          backgroundColor: s.connected ? `${s.color}08` : '#f9f5ff',
+                          backgroundColor: s.connected ? `${s.color}08` : 'rgba(124,58,237,0.04)',
                           border: s.connected ? `1px solid ${s.color}30` : '1px solid #e9d5ff',
                         }}>
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -2686,7 +2686,7 @@ export default function TalentDashboard() {
                 </div>
                 <div className="flex items-center gap-3">
                   {profile.featuredVideo && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-3 py-1.5 rounded-full" style={{ backgroundColor: '#f3e8ff', color: '#7c3aed' }}>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-3 py-1.5 rounded-full" style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: '#7c3aed' }}>
                       <Star className="w-3 h-3 fill-violet-500" /> Featured video set
                     </span>
                   )}
@@ -2701,7 +2701,7 @@ export default function TalentDashboard() {
 
               {/* Empty state */}
               {profile.portfolio.length === 0 ? (
-                <div className="rounded-3xl p-16 text-center" style={{ backgroundColor: '#f9f5ff', border: '2px dashed #e9d5ff' }}>
+                <div className="rounded-2xl p-16 text-center" style={{ backgroundColor: 'rgba(124,58,237,0.04)', border: '2px dashed #e9d5ff' }}>
                   <div className="flex justify-center gap-4 mb-4 opacity-20">
                     <Briefcase className="w-10 h-10" style={{ color: purple }} />
                     <ImagePlus className="w-10 h-10" style={{ color: purple }} />
@@ -2774,7 +2774,7 @@ export default function TalentDashboard() {
                               className="mt-3 w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl transition-colors"
                               style={isFeatured
                                 ? { backgroundColor: '#ede9fe', color: '#6d28d9', border: '1px solid #c4b5fd' }
-                                : { backgroundColor: '#f9f5ff', color: '#a78bfa', border: '1px solid #e9d5ff' }
+                                : { backgroundColor: 'rgba(124,58,237,0.04)', color: '#7c3aed', border: '1px solid #e9d5ff' }
                               }
                             >
                               <Star className={`w-3.5 h-3.5 ${isFeatured ? 'fill-violet-500 text-violet-600' : ''}`} />
@@ -2794,7 +2794,7 @@ export default function TalentDashboard() {
                   <div className="w-full max-w-lg rounded-3xl bg-white shadow-2xl overflow-hidden" style={{ border: '1px solid #e9d5ff' }}>
                     <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: '1px solid #e9d5ff' }}>
                       <p className="font-bold text-brand-dark">Add Portfolio Sample</p>
-                      <button onClick={resetAddWork} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+                      <button onClick={resetAddWork} className="p-1.5 rounded-lg transition-colors" onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(124,58,237,0.06)'} onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
                         <X className="w-4 h-4 text-brand-dark/40" />
                       </button>
                     </div>
@@ -2823,7 +2823,7 @@ export default function TalentDashboard() {
                               <img src={uploadPreview.url} alt="preview"
                                 className="w-full max-h-48 object-cover" />
                             )}
-                            <div className="flex items-center justify-between px-3 py-2" style={{ backgroundColor: '#f9f5ff' }}>
+                            <div className="flex items-center justify-between px-3 py-2" style={{ backgroundColor: 'rgba(124,58,237,0.04)' }}>
                               <div className="flex items-center gap-2 min-w-0">
                                 <span className="text-sm">{newWork.type === 'video' ? '🎬' : '📷'}</span>
                                 <p className="text-xs font-medium text-brand-dark truncate">{uploadPreview.name}</p>
@@ -2847,7 +2847,7 @@ export default function TalentDashboard() {
                             className="cursor-pointer rounded-2xl flex flex-col items-center justify-center gap-2 py-10 transition-colors"
                             style={{
                               border: `2px dashed ${dragOver ? '#c084fc' : '#e9d5ff'}`,
-                              backgroundColor: dragOver ? '#fdf4ff' : '#f9f5ff',
+                              backgroundColor: dragOver ? 'rgba(124,58,237,0.08)' : 'rgba(124,58,237,0.04)',
                             }}>
                             <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#ede9fe' }}>
                               <Upload className="w-5 h-5" style={{ color: purple }} />
@@ -2873,7 +2873,7 @@ export default function TalentDashboard() {
                                 setUploadPreview(null)
                               }}
                               className="flex-1 py-2.5 text-sm font-semibold capitalize transition-all"
-                              style={{ backgroundColor: newWork.type === t ? darkPurple : 'white', color: newWork.type === t ? 'white' : '#9ca3af' }}>
+                              style={{ backgroundColor: newWork.type === t ? darkPurple : 'white', color: newWork.type === t ? 'white' : 'rgba(15,0,32,0.4)' }}>
                               {t === 'video' ? '🎬' : '📷'} {t}
                             </button>
                           ))}
@@ -2886,7 +2886,7 @@ export default function TalentDashboard() {
                         <input required value={newWork.title} onChange={e => setNewWork(w => ({ ...w, title: stripInjection(e.target.value) }))}
                           placeholder="e.g. GlowSerum Instagram Reel"
                           className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                          style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff', color: '#1e0040' }} />
+                          style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff', color: '#0F0020' }} />
                       </div>
 
                       {/* ── Brand ── */}
@@ -2895,7 +2895,7 @@ export default function TalentDashboard() {
                         <input value={newWork.brand} onChange={e => setNewWork(w => ({ ...w, brand: stripInjection(e.target.value) }))}
                           placeholder="e.g. GlowLab Skincare"
                           className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                          style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff', color: '#1e0040' }} />
+                          style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff', color: '#0F0020' }} />
                       </div>
 
                       {/* ── Description ── */}
@@ -2904,7 +2904,7 @@ export default function TalentDashboard() {
                         <textarea value={newWork.desc} onChange={e => setNewWork(w => ({ ...w, desc: stripInjection(e.target.value) }))}
                           placeholder="Brief description of the campaign…"
                           rows={2} className="w-full px-4 py-3 rounded-xl text-sm outline-none resize-none"
-                          style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff', color: '#1e0040' }} />
+                          style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff', color: '#0F0020' }} />
                       </div>
 
                       {/* ── Upload error ── */}
@@ -2915,7 +2915,7 @@ export default function TalentDashboard() {
                       {/* ── Actions ── */}
                       <div className="flex gap-3 pt-1">
                         <button type="button" onClick={resetAddWork}
-                          className="flex-1 py-3 rounded-xl text-sm font-semibold text-brand-dark/50 border border-gray-200 hover:bg-gray-50 transition-colors">
+                          className="flex-1 py-3 rounded-xl text-sm font-semibold transition-colors" style={{ border: '1px solid #e9d5ff', color: 'rgba(15,0,32,0.5)' }} onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(124,58,237,0.04)'} onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
                           Cancel
                         </button>
                         <button type="submit" disabled={uploadingPortfolio}
@@ -2936,7 +2936,7 @@ export default function TalentDashboard() {
             <div className="max-w-5xl mx-auto space-y-5">
 
               {/* Engagement Metrics */}
-              <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+              <div className="rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
                 <div className="flex items-center gap-2 mb-5">
                   <BarChart2 className="w-4 h-4" style={{ color: purple }} />
                   <p className="font-bold text-brand-dark">Engagement Metrics</p>
@@ -2968,7 +2968,7 @@ export default function TalentDashboard() {
                             return reach >= 1000 ? `${(reach/1000).toFixed(1)}K` : reach
                           })(), icon: Eye, color: '#22c55e' },
                       ].map(({ label, value, icon: Icon, color }) => (
-                        <div key={label} className="rounded-2xl p-4 text-center" style={{ backgroundColor: '#f9f5ff', border: '1px solid #e9d5ff' }}>
+                        <div key={label} className="rounded-2xl p-4 text-center" style={{ backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid #e9d5ff' }}>
                           <div className="w-8 h-8 rounded-xl flex items-center justify-center mx-auto mb-2" style={{ backgroundColor: `${color}15` }}>
                             <Icon className="w-4 h-4" style={{ color }} />
                           </div>
@@ -3003,7 +3003,7 @@ export default function TalentDashboard() {
               </div>
 
               {/* Audience Demographics */}
-              <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+              <div className="rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
                 <div className="flex items-center gap-2 mb-5">
                   <PieChart className="w-4 h-4" style={{ color: purple }} />
                   <p className="font-bold text-brand-dark">Audience Demographics</p>
@@ -3102,7 +3102,7 @@ export default function TalentDashboard() {
               </div>
 
               {/* ── Pricing ── */}
-              <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+              <div className="rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-2">
                     <DollarSign className="w-4 h-4" style={{ color: purple }} />
@@ -3114,7 +3114,7 @@ export default function TalentDashboard() {
                         className="px-4 py-1.5 text-xs font-semibold capitalize transition-all"
                         style={{
                           backgroundColor: profile.pricing.type === type ? darkPurple : 'white',
-                          color: profile.pricing.type === type ? 'white' : '#9ca3af',
+                          color: profile.pricing.type === type ? 'white' : 'rgba(15,0,32,0.4)',
                         }}>
                         {type}
                       </button>
@@ -3144,7 +3144,7 @@ export default function TalentDashboard() {
                             <div key={i} className="flex items-center gap-3">
                               <span className="text-sm text-brand-dark/60 flex-1">{label}</span>
                               <div className="flex items-center rounded-xl overflow-hidden w-36"
-                                style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
+                                style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}>
                                 <span className="pl-3 text-sm text-brand-dark/40">₦</span>
                                 <input
                                   type="number"
@@ -3210,7 +3210,7 @@ export default function TalentDashboard() {
               </div>
 
               {/* Public info */}
-              <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+              <div className="rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
                 <div className="flex items-center justify-between mb-5">
                   <p className="font-bold text-brand-dark">Public Info</p>
                   <span className="text-[10px] font-semibold flex items-center gap-1" style={{ color: '#22c55e' }}>
@@ -3239,7 +3239,7 @@ export default function TalentDashboard() {
                             value={selectedCountry}
                             onChange={e => updateField('location', e.target.value ? `, ${e.target.value}` : '')}
                             className="flex-1 rounded-xl px-3 py-2 text-sm border focus:outline-none"
-                            style={{ borderColor: '#e9d5ff', color: '#1a0030', backgroundColor: '#faf5ff' }}>
+                            style={{ borderColor: '#e9d5ff', color: '#0F0020', backgroundColor: '#fff' }}>
                             <option value="">Country</option>
                             {Object.keys(STATES).map(c => <option key={c} value={c}>{c}</option>)}
                           </select>
@@ -3248,7 +3248,7 @@ export default function TalentDashboard() {
                             onChange={e => updateField('location', e.target.value ? `${e.target.value}, ${selectedCountry}` : (selectedCountry ? `, ${selectedCountry}` : ''))}
                             disabled={!selectedCountry}
                             className="flex-1 rounded-xl px-3 py-2 text-sm border focus:outline-none disabled:opacity-40"
-                            style={{ borderColor: '#e9d5ff', color: '#1a0030', backgroundColor: '#faf5ff' }}>
+                            style={{ borderColor: '#e9d5ff', color: '#0F0020', backgroundColor: '#fff' }}>
                             <option value="">State / Region</option>
                             {(STATES[selectedCountry] || []).map(s => <option key={s} value={s}>{s}</option>)}
                           </select>
@@ -3265,7 +3265,7 @@ export default function TalentDashboard() {
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-xs font-medium text-brand-dark/40 uppercase tracking-widest">Niche / Category</label>
                       {settingsEditMode && (
-                        <span className="text-[10px]" style={{ color: profile.niches.length >= 3 ? pink : '#9ca3af' }}>
+                        <span className="text-[10px]" style={{ color: profile.niches.length >= 3 ? pink : 'rgba(15,0,32,0.4)' }}>
                           {profile.niches.length}/3 selected
                         </span>
                       )}
@@ -3285,8 +3285,8 @@ export default function TalentDashboard() {
                             }))}
                             className="px-3 py-1.5 rounded-full text-xs font-medium transition-all disabled:opacity-30"
                             style={{
-                              backgroundColor: selected ? darkPurple : '#f9f5ff',
-                              color: selected ? 'white' : '#6b7280',
+                              backgroundColor: selected ? darkPurple : 'rgba(124,58,237,0.04)',
+                              color: selected ? 'white' : 'rgba(15,0,32,0.4)',
                               border: selected ? `1px solid ${purple}` : '1px solid #e9d5ff',
                             }}>
                             {n}
@@ -3340,7 +3340,7 @@ export default function TalentDashboard() {
               </div>
 
               {/* Hashtags */}
-              <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+              <div className="rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
                 <div className="flex items-center gap-1.5 mb-4">
                   <Hash className="w-4 h-4" style={{ color: purple }} />
                   <p className="font-bold text-brand-dark">Hashtags</p>
@@ -3365,7 +3365,7 @@ export default function TalentDashboard() {
                 {settingsEditMode && (
                   <div className="flex gap-2">
                     <div className="flex-1 flex items-center rounded-xl overflow-hidden"
-                      style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
+                      style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}>
                       <span className="pl-3 text-sm font-bold" style={{ color: purple }}>#</span>
                       <input
                         value={hashInput}
@@ -3385,7 +3385,7 @@ export default function TalentDashboard() {
               </div>
 
               {/* Content Style */}
-              <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+              <div className="rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
                 <div className="flex items-center justify-between mb-4">
                   <p className="font-bold text-brand-dark">Content Style</p>
                   <span className="text-[10px] text-brand-dark/30">Select all that apply</span>
@@ -3404,7 +3404,7 @@ export default function TalentDashboard() {
                         }))}
                         className="flex flex-col items-center gap-1.5 py-3 px-2 rounded-2xl text-center transition-all relative"
                         style={{
-                          backgroundColor: selected ? `${purple}15` : '#f9f5ff',
+                          backgroundColor: selected ? `${purple}15` : 'rgba(124,58,237,0.04)',
                           border: selected ? `2px solid ${purple}` : '2px solid #e9d5ff',
                           cursor: settingsEditMode ? 'pointer' : 'default',
                           opacity: !settingsEditMode && !selected ? 0.5 : 1,
@@ -3495,10 +3495,10 @@ export default function TalentDashboard() {
               })()}
 
               {/* Private info */}
-              <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+              <div className="rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
                 <div className="flex items-center justify-between mb-4">
                   <p className="font-bold text-brand-dark">Private Info</p>
-                  <span className="text-[10px] font-semibold flex items-center gap-1" style={{ color: '#9ca3af' }}>
+                  <span className="text-[10px] font-semibold flex items-center gap-1" style={{ color: 'rgba(15,0,32,0.4)' }}>
                     <EyeOff className="w-3 h-3" /> Not shown to brands
                   </span>
                 </div>
@@ -3510,7 +3510,7 @@ export default function TalentDashboard() {
               <SecurityCard />
 
               {/* Identity Verification (KYC) */}
-              <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+              <div className="rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="font-bold text-brand-dark">Identity Verification</p>
@@ -3676,7 +3676,7 @@ export default function TalentDashboard() {
                 )}
               </div>
 
-              <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+              <div className="rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
                 <div className="flex items-center justify-between mb-4">
                   <p className="font-bold text-brand-dark">Talent Types</p>
                   <span className="text-[10px] text-brand-dark/30">Select all that apply</span>
@@ -3700,7 +3700,7 @@ export default function TalentDashboard() {
                         }))}
                         className="flex flex-col items-center gap-2 py-4 px-3 rounded-2xl text-center transition-all relative"
                         style={{
-                          backgroundColor: selected ? darkPurple : '#f9f5ff',
+                          backgroundColor: selected ? darkPurple : 'rgba(124,58,237,0.04)',
                           border: selected ? `2px solid ${purple}` : '2px solid #e9d5ff',
                           color: selected ? 'white' : '#0a0a0a',
                           cursor: settingsEditMode ? 'pointer' : 'default',
@@ -3718,16 +3718,16 @@ export default function TalentDashboard() {
               </div>
 
               {/* Change Password */}
-              <div className="rounded-3xl p-6 shadow-sm space-y-4" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
-                <p className="font-bold text-gray-900">Change Password</p>
+              <div className="rounded-2xl p-6 shadow-sm space-y-4" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+                <p className="font-bold" style={{ color: '#0F0020' }}>Change Password</p>
                 {['next', 'confirm'].map(k => (
                   <div key={k}>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                    <label className="block text-xs font-bold uppercase tracking-wide mb-1.5" style={{ color: 'rgba(15,0,32,0.4)' }}>
                       {k === 'next' ? 'New password' : 'Confirm new password'}
                     </label>
                     <input type="password" value={pwForm[k]} onChange={e => setPwForm(f => ({ ...f, [k]: e.target.value }))}
                       placeholder={k === 'next' ? 'At least 8 characters' : 'Repeat new password'}
-                      className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:border-purple-300" />
+                      className="w-full px-4 py-3 text-sm rounded-2xl focus:outline-none" style={{ border: '1.5px solid #e9d5ff', color: '#0F0020', backgroundColor: '#fff' }} />
                   </div>
                 ))}
                 {pwMsg && (
@@ -3741,8 +3741,8 @@ export default function TalentDashboard() {
               </div>
 
               {/* Privacy & Data */}
-              <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
-                <p className="font-bold text-gray-900 mb-1">Privacy & Data</p>
+              <div className="rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+                <p className="font-bold mb-1" style={{ color: '#0F0020' }}>Privacy & Data</p>
                 <p className="text-brand-dark/40 text-sm mb-4">Download a copy of all your account data, collabs, and notifications.</p>
                 <button onClick={handleDownloadCreatorData} disabled={downloading}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold text-white transition-opacity disabled:opacity-50"
@@ -3752,7 +3752,7 @@ export default function TalentDashboard() {
                 </button>
               </div>
 
-              <div className="rounded-3xl p-6 shadow-sm" style={{ border: '1px solid #ffe4e6', backgroundColor: 'white' }}>
+              <div className="rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #ffe4e6', backgroundColor: 'white' }}>
                 <p className="font-bold text-red-500 mb-1">Danger Zone</p>
                 <p className="text-brand-dark/40 text-sm mb-4">Permanently delete your Brandior account and all associated data.</p>
                 <button className="px-5 py-2.5 rounded-full text-sm font-semibold text-red-500 border border-red-200 hover:bg-red-50 transition-colors">
@@ -3829,7 +3829,7 @@ function TalentAnalyticsTab() {
 
   return (
     <div className="space-y-5">
-      <h2 className="text-xl font-bold text-gray-900">My Analytics</h2>
+      <h2 className="text-xl font-bold" style={{ color: '#0F0020' }}>My Analytics</h2>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -3840,7 +3840,7 @@ function TalentAnalyticsTab() {
           { label: 'Reviews',        value: data.totalReviews,                            color: '#0ea5e9' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-2xl p-4 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
-            <p className="text-xs text-gray-400 mb-1">{s.label}</p>
+            <p className="text-xs mb-1" style={{ color: 'rgba(15,0,32,0.4)' }}>{s.label}</p>
             <p className="text-2xl font-black" style={{ color: s.color }}>{s.value}</p>
           </div>
         ))}
@@ -3848,7 +3848,7 @@ function TalentAnalyticsTab() {
 
       {/* Collabs over time */}
       <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
-        <p className="font-bold text-gray-900 mb-4">Collabs — Last 30 Days</p>
+        <p className="font-bold mb-4" style={{ color: '#0F0020' }}>Collabs — Last 30 Days</p>
         {data.dailyCollabs.some(d => d.count > 0) ? (
           <ResponsiveContainer width="100%" height={180}>
             <LineChart data={data.dailyCollabs}>
@@ -3859,13 +3859,13 @@ function TalentAnalyticsTab() {
             </LineChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex items-center justify-center h-28 text-sm text-gray-400">No collabs yet</div>
+          <div className="flex items-center justify-center h-28 text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>No collabs yet</div>
         )}
       </div>
 
       {/* Status breakdown */}
       <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
-        <p className="font-bold text-gray-900 mb-4">Collab Status</p>
+        <p className="font-bold mb-4" style={{ color: '#0F0020' }}>Collab Status</p>
         {pieData.length > 0 ? (
           <div className="flex items-center gap-6">
             <ResponsiveContainer width={120} height={120}>
@@ -3879,14 +3879,14 @@ function TalentAnalyticsTab() {
               {pieData.map(d => (
                 <div key={d.name} className="flex items-center gap-2 text-sm">
                   <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
-                  <span className="text-gray-600">{d.name}</span>
-                  <span className="font-bold text-gray-900 ml-auto pl-4">{d.value}</span>
+                  <span style={{ color: 'rgba(15,0,32,0.5)' }}>{d.name}</span>
+                  <span className="font-bold ml-auto pl-4" style={{ color: '#0F0020' }}>{d.value}</span>
                 </div>
               ))}
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-28 text-sm text-gray-400">No collabs yet</div>
+          <div className="flex items-center justify-center h-28 text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>No collabs yet</div>
         )}
       </div>
     </div>
@@ -4038,10 +4038,10 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
 
       {/* Promo code redeemer */}
       {txUser && (
-        <div className="rounded-2xl border bg-white p-5" style={{ borderColor: "#e5e7eb" }}>
+        <div className="rounded-2xl border bg-white p-5" style={{ borderColor: '#e9d5ff' }}>
           <div className="flex items-center gap-2 mb-3">
             <Ticket className="w-4 h-4 text-purple-600" />
-            <p className="text-sm font-bold text-gray-800">Redeem Promo Code</p>
+            <p className="text-sm font-bold" style={{ color: '#0F0020' }}>Redeem Promo Code</p>
           </div>
           <PromoCodeRedeemer
             userId={txUser.id}
@@ -4122,7 +4122,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
 
       {/* Pipeline explanation */}
       <div className="rounded-2xl px-5 py-4 flex items-center gap-3 flex-wrap"
-        style={{ backgroundColor: '#f9f5ff', border: '1px solid #e9d5ff' }}>
+        style={{ backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid #e9d5ff' }}>
         {[
           { label: 'Work in Progress', color: '#0a0a0a' },
           { label: '→', color: '#c4b5fd' },
@@ -4177,8 +4177,8 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
                 <button key={f} onClick={() => setFilter(f)}
                   className="px-3 py-1 rounded-full text-[11px] font-semibold transition-all"
                   style={{
-                    backgroundColor: filter === f ? (s?.color ?? darkPurple) : '#f9f5ff',
-                    color: filter === f ? 'white' : '#9ca3af',
+                    backgroundColor: filter === f ? (s?.color ?? darkPurple) : 'rgba(124,58,237,0.04)',
+                    color: filter === f ? 'white' : 'rgba(15,0,32,0.4)',
                     border: filter === f ? 'none' : '1px solid #e9d5ff',
                   }}>
                   {f === 'all' ? 'All' : s.label}
@@ -4201,7 +4201,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
           ) : filtered.map(tx => {
             const s = TX_STATUS[tx.status]
             return (
-              <div key={tx.id} className="flex items-center gap-4 p-4 rounded-2xl transition-colors hover:bg-[#f9f5ff]"
+              <div key={tx.id} className="flex items-center gap-4 p-4 rounded-2xl transition-colors" onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(124,58,237,0.04)'} onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}
                 style={{ border: '1px solid #f3eeff' }}>
                 {/* Status icon */}
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -4252,7 +4252,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
                   <p className="text-brand-dark/40 text-[11px]">Available: ₦{availableTotal.toLocaleString()}</p>
                 </div>
               </div>
-              <button onClick={resetWithdraw} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+              <button onClick={resetWithdraw} className="p-1.5 rounded-lg transition-colors" onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(124,58,237,0.06)'} onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
                 <X className="w-4 h-4 text-brand-dark/40" />
               </button>
             </div>
@@ -4271,7 +4271,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
                       onChange={e => setWithdrawForm(f => ({ ...f, amount: stripInjection(e.target.value) }))}
                       placeholder="e.g. 10000"
                       className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none"
-                      style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}
+                      style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}
                     />
                     <p className="text-[10px] text-brand-dark/30 mt-1">Minimum ₦5,000</p>
                   </div>
@@ -4282,7 +4282,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
                       value={withdrawForm.bank}
                       onChange={e => setWithdrawForm(f => ({ ...f, bank: stripInjection(e.target.value) }))}
                       className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none appearance-none"
-                      style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
+                      style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}>
                       <option value="">Select your bank</option>
                       {nigerianBanks.map(b => <option key={b}>{b}</option>)}
                     </select>
@@ -4297,7 +4297,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
                       onChange={e => setWithdrawForm(f => ({ ...f, accountNumber: e.target.value.replace(/\D/g, '') }))}
                       placeholder="10-digit account number"
                       className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none font-mono"
-                      style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}
+                      style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}
                     />
                   </div>
                   <div>
@@ -4309,7 +4309,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
                       onChange={e => setWithdrawForm(f => ({ ...f, accountName: stripInjection(e.target.value) }))}
                       placeholder="Name on account"
                       className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none"
-                      style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}
+                      style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}
                     />
                   </div>
                   <button type="submit"
@@ -4322,7 +4322,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
 
               {withdrawStep === 'confirm' && (
                 <div className="space-y-4">
-                  <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: '#f9f5ff', border: '1px solid #e9d5ff' }}>
+                  <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid #e9d5ff' }}>
                     {[
                       { label: 'Amount',         value: `₦${Number(withdrawForm.amount).toLocaleString()}` },
                       { label: 'Bank',           value: withdrawForm.bank },
@@ -4343,7 +4343,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
                   )}
                   <div className="flex gap-3">
                     <button onClick={() => { setWithdrawStep('form'); setWithdrawError('') }}
-                      className="flex-1 py-3 rounded-xl font-semibold text-sm text-brand-dark/60 border border-gray-200 hover:bg-gray-50 transition-colors">
+                      className="flex-1 py-3 rounded-xl font-semibold text-sm transition-colors" style={{ border: '1px solid #e9d5ff', color: 'rgba(15,0,32,0.5)' }} onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(124,58,237,0.04)'} onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
                       Edit
                     </button>
                     <button onClick={confirmWithdraw} disabled={processing}
@@ -4479,7 +4479,7 @@ function SupportTab() {
                   value={ticket.category}
                   onChange={e => setTicket(t => ({ ...t, category: stripInjection(e.target.value) }))}
                   className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none appearance-none"
-                  style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
+                  style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}>
                   {['Payment', 'Campaign Issue', 'Account', 'Technical', 'Other'].map(c => (
                     <option key={c}>{c}</option>
                   ))}
@@ -4493,7 +4493,7 @@ function SupportTab() {
                   placeholder="Brief description of your issue"
                   required
                   className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark placeholder-brand-dark/25 outline-none"
-                  style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}
+                  style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}
                 />
               </div>
               <div>
@@ -4504,7 +4504,7 @@ function SupportTab() {
                   placeholder="Describe your issue in detail…"
                   required rows={4}
                   className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark placeholder-brand-dark/25 outline-none resize-none"
-                  style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}
+                  style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}
                 />
               </div>
               <button type="submit" disabled={submitting}
@@ -4668,7 +4668,7 @@ function SupportTab() {
                   style={{ color: purple }} />
               </button>
               {openFaq === i && (
-                <div className="px-5 pb-4" style={{ backgroundColor: '#f9f5ff' }}>
+                <div className="px-5 pb-4" style={{ backgroundColor: 'rgba(124,58,237,0.04)' }}>
                   <p className="text-brand-dark/60 text-sm leading-relaxed">{faq.a}</p>
                 </div>
               )}
@@ -4684,13 +4684,13 @@ function SupportTab() {
 // ── Notifications Tab ─────────────────────────────────────────────────────────
 
 const NOTIF_ICONS = {
-  new_collab:         { color: '#7c3aed', bg: '#f3e8ff', label: 'New Collab'      },
+  new_collab:         { color: '#7c3aed', bg: 'rgba(124,58,237,0.08)', label: 'New Collab'      },
   delivered:          { color: '#2563eb', bg: '#dbeafe', label: 'Delivered'       },
   revision_requested: { color: '#ea580c', bg: '#fff7ed', label: 'Revision'        },
   completed:          { color: '#16a34a', bg: '#dcfce7', label: 'Completed'       },
   payment_released:   { color: '#16a34a', bg: '#dcfce7', label: 'Payment'         },
   message:            { color: '#0284c7', bg: '#e0f2fe', label: 'Message'         },
-  default:            { color: '#6b7280', bg: '#f3f4f6', label: 'Notification'    },
+  default:            { color: 'rgba(15,0,32,0.4)', bg: 'rgba(124,58,237,0.04)', label: 'Notification'    },
 }
 
 function NotificationsTab() {
@@ -4721,14 +4721,14 @@ function NotificationsTab() {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-black" style={{ color: darkPurple }}>Notifications</h2>
         {notifs.length > 0 && (
-          <span className="text-xs text-gray-400">{notifs.filter(n => !n.read).length} unread</span>
+          <span className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>{notifs.filter(n => !n.read).length} unread</span>
         )}
       </div>
       {notifs.length === 0 ? (
         <div className="text-center py-20">
           <Bell className="w-12 h-12 mx-auto mb-4 opacity-20" style={{ color: purple }} />
-          <p className="font-semibold text-gray-500">No notifications yet</p>
-          <p className="text-sm text-gray-400 mt-1">We'll notify you when brands place orders or respond to your work</p>
+          <p className="font-semibold" style={{ color: 'rgba(15,0,32,0.4)' }}>No notifications yet</p>
+          <p className="text-sm mt-1" style={{ color: 'rgba(15,0,32,0.4)' }}>We'll notify you when brands place orders or respond to your work</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -4742,9 +4742,9 @@ function NotificationsTab() {
                   <Bell className="w-4 h-4" style={{ color: meta.color }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-gray-900">{n.title}</p>
-                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{n.body}</p>
-                  <p className="text-[10px] text-gray-400 mt-1.5">{new Date(n.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                  <p className="text-sm font-bold" style={{ color: '#0F0020' }}>{n.title}</p>
+                  <p className="text-xs mt-0.5 leading-relaxed" style={{ color: 'rgba(15,0,32,0.4)' }}>{n.body}</p>
+                  <p className="text-[10px] mt-1.5" style={{ color: 'rgba(15,0,32,0.4)' }}>{new Date(n.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                 </div>
                 {!n.read && <span className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: meta.color }} />}
               </div>
@@ -4842,12 +4842,12 @@ function RateCardTab() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-black" style={{ color: darkPurple }}>Rate Card</h2>
-          <p className="text-sm text-gray-400 mt-0.5">Set your pricing — brands see this when they hire you</p>
+          <p className="text-sm mt-0.5" style={{ color: 'rgba(15,0,32,0.4)' }}>Set your pricing — brands see this when they hire you</p>
         </div>
         <button onClick={() => setIsPublic(v => !v)}
           className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors"
-          style={{ backgroundColor: isPublic ? '#f3e8ff' : '#f3f4f6', color: isPublic ? purple : '#9ca3af', border: `1px solid ${isPublic ? '#e9d5ff' : '#e5e7eb'}` }}>
-          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isPublic ? purple : '#9ca3af' }} />
+          style={{ backgroundColor: isPublic ? 'rgba(124,58,237,0.08)' : 'rgba(124,58,237,0.04)', color: isPublic ? purple : 'rgba(15,0,32,0.4)', border: '1px solid #e9d5ff' }}>
+          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isPublic ? purple : 'rgba(15,0,32,0.3)' }} />
           {isPublic ? 'Public' : 'Hidden'}
         </button>
       </div>
@@ -4870,13 +4870,13 @@ function RateCardTab() {
               className="rounded-2xl p-4 text-left transition-all"
               style={{ border: `2px solid ${t.enabled ? t.color : '#e9d5ff'}`, backgroundColor: t.enabled ? t.color + '0C' : 'white' }}>
               <div className="flex justify-between items-start mb-2">
-                <span className="text-xs font-bold" style={{ color: t.enabled ? t.color : '#9ca3af' }}>{t.label}</span>
+                <span className="text-xs font-bold" style={{ color: t.enabled ? t.color : 'rgba(15,0,32,0.4)' }}>{t.label}</span>
                 <span className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
-                  style={{ backgroundColor: t.enabled ? t.color : '#e5e7eb' }}>
+                  style={{ backgroundColor: t.enabled ? t.color : '#e9d5ff' }}>
                   {t.enabled ? '✓' : ''}
                 </span>
               </div>
-              <p className="text-xs text-gray-400">{t.desc}</p>
+              <p className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>{t.desc}</p>
             </button>
           ))}
         </div>
@@ -4889,15 +4889,15 @@ function RateCardTab() {
             <div key={d.id} className="flex items-center justify-between px-4 py-3"
               style={{ borderBottom: i < durations.length - 1 ? '1px solid #e9d5ff' : 'none' }}>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-gray-800">{d.label}</span>
+                <span className="text-sm font-semibold" style={{ color: '#0F0020' }}>{d.label}</span>
                 {i === 0 && <span className="text-[9px] font-black px-1.5 py-0.5 rounded" style={{ backgroundColor: '#FA8112' + '18', color: '#FA8112' }}>Base</span>}
               </div>
-              <div className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ backgroundColor: '#f9f5ff' }}>
-                <span className="text-xs font-bold text-gray-400">₦</span>
+              <div className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ backgroundColor: 'rgba(124,58,237,0.04)' }}>
+                <span className="text-xs font-bold" style={{ color: 'rgba(15,0,32,0.4)' }}>₦</span>
                 <input type="text" inputMode="numeric"
                   value={d.price > 0 ? d.price.toLocaleString() : ''}
                   onChange={e => setDurations(prev => prev.map(r => r.id === d.id ? { ...r, price: parseNum(stripInjection(e.target.value)) } : r))}
-                  className="w-24 text-sm font-bold text-gray-800 bg-transparent focus:outline-none text-right"
+                  className="w-24 text-sm font-bold bg-transparent focus:outline-none text-right" style={{ color: '#0F0020' }}
                   placeholder="0" />
               </div>
             </div>
@@ -4917,25 +4917,25 @@ function RateCardTab() {
                 <span className="text-xs font-black" style={{ color: p.color }}>{p.label[0]}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold" style={{ color: p.enabled ? p.color : '#374151' }}>{p.label}</p>
-                <p className="text-xs text-gray-400">{p.reach}</p>
+                <p className="text-sm font-bold" style={{ color: p.enabled ? p.color : 'rgba(15,0,32,0.5)' }}>{p.label}</p>
+                <p className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>{p.reach}</p>
               </div>
               {p.enabled && (
                 <div className="flex items-center gap-2">
                   <div className="flex flex-col items-end gap-0.5">
-                    <span className="text-[10px] text-gray-400">Followers</span>
-                    <div className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ backgroundColor: '#f9f5ff' }}>
+                    <span className="text-[10px]" style={{ color: 'rgba(15,0,32,0.4)' }}>Followers</span>
+                    <div className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ backgroundColor: 'rgba(124,58,237,0.04)' }}>
                       <input type="text" inputMode="numeric"
                         value={(p.followers ?? 0) > 0 ? (p.followers ?? 0).toLocaleString() : ''}
                         onChange={e => setPlatforms(prev => prev.map(r => r.id === p.id ? { ...r, followers: parseNum(stripInjection(e.target.value)) } : r))}
                         className="w-20 text-sm font-bold bg-transparent focus:outline-none text-right"
-                        style={{ color: '#374151' }}
+                        style={{ color: 'rgba(15,0,32,0.6)' }}
                         placeholder="0" />
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-0.5">
-                    <span className="text-[10px] text-gray-400">Posting fee</span>
-                    <div className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ backgroundColor: '#f9f5ff' }}>
+                    <span className="text-[10px]" style={{ color: 'rgba(15,0,32,0.4)' }}>Posting fee</span>
+                    <div className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ backgroundColor: 'rgba(124,58,237,0.04)' }}>
                       <span className="text-xs font-bold" style={{ color: p.color }}>+₦</span>
                       <input type="text" inputMode="numeric"
                         value={p.fee > 0 ? p.fee.toLocaleString() : ''}
@@ -4967,8 +4967,8 @@ function RateCardTab() {
                   <span className="text-sm font-black" style={{ color: a.color }}>+</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold" style={{ color: a.enabled ? a.color : '#374151' }}>{a.label}</p>
-                  <p className="text-xs text-gray-400">{a.desc}</p>
+                  <p className="text-sm font-bold" style={{ color: a.enabled ? a.color : 'rgba(15,0,32,0.5)' }}>{a.label}</p>
+                  <p className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>{a.desc}</p>
                 </div>
                 {a.custom ? (
                   <button onClick={() => setAddons(prev => prev.filter(x => x.id !== a.id))}
@@ -4983,9 +4983,9 @@ function RateCardTab() {
                 )}
               </div>
               {a.enabled && (
-                <div className="flex items-center justify-between px-4 py-3 border-t" style={{ borderColor: '#f3e8ff', backgroundColor: '#fafafa' }}>
-                  <span className="text-xs font-semibold text-gray-400">Price for this add-on</span>
-                  <div className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ backgroundColor: '#f9f5ff' }}>
+                <div className="flex items-center justify-between px-4 py-3 border-t" style={{ borderColor: '#e9d5ff', backgroundColor: 'rgba(124,58,237,0.03)' }}>
+                  <span className="text-xs font-semibold" style={{ color: 'rgba(15,0,32,0.4)' }}>Price for this add-on</span>
+                  <div className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ backgroundColor: 'rgba(124,58,237,0.04)' }}>
                     <span className="text-xs font-bold" style={{ color: a.color }}>+₦</span>
                     <input type="text" inputMode="numeric"
                       value={a.price > 0 ? a.price.toLocaleString() : ''}
@@ -5013,14 +5013,14 @@ function RateCardTab() {
       {showCustom && (
         <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="bg-white rounded-t-3xl w-full max-w-md p-6 pb-10">
-            <div className="w-9 h-1 rounded-full bg-gray-200 mx-auto mb-5" />
-            <h3 className="text-lg font-black text-gray-900 mb-1">Custom Add-on</h3>
-            <p className="text-sm text-gray-400 mb-5">Name it and set your price</p>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Add-on name</label>
+            <div className="w-9 h-1 rounded-full mx-auto mb-5" style={{ backgroundColor: '#e9d5ff' }} />
+            <h3 className="text-lg font-black mb-1" style={{ color: '#0F0020' }}>Custom Add-on</h3>
+            <p className="text-sm mb-5" style={{ color: 'rgba(15,0,32,0.4)' }}>Name it and set your price</p>
+            <label className="block text-xs font-bold uppercase tracking-wide mb-1.5" style={{ color: 'rgba(15,0,32,0.4)' }}>Add-on name</label>
             <input type="text" maxLength={40} value={customName} onChange={e => setCustomName(stripInjection(e.target.value))}
               placeholder="e.g. Express Delivery, Raw Files, Revision…"
               className="w-full rounded-xl border px-4 py-3 text-sm focus:outline-none mb-4" style={{ borderColor: '#e9d5ff' }} />
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Price</label>
+            <label className="block text-xs font-bold uppercase tracking-wide mb-1.5" style={{ color: 'rgba(15,0,32,0.4)' }}>Price</label>
             <div className="flex items-center rounded-xl border-2 px-4 py-3 mb-5" style={{ borderColor: '#e9d5ff' }}>
               <span className="text-xl font-black mr-2" style={{ color: purple }}>₦</span>
               <input type="text" inputMode="numeric" value={customPrice} onChange={e => setCustomPrice(e.target.value.replace(/[^0-9]/g, ''))}
@@ -5028,7 +5028,7 @@ function RateCardTab() {
             </div>
             <div className="flex gap-3">
               <button onClick={() => setShowCustom(false)}
-                className="flex-1 py-3 rounded-xl border font-bold text-sm text-gray-500" style={{ borderColor: '#e9d5ff' }}>
+                className="flex-1 py-3 rounded-xl border font-bold text-sm" style={{ color: 'rgba(15,0,32,0.4)', borderColor: '#e9d5ff' }} style={{ borderColor: '#e9d5ff' }}>
                 Cancel
               </button>
               <button onClick={addCustomAddon} disabled={!customName.trim() || !customPrice}
@@ -5057,7 +5057,7 @@ function RCSection({ label, hint, children }) {
   return (
     <div>
       <p className="text-sm font-black mb-0.5" style={{ color: darkPurple }}>{label}</p>
-      <p className="text-xs text-gray-400 mb-3">{hint}</p>
+      <p className="text-xs mb-3" style={{ color: 'rgba(15,0,32,0.4)' }}>{hint}</p>
       {children}
     </div>
   )
@@ -5338,7 +5338,7 @@ function PayoutSettingsTab() {
             <p className="text-brand-dark/50 text-sm mb-5">This bank account will be removed from your payout settings.</p>
             <div className="flex gap-3">
               <button onClick={() => setDeleteTarget(null)}
-                className="flex-1 py-3 rounded-xl text-sm font-semibold text-brand-dark/60 border border-gray-200 hover:bg-gray-50 transition-colors">
+                className="flex-1 py-3 rounded-xl text-sm font-semibold transition-colors" style={{ border: '1px solid #e9d5ff', color: 'rgba(15,0,32,0.5)' }} onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(124,58,237,0.04)'} onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
                 Cancel
               </button>
               <button onClick={() => removeAccount(deleteTarget)}
@@ -5357,7 +5357,7 @@ function PayoutSettingsTab() {
           <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden" style={{ border: '1px solid #e9d5ff' }}>
             <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: '1px solid #e9d5ff' }}>
               <p className="font-black text-brand-dark">Add bank account</p>
-              <button onClick={() => { setShowAddModal(false); resetForm() }} className="p-1.5 rounded-lg hover:bg-gray-100">
+              <button onClick={() => { setShowAddModal(false); resetForm() }} className="p-1.5 rounded-lg" onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(124,58,237,0.06)'} onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
                 <X className="w-4 h-4 text-brand-dark/40" />
               </button>
             </div>
@@ -5367,7 +5367,7 @@ function PayoutSettingsTab() {
                 <label className="text-xs font-bold text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Bank *</label>
                 <button onClick={() => setShowBankPicker(true)}
                   className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm outline-none text-left"
-                  style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
+                  style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}>
                   <span className={newBank ? 'text-brand-dark font-semibold' : 'text-brand-dark/40'}>{newBank || 'Select your bank'}</span>
                   <ChevronDown className="w-4 h-4 text-brand-dark/40" />
                 </button>
@@ -5375,7 +5375,7 @@ function PayoutSettingsTab() {
               {/* Account number */}
               <div>
                 <label className="text-xs font-bold text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Account Number *</label>
-                <div className="flex items-center px-4 rounded-xl" style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
+                <div className="flex items-center px-4 rounded-xl" style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}>
                   <input
                     type="text" inputMode="numeric" maxLength={10}
                     value={newAccNum}
@@ -5402,7 +5402,7 @@ function PayoutSettingsTab() {
                     onChange={e => setNewAccName(stripInjection(e.target.value))}
                     placeholder="Name on account"
                     className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none"
-                    style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}
+                    style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}
                   />
                 </div>
               )}
@@ -5422,12 +5422,12 @@ function PayoutSettingsTab() {
           <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden" style={{ border: '1px solid #e9d5ff', maxHeight: '80vh' }}>
             <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #e9d5ff' }}>
               <p className="font-black text-brand-dark">Select bank</p>
-              <button onClick={() => setShowBankPicker(false)} className="p-1.5 rounded-lg hover:bg-gray-100">
+              <button onClick={() => setShowBankPicker(false)} className="p-1.5 rounded-lg" onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(124,58,237,0.06)'} onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
                 <X className="w-4 h-4 text-brand-dark/40" />
               </button>
             </div>
             <div className="px-6 py-3" style={{ borderBottom: '1px solid #e9d5ff' }}>
-              <div className="flex items-center gap-2 px-3 rounded-xl" style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
+              <div className="flex items-center gap-2 px-3 rounded-xl" style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}>
                 <Hash className="w-4 h-4 text-brand-dark/30" />
                 <input type="text" placeholder="Search banks…" value={bankSearch} onChange={e => setBankSearch(stripInjection(e.target.value))}
                   autoFocus className="flex-1 py-2.5 text-sm text-brand-dark bg-transparent outline-none" />
@@ -5438,7 +5438,7 @@ function PayoutSettingsTab() {
                 <button key={bank} onClick={() => handleSelectBank(bank)}
                   className="w-full flex items-center justify-between px-6 py-3.5 text-sm hover:bg-purple-50 transition-colors text-left"
                   style={{ borderBottom: i < filteredBanks.length - 1 ? '1px solid #f3eeff' : 'none' }}>
-                  <span className={`font-medium ${newBank === bank ? 'font-bold' : ''}`} style={{ color: newBank === bank ? darkPurple : '#374151' }}>{bank}</span>
+                  <span className={`font-medium ${newBank === bank ? 'font-bold' : ''}`} style={{ color: newBank === bank ? darkPurple : '#0F0020' }}>{bank}</span>
                   {newBank === bank && <CheckCircle className="w-4 h-4" style={{ color: darkPurple }} />}
                 </button>
               ))}
@@ -5455,7 +5455,7 @@ function PayoutSettingsTab() {
               <p className="font-black text-brand-dark">
                 {secStep === 'set' ? (secQuestion ? 'Change security question' : 'Set security question') : 'Confirm your answer'}
               </p>
-              <button onClick={() => setShowSecModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100">
+              <button onClick={() => setShowSecModal(false)} className="p-1.5 rounded-lg" onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(124,58,237,0.06)'} onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
                 <X className="w-4 h-4 text-brand-dark/40" />
               </button>
             </div>
@@ -5466,14 +5466,14 @@ function PayoutSettingsTab() {
                     <label className="text-xs font-bold text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Choose a question *</label>
                     <button onClick={() => setShowQPicker(true)}
                       className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm outline-none text-left"
-                      style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
+                      style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}>
                       <span className={draftQuestion ? 'text-brand-dark font-medium text-xs' : 'text-brand-dark/40'}>{draftQuestion || 'Select a security question'}</span>
                       <ChevronDown className="w-4 h-4 text-brand-dark/40 flex-shrink-0" />
                     </button>
                   </div>
                   <div>
                     <label className="text-xs font-bold text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Your answer *</label>
-                    <div className="flex items-center px-4 rounded-xl" style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
+                    <div className="flex items-center px-4 rounded-xl" style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}>
                       <input type={showAnswer ? 'text' : 'password'} value={draftAnswer}
                         onChange={e => { setDraftAnswer(stripInjection(e.target.value)); setSecError('') }}
                         placeholder="Enter your answer" autoComplete="off"
@@ -5499,7 +5499,7 @@ function PayoutSettingsTab() {
                   </div>
                   <div>
                     <label className="text-xs font-bold text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Re-enter your answer *</label>
-                    <div className="flex items-center px-4 rounded-xl" style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
+                    <div className="flex items-center px-4 rounded-xl" style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}>
                       <input type={showAnswer ? 'text' : 'password'} value={confirmAnswer}
                         onChange={e => { setConfirmAnswer(stripInjection(e.target.value)); setSecError('') }}
                         placeholder="Re-enter your answer" autoFocus autoComplete="off"
@@ -5512,7 +5512,7 @@ function PayoutSettingsTab() {
                   {secError && <p className="text-xs text-red-500 font-medium">{secError}</p>}
                   <div className="flex gap-3">
                     <button onClick={() => { setSecStep('set'); setSecError('') }}
-                      className="px-5 py-3 rounded-xl text-sm font-semibold text-brand-dark/50 border border-gray-200 hover:bg-gray-50 transition-colors">
+                      className="px-5 py-3 rounded-xl text-sm font-semibold transition-colors" style={{ border: '1px solid #e9d5ff', color: 'rgba(15,0,32,0.5)' }} onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(124,58,237,0.04)'} onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
                       ← Back
                     </button>
                     <button onClick={handleSecSave} disabled={confirmAnswer.length < 2}
@@ -5534,7 +5534,7 @@ function PayoutSettingsTab() {
           <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden" style={{ border: '1px solid #e9d5ff', maxHeight: '75vh' }}>
             <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #e9d5ff' }}>
               <p className="font-black text-brand-dark">Choose a question</p>
-              <button onClick={() => setShowQPicker(false)} className="p-1.5 rounded-lg hover:bg-gray-100">
+              <button onClick={() => setShowQPicker(false)} className="p-1.5 rounded-lg" onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(124,58,237,0.06)'} onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
                 <X className="w-4 h-4 text-brand-dark/40" />
               </button>
             </div>
