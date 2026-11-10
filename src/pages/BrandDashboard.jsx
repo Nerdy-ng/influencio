@@ -79,9 +79,9 @@ function CollabStepper({ status }) {
             <span
               className="flex items-center gap-1 text-xs font-black px-2 py-1 rounded-full border-2 whitespace-nowrap flex-shrink-0"
               style={{
-                backgroundColor: active ? color : done ? color + '28' : '#f0eff5',
-                borderColor:     active ? color : done ? color + '80' : '#d1d5db',
-                color:           active ? '#fff' : done ? color : '#9ca3af',
+                backgroundColor: active ? color : done ? color + '28' : 'rgba(124,58,237,0.04)',
+                borderColor:     active ? color : done ? color + '80' : '#e9d5ff',
+                color:           active ? '#fff' : done ? color : 'rgba(15,0,32,0.4)',
               }}
             >
               {done && <span style={{ fontSize: 9 }}>✓</span>}
@@ -89,7 +89,7 @@ function CollabStepper({ status }) {
               {label}
             </span>
             {i < STEPS.length - 1 && (
-              <div className="mx-1 rounded-full" style={{ flex: 1, height: 2.5, backgroundColor: done ? color + '55' : '#e5e7eb', minWidth: 8 }} />
+              <div className="mx-1 rounded-full" style={{ flex: 1, height: 2.5, backgroundColor: done ? color + '55' : '#e9d5ff', minWidth: 8 }} />
             )}
           </div>
         )
@@ -398,7 +398,7 @@ function OrderActions({ order, onPayNow, onApprove, onRevision, onReview }) {
   }
   if (order.status === 'in_progress') {
     return (
-      <span className="px-4 py-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-400">
+      <span className="px-4 py-2 rounded-full text-xs font-semibold" style={{ backgroundColor: 'rgba(124,58,237,0.06)', color: 'rgba(15,0,32,0.4)' }}>
         In Progress
       </span>
     )
@@ -1917,7 +1917,7 @@ function OrdersTab({ title, orders, emptyMsg, onPayNow, onApprove, onRevision, o
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-black text-brand-dpurple">{title}</h2>
-        <span className="text-sm text-gray-500">{filtered.length} of {orders.length} order{orders.length !== 1 ? 's' : ''}</span>
+        <span className="text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>{filtered.length} of {orders.length} order{orders.length !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Filters bar */}
@@ -1971,18 +1971,18 @@ function OrdersTab({ title, orders, emptyMsg, onPayNow, onApprove, onRevision, o
       )}
 
       {orders.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-3xl border border-brand-lav">
+        <div className="text-center py-20 bg-white rounded-2xl border border-brand-lav">
           <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#f3e8ff' }}>
             <ShoppingBag className="w-7 h-7" style={{ color: purple }} />
           </div>
-          <p className="text-gray-500 text-sm mb-5">{emptyMsg}</p>
-          <Link to="/marketplace" className="px-6 py-2.5 rounded-full text-white text-sm font-semibold" style={{ backgroundColor: darkPurple }}>
+          <p className="text-sm mb-5" style={{ color: 'rgba(15,0,32,0.4)' }}>{emptyMsg}</p>
+          <Link to="/brand/find-creators" className="px-6 py-2.5 rounded-full text-white text-sm font-semibold" style={{ backgroundColor: darkPurple }}>
             Browse Talents
           </Link>
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-14 bg-white rounded-2xl border border-brand-lav">
-          <p className="text-gray-400 text-sm mb-3">No orders match your filters</p>
+          <p className="text-sm mb-3" style={{ color: 'rgba(15,0,32,0.4)' }}>No orders match your filters</p>
           <button
             onClick={() => { setSearch(''); setStatusFilter('all') }}
             className="text-sm font-semibold px-4 py-2 rounded-full"
@@ -2939,8 +2939,8 @@ function BrandCustomOffersPanel() {
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-3">
         <Send className="w-4 h-4" style={{ color: purple }} />
-        <p className="font-black text-gray-900 text-sm">Custom Offers Sent</p>
-        <span className="text-xs text-gray-400 font-medium">{offers.length} total</span>
+        <p className="font-black text-sm" style={{ color: '#0F0020' }}>Custom Offers Sent</p>
+        <span className="text-xs font-medium" style={{ color: 'rgba(15,0,32,0.4)' }}>{offers.length} total</span>
       </div>
       <div className="space-y-3">
         {offers.map(o => {
@@ -2948,15 +2948,15 @@ function BrandCustomOffersPanel() {
           const s = STATUS_MAP[o.status] || STATUS_MAP.offer_pending
           const isOpen = expanded === o.id
           return (
-            <div key={o.id} className="rounded-2xl bg-white overflow-hidden" style={{ border: `1px solid ${purple}25` }}>
+            <div key={o.id} className="rounded-2xl bg-white overflow-hidden" style={{ border: '1px solid #e9d5ff' }}>
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-gray-900 text-sm truncate">{o.title}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">To {creatorName} · {new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                    <p className="font-bold text-sm truncate" style={{ color: '#0F0020' }}>{o.title}</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'rgba(15,0,32,0.4)' }}>To {creatorName} · {new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <p className="font-black text-sm" style={{ color: '#22c55e' }}>₦{Number(o.budget).toLocaleString()}</p>
+                    <p className="font-black text-sm" style={{ color: '#7c3aed' }}>₦{Number(o.budget).toLocaleString()}</p>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: s.bg, color: s.color }}>{s.label}</span>
                   </div>
                 </div>
@@ -2965,7 +2965,7 @@ function BrandCustomOffersPanel() {
                   {isOpen ? 'Hide' : 'View brief'} <ChevronRight className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
                 </button>
                 {isOpen && (
-                  <div className="mb-3 space-y-2 text-xs text-gray-600 leading-relaxed">
+                  <div className="mb-3 rounded-xl p-3 space-y-2 text-xs leading-relaxed" style={{ backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid rgba(124,58,237,0.08)', color: 'rgba(15,0,32,0.6)' }}>
                     <p>{o.brief}</p>
                     {o.deliverables?.length > 0 && (
                       <div className="flex flex-wrap gap-1">
