@@ -2191,6 +2191,7 @@ export default function TalentDashboard() {
   const [bsCompanyName, setBsCompanyName] = useState('')
   const [bsIndustry,    setBsIndustry]    = useState('')
   const [bsActivating,  setBsActivating]  = useState(false)
+  const [bsError,       setBsError]       = useState('')
   const navigateTo = useNavigate()
 
   const INDUSTRIES = [
@@ -2221,12 +2222,14 @@ export default function TalentDashboard() {
     setBsProfileId(user.id)
     setBsCompanyName(profile?.company_name || profile?.full_name || '')
     setBsIndustry('')
+    setBsError('')
     setShowBrandSetup(true)
   }
 
   async function activateBrandMode() {
     if (!bsCompanyName.trim() || !bsIndustry || !bsProfileId) return
     setBsActivating(true)
+    setBsError('')
     try {
       const { error } = await supabase.functions.invoke('sync-workspace', {
         body: { workspace: 'brand', company_name: bsCompanyName.trim(), industry: bsIndustry },
@@ -2235,11 +2238,8 @@ export default function TalentDashboard() {
       localStorage.setItem('brandiór_workspace', 'brand')
       localStorage.setItem('brandiór_role', 'brand')
       navigateTo('/brand-dashboard')
-    } catch {
-      // EF failed — still navigate
-      localStorage.setItem('brandiór_workspace', 'brand')
-      localStorage.setItem('brandiór_role', 'brand')
-      navigateTo('/brand-dashboard')
+    } catch (err) {
+      setBsError(err?.message || 'Could not activate Brand mode. Please try again.')
     } finally {
       setBsActivating(false)
     }
@@ -2666,6 +2666,7 @@ export default function TalentDashboard() {
               ))}
             </div>
 
+            {bsError && <p className="text-xs font-semibold text-red-500 mb-3">{bsError}</p>}
             <button onClick={activateBrandMode} disabled={!bsCompanyName.trim() || !bsIndustry || bsActivating}
               className="w-full py-3 rounded-xl text-white font-bold text-sm transition-opacity disabled:opacity-40"
               style={{ backgroundColor: '#4c1d95' }}>

@@ -677,6 +677,7 @@ export default function BrandDashboard() {
   const [csUsername,       setCsUsername]       = useState('')
   const [csUsernameStatus, setCsUsernameStatus] = useState('idle') // idle|checking|available|taken|invalid
   const [csActivating,  setCsActivating]  = useState(false)
+  const [csError,       setCsError]       = useState('')
   const navigate = useNavigate()
   const csCheckTimer = useRef(null)
 
@@ -704,6 +705,7 @@ export default function BrandDashboard() {
       .toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '_').slice(0, 24)
     setCsUsername(suggested)
     setCsUsernameStatus('idle')
+    setCsError('')
     setShowCreatorSetup(true)
   }
 
@@ -724,6 +726,7 @@ export default function BrandDashboard() {
   async function activateCreatorMode() {
     if (csUsernameStatus !== 'available' || !csUsername || !csProfileId) return
     setCsActivating(true)
+    setCsError('')
     try {
       const { error } = await supabase.functions.invoke('sync-workspace', {
         body: { workspace: 'creator', username: csUsername },
@@ -732,11 +735,8 @@ export default function BrandDashboard() {
       localStorage.setItem('brandiór_workspace', 'creator')
       localStorage.setItem('brandiór_role', 'talent')
       navigate('/dashboard')
-    } catch {
-      // EF failed — still navigate (EF may have partially succeeded)
-      localStorage.setItem('brandiór_workspace', 'creator')
-      localStorage.setItem('brandiór_role', 'talent')
-      navigate('/dashboard')
+    } catch (err) {
+      setCsError(err?.message || 'Could not activate Creator mode. Please try again.')
     } finally {
       setCsActivating(false)
     }
@@ -1119,6 +1119,7 @@ export default function BrandDashboard() {
             {csUsernameStatus === 'invalid'   && <p className="text-xs font-semibold text-amber-500 mb-3">Letters, numbers and underscores only. Min 3 characters.</p>}
             {!['available','taken','invalid','checking'].includes(csUsernameStatus) && <div className="mb-3" />}
 
+            {csError && <p className="text-xs font-semibold text-red-500 mb-3">{csError}</p>}
             <button onClick={activateCreatorMode} disabled={csUsernameStatus !== 'available' || csActivating}
               className="w-full py-3 rounded-xl text-white font-bold text-sm transition-opacity disabled:opacity-40"
               style={{ backgroundColor: '#7c3aed' }}>

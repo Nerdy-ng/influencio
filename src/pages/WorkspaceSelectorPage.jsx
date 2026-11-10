@@ -8,27 +8,27 @@ export default function WorkspaceSelectorPage() {
   const [selecting, setSelecting]       = useState(null) // 'brand' | 'creator' | null
 
   useEffect(() => {
-    const userId = localStorage.getItem('brandiór_user')
-    if (!userId) { navigate('/login', { replace: true }); return }
-
-    supabase
-      .from('profiles')
-      .select('has_brand_access, has_creator_access')
-      .eq('id', userId)
-      .single()
-      .then(({ data }) => {
-        if (!data) { navigate('/login', { replace: true }); return }
-        // If only one capability exists, skip the selector and route directly
-        if (data.has_brand_access && !data.has_creator_access) {
-          navigate('/brand-dashboard', { replace: true })
-          return
-        }
-        if (data.has_creator_access && !data.has_brand_access) {
-          navigate('/dashboard', { replace: true })
-          return
-        }
-        setCapabilities(data)
-      })
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) { navigate('/login', { replace: true }); return }
+      supabase
+        .from('profiles')
+        .select('has_brand_access, has_creator_access')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          if (!data) { navigate('/login', { replace: true }); return }
+          // If only one capability exists, skip the selector and route directly
+          if (data.has_brand_access && !data.has_creator_access) {
+            navigate('/brand-dashboard', { replace: true })
+            return
+          }
+          if (data.has_creator_access && !data.has_brand_access) {
+            navigate('/dashboard', { replace: true })
+            return
+          }
+          setCapabilities(data)
+        })
+    })
   }, [])
 
   async function selectWorkspace(workspace) {
