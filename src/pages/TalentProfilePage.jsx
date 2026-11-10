@@ -1203,8 +1203,8 @@ export default function TalentProfilePage() {
                 <label className="text-xs font-bold uppercase tracking-widest mb-1.5 block" style={{ color: 'rgba(15,0,32,0.4)' }}>Project title *</label>
                 <input type="text" required value={offerForm.title} onChange={e => setOfferForm(f => ({ ...f, title: stripInjection(e.target.value) }))}
                   placeholder="e.g. Summer Glow UGC Campaign"
-                  className="w-full px-4 py-2.5 rounded-xl text-sm outline-none" style={{ color: '#0F0020' }}
-                  style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }} />
+                  className="w-full px-4 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ color: '#0F0020', border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }} />
               </div>
 
               {/* Brief */}
@@ -1212,8 +1212,8 @@ export default function TalentProfilePage() {
                 <label className="text-xs font-bold uppercase tracking-widest mb-1.5 block" style={{ color: 'rgba(15,0,32,0.4)' }}>Brief * <span className="normal-case font-normal" style={{ color: 'rgba(15,0,32,0.4)' }}>(min 20 chars)</span></label>
                 <textarea required rows={4} value={offerForm.brief} onChange={e => setOfferForm(f => ({ ...f, brief: stripInjection(e.target.value) }))}
                   placeholder="Describe your campaign goals, tone, target audience, and specific requirements…"
-                  className="w-full px-4 py-2.5 rounded-xl text-sm outline-none resize-none" style={{ color: '#0F0020' }}
-                  style={{ border: `1.5px solid ${offerForm.brief.length > 0 && offerForm.brief.length < 20 ? '#ef4444' : '#e9d5ff'}`, backgroundColor: '#fff' }} />
+                  className="w-full px-4 py-2.5 rounded-xl text-sm outline-none resize-none"
+                  style={{ color: '#0F0020', border: `1.5px solid ${offerForm.brief.length > 0 && offerForm.brief.length < 20 ? '#ef4444' : '#e9d5ff'}`, backgroundColor: '#fff' }} />
                 <p className={`text-[10px] mt-0.5 ${offerForm.brief.length > 0 && offerForm.brief.length < 20 ? 'text-red-500' : ''}`} style={{ color: offerForm.brief.length > 0 && offerForm.brief.length < 20 ? undefined : 'rgba(15,0,32,0.25)' }}>{offerForm.brief.length} / 20 min</p>
               </div>
 
@@ -1263,7 +1263,7 @@ export default function TalentProfilePage() {
                   <div className="absolute z-10 w-full mt-1 rounded-xl bg-white shadow-xl overflow-hidden" style={{ border: '1px solid #e9d5ff' }}>
                     {TIMELINES_LIST.map(t => (
                       <button key={t} type="button" onClick={() => { setOfferForm(f => ({ ...f, timeline: t })); setTimelineOpen(false) }}
-                        className="w-full px-4 py-2.5 text-left text-sm hover:bg-purple-50 transition-colors flex items-center justify-between"
+                        className="w-full px-4 py-2.5 text-left text-sm hover:bg-[rgba(124,58,237,0.06)] transition-colors flex items-center justify-between"
                         style={{ color: offerForm.timeline === t ? purple : '#0F0020', fontWeight: offerForm.timeline === t ? '700' : '400' }}>
                         {t}{offerForm.timeline === t && <CheckCircle className="w-4 h-4" style={{ color: purple }} />}
                       </button>

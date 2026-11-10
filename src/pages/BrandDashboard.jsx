@@ -132,20 +132,20 @@ function PaymentModal({ order, onClose, onSuccess }) {
           <>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-black text-brand-dpurple">Complete Payment</h2>
-              <button onClick={onClose}><X className="w-5 h-5 text-gray-400" /></button>
+              <button onClick={onClose}><X className="w-5 h-5" style={{ color: 'rgba(15,0,32,0.4)' }} /></button>
             </div>
-            <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#f9f5ff', border: '1px solid #e9d5ff' }}>
+            <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid #e9d5ff' }}>
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-500">Package</span>
-                <span className="font-medium text-gray-800">{order.package?.name}</span>
+                <span style={{ color: 'rgba(15,0,32,0.4)' }}>Package</span>
+                <span className="font-medium" style={{ color: 'rgba(15,0,32,0.6)' }}>{order.package?.name}</span>
               </div>
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-500">Talent</span>
-                <span className="font-medium text-gray-800">{order.talent?.name}</span>
+                <span style={{ color: 'rgba(15,0,32,0.4)' }}>Talent</span>
+                <span className="font-medium" style={{ color: 'rgba(15,0,32,0.6)' }}>{order.talent?.name}</span>
               </div>
-              <div className="h-px bg-gray-200 my-2" />
+              <div className="h-px my-2" style={{ backgroundColor: '#e9d5ff' }} />
               <div className="flex justify-between">
-                <span className="font-bold text-gray-900">Total</span>
+                <span className="font-bold" style={{ color: '#0F0020' }}>Total</span>
                 <span className="text-xl font-extrabold" style={{ color: pink }}>{formatNGN(order.total)}</span>
               </div>
             </div>
@@ -167,11 +167,11 @@ function PaymentModal({ order, onClose, onSuccess }) {
 
         {step === 'processing' && (
           <div className="text-center py-8">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: '#f3e8ff' }}>
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(124,58,237,0.1)' }}>
               <Loader2 className="w-8 h-8 animate-spin" style={{ color: purple }} />
             </div>
-            <p className="font-bold text-gray-900 mb-1">Redirecting to Paystack...</p>
-            <p className="text-sm text-gray-500">Please wait while we process your payment</p>
+            <p className="font-bold mb-1" style={{ color: '#0F0020' }}>Redirecting to Paystack...</p>
+            <p className="text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>Please wait while we process your payment</p>
           </div>
         )}
 
@@ -180,8 +180,8 @@ function PaymentModal({ order, onClose, onSuccess }) {
             <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-green-100">
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
-            <p className="font-bold text-gray-900 mb-1">Payment Successful!</p>
-            <p className="text-sm text-gray-500">Funds held securely. The talent has been notified.</p>
+            <p className="font-bold mb-1" style={{ color: '#0F0020' }}>Payment Successful!</p>
+            <p className="text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>Funds held securely. The talent has been notified.</p>
           </div>
         )}
       </div>
@@ -207,18 +207,18 @@ function RevisionModal({ order, onClose, onSubmit }) {
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-xl font-black text-brand-dpurple">Request Revision</h2>
-          <button onClick={onClose}><X className="w-5 h-5 text-gray-400" /></button>
+          <button onClick={onClose}><X className="w-5 h-5" style={{ color: 'rgba(15,0,32,0.4)' }} /></button>
         </div>
-        <p className="text-sm text-gray-500 mb-4">Describe what you'd like the talent to change or improve.</p>
+        <p className="text-sm mb-4" style={{ color: 'rgba(15,0,32,0.4)' }}>Describe what you'd like the talent to change or improve.</p>
         <textarea
           value={reason}
           onChange={e => setReason(stripInjection(e.target.value))}
           rows={5}
           placeholder="e.g. Please adjust the lighting, change the caption to mention our promo code..."
-          className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 resize-none mb-5"
+          className="w-full px-4 py-3 text-sm rounded-2xl resize-none mb-5 focus:outline-none" style={{ border: '1.5px solid #e9d5ff' }}
         />
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 py-3 rounded-full text-sm font-semibold border border-gray-200 text-gray-700">
+          <button onClick={onClose} className="flex-1 py-3 rounded-full text-sm font-semibold border" style={{ borderColor: '#e9d5ff', color: 'rgba(15,0,32,0.6)' }}>
             Cancel
           </button>
           <button
@@ -368,7 +368,7 @@ function OrderCard({ order, onPayNow, onApprove, onRevision, onReview }) {
                   <a
                     key={f.name}
                     href={f.url}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-medium hover:bg-purple-50 transition-colors" style={{ color: 'rgba(15,0,32,0.6)' }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-medium hover:bg-[rgba(124,58,237,0.04)] transition-colors" style={{ color: 'rgba(15,0,32,0.6)' }}
                     download
                   >
                     <Download className="w-3.5 h-3.5" />
@@ -487,8 +487,8 @@ function ReviewModal({ order, onClose, onSubmitted }) {
         {done ? (
           <div className="text-center py-6">
             <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-500" />
-            <p className="text-lg font-black text-gray-900 mb-1">Review submitted!</p>
-            <p className="text-sm text-gray-400 mb-6">Your review helps other brands make informed decisions.</p>
+            <p className="text-lg font-black mb-1" style={{ color: '#0F0020' }}>Review submitted!</p>
+            <p className="text-sm mb-6" style={{ color: 'rgba(15,0,32,0.4)' }}>Your review helps other brands make informed decisions.</p>
             <button onClick={onClose} className="px-6 py-2.5 rounded-full text-sm font-bold text-white" style={{ backgroundColor: purple }}>
               Done
             </button>
@@ -496,13 +496,13 @@ function ReviewModal({ order, onClose, onSubmitted }) {
         ) : (
           <form onSubmit={submit}>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-black text-gray-900">Rate {order.talent?.name || 'Creator'}</h3>
-              <button type="button" onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-700">
+              <h3 className="text-lg font-black" style={{ color: '#0F0020' }}>Rate {order.talent?.name || 'Creator'}</h3>
+              <button type="button" onClick={onClose} className="p-1.5" style={{ color: 'rgba(15,0,32,0.4)' }}>
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-sm text-gray-500 mb-4">
-              Campaign: <span className="font-medium text-gray-700">{order.package?.name || 'Campaign'}</span>
+            <p className="text-sm mb-4" style={{ color: 'rgba(15,0,32,0.4)' }}>
+              Campaign: <span className="font-medium" style={{ color: 'rgba(15,0,32,0.6)' }}>{order.package?.name || 'Campaign'}</span>
             </p>
 
             {/* Star picker */}
@@ -538,7 +538,7 @@ function ReviewModal({ order, onClose, onSubmitted }) {
               rows={4}
               placeholder="Describe your experience with this creator — quality of content, communication, delivery time…"
               className="w-full rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none border"
-              style={{ borderColor: '#e9d5ff', backgroundColor: '#faf5ff', color: '#1e0040' }}
+              style={{ borderColor: '#e9d5ff', backgroundColor: '#fff', color: '#1e0040' }}
               onFocus={e => e.target.style.borderColor = purple}
               onBlur={e => e.target.style.borderColor = '#e9d5ff'}
             />
@@ -625,7 +625,8 @@ export default function BrandDashboard() {
   const newOrderId = searchParams.get('newOrder')
   const initialTab = searchParams.get('tab')
   const initialConvId = searchParams.get('conv')
-  const pathTab = location.pathname === '/brand/find-creators' ? 'talents' : null
+  const pathTab = location.pathname === '/brand/find-creators' ? 'talents'
+    : location.pathname === '/brand/post-campaign' ? 'post-campaign' : null
 
   const [activeTab, setActiveTab] = useState(pathTab || initialTab || 'overview')
   const hasSetInitialTab = useRef(false)
@@ -1053,16 +1054,16 @@ export default function BrandDashboard() {
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style={{ backgroundColor: '#7c3aed18' }}>
                 <span className="text-2xl">✨</span>
               </div>
-              <h2 className="text-lg font-black text-gray-900 text-center">Choose your creator handle</h2>
-              <p className="text-sm text-gray-500 text-center mt-1">This will be your public username on Brandior. You can change it later.</p>
+              <h2 className="text-lg font-black text-center" style={{ color: '#0F0020' }}>Choose your creator handle</h2>
+              <p className="text-sm text-center mt-1" style={{ color: 'rgba(15,0,32,0.4)' }}>This will be your public username on Brandior. You can change it later.</p>
             </div>
 
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Username</p>
+            <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: 'rgba(15,0,32,0.4)' }}>Username</p>
             <div className="flex items-center border-2 rounded-xl px-4 py-3 mb-2 transition-colors"
               style={{ borderColor: csUsernameStatus === 'available' ? '#16a34a' : csUsernameStatus === 'taken' || csUsernameStatus === 'invalid' ? '#ef4444' : '#e5e7eb' }}>
               <span className="font-bold mr-1" style={{ color: '#7c3aed' }}>@</span>
               <input
-                className="flex-1 text-sm font-bold text-gray-900 outline-none bg-transparent"
+                className="flex-1 text-sm font-bold outline-none bg-transparent" style={{ color: '#0F0020' }}
                 placeholder="your_handle"
                 value={csUsername}
                 onChange={e => handleCsUsernameChange(e.target.value)}
@@ -1085,7 +1086,7 @@ export default function BrandDashboard() {
               {csActivating ? 'Activating…' : 'Activate Creator Mode →'}
             </button>
             <button onClick={() => setShowCreatorSetup(false)} disabled={csActivating}
-              className="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-40">
+              className="w-full mt-2 py-2 text-sm transition-colors disabled:opacity-40" style={{ color: 'rgba(15,0,32,0.4)' }}>
               Cancel
             </button>
           </div>
@@ -1583,7 +1584,7 @@ function MyCampaignsTab() {
                       {timeAgo(app.created_at)}
                     </span>
                   </div>
-                  <p className="text-sm leading-relaxed mb-3" style={{ color: '#374151', background: '#faf5ff', borderRadius: 10, padding: '10px 14px' }}>"{app.pitch}"</p>
+                  <p className="text-sm leading-relaxed mb-3" style={{ color: 'rgba(15,0,32,0.6)', background: 'rgba(124,58,237,0.04)', borderRadius: 10, padding: '10px 14px' }}>"{app.pitch}"</p>
                   <Link to={`/creators/${c.username || c.id}`}
                     className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl text-white"
                     style={{ backgroundColor: '#4c1d95' }}>
@@ -1972,7 +1973,7 @@ function OrdersTab({ title, orders, emptyMsg, onPayNow, onApprove, onRevision, o
 
       {orders.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-2xl border border-brand-lav">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#f3e8ff' }}>
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'rgba(124,58,237,0.1)' }}>
             <ShoppingBag className="w-7 h-7" style={{ color: purple }} />
           </div>
           <p className="text-sm mb-5" style={{ color: 'rgba(15,0,32,0.4)' }}>{emptyMsg}</p>
@@ -2038,7 +2039,7 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr style={{ backgroundColor: "#f9f5ff" }}>
+                <tr style={{ backgroundColor: "rgba(124,58,237,0.04)" }}>
                   <th className="text-left text-xs font-semibold text-gray-500 px-5 py-3">Talent</th>
                   <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Package</th>
                   <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Status</th>
@@ -2049,7 +2050,7 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {recentOrders.map(order => (
-                  <tr key={order._id} className="hover:bg-purple-50 transition-colors">
+                  <tr key={order._id} className="hover:bg-[rgba(124,58,237,0.04)] transition-colors">
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-2">
                         <img
@@ -2086,7 +2087,7 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr style={{ backgroundColor: "#f9f5ff" }}>
+                <tr style={{ backgroundColor: "rgba(124,58,237,0.04)" }}>
                   <th className="text-left text-xs font-semibold text-gray-500 px-5 py-3">Talent</th>
                   <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Package</th>
                   <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Amount</th>
@@ -2097,7 +2098,7 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {paidOrders.map(order => (
-                  <tr key={order._id} className="hover:bg-purple-50 transition-colors">
+                  <tr key={order._id} className="hover:bg-[rgba(124,58,237,0.04)] transition-colors">
                     <td className="px-5 py-3 text-sm font-medium text-gray-800 whitespace-nowrap">{order.talent?.name}</td>
                     <td className="px-3 py-3 text-sm text-gray-600 whitespace-nowrap">{order.package?.name}</td>
                     <td className="px-3 py-3 text-sm font-semibold text-gray-800 whitespace-nowrap">{formatNGN(order.total)}</td>
@@ -2276,7 +2277,7 @@ function WalletTab() {
                 className="px-3 py-1.5 rounded-full text-sm font-semibold border transition-all"
                 style={amount === String(a)
                   ? { backgroundColor: purple, color: '#fff', borderColor: purple }
-                  : { backgroundColor: '#faf5ff', color: purple, borderColor: '#e9d5ff' }}
+                  : { backgroundColor: 'rgba(124,58,237,0.04)', color: purple, borderColor: '#e9d5ff' }}
               >
                 {formatNGN(a)}
               </button>
@@ -2312,7 +2313,7 @@ function WalletTab() {
                   onClick={() => setMethod(m.id)}
                   className="flex items-center gap-3 p-3 rounded-xl border text-left transition-all"
                   style={active
-                    ? { borderColor: purple, backgroundColor: '#faf5ff' }
+                    ? { borderColor: purple, backgroundColor: 'rgba(124,58,237,0.06)' }
                     : { borderColor: '#e5e7eb', backgroundColor: '#fff' }}
                 >
                   <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -2366,7 +2367,7 @@ function WalletTab() {
               return (
                 <div key={t.id} className="px-5 py-3 flex items-center gap-4">
                   <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: '#f3e8ff' }}>
+                    style={{ backgroundColor: 'rgba(124,58,237,0.1)' }}>
                     <ArrowUpRight className="w-4 h-4" style={{ color: purple }} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -2626,7 +2627,7 @@ function SettingsTab() {
         onChange={e => setForm(f => ({ ...f, [key]: stripInjection(e.target.value) }))}
         placeholder={opts.placeholder || ''}
         disabled={opts.disabled}
-        className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 disabled:bg-gray-50 disabled:text-gray-400"
+        className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400 disabled:opacity-50"
       />
     </div>
   )
@@ -2778,7 +2779,7 @@ function SettingsTab() {
 // ── Brand Notifications Tab ────────────────────────────────────────────────────
 
 const BRAND_NOTIF_ICONS = {
-  delivered:          { color: '#7c3aed', bg: '#f3e8ff' },
+  delivered:          { color: '#7c3aed', bg: 'rgba(124,58,237,0.1)' },
   new_collab:         { color: '#2563eb', bg: '#dbeafe' },
   revision_requested: { color: '#ea580c', bg: '#fff7ed' },
   completed:          { color: '#16a34a', bg: '#dcfce7' },

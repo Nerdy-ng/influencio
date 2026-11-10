@@ -1141,8 +1141,8 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
                 <input type="url" value={deliverLink} disabled={!!deliverFile}
                   onChange={e => setDeliverLink(stripInjection(e.target.value))}
                   placeholder="Instagram, TikTok, YouTube, Drive…"
-                  className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none mb-3 disabled:opacity-40" style={{ border: '1.5px solid #e9d5ff', color: '#0F0020', backgroundColor: '#fff' }}
-                  style={{ borderColor: deliverLink && !deliverFile ? '#e9d5ff' : undefined }} />
+                  className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none mb-3 disabled:opacity-40"
+                  style={{ border: '1.5px solid #e9d5ff', color: '#0F0020', backgroundColor: '#fff' }} />
 
                 <textarea value={deliverNote} onChange={e => setDeliverNote(stripInjection(e.target.value))}
                   placeholder="Add a note for the brand (optional)..."
@@ -1249,8 +1249,8 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
                   <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
                 </button>
                 {isOpen && (
-                  <div className="mt-3 p-3 rounded-xl text-sm leading-relaxed space-y-1" style={{ color: 'rgba(15,0,32,0.6)' }}
-                    style={{ backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid #e9d5ff' }}>
+                  <div className="mt-3 p-3 rounded-xl text-sm leading-relaxed space-y-1"
+                    style={{ color: 'rgba(15,0,32,0.6)', backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid #e9d5ff' }}>
                     <p><span className="font-semibold">Duration:</span> {c.duration_label}</p>
                     {c.brief?.productName && <p><span className="font-semibold">Product:</span> {c.brief.productName}</p>}
                     {c.brief?.goal && <p><span className="font-semibold">Goal:</span> {c.brief.goal}</p>}
@@ -5028,7 +5028,7 @@ function RateCardTab() {
             </div>
             <div className="flex gap-3">
               <button onClick={() => setShowCustom(false)}
-                className="flex-1 py-3 rounded-xl border font-bold text-sm" style={{ color: 'rgba(15,0,32,0.4)', borderColor: '#e9d5ff' }} style={{ borderColor: '#e9d5ff' }}>
+                className="flex-1 py-3 rounded-xl border font-bold text-sm" style={{ color: 'rgba(15,0,32,0.4)', borderColor: '#e9d5ff' }}>
                 Cancel
               </button>
               <button onClick={addCustomAddon} disabled={!customName.trim() || !customPrice}
@@ -5244,7 +5244,7 @@ function PayoutSettingsTab() {
                 <div className="flex items-center gap-2">
                   {!acc.isDefault && (
                     <button onClick={() => setDefault(acc.id)}
-                      className="text-xs font-bold px-3 py-1.5 rounded-lg transition-colors hover:bg-purple-50"
+                      className="text-xs font-bold px-3 py-1.5 rounded-lg transition-colors hover:bg-[rgba(124,58,237,0.06)]"
                       style={{ color: darkPurple }}>
                       Set default
                     </button>
@@ -5260,7 +5260,7 @@ function PayoutSettingsTab() {
         )}
 
         <button onClick={() => { resetForm(); setShowAddModal(true) }}
-          className="w-full mt-3 flex items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold transition-colors hover:bg-purple-50"
+          className="w-full mt-3 flex items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold transition-colors hover:bg-[rgba(124,58,237,0.06)]"
           style={{ border: '1.5px dashed #c084fc', color: darkPurple }}>
           <Plus className="w-4 h-4" /> Add bank account
         </button>
@@ -5282,7 +5282,7 @@ function PayoutSettingsTab() {
             </div>
             <div className="flex gap-2">
               <button onClick={openSecModal}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-colors hover:bg-purple-50"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-colors hover:bg-[rgba(124,58,237,0.06)]"
                 style={{ border: `1px solid ${purple}40`, color: darkPurple }}>
                 <Edit3 className="w-3.5 h-3.5" /> Change
               </button>
@@ -5295,7 +5295,7 @@ function PayoutSettingsTab() {
           </div>
         ) : (
           <button onClick={openSecModal}
-            className="w-full flex items-center gap-4 p-4 rounded-2xl bg-white text-left hover:bg-purple-50 transition-colors"
+            className="w-full flex items-center gap-4 p-4 rounded-2xl bg-white text-left hover:bg-[rgba(124,58,237,0.04)] transition-colors"
             style={{ border: '1.5px dashed #e9d5ff' }}>
             <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${darkPurple}10` }}>
               <Lock className="w-5 h-5" style={{ color: darkPurple }} />
@@ -5436,7 +5436,7 @@ function PayoutSettingsTab() {
             <div className="overflow-y-auto" style={{ maxHeight: '50vh' }}>
               {filteredBanks.map((bank, i) => (
                 <button key={bank} onClick={() => handleSelectBank(bank)}
-                  className="w-full flex items-center justify-between px-6 py-3.5 text-sm hover:bg-purple-50 transition-colors text-left"
+                  className="w-full flex items-center justify-between px-6 py-3.5 text-sm hover:bg-[rgba(124,58,237,0.04)] transition-colors text-left"
                   style={{ borderBottom: i < filteredBanks.length - 1 ? '1px solid #f3eeff' : 'none' }}>
                   <span className={`font-medium ${newBank === bank ? 'font-bold' : ''}`} style={{ color: newBank === bank ? darkPurple : '#0F0020' }}>{bank}</span>
                   {newBank === bank && <CheckCircle className="w-4 h-4" style={{ color: darkPurple }} />}
@@ -5541,7 +5541,7 @@ function PayoutSettingsTab() {
             <div className="overflow-y-auto" style={{ maxHeight: '60vh' }}>
               {SECURITY_QUESTIONS_LIST.map((q, i) => (
                 <button key={q} onClick={() => { setDraftQuestion(q); setShowQPicker(false); setSecError('') }}
-                  className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-purple-50 transition-colors"
+                  className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-[rgba(124,58,237,0.04)] transition-colors"
                   style={{ borderBottom: i < SECURITY_QUESTIONS_LIST.length - 1 ? '1px solid #f3eeff' : 'none' }}>
                   <span className="text-sm font-medium text-brand-dark pr-4">{q}</span>
                   {draftQuestion === q && <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: darkPurple }} />}

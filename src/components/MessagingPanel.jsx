@@ -1070,8 +1070,7 @@ export default function MessagingPanel({ userId, userType: userTypeProp, initial
                     placeholder="Type a message…"
                     rows={1}
                     className="flex-1 text-sm bg-transparent outline-none resize-none leading-relaxed"
-                    style={{ color: '#0F0020' }}
-                    style={{ maxHeight: 120 }}
+                    style={{ color: '#0F0020', maxHeight: 120 }}
                   />
                 </div>
                 <button type="submit" disabled={!input.trim() || sending}

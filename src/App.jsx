@@ -367,6 +367,10 @@ export default function App() {
           element={IS_APP
             ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><BrandDashboard /></PrivateRoute>
             : <CrossDomainRedirect to={`${APP_URL}/brand/find-creators`} />} />
+        <Route path="/brand/post-campaign"
+          element={IS_APP
+            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><BrandDashboard /></PrivateRoute>
+            : <CrossDomainRedirect to={`${APP_URL}/brand/post-campaign`} />} />
         <Route path="/brand/my-campaigns"
           element={IS_APP
             ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><BrandCampaignsPage /></PrivateRoute>

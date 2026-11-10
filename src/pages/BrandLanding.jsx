@@ -418,7 +418,7 @@ export default function BrandLanding() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/marketplace"
-              className="group flex items-center justify-center gap-2 bg-white text-brand-dark font-bold px-9 py-4 rounded-full hover:bg-purple-50 transition-colors text-sm">
+              className="group flex items-center justify-center gap-2 bg-white text-brand-dark font-bold px-9 py-4 rounded-full hover:bg-[rgba(124,58,237,0.04)] transition-colors text-sm">
               Browse Creators
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
