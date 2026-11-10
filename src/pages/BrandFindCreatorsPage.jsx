@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Search, SlidersHorizontal, X, Users } from 'lucide-react'
 import { useCreatorSearch, PAGE_SIZE } from '../hooks/useCreatorSearch'
 import { TalentCard, FilterSidebar, SkeletonCard, SortDropdown } from './Marketplace'
@@ -10,8 +9,7 @@ const darkPurple = '#4c1d95'
 const purple = '#7c3aed'
 const pink = '#F72585'
 
-export default function BrandFindCreatorsPage() {
-  const navigate = useNavigate()
+export function BrandFindCreatorsContent() {
   const hook = useCreatorSearch()
   const {
     talents, total, loading, error,
@@ -25,25 +23,7 @@ export default function BrandFindCreatorsPage() {
   } = hook
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f3eeff' }}>
-      {/* Brand breadcrumb header */}
-      <div
-        className="sticky top-0 z-30 px-4 sm:px-6 py-3 flex items-center gap-3"
-        style={{ backgroundColor: '#0d0020', borderBottom: '1px solid rgba(192,132,252,0.15)' }}
-      >
-        <button
-          onClick={() => navigate('/brand/dashboard')}
-          className="text-xs font-medium transition-colors"
-          style={{ color: '#a78bfa' }}
-          onMouseEnter={e => e.currentTarget.style.color = '#c084fc'}
-          onMouseLeave={e => e.currentTarget.style.color = '#a78bfa'}
-        >
-          ← Dashboard
-        </button>
-        <span style={{ color: 'rgba(192,132,252,0.4)' }}>/</span>
-        <span className="text-xs font-semibold text-white">Find Creators</span>
-      </div>
-
+    <div>
       {/* Page header — compact */}
       <div
         className="py-8 px-4 relative overflow-hidden"
@@ -56,7 +36,7 @@ export default function BrandFindCreatorsPage() {
         <div className="relative max-w-7xl mx-auto">
           <span
             className="inline-block text-xs font-bold tracking-widest uppercase mb-3 px-3 py-1 rounded-full"
-            style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: '#7c3aed', border: '1px solid rgba(124,58,237,0.18)' }}
+            style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple, border: '1px solid rgba(124,58,237,0.18)' }}
           >
             Creator Discovery
           </span>
@@ -136,7 +116,7 @@ export default function BrandFindCreatorsPage() {
       )}
 
       {/* Main content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8" style={{ backgroundColor: '#f3eeff' }}>
         <div className="flex gap-6">
           <div className="flex-1 min-w-0">
             {!loading && (
@@ -205,3 +185,5 @@ export default function BrandFindCreatorsPage() {
     </div>
   )
 }
+
+export default BrandFindCreatorsContent

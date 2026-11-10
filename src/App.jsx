@@ -365,7 +365,7 @@ export default function App() {
             : <CrossDomainRedirect to={`${APP_URL}/campaigns`} />} />
         <Route path="/brand/find-creators"
           element={IS_APP
-            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><BrandFindCreatorsPage /></PrivateRoute>
+            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><BrandDashboard /></PrivateRoute>
             : <CrossDomainRedirect to={`${APP_URL}/brand/find-creators`} />} />
         <Route path="/brand/my-campaigns"
           element={IS_APP

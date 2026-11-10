@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Link, useSearchParams, useNavigate } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '');
 import { logout } from '../lib/logout'
 import { getLogo } from '../lib/brandSettings'
@@ -23,6 +23,7 @@ import { getBrandAnalytics } from '../lib/analytics'
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import OnboardingTour from '../components/OnboardingTour'
 import OnboardingChecklist from '../components/OnboardingChecklist'
+import { BrandFindCreatorsContent } from './BrandFindCreatorsPage'
 
 const pink = '#F72585'
 const darkPurple = '#4c1d95'
@@ -620,11 +621,13 @@ function initials(name) {
 
 export default function BrandDashboard() {
   const [searchParams] = useSearchParams()
+  const location = useLocation()
   const newOrderId = searchParams.get('newOrder')
   const initialTab = searchParams.get('tab')
   const initialConvId = searchParams.get('conv')
+  const pathTab = location.pathname === '/brand/find-creators' ? 'talents' : null
 
-  const [activeTab, setActiveTab] = useState(initialTab || 'overview')
+  const [activeTab, setActiveTab] = useState(pathTab || initialTab || 'overview')
   const hasSetInitialTab = useRef(false)
   const [dashLogo, setDashLogo] = useState(() => getLogo('dashboard'))
   const [orders, setOrders] = useState([])
@@ -919,53 +922,61 @@ export default function BrandDashboard() {
 
         <AnnouncementBanner role="brand" />
         {/* Content */}
-        <main className="flex-1 p-4 sm:p-6 pb-24 md:pb-6">
-          <div className="max-w-screen-xl mx-auto">
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="w-8 h-8 rounded-full border-3 border-purple-200 border-t-purple-600 animate-spin" style={{ borderWidth: '3px' }} />
+        <main className="flex-1 overflow-hidden">
+          {activeTab === 'talents' ? (
+            <div className="pb-24 md:pb-0">
+              <BrandFindCreatorsContent />
             </div>
           ) : (
-            <>
-              {activeTab === 'post-campaign' && <PostCampaignTab onCreated={() => navigate('/brand/my-campaigns')} />}
-              {activeTab === 'overview' && (
-                <OverviewTab
-                  activeOrders={activeOrders}
-                  pendingReview={pendingReview}
-                  completedOrders={completedOrders}
-                  setActiveTab={setActiveTab}
-                />
-              )}
-              {activeTab === 'analytics' && <BrandAnalyticsTab />}
-              {activeTab === 'collabs' && (
+            <div className="p-4 sm:p-6 pb-24 md:pb-6">
+              <div className="max-w-screen-xl mx-auto">
+              {loading ? (
+                <div className="flex items-center justify-center py-20">
+                  <div className="w-8 h-8 rounded-full border-3 border-purple-200 border-t-purple-600 animate-spin" style={{ borderWidth: '3px' }} />
+                </div>
+              ) : (
                 <>
-                  <BrandCustomOffersPanel />
-                  <CampaignsTab
-                    activeOrders={activeOrders}
-                    completedOrders={completedOrders}
-                    onPayNow={setPaymentModal}
-                    onApprove={handleApprove}
-                    onRevision={setRevisionModal}
-                    onReview={setReviewModal}
-                  />
+                  {activeTab === 'post-campaign' && <PostCampaignTab onCreated={() => navigate('/brand/my-campaigns')} />}
+                  {activeTab === 'overview' && (
+                    <OverviewTab
+                      activeOrders={activeOrders}
+                      pendingReview={pendingReview}
+                      completedOrders={completedOrders}
+                      setActiveTab={setActiveTab}
+                    />
+                  )}
+                  {activeTab === 'analytics' && <BrandAnalyticsTab />}
+                  {activeTab === 'collabs' && (
+                    <>
+                      <BrandCustomOffersPanel />
+                      <CampaignsTab
+                        activeOrders={activeOrders}
+                        completedOrders={completedOrders}
+                        onPayNow={setPaymentModal}
+                        onApprove={handleApprove}
+                        onRevision={setRevisionModal}
+                        onReview={setReviewModal}
+                      />
+                    </>
+                  )}
+                  {activeTab === 'notifications' && <BrandNotificationsTab />}
+                  {activeTab === 'wallet' && <WalletTab />}
+                  {activeTab === 'payments' && (
+                    <PaymentsTab orders={orders} totalSpent={totalSpent} onPayNow={setPaymentModal} onApprove={handleApprove} onRevision={setRevisionModal} />
+                  )}
+                  {activeTab === 'favorites' && <FavoritesTab />}
+                  {activeTab === 'messages' && (
+                    <MessagingPanel userId={localStorage.getItem('brandiór_user') || ''} userType="brand" initialConvId={initialConvId} />
+                  )}
+                  {activeTab === 'invite' && <InviteTab userType="brand" />}
+                  {activeTab === 'settings' && (
+                    <SettingsTab />
+                  )}
                 </>
               )}
-              {activeTab === 'notifications' && <BrandNotificationsTab />}
-              {activeTab === 'wallet' && <WalletTab />}
-              {activeTab === 'payments' && (
-                <PaymentsTab orders={orders} totalSpent={totalSpent} onPayNow={setPaymentModal} onApprove={handleApprove} onRevision={setRevisionModal} />
-              )}
-              {activeTab === 'favorites' && <FavoritesTab />}
-              {activeTab === 'messages' && (
-                <MessagingPanel userId={localStorage.getItem('brandiór_user') || ''} userType="brand" initialConvId={initialConvId} />
-              )}
-              {activeTab === 'invite' && <InviteTab userType="brand" />}
-              {activeTab === 'settings' && (
-                <SettingsTab />
-              )}
-            </>
+              </div>
+            </div>
           )}
-          </div>
         </main>
 
         {/* ── Mobile bottom tab bar ── */}
@@ -981,7 +992,15 @@ export default function BrandDashboard() {
             { id: 'messages',  label: 'Messages',  Icon: Mail },
             { id: 'wallet',    label: 'Wallet',    Icon: Wallet },
           ].map(({ id, label, Icon }) => (
-            <button key={id} onClick={() => ROUTED_BRAND_TABS[id] ? navigate(ROUTED_BRAND_TABS[id]) : setActiveTab(id)}
+            <button key={id} onClick={() => {
+              if (ROUTED_BRAND_TABS[id]) {
+                navigate(ROUTED_BRAND_TABS[id])
+              } else if (location.pathname !== '/brand-dashboard') {
+                navigate(id === 'overview' ? '/brand-dashboard' : `/brand-dashboard?tab=${id}`)
+              } else {
+                setActiveTab(id)
+              }
+            }}
               className="flex-1 flex flex-col items-center gap-1 py-2.5 text-[10px] font-bold transition-colors"
               style={{ color: activeTab === id ? '#c084fc' : 'rgba(196,181,253,0.4)' }}>
               <Icon className="w-5 h-5" />
@@ -1148,6 +1167,7 @@ const ROUTED_BRAND_TABS = {
 
 function SidebarContent({ activeTab, setActiveTab, dashLogo, onSwitchToCreator }) {
   const navigate = useNavigate()
+  const location = useLocation()
 
   return (
     <>
@@ -1167,7 +1187,15 @@ function SidebarContent({ activeTab, setActiveTab, dashLogo, onSwitchToCreator }
         {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
-            onClick={() => ROUTED_BRAND_TABS[id] ? navigate(ROUTED_BRAND_TABS[id]) : setActiveTab(id)}
+            onClick={() => {
+              if (ROUTED_BRAND_TABS[id]) {
+                navigate(ROUTED_BRAND_TABS[id])
+              } else if (location.pathname !== '/brand-dashboard') {
+                navigate(id === 'overview' ? '/brand-dashboard' : `/brand-dashboard?tab=${id}`)
+              } else {
+                setActiveTab(id)
+              }
+            }}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left"
             style={
               activeTab === id
