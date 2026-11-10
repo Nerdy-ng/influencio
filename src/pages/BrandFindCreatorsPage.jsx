@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, SlidersHorizontal, X, Users } from 'lucide-react'
 import { useCreatorSearch, PAGE_SIZE } from '../hooks/useCreatorSearch'
-import { TalentCard, FilterSidebar, SkeletonCard } from './Marketplace'
-import { SORT_OPTIONS } from '../lib/creatorFilters'
+import { TalentCard, FilterSidebar, SkeletonCard, SortDropdown } from './Marketplace'
 
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '')
 
@@ -45,62 +44,63 @@ export default function BrandFindCreatorsPage() {
         <span className="text-xs font-semibold text-white">Find Creators</span>
       </div>
 
-      {/* Page header */}
+      {/* Page header — compact */}
       <div
-        className="pt-10 pb-10 px-4 relative overflow-hidden"
+        className="py-8 px-4 relative overflow-hidden"
         style={{ background: 'linear-gradient(160deg, #f5f0ff 0%, #ede9fe 55%, #f0ebff 100%)' }}
       >
-        {/* Decorative blobs */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full" style={{ background: 'radial-gradient(circle, rgba(192,132,252,0.18) 0%, transparent 70%)' }} />
           <div className="absolute -bottom-12 -left-12 w-64 h-64 rounded-full" style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.10) 0%, transparent 70%)' }} />
         </div>
-
-        <div className="relative max-w-3xl mx-auto text-center">
+        <div className="relative max-w-7xl mx-auto">
           <span
-            className="inline-block text-xs font-bold tracking-widest uppercase mb-4 px-3 py-1 rounded-full"
+            className="inline-block text-xs font-bold tracking-widest uppercase mb-3 px-3 py-1 rounded-full"
             style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: '#7c3aed', border: '1px solid rgba(124,58,237,0.18)' }}
           >
             Creator Discovery
           </span>
-          <h1 className="text-2xl sm:text-4xl font-black mb-3 leading-tight" style={{ color: '#1e0040' }}>
+          <h1 className="text-2xl sm:text-4xl font-black mb-2 leading-tight" style={{ color: '#1e0040' }}>
             Find Creators
           </h1>
-          <p className="mb-6 text-sm" style={{ color: 'rgba(76,29,149,0.65)' }}>
+          <p className="text-sm" style={{ color: 'rgba(76,29,149,0.6)' }}>
             Browse verified African creators ready to amplify your brand
           </p>
+        </div>
+      </div>
 
-          {/* Search bar */}
-          <div className="relative max-w-xl mx-auto">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none" style={{ color: '#a78bfa' }} />
+      {/* Search + controls bar */}
+      <div style={{ backgroundColor: '#fff', borderBottom: '1px solid #e9d5ff' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'rgba(76,29,149,0.4)' }} />
             <input
               type="text"
-              placeholder="Search by name, handle, or niche..."
+              placeholder="Search by name, handle or niche..."
               value={search}
               onChange={e => { setSearch(stripInjection(e.target.value)); setVisibleCount(PAGE_SIZE) }}
-              className="w-full py-4 text-base bg-white focus:outline-none transition-shadow"
-              style={{
-                borderRadius: '9999px',
-                paddingLeft: '3rem',
-                paddingRight: '4rem',
-                boxShadow: '0 4px 24px rgba(124,58,237,0.35)',
-                color: '#1a0040',
-              }}
+              className="w-full text-sm focus:outline-none transition-all"
+              style={{ paddingLeft: '2.75rem', paddingRight: '1rem', paddingTop: '0.625rem', paddingBottom: '0.625rem', borderRadius: '0.75rem', border: '1px solid #e9d5ff', color: '#1e0040', backgroundColor: '#faf8ff' }}
+              onFocus={e => { e.target.style.borderColor = '#c4b5fd'; e.target.style.boxShadow = '0 0 0 3px rgba(196,181,253,0.2)' }}
+              onBlur={e => { e.target.style.borderColor = '#e9d5ff'; e.target.style.boxShadow = 'none' }}
             />
-            <button
-              onClick={() => setMobileFiltersOpen(true)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-10 h-10 rounded-full transition-colors"
-              style={{ backgroundColor: purple }}
-              title="Open filters"
-            >
-              <SlidersHorizontal className="w-4 h-4 text-white" />
-              {activeFilterCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white flex items-center justify-center text-[9px] font-bold" style={{ backgroundColor: pink }}>
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
           </div>
+          <button
+            onClick={() => setMobileFiltersOpen(true)}
+            className="relative flex items-center gap-2 text-sm font-semibold transition-all flex-shrink-0"
+            style={{ padding: '0.625rem 1rem', borderRadius: '0.75rem', border: '1px solid #e9d5ff', color: '#4c1d95', backgroundColor: '#fff' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#c4b5fd'; e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.04)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = '#e9d5ff'; e.currentTarget.style.backgroundColor = '#fff' }}
+          >
+            <SlidersHorizontal className="w-4 h-4" style={{ color: purple }} />
+            Filters
+            {activeFilterCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-white flex items-center justify-center text-[9px] font-bold" style={{ backgroundColor: pink }}>
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+          <SortDropdown value={sort} onChange={v => { setSort(v); setVisibleCount(PAGE_SIZE) }} />
         </div>
       </div>
 
@@ -139,20 +139,11 @@ export default function BrandFindCreatorsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="flex gap-6">
           <div className="flex-1 min-w-0">
-            {/* Sort bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-              <p className="text-sm" style={{ color: '#6b21a8' }}>
-                {loading ? 'Loading...' : `Showing ${total} creator${total !== 1 ? 's' : ''}`}
+            {!loading && (
+              <p className="text-xs mb-5" style={{ color: 'rgba(76,29,149,0.45)' }}>
+                {total} creator{total !== 1 ? 's' : ''} found
               </p>
-              <select
-                value={sort}
-                onChange={e => { setSort(stripInjection(e.target.value)); setVisibleCount(PAGE_SIZE) }}
-                className="text-sm rounded-xl px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-purple-300"
-                style={{ backgroundColor: '#fff', border: '1px solid rgba(124,58,237,0.2)', color: '#4c1d95' }}
-              >
-                {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </div>
+            )}
 
             {/* Error state */}
             {error && !loading && talents.length === 0 && (

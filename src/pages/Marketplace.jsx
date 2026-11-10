@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '');
 import { Helmet } from 'react-helmet-async'
 import {
   Search, Heart, CheckCircle, Star, Filter,
-  X, SlidersHorizontal,
+  X, SlidersHorizontal, ChevronDown,
   Lock, BadgeCheck, Play, Users,
 } from 'lucide-react'
 import { useFavorites } from '../hooks/useFavorites'
@@ -212,21 +212,13 @@ export function TalentCard({ talent, onGate, from = '/marketplace' }) {
           <Heart className="w-3.5 h-3.5" style={{ color: faved ? pink : '#fff' }} fill={faved ? pink : 'none'} />
         </button>
 
-        {/* Availability */}
-        {talent.availableForHire && (
-          <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
-            style={{ backgroundColor: 'rgba(14,0,32,0.5)', backdropFilter: 'blur(4px)', color: '#86efac' }}>
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0" />
-            Available
-          </div>
-        )}
       </div>
 
       {/* ── Info panel ── */}
-      <div className="p-4">
-        {/* Name + verified */}
-        <div className="flex items-center gap-1.5 mb-0.5">
-          <p className="font-black text-sm truncate" style={{ color: '#1e0040' }}>{talent.name}</p>
+      <div className="p-5 flex flex-col gap-2">
+        {/* Primary: name + verified */}
+        <div className="flex items-center gap-1.5">
+          <p className="font-black text-sm truncate leading-snug" style={{ color: '#1e0040' }}>{talent.name}</p>
           {talent.completedCampaigns >= 10 && (
             <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: purple }}>
               <BadgeCheck className="w-2.5 h-2.5 text-white" strokeWidth={3} />
@@ -234,62 +226,91 @@ export function TalentCard({ talent, onGate, from = '/marketplace' }) {
           )}
         </div>
 
-        {/* Handle */}
-        <p className="text-xs mb-2.5" style={{ color: 'rgba(76,29,149,0.5)' }}>@{talent.handle}</p>
+        {/* Secondary: handle + niche chips on same line */}
+        <div className="flex items-center flex-wrap gap-1.5">
+          <span className="text-[11px]" style={{ color: 'rgba(76,29,149,0.5)' }}>@{talent.handle}</span>
+          {(talent.niches || []).slice(0, 2).map(n => {
+            const nicheObj = NICHES.find(x => x.label === n)
+            return (
+              <span key={n} className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple }}>
+                {nicheObj ? nicheObj.emoji + ' ' : ''}{n}
+              </span>
+            )
+          })}
+        </div>
 
-        {/* Niche chips */}
-        {(talent.niches || []).length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {(talent.niches || []).slice(0, 2).map(n => {
-              const nicheObj = NICHES.find(x => x.label === n)
-              return (
-                <span key={n} className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
-                  style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple }}>
-                  {nicheObj ? nicheObj.emoji + ' ' : ''}{n}
-                </span>
-              )
-            })}
-            {(talent.niches || []).length > 2 && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: 'rgba(124,58,237,0.06)', color: 'rgba(76,29,149,0.5)' }}>
-                +{talent.niches.length - 2}
+        {/* Tertiary: plain muted metrics text — no background treatment */}
+        <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(76,29,149,0.38)' }}>
+          {formatFollowers(talent.totalFollowers)} followers
+          {' · '}{Number(talent.avgEngagement || 0).toFixed(1)}% eng
+          {' · '}{talent.completedCampaigns || 0} jobs
+        </p>
+
+        {/* Footer: rating + availability left | price + CTA right */}
+        <div className="flex items-end justify-between gap-2 pt-1">
+          <div className="flex flex-col gap-0.5">
+            <StarRating rating={talent.avgRating} />
+            {talent.availableForHire && (
+              <span className="flex items-center gap-1 text-[10px]" style={{ color: '#16a34a' }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
+                Available
               </span>
             )}
           </div>
-        )}
-
-        {/* Metrics row */}
-        <div className="flex items-center py-2.5 px-3 rounded-xl mb-3"
-          style={{ backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid rgba(124,58,237,0.06)' }}>
-          <div className="flex-1 text-center">
-            <p className="text-xs font-black" style={{ color: '#1e0040' }}>{formatFollowers(talent.totalFollowers)}</p>
-            <p className="text-[10px]" style={{ color: 'rgba(76,29,149,0.5)' }}>Followers</p>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className="text-xs font-black" style={{ color: purple }}>From {formatNGN(talent.minPrice)}</span>
+            <button onClick={handleView}
+              className="text-[10px] font-bold px-3 py-1.5 rounded-lg text-white transition-opacity hover:opacity-90"
+              style={{ backgroundColor: purple }}>
+              View Profile
+            </button>
           </div>
-          <div className="w-px h-5 flex-shrink-0" style={{ backgroundColor: '#e9d5ff' }} />
-          <div className="flex-1 text-center">
-            <p className="text-xs font-black" style={{ color: '#1e0040' }}>{Number(talent.avgEngagement || 0).toFixed(1)}%</p>
-            <p className="text-[10px]" style={{ color: 'rgba(76,29,149,0.5)' }}>Engagement</p>
-          </div>
-          <div className="w-px h-5 flex-shrink-0" style={{ backgroundColor: '#e9d5ff' }} />
-          <div className="flex-1 text-center">
-            <p className="text-xs font-black" style={{ color: '#1e0040' }}>{talent.completedCampaigns || 0}</p>
-            <p className="text-[10px]" style={{ color: 'rgba(76,29,149,0.5)' }}>Jobs Done</p>
-          </div>
-        </div>
-
-        {/* Rating + price + CTA */}
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <StarRating rating={talent.avgRating} />
-            <p className="text-[11px] font-black mt-0.5" style={{ color: purple }}>From {formatNGN(talent.minPrice)}</p>
-          </div>
-          <button onClick={handleView}
-            className="text-[11px] font-bold px-3.5 py-2 rounded-xl text-white transition-opacity hover:opacity-90 flex-shrink-0"
-            style={{ backgroundColor: purple }}>
-            View Profile
-          </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+export function SortDropdown({ value, onChange }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+  const selected = SORT_OPTIONS.find(o => o.value === value) || SORT_OPTIONS[0]
+  return (
+    <div ref={ref} className="relative flex-shrink-0">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-2 text-sm font-semibold transition-all"
+        style={{ padding: '0.625rem 1rem', borderRadius: '0.75rem', border: '1px solid #e9d5ff', color: '#4c1d95', backgroundColor: '#fff' }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = '#c4b5fd'; e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.04)' }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = open ? '#c4b5fd' : '#e9d5ff'; e.currentTarget.style.backgroundColor = open ? 'rgba(124,58,237,0.04)' : '#fff' }}
+      >
+        {selected.label}
+        <ChevronDown className="w-3.5 h-3.5" style={{ color: 'rgba(76,29,149,0.5)', transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'none' }} />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1.5 z-30 rounded-xl overflow-hidden py-1" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 6px 24px rgba(124,58,237,0.12)', minWidth: '168px' }}>
+          {SORT_OPTIONS.map(o => (
+            <button key={o.value} onClick={() => { onChange(o.value); setOpen(false) }}
+              className="w-full text-left px-4 py-2.5 text-sm transition-colors"
+              style={{
+                color: o.value === value ? purple : '#4c1d95',
+                backgroundColor: o.value === value ? 'rgba(124,58,237,0.06)' : 'transparent',
+                fontWeight: o.value === value ? '700' : '500',
+              }}
+              onMouseEnter={e => { if (o.value !== value) e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.03)' }}
+              onMouseLeave={e => { if (o.value !== value) e.currentTarget.style.backgroundColor = 'transparent' }}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -298,20 +319,23 @@ export function SkeletonCard() {
   return (
     <div className="rounded-2xl overflow-hidden animate-pulse" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
       <div style={{ aspectRatio: '4/3', backgroundColor: '#ede9fe' }} />
-      <div className="p-4">
-        <div className="h-3.5 rounded-full mb-1.5" style={{ backgroundColor: '#e9d5ff', width: '55%' }} />
-        <div className="h-2.5 rounded-full mb-3" style={{ backgroundColor: '#f3eeff', width: '35%' }} />
-        <div className="flex gap-1.5 mb-3">
-          <div className="h-5 w-16 rounded-full" style={{ backgroundColor: '#f3eeff' }} />
+      <div className="p-5 flex flex-col gap-2.5">
+        <div className="h-3.5 rounded-full" style={{ backgroundColor: '#e9d5ff', width: '52%' }} />
+        <div className="flex gap-1.5">
+          <div className="h-2.5 w-20 rounded-full" style={{ backgroundColor: '#f3eeff' }} />
           <div className="h-5 w-14 rounded-full" style={{ backgroundColor: '#f3eeff' }} />
+          <div className="h-5 w-12 rounded-full" style={{ backgroundColor: '#f3eeff' }} />
         </div>
-        <div className="h-10 rounded-xl mb-3" style={{ backgroundColor: '#f3eeff' }} />
-        <div className="flex items-center justify-between">
+        <div className="h-2.5 rounded-full" style={{ backgroundColor: '#f3eeff', width: '75%' }} />
+        <div className="flex items-end justify-between pt-1">
           <div>
-            <div className="h-2.5 rounded-full mb-1.5" style={{ backgroundColor: '#e9d5ff', width: '60px' }} />
-            <div className="h-3 rounded-full" style={{ backgroundColor: '#f3eeff', width: '80px' }} />
+            <div className="h-2.5 rounded-full mb-1.5" style={{ backgroundColor: '#e9d5ff', width: '56px' }} />
+            <div className="h-2 rounded-full" style={{ backgroundColor: '#f3eeff', width: '44px' }} />
           </div>
-          <div className="h-8 w-24 rounded-xl" style={{ backgroundColor: '#ede9fe' }} />
+          <div className="flex items-center gap-2">
+            <div className="h-3 w-16 rounded-full" style={{ backgroundColor: '#f3eeff' }} />
+            <div className="h-7 w-20 rounded-lg" style={{ backgroundColor: '#ede9fe' }} />
+          </div>
         </div>
       </div>
     </div>
@@ -653,63 +677,64 @@ export default function Marketplace() {
       </Helmet>
       <Navbar />
 
-      {/* Hero */}
+      {/* Page header — compact */}
       <div
-        className="pt-28 pb-14 px-4 relative overflow-hidden"
+        className="pt-24 pb-8 px-4 relative overflow-hidden"
         style={{ background: 'linear-gradient(160deg, #f5f0ff 0%, #ede9fe 55%, #f0ebff 100%)' }}
       >
-        {/* Decorative blobs */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full" style={{ background: 'radial-gradient(circle, rgba(192,132,252,0.18) 0%, transparent 70%)' }} />
           <div className="absolute -bottom-16 -left-16 w-80 h-80 rounded-full" style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.10) 0%, transparent 70%)' }} />
         </div>
-
-        <div className="relative max-w-3xl mx-auto text-center">
+        <div className="relative max-w-7xl mx-auto">
           <span
-            className="inline-block text-xs font-bold tracking-widest uppercase mb-4 px-3 py-1 rounded-full"
+            className="inline-block text-xs font-bold tracking-widest uppercase mb-3 px-3 py-1 rounded-full"
             style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple, border: '1px solid rgba(124,58,237,0.18)' }}
           >
             Talent Marketplace
           </span>
-          <h1 className="text-3xl sm:text-5xl font-black mb-4 leading-tight" style={{ color: '#1e0040' }}>
+          <h1 className="text-3xl sm:text-5xl font-black mb-2 leading-tight" style={{ color: '#1e0040' }}>
             Find{' '}
             <span style={{ color: pink }}>Creators</span>
           </h1>
-          <p className="mb-6 text-base" style={{ color: 'rgba(76,29,149,0.65)' }}>
+          <p className="text-sm" style={{ color: 'rgba(76,29,149,0.6)' }}>
             Browse 500+ verified creators ready to amplify your brand
           </p>
+        </div>
+      </div>
 
-          {/* Search bar */}
-          <div className="relative max-w-xl mx-auto">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none" style={{ color: '#a78bfa' }} />
+      {/* Search + controls bar */}
+      <div style={{ backgroundColor: '#fff', borderBottom: '1px solid #e9d5ff' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'rgba(76,29,149,0.4)' }} />
             <input
               type="text"
-              placeholder="Search by name, handle, or niche..."
+              placeholder="Search by name, handle or niche..."
               value={search}
               onChange={e => { setSearch(stripInjection(e.target.value)); setVisibleCount(PAGE_SIZE) }}
-              className="w-full py-4 text-base bg-white focus:outline-none transition-shadow"
-              style={{
-                borderRadius: '9999px',
-                paddingLeft: '3rem',
-                paddingRight: '4rem',
-                boxShadow: '0 4px 24px rgba(124,58,237,0.35)',
-                color: '#1a0040',
-              }}
+              className="w-full text-sm focus:outline-none transition-all"
+              style={{ paddingLeft: '2.75rem', paddingRight: '1rem', paddingTop: '0.625rem', paddingBottom: '0.625rem', borderRadius: '0.75rem', border: '1px solid #e9d5ff', color: '#1e0040', backgroundColor: '#faf8ff' }}
+              onFocus={e => { e.target.style.borderColor = '#c4b5fd'; e.target.style.boxShadow = '0 0 0 3px rgba(196,181,253,0.2)' }}
+              onBlur={e => { e.target.style.borderColor = '#e9d5ff'; e.target.style.boxShadow = 'none' }}
             />
-            <button
-              onClick={() => setMobileFiltersOpen(true)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-10 h-10 rounded-full transition-colors"
-              style={{ backgroundColor: darkPurple }}
-              title="Open filters"
-            >
-              <SlidersHorizontal className="w-4 h-4 text-white" />
-              {activeFilterCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white flex items-center justify-center text-[9px] font-bold" style={{ backgroundColor: pink }}>
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
           </div>
+          <button
+            onClick={() => setMobileFiltersOpen(true)}
+            className="relative flex items-center gap-2 text-sm font-semibold transition-all flex-shrink-0"
+            style={{ padding: '0.625rem 1rem', borderRadius: '0.75rem', border: '1px solid #e9d5ff', color: '#4c1d95', backgroundColor: '#fff' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#c4b5fd'; e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.04)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = '#e9d5ff'; e.currentTarget.style.backgroundColor = '#fff' }}
+          >
+            <SlidersHorizontal className="w-4 h-4" style={{ color: purple }} />
+            Filters
+            {activeFilterCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-white flex items-center justify-center text-[9px] font-bold" style={{ backgroundColor: pink }}>
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+          <SortDropdown value={sort} onChange={v => { setSort(v); setVisibleCount(PAGE_SIZE) }} />
         </div>
       </div>
 
@@ -746,20 +771,11 @@ export default function Marketplace() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8" style={{ backgroundColor: '#f3eeff' }}>
         <div className="flex gap-6">
           <div className="flex-1 min-w-0">
-            {/* Sort bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-              <p className="text-sm" style={{ color: '#6b21a8' }}>
-                {loading ? 'Loading...' : `Showing ${total} talent${total !== 1 ? 's' : ''}`}
+            {!loading && (
+              <p className="text-xs mb-5" style={{ color: 'rgba(76,29,149,0.45)' }}>
+                {total} creator{total !== 1 ? 's' : ''} found
               </p>
-              <select
-                value={sort}
-                onChange={e => { setSort(stripInjection(e.target.value)); setVisibleCount(PAGE_SIZE) }}
-                className="text-sm rounded-xl px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-purple-300"
-                style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', color: '#4c1d95' }}
-              >
-                {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </div>
+            )}
 
             {/* Error state */}
             {error && !loading && talents.length === 0 && (
