@@ -9,7 +9,7 @@ import {
   Bell, ChevronDown, ChevronRight, X, AlertCircle, Shield, Loader2,
   ExternalLink, Download, RotateCcw, Zap, Award, Lock, Menu, Mail, Heart, MapPin, Star, Users, Search, UserPlus, LogOut,
   Inbox, Clock, ThumbsUp, ThumbsDown, MessageSquare, FileText, TrendingUp, Send, ArrowLeftRight,
-  Plus, CreditCard, Building2, ArrowUpRight, Megaphone, ChevronLeft,
+  Plus, CreditCard, Building2, ArrowUpRight, ArrowDownLeft, Megaphone, ChevronLeft,
 } from 'lucide-react'
 import MessagingPanel from '../components/MessagingPanel'
 import AnnouncementBanner from '../components/AnnouncementBanner'
@@ -113,11 +113,19 @@ function StatusBadge({ status }) {
 // Payment modal
 function PaymentModal({ order, onClose, onSuccess }) {
   const [step, setStep] = useState('confirm') // confirm → processing → success
+  const [payError, setPayError] = useState('')
 
   const handlePay = async () => {
+    setPayError('')
     setStep('processing')
-    // Simulate Paystack redirect + return
-    await new Promise(r => setTimeout(r, 2000))
+    const { data, error } = await supabase.functions.invoke('collab-pay', {
+      body: { collab_id: order._id },
+    })
+    if (error || !data?.ok) {
+      setStep('confirm')
+      setPayError(data?.error || 'Payment failed. Please check your wallet balance and try again.')
+      return
+    }
     setStep('success')
     setTimeout(() => {
       onSuccess(order._id)
@@ -153,6 +161,7 @@ function PaymentModal({ order, onClose, onSuccess }) {
               <Shield className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-green-700">Your payment will be held securely until you approve the delivered content.</p>
             </div>
+            {payError && <p className="text-xs font-semibold text-red-500 mb-3">{payError}</p>}
             <button
               onClick={handlePay}
               className="w-full py-3.5 rounded-full text-white font-bold transition-colors"
@@ -160,7 +169,7 @@ function PaymentModal({ order, onClose, onSuccess }) {
               onMouseEnter={e => e.currentTarget.style.backgroundColor = '#3b0764'}
               onMouseLeave={e => e.currentTarget.style.backgroundColor = darkPurple}
             >
-              Pay {formatNGN(order.total)} via Paystack
+              Pay {formatNGN(order.total)} from Wallet
             </button>
           </>
         )}
@@ -837,9 +846,8 @@ export default function BrandDashboard() {
   }, [newOrderId, loading])
 
   // Actions
-  const handlePaySuccess = async (orderId) => {
-    setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: 'in_progress' } : o))
-    await supabase.from('collabs').update({ status: 'in_progress', payment_status: 'paid' }).eq('id', orderId)
+  const handlePaySuccess = (orderId) => {
+    setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: 'in_progress', payment_status: 'paid' } : o))
     showToast('Payment successful! Funds held securely.')
   }
 
@@ -2178,7 +2186,7 @@ function loadInterswitchScript(cb) {
   document.head.appendChild(s)
 }
 
-const QUICK_AMOUNTS = [20000, 50000, 100000, 200000]
+const QUICK_AMOUNTS = [5000, 20000, 50000, 100000]
 
 function WalletTab() {
   const [balance,      setBalance]      = useState(0)
@@ -2192,17 +2200,30 @@ function WalletTab() {
   const [txns,     setTxns]     = useState([])
 
   async function reload(uid) {
-    const [profileRes, collabsRes] = await Promise.all([
+    const [profileRes, collabsRes, topupsRes] = await Promise.all([
       supabase.from('profiles').select('wallet_balance').eq('id', uid).single(),
       supabase.from('collabs')
         .select('id, total_amount, payment_status, content_type, created_at, creator:profiles!creator_id(full_name)')
         .eq('brand_id', uid)
         .neq('payment_status', 'unpaid')
         .order('created_at', { ascending: false })
+        .limit(20),
+      supabase.from('wallet_topups')
+        .select('id, amount, status, created_at')
+        .eq('profile_id', uid)
+        .order('created_at', { ascending: false })
         .limit(20)
     ])
     if (profileRes.data) setBalance(profileRes.data.wallet_balance || 0)
-    setTxns(collabsRes.data || [])
+    const collabTxns = (collabsRes.data || []).map(t => ({ ...t, _type: 'collab' }))
+    const topupTxns = (topupsRes.data || []).map(t => ({
+      id: t.id, _type: 'topup', total_amount: t.amount,
+      payment_status: t.status, content_type: 'Wallet Top-up', creator: null, created_at: t.created_at,
+    }))
+    const merged = [...collabTxns, ...topupTxns]
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 30)
+    setTxns(merged)
   }
 
   useEffect(() => {
@@ -2219,7 +2240,7 @@ function WalletTab() {
 
   async function handleFund() {
     const amt = Number(amount)
-    if (!amt || amt < 20000) return
+    if (!amt || amt < 5000) return
     setFunding(true)
 
     if (method === 'card') {
@@ -2265,8 +2286,8 @@ function WalletTab() {
     </div>
   )
 
-  const txnStatusLabel = (ps) => ps === 'released' ? 'Released' : ps === 'paid' ? 'Active' : ps === 'refunded' ? 'Refunded' : ps
-  const txnStatusColor = (ps) => ps === 'released' ? { bg: '#dcfce7', color: '#166534' } : ps === 'paid' ? { bg: '#dbeafe', color: '#1e40af' } : { bg: '#fee2e2', color: '#991b1b' }
+  const txnStatusLabel = (ps) => ps === 'released' ? 'Released' : ps === 'paid' ? 'Active' : ps === 'refunded' ? 'Refunded' : ps === 'completed' ? 'Completed' : ps === 'pending' ? 'Pending' : ps
+  const txnStatusColor = (ps) => ps === 'released' || ps === 'completed' ? { bg: '#dcfce7', color: '#166534' } : ps === 'paid' ? { bg: '#dbeafe', color: '#1e40af' } : ps === 'pending' ? { bg: '#fef9c3', color: '#854d0e' } : { bg: '#fee2e2', color: '#991b1b' }
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -2376,7 +2397,7 @@ function WalletTab() {
 
         <button
           onClick={handleFund}
-          disabled={!amount || Number(amount) < 20000 || funding}
+          disabled={!amount || Number(amount) < 5000 || funding}
           className="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-opacity disabled:opacity-40"
           style={{ backgroundColor: purple }}
         >
@@ -2385,7 +2406,7 @@ function WalletTab() {
         </button>
 
         <p className="text-xs text-gray-400 text-center">
-          Minimum ₦20,000 · Card payments processed via Interswitch · Wallet credited after confirmation
+          Minimum ₦5,000 · Card payments processed via Interswitch · Wallet credited after confirmation
         </p>
       </div>
 
@@ -2407,12 +2428,15 @@ function WalletTab() {
               return (
                 <div key={t.id} className="px-5 py-3 flex items-center gap-4">
                   <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: 'rgba(124,58,237,0.1)' }}>
-                    <ArrowUpRight className="w-4 h-4" style={{ color: purple }} />
+                    style={{ backgroundColor: t._type === 'topup' ? 'rgba(34,197,94,0.1)' : 'rgba(124,58,237,0.1)' }}>
+                    {t._type === 'topup'
+                      ? <ArrowDownLeft className="w-4 h-4 text-green-600" />
+                      : <ArrowUpRight className="w-4 h-4" style={{ color: purple }} />
+                    }
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-800 truncate">
-                      {t.content_type || 'Collab'} · {t.creator?.full_name || 'Creator'}
+                      {t._type === 'topup' ? 'Wallet Top-up' : `${t.content_type || 'Collab'} · ${t.creator?.full_name || 'Creator'}`}
                     </p>
                     <p className="text-xs text-gray-400">{new Date(t.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                   </div>
