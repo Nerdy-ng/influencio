@@ -791,8 +791,11 @@ export default function BrandDashboard() {
   }, [fetchOrders])
 
   // New brand → redirect to Find Creators; returning brand → keep Overview
+  // Guard: already at /brand/find-creators — don't navigate there again (same-URL navigate
+  // changes location.key, which remounts the ErrorBoundary and causes an infinite loop)
   useEffect(() => {
     if (loading || hasSetInitialTab.current || initialTab) return
+    if (location.pathname === '/brand/find-creators') { hasSetInitialTab.current = true; return }
     hasSetInitialTab.current = true
     const hasActivity = orders.some(o => !['cancelled'].includes(o.status))
     if (!hasActivity) navigate('/brand/find-creators')
