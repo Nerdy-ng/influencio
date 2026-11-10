@@ -278,12 +278,12 @@ export default function Navbar() {
                   <div className="max-h-80 overflow-y-auto">
                     {inAppNotifs.length === 0 ? (
                       <div className="py-10 text-center">
-                        <Bell className="w-8 h-8 mx-auto mb-2 text-gray-200" />
-                        <p className="text-sm text-gray-400">No notifications yet</p>
+                        <Bell className="w-8 h-8 mx-auto mb-2" style={{ color: 'rgba(15,0,32,0.15)' }} />
+                        <p className="text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>No notifications yet</p>
                       </div>
                     ) : inAppNotifs.map(n => (
                       <div key={n.id} className="flex items-start gap-3 px-4 py-3 border-b last:border-0 transition-colors"
-                        style={{ borderColor: '#f9f5ff', backgroundColor: n.read ? '#fff' : '#faf5ff' }}>
+                        style={{ borderColor: '#e9d5ff', backgroundColor: n.read ? '#fff' : 'rgba(124,58,237,0.04)' }}>
                         <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
                           style={{ backgroundColor: n.type === 'application_accepted' ? '#d1fae5' : n.type === 'application_rejected' ? '#fee2e2' : '#ede9fe' }}>
                           <span className="text-sm">
@@ -292,8 +292,8 @@ export default function Navbar() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-semibold text-brand-dark leading-snug">{n.title}</p>
-                          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{n.body}</p>
-                          <p className="text-[11px] text-gray-400 mt-1">{new Date(n.created_at).toLocaleDateString()}</p>
+                          <p className="text-xs mt-0.5 leading-relaxed" style={{ color: 'rgba(15,0,32,0.4)' }}>{n.body}</p>
+                          <p className="text-[11px] mt-1" style={{ color: 'rgba(15,0,32,0.4)' }}>{new Date(n.created_at).toLocaleDateString()}</p>
                         </div>
                       </div>
                     ))}
@@ -326,7 +326,7 @@ export default function Navbar() {
                     {(userRole === 'brand' ? BRAND_DROPDOWN : TALENT_DROPDOWN).map(({ label, icon: Icon, href }) => (
                       <Link key={label} to={href} onClick={() => setUserOpen(false)}
                         className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-brand-dark/70 font-medium w-full transition-colors"
-                        onMouseEnter={e => e.currentTarget.style.backgroundColor = '#faf5ff'}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.06)'}
                         onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
                         <Icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#a78bfa' }} />
                         {label}
@@ -341,7 +341,7 @@ export default function Navbar() {
                     onClick={() => setUserOpen(false)}
                     className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium w-full transition-colors"
                     style={{ color: '#7c3aed' }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#faf5ff'}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.06)'}
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
                     <Eye className="w-3.5 h-3.5" /> View Public Profile
                   </Link>

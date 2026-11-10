@@ -377,7 +377,7 @@ export default function SignupPage() {
 
             {/* Google */}
             <button onClick={handleGoogleSignup} disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-brand-dark text-sm border transition-all hover:bg-gray-50 disabled:opacity-60 mb-4"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-brand-dark text-sm border transition-all disabled:opacity-60 mb-4" onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(124,58,237,0.04)'} onMouseLeave={e => e.currentTarget.style.backgroundColor='#fff'}
               style={{ borderColor: '#e9d5ff' }}>
               <GoogleIcon /> Continue with Google
             </button>
@@ -483,7 +483,7 @@ export default function SignupPage() {
 
             {/* Google */}
             <button onClick={handleGoogleSignup} disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-brand-dark text-sm border transition-all hover:bg-gray-50 disabled:opacity-60 mb-4"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-brand-dark text-sm border transition-all disabled:opacity-60 mb-4" onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(124,58,237,0.04)'} onMouseLeave={e => e.currentTarget.style.backgroundColor='#fff'}
               style={{ borderColor: '#e9d5ff' }}>
               <GoogleIcon /> Continue with Google
             </button>
@@ -732,7 +732,7 @@ export default function SignupPage() {
             <p className="text-brand-dark/40 text-sm mb-1">We sent a confirmation link to</p>
             <p className="font-semibold text-sm mb-6" style={{ color: gold }}>{form.email}</p>
 
-            <div className="rounded-2xl p-4 mb-6 text-left space-y-3" style={{ backgroundColor: '#f9f5ff', border: '1px solid #e9d5ff' }}>
+            <div className="rounded-2xl p-4 mb-6 text-left space-y-3" style={{ backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid #e9d5ff' }}>
               {(role === 'brand'
                 ? [
                     'Click the link in the email to confirm your account',

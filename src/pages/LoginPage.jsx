@@ -487,7 +487,7 @@ export default function LoginPage() {
             <img src={authLogo} alt="Brandior" className="object-contain rounded-xl" style={{ height: '40px', width: 'auto' }} />
           </Link>
           <div className="hidden lg:block" />
-          <p className="text-sm text-gray-500">
+          <p className="text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>
             Don't have an account?{' '}
             <Link to="/signup" className="font-semibold" style={{ color: darkPurple }}>Sign up free →</Link>
           </p>
@@ -505,7 +505,7 @@ export default function LoginPage() {
                 className="flex-1 py-2 rounded-lg text-sm font-bold capitalize transition-all"
                 style={role === r
                   ? { backgroundColor: '#4c1d95', color: 'white', boxShadow: '0 2px 8px rgba(76,29,149,0.3)' }
-                  : { color: '#9ca3af' }}>
+                  : { color: 'rgba(15,0,32,0.4)' }}>
                 {r === 'talent' ? '⭐ Talent' : '🏢 Brand'}
               </button>
             ))}
@@ -521,7 +521,7 @@ export default function LoginPage() {
                 setLoading(false)
               }}
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-brand-dark text-sm border transition-all hover:bg-gray-50 disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-brand-dark text-sm border transition-all disabled:opacity-60" onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(124,58,237,0.04)'} onMouseLeave={e => e.currentTarget.style.backgroundColor='#fff'}
               style={{ borderColor: '#e9d5ff' }}
             >
               <GoogleIcon />
@@ -587,7 +587,7 @@ export default function LoginPage() {
                         {countryCodes.map(c => (
                           <button key={c.code} type="button"
                             onClick={() => { setCountryCode(c); setShowCodes(false) }}
-                            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-brand-dark hover:bg-gray-50 transition-colors">
+                            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-brand-dark transition-colors" onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(124,58,237,0.06)'} onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
                             <span>{c.flag}</span>
                             <span className="text-brand-dark/40 text-xs">{c.label}</span>
                             <span className="ml-auto text-xs text-brand-dark/50">{c.code}</span>
