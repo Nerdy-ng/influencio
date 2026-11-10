@@ -296,7 +296,7 @@ function OrderCard({ order, onPayNow, onApprove, onRevision, onReview }) {
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <div className="bg-white rounded-3xl border border-brand-lav shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-brand-lav overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
       {/* Main row */}
       <div className="p-5">
         <div className="flex flex-wrap items-start gap-4">
@@ -309,29 +309,29 @@ function OrderCard({ order, onPayNow, onApprove, onRevision, onReview }) {
               onError={e => { e.target.src = `https://ui-avatars.com/api/?name=C&background=7c3aed&color=fff&size=40` }}
             />
             <div>
-              <p className="font-semibold text-gray-900 text-sm">{order.talent?.name}</p>
-              <p className="text-xs text-gray-400">@{order.talent?.handle}</p>
+              <p className="font-semibold text-sm" style={{ color: '#0F0020' }}>{order.talent?.name}</p>
+              <p className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>@{order.talent?.handle}</p>
             </div>
           </div>
 
           {/* Package + status */}
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-1">
-              <span className="text-sm font-medium text-gray-800">{order.package?.name}</span>
+              <span className="text-sm font-medium" style={{ color: 'rgba(15,0,32,0.6)' }}>{order.package?.name}</span>
               {order.package?.platform && (
                 <span title={order.package.platform} className="inline-flex items-center rounded-lg overflow-hidden flex-shrink-0" style={{ lineHeight: 0 }}>
                   <PlatformIcon platform={order.package.platform} size={20} />
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-500 mb-1.5">{order.brief?.productName} · {timeAgo(order.createdAt)}</p>
+            <p className="text-xs mb-1.5" style={{ color: 'rgba(15,0,32,0.4)' }}>{order.brief?.productName} · {timeAgo(order.createdAt)}</p>
             <StatusBadge status={order.status} />
             <CollabStepper status={order.status} />
           </div>
 
           {/* Price + actions */}
           <div className="flex flex-col items-end gap-2 flex-shrink-0">
-            <p className="font-bold text-gray-900">{formatNGN(order.total)}</p>
+            <p className="font-bold" style={{ color: '#0F0020' }}>{formatNGN(order.total)}</p>
             <OrderActions order={order} onPayNow={onPayNow} onApprove={onApprove} onRevision={onRevision} onReview={onReview} />
           </div>
 
@@ -344,31 +344,31 @@ function OrderCard({ order, onPayNow, onApprove, onRevision, onReview }) {
 
       {/* Expanded details */}
       {expanded && (
-        <div className="border-t border-brand-lav p-5" style={{ backgroundColor: "#f9f5ff" }}>
+        <div className="border-t border-brand-lav p-5" style={{ backgroundColor: "rgba(124,58,237,0.04)" }}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Brief Summary</p>
-              <p className="text-sm text-gray-700"><span className="font-medium">Brand:</span> {order.brief?.brandName}</p>
-              <p className="text-sm text-gray-700"><span className="font-medium">Product:</span> {order.brief?.productName}</p>
+              <p className="text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: 'rgba(15,0,32,0.4)' }}>Brief Summary</p>
+              <p className="text-sm" style={{ color: 'rgba(15,0,32,0.6)' }}><span className="font-medium">Brand:</span> {order.brief?.brandName}</p>
+              <p className="text-sm" style={{ color: 'rgba(15,0,32,0.6)' }}><span className="font-medium">Product:</span> {order.brief?.productName}</p>
             </div>
             <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Payment</p>
-              <p className="text-sm text-gray-700"><span className="font-medium">Package:</span> {formatNGN(order.packagePrice)}</p>
-              <p className="text-sm text-gray-700"><span className="font-medium">Platform fee:</span> {formatNGN(order.platformFee)}</p>
-              <p className="text-sm font-bold text-gray-900"><span className="font-medium">Total:</span> {formatNGN(order.total)}</p>
+              <p className="text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: 'rgba(15,0,32,0.4)' }}>Payment</p>
+              <p className="text-sm" style={{ color: 'rgba(15,0,32,0.6)' }}><span className="font-medium">Package:</span> {formatNGN(order.packagePrice)}</p>
+              <p className="text-sm" style={{ color: 'rgba(15,0,32,0.6)' }}><span className="font-medium">Platform fee:</span> {formatNGN(order.platformFee)}</p>
+              <p className="text-sm font-bold" style={{ color: '#0F0020' }}><span className="font-medium">Total:</span> {formatNGN(order.total)}</p>
             </div>
           </div>
 
           {/* Delivered files */}
           {order.deliveredFiles && order.deliveredFiles.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Delivered Files</p>
+              <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'rgba(15,0,32,0.4)' }}>Delivered Files</p>
               <div className="flex flex-wrap gap-2">
                 {order.deliveredFiles.map(f => (
                   <a
                     key={f.name}
                     href={f.url}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-purple-50 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-medium hover:bg-purple-50 transition-colors" style={{ color: 'rgba(15,0,32,0.6)' }}
                     download
                   >
                     <Download className="w-3.5 h-3.5" />
@@ -580,7 +580,7 @@ function Toast({ message, type, onClose }) {
 
 function StatCard({ label, value, icon: Icon, color }) {
   return (
-    <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #e9d5ff', boxShadow: '0 1px 4px rgba(124,58,237,0.06)' }}>
+    <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
       <div className="flex items-center justify-between mb-3">
         <p className="text-sm font-medium" style={{ color: 'rgba(28,0,64,0.5)' }}>{label}</p>
         <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: color + '18' }}>
@@ -841,7 +841,7 @@ export default function BrandDashboard() {
   const recentOrders = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5)
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#f9f5ff' }}>
+    <div className="min-h-screen flex" style={{ backgroundColor: '#f3eeff' }}>
       {showTour && (
         <OnboardingTour
           role="brand"
@@ -1248,7 +1248,7 @@ function TalentMiniCard({ talent }) {
   const faved = isFav(talent.id)
   return (
     <div className="bg-white rounded-2xl p-4 flex flex-col gap-3 hover:shadow-md transition-shadow"
-      style={{ border: '1px solid #e9d5ff', boxShadow: '0 1px 4px rgba(124,58,237,0.06)' }}>
+      style={{ border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
       <div className="flex items-center gap-3">
         {talent.avatar
           ? <img src={talent.avatar} alt={talent.name}
@@ -1260,8 +1260,8 @@ function TalentMiniCard({ talent }) {
           {(talent.name || '?')[0].toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-gray-900 text-sm truncate">{talent.name}</p>
-          <p className="text-xs text-gray-400 truncate">{talent.handle}</p>
+          <p className="font-bold text-sm truncate" style={{ color: '#0F0020' }}>{talent.name}</p>
+          <p className="text-xs truncate" style={{ color: 'rgba(15,0,32,0.4)' }}>{talent.handle}</p>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <button
@@ -1279,9 +1279,9 @@ function TalentMiniCard({ talent }) {
           </span>
         </div>
       </div>
-      <div className="flex items-center justify-between text-xs text-gray-500">
+      <div className="flex items-center justify-between text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>
         <span className="truncate">{talent.niche}</span>
-        <span className="font-semibold text-gray-700 flex-shrink-0 ml-2">{talent.followers}</span>
+        <span className="font-semibold flex-shrink-0 ml-2" style={{ color: 'rgba(15,0,32,0.6)' }}>{talent.followers}</span>
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-0.5">
@@ -1290,7 +1290,7 @@ function TalentMiniCard({ talent }) {
               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
             </svg>
           ))}
-          <span className="ml-1 text-xs font-semibold text-gray-600">{talent.rating}</span>
+          <span className="ml-1 text-xs font-semibold" style={{ color: 'rgba(15,0,32,0.5)' }}>{talent.rating}</span>
         </div>
         <span className="text-xs font-bold" style={{ color: '#7c3aed' }}>From ₦{talent.from.toLocaleString('en')}</span>
       </div>
@@ -1829,7 +1829,7 @@ function OverviewTab({ activeOrders, pendingReview, completedOrders, setActiveTa
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-black" style={{ color: '#1e0040' }}>Top Creators</h3>
-            <Link to="/marketplace" className="text-sm font-medium flex items-center gap-1" style={{ color: purple }}>
+            <Link to="/brand/find-creators" className="text-sm font-medium flex items-center gap-1" style={{ color: purple }}>
               Browse all <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
@@ -1924,17 +1924,29 @@ function OrdersTab({ title, orders, emptyMsg, onPayNow, onApprove, onRevision, o
       {orders.length > 0 && (
         <div className="bg-white rounded-2xl border border-brand-lav p-4 space-y-3">
           {/* Search */}
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-brand-lav" style={{ backgroundColor: '#f9f5ff' }}>
-            <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'rgba(124,58,237,0.45)' }} />
             <input
               value={search}
               onChange={e => setSearch(stripInjection(e.target.value))}
               placeholder="Search by talent name…"
-              className="flex-1 text-sm bg-transparent outline-none text-gray-700 placeholder-gray-400"
+              className="w-full rounded-xl text-sm focus:outline-none transition-shadow"
+              style={{
+                paddingLeft: '2.5rem',
+                paddingRight: search ? '2.5rem' : '1rem',
+                paddingTop: '0.625rem',
+                paddingBottom: '0.625rem',
+                backgroundColor: '#fff',
+                border: '1.5px solid #e9d5ff',
+                color: '#1e0040',
+                boxShadow: '0 2px 12px rgba(124,58,237,0.08)',
+              }}
+              onFocus={e => { e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.12), 0 2px 12px rgba(124,58,237,0.08)' }}
+              onBlur={e => { e.target.style.boxShadow = '0 2px 12px rgba(124,58,237,0.08)' }}
             />
             {search && (
-              <button onClick={() => setSearch('')} className="text-gray-300 hover:text-gray-500">
-                <X className="w-3.5 h-3.5" />
+              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: '#7c3aed' }}>
+                <X className="w-3 h-3" />
               </button>
             )}
           </div>
