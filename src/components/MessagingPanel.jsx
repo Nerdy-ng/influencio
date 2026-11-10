@@ -51,7 +51,7 @@ function ConvItem({ conv, active, userType, onClick, isFav, isHidden, onToggleFa
   return (
     <div
       className="relative flex items-center gap-3 px-4 py-3.5 transition-colors group"
-      style={{ backgroundColor: active ? '#f3e8ff' : 'transparent' }}
+      style={{ backgroundColor: active ? 'rgba(124,58,237,0.06)' : 'transparent' }}
     >
       {/* Clickable area */}
       <button onClick={onClick} className="flex items-center gap-3 flex-1 min-w-0 text-left">
@@ -64,47 +64,57 @@ function ConvItem({ conv, active, userType, onClick, isFav, isHidden, onToggleFa
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-0.5">
-            <p className="text-sm font-semibold text-gray-900 truncate">{otherName}</p>
+            <p className="text-sm font-semibold truncate" style={{ color: '#0F0020' }}>{otherName}</p>
             {isFav && <Star className="w-3 h-3 flex-shrink-0" style={{ color: '#D4AF37' }} fill="#D4AF37" />}
-            {isHidden && <EyeOff className="w-3 h-3 flex-shrink-0 text-gray-300" />}
+            {isHidden && <EyeOff className="w-3 h-3 flex-shrink-0" style={{ color: 'rgba(15,0,32,0.2)' }} />}
           </div>
           {conv.orderTitle && (
             <p className="text-[10px] font-medium mb-0.5 truncate" style={{ color: purple }}>
               {conv.orderTitle}
             </p>
           )}
-          <p className={`text-xs truncate ${unread > 0 ? 'font-semibold text-gray-800' : 'text-gray-400'}`}>
+          <p className={`text-xs truncate ${unread > 0 ? 'font-semibold' : ''}`}
+            style={{ color: unread > 0 ? '#0F0020' : 'rgba(15,0,32,0.4)' }}>
             {conv.lastMessage || 'No messages yet'}
           </p>
         </div>
-        <span className="text-[11px] text-gray-400 flex-shrink-0 ml-1">{timeAgo(conv.lastMessageAt)}</span>
+        <span className="text-[11px] flex-shrink-0 ml-1" style={{ color: 'rgba(15,0,32,0.4)' }}>{timeAgo(conv.lastMessageAt)}</span>
       </button>
 
       {/* Three-dot menu */}
       <div ref={menuRef} className="flex-shrink-0">
         <button
           onClick={e => { e.stopPropagation(); setMenuOpen(v => !v) }}
-          className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-lg transition-all hover:bg-gray-100"
+          className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-lg transition-all"
+          style={{ color: 'rgba(15,0,32,0.4)' }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.08)' }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
         >
-          <MoreVertical className="w-3.5 h-3.5 text-gray-400" />
+          <MoreVertical className="w-3.5 h-3.5" />
         </button>
         {menuOpen && (
           <div className="absolute right-3 top-10 z-50 w-36 rounded-xl shadow-lg overflow-hidden"
             style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
             <button
               onClick={() => { onToggleFav(conv.id); setMenuOpen(false) }}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-medium text-left transition-colors hover:bg-gray-50"
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-medium text-left transition-colors"
+              style={{ color: '#0F0020' }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.04)' }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
             >
               <Star className="w-3.5 h-3.5" style={{ color: '#D4AF37' }} fill={isFav ? '#D4AF37' : 'none'} />
               {isFav ? 'Unfavorite' : 'Favorite'}
             </button>
             <button
               onClick={() => { onToggleHide(conv.id); setMenuOpen(false) }}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-medium text-left transition-colors hover:bg-gray-50"
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-medium text-left transition-colors"
+              style={{ color: '#0F0020' }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.04)' }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
             >
               {isHidden
-                ? <Eye className="w-3.5 h-3.5 text-gray-400" />
-                : <EyeOff className="w-3.5 h-3.5 text-gray-400" />
+                ? <Eye className="w-3.5 h-3.5" style={{ color: 'rgba(15,0,32,0.4)' }} />
+                : <EyeOff className="w-3.5 h-3.5" style={{ color: 'rgba(15,0,32,0.4)' }} />
               }
               {isHidden ? 'Unhide' : 'Hide'}
             </button>
@@ -134,7 +144,7 @@ function MessageBubble({ msg, isMine }) {
             <a href={msg.fileUrl} target="_blank" rel="noreferrer"
               className="flex items-center gap-3 px-4 py-3 rounded-2xl no-underline"
               style={{
-                backgroundColor: isMine ? darkPurple : '#f3f4f6',
+                backgroundColor: isMine ? darkPurple : 'rgba(124,58,237,0.06)',
                 borderBottomRightRadius: isMine ? 4 : 16,
                 borderBottomLeftRadius: isMine ? 16 : 4,
               }}>
@@ -143,23 +153,24 @@ function MessageBubble({ msg, isMine }) {
                 <Paperclip className="w-4 h-4" style={{ color: isMine ? 'white' : purple }} />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold truncate" style={{ color: isMine ? 'white' : '#111827' }}>{msg.fileName}</p>
-                <p className="text-xs" style={{ color: isMine ? 'rgba(255,255,255,0.6)' : '#9ca3af' }}>{msg.fileSize}</p>
+                <p className="text-sm font-semibold truncate" style={{ color: isMine ? 'white' : '#0F0020' }}>{msg.fileName}</p>
+                <p className="text-xs" style={{ color: isMine ? 'rgba(255,255,255,0.6)' : 'rgba(15,0,32,0.4)' }}>{msg.fileSize}</p>
               </div>
             </a>
           )
         ) : (
           <div className="px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
             style={{
-              backgroundColor: isMine ? darkPurple : '#f3f4f6',
-              color: isMine ? 'white' : '#111827',
+              backgroundColor: isMine ? darkPurple : 'rgba(124,58,237,0.06)',
+              color: isMine ? 'white' : '#0F0020',
               borderBottomRightRadius: isMine ? 4 : 16,
               borderBottomLeftRadius: isMine ? 16 : 4,
             }}>
             {msg.body}
           </div>
         )}
-        <p className={`text-[10px] mt-1 text-gray-400 ${isMine ? 'text-right' : 'text-left'}`}>
+        <p className={`text-[10px] mt-1 ${isMine ? 'text-right' : 'text-left'}`}
+          style={{ color: 'rgba(15,0,32,0.4)' }}>
           {timeAgo(msg.createdAt)}
           {isMine && <span className="ml-1">{msg.read ? '✓✓' : '✓'}</span>}
         </p>
@@ -174,7 +185,7 @@ function OfferBubble({ msg, isMine, onRespond }) {
   const status = offer.status || 'pending'
 
   const statusConfig = {
-    pending: { label: 'Awaiting response', bg: '#f3e8ff', border: '#e9d5ff', color: purple },
+    pending: { label: 'Awaiting response', bg: 'rgba(124,58,237,0.06)', border: '#e9d5ff', color: purple },
     accepted: { label: 'Offer accepted', bg: '#f0fdf4', border: '#86efac', color: '#16a34a' },
     declined: { label: 'Offer declined', bg: '#fef2f2', border: '#fca5a5', color: '#dc2626' },
   }
@@ -199,7 +210,7 @@ function OfferBubble({ msg, isMine, onRespond }) {
           {/* Amount */}
           {offer.amount && (
             <div className="px-4 pt-3">
-              <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Proposed Budget</p>
+              <p className="text-xs font-medium uppercase tracking-wide" style={{ color: 'rgba(15,0,32,0.4)' }}>Proposed Budget</p>
               <p className="text-2xl font-extrabold mt-0.5" style={{ color: pink }}>
                 ₦{Number(offer.amount).toLocaleString('en')}
               </p>
@@ -208,8 +219,8 @@ function OfferBubble({ msg, isMine, onRespond }) {
 
           {/* Note */}
           <div className="px-4 py-3">
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Project Brief</p>
-            <p className="text-sm text-gray-700 leading-relaxed">{msg.body}</p>
+            <p className="text-xs font-medium uppercase tracking-wide mb-1" style={{ color: 'rgba(15,0,32,0.4)' }}>Project Brief</p>
+            <p className="text-sm leading-relaxed" style={{ color: 'rgba(15,0,32,0.6)' }}>{msg.body}</p>
           </div>
 
           {/* Status / Actions */}
@@ -238,7 +249,8 @@ function OfferBubble({ msg, isMine, onRespond }) {
             )}
           </div>
         </div>
-        <p className={`text-[10px] mt-1 text-gray-400 ${isMine ? 'text-right' : 'text-left'}`}>
+        <p className={`text-[10px] mt-1 ${isMine ? 'text-right' : 'text-left'}`}
+          style={{ color: 'rgba(15,0,32,0.4)' }}>
           {timeAgo(msg.createdAt)}
         </p>
       </div>
@@ -250,12 +262,12 @@ function OfferBubble({ msg, isMine, onRespond }) {
 function EmptyThread({ otherName }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-      <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-        style={{ backgroundColor: '#f3e8ff' }}>
+      <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4"
+        style={{ backgroundColor: 'rgba(124,58,237,0.1)' }}>
         <MessageSquare className="w-7 h-7" style={{ color: purple }} />
       </div>
-      <p className="font-semibold text-gray-700 mb-1">Start a conversation</p>
-      <p className="text-sm text-gray-400">
+      <p className="font-semibold mb-1" style={{ color: '#0F0020' }}>Start a conversation</p>
+      <p className="text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>
         Send your first message to {otherName || 'this user'}.
       </p>
     </div>
@@ -738,30 +750,35 @@ export default function MessagingPanel({ userId, userType: userTypeProp, initial
 
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-[calc(100vh-9rem)] min-h-[500px] rounded-3xl overflow-hidden shadow-sm"
+    <div className="flex h-[calc(100vh-9rem)] min-h-[500px] rounded-2xl overflow-hidden shadow-sm"
       style={{ border: '1px solid #e9d5ff' }}>
 
       {/* ── Conversation list ── */}
       <div className={`flex flex-col bg-white ${mobileView === 'thread' ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-shrink-0`}
-        style={{ borderRight: '1px solid #f3e8ff' }}>
+        style={{ borderRight: '1px solid #e9d5ff' }}>
 
         {/* Header */}
-        <div className="px-4 pt-5 pb-3" style={{ borderBottom: '1px solid #f3e8ff' }}>
+        <div className="px-4 pt-5 pb-3" style={{ borderBottom: '1px solid #e9d5ff' }}>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold text-gray-900 text-base">Messages</h2>
+            <h2 className="font-bold text-base" style={{ color: '#0F0020' }}>Messages</h2>
             {totalUnread > 0 && (
               <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white"
                 style={{ backgroundColor: pink }}>{totalUnread} new</span>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: '#f9f5ff' }}>
-              <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl transition-shadow"
+              style={{ backgroundColor: '#fff', border: '1.5px solid #e9d5ff', boxShadow: '0 2px 8px rgba(124,58,237,0.06)' }}
+              onFocusCapture={e => { e.currentTarget.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.12), 0 2px 8px rgba(124,58,237,0.06)' }}
+              onBlurCapture={e => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(124,58,237,0.06)' }}
+            >
+              <Search className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'rgba(124,58,237,0.45)' }} />
               <input
                 value={search}
                 onChange={e => setSearch(stripInjection(e.target.value))}
                 placeholder="Search conversations…"
-                className="flex-1 text-sm bg-transparent outline-none text-gray-700 placeholder-gray-400"
+                className="flex-1 text-sm bg-transparent outline-none"
+                style={{ color: '#0F0020' }}
               />
             </div>
             <div className="relative" ref={filterRef}>
@@ -770,7 +787,7 @@ export default function MessagingPanel({ userId, userType: userTypeProp, initial
                 title="Filter"
                 className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 transition-colors"
                 style={{
-                  backgroundColor: showFilters || msgFilter !== 'all' ? darkPurple : '#f3e8ff',
+                  backgroundColor: showFilters || msgFilter !== 'all' ? darkPurple : 'rgba(124,58,237,0.08)',
                   color: showFilters || msgFilter !== 'all' ? 'white' : purple,
                 }}
               >
@@ -794,12 +811,12 @@ export default function MessagingPanel({ userId, userType: userTypeProp, initial
                       onClick={() => { setMsgFilter(value); setShowFilters(false) }}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left"
                       style={{
-                        backgroundColor: msgFilter === value ? '#f3e8ff' : 'transparent',
-                        color: msgFilter === value ? darkPurple : '#374151',
+                        backgroundColor: msgFilter === value ? 'rgba(124,58,237,0.06)' : 'transparent',
+                        color: msgFilter === value ? darkPurple : '#0F0020',
                         fontWeight: msgFilter === value ? 600 : 400,
                       }}
                     >
-                      <Icon className="w-4 h-4 flex-shrink-0" style={{ color: msgFilter === value ? darkPurple : '#9ca3af' }} />
+                      <Icon className="w-4 h-4 flex-shrink-0" style={{ color: msgFilter === value ? darkPurple : 'rgba(15,0,32,0.4)' }} />
                       {title}
                     </button>
                   ))}
@@ -814,18 +831,20 @@ export default function MessagingPanel({ userId, userType: userTypeProp, initial
           {/* ── Welcome pinned thread ── */}
           {!welcomeDismissed && (
             <div
-              className="flex items-center gap-3 px-4 py-3.5 cursor-pointer border-b transition-colors hover:bg-gray-50"
-              style={{ borderColor: '#f3e8ff', backgroundColor: activeConvId === 'welcome' ? '#faf5ff' : undefined }}
+              className="flex items-center gap-3 px-4 py-3.5 cursor-pointer border-b transition-colors"
+              style={{ borderColor: '#e9d5ff', backgroundColor: activeConvId === 'welcome' ? 'rgba(124,58,237,0.06)' : undefined }}
+              onMouseEnter={e => { if (activeConvId !== 'welcome') e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.03)' }}
+              onMouseLeave={e => { if (activeConvId !== 'welcome') e.currentTarget.style.backgroundColor = '' }}
               onClick={() => { setActiveConvId('welcome'); setMobileView('thread') }}
             >
               <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-bold"
                 style={{ background: 'linear-gradient(135deg, #7c3aed, #ec4899)' }}>B</div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-0.5">
-                  <p className="text-sm font-bold text-gray-900">Brandior</p>
-                  <p className="text-[11px] text-gray-400">just now</p>
+                  <p className="text-sm font-bold" style={{ color: '#0F0020' }}>Brandior</p>
+                  <p className="text-[11px]" style={{ color: 'rgba(15,0,32,0.4)' }}>just now</p>
                 </div>
-                <p className="text-xs text-gray-500 truncate">👋 Welcome to Brandior! Here's how to get started…</p>
+                <p className="text-xs truncate" style={{ color: 'rgba(15,0,32,0.4)' }}>👋 Welcome to Brandior! Here's how to get started…</p>
               </div>
               <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: purple }} />
             </div>
@@ -833,8 +852,11 @@ export default function MessagingPanel({ userId, userType: userTypeProp, initial
 
           {filtered.length === 0 && welcomeDismissed ? (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-              <MessageSquare className="w-8 h-8 mb-3 text-gray-300" />
-              <p className="text-sm text-gray-400">No conversations yet</p>
+              <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3"
+                style={{ backgroundColor: 'rgba(124,58,237,0.1)' }}>
+                <MessageSquare className="w-6 h-6" style={{ color: 'rgba(124,58,237,0.5)' }} />
+              </div>
+              <p className="text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>No conversations yet</p>
             </div>
           ) : (
             filtered.map(conv => (
@@ -859,18 +881,25 @@ export default function MessagingPanel({ userId, userType: userTypeProp, initial
         {activeConvId === 'welcome' ? (
           // ── Welcome thread (read-only) ──────────────────────────────
           <div className="flex-1 flex flex-col">
-            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: '1px solid #f3e8ff' }}>
-              <button className="md:hidden p-1.5 -ml-1.5 rounded-lg hover:bg-gray-100"
+            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: '1px solid #e9d5ff' }}>
+              <button className="md:hidden p-1.5 -ml-1.5 rounded-lg transition-colors"
+                style={{ color: 'rgba(15,0,32,0.4)' }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.08)' }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
                 onClick={() => setMobileView('list')}>
-                <ChevronLeft className="w-4 h-4 text-gray-500" />
+                <ChevronLeft className="w-4 h-4" />
               </button>
               <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
                 style={{ background: 'linear-gradient(135deg, #7c3aed, #ec4899)' }}>B</div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-gray-900 text-sm">Brandior</p>
+                <p className="font-bold text-sm" style={{ color: '#0F0020' }}>Brandior</p>
                 <p className="text-xs" style={{ color: purple }}>Platform team</p>
               </div>
-              <button onClick={dismissWelcome} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 text-xs">
+              <button onClick={dismissWelcome}
+                className="p-1.5 rounded-lg text-xs transition-colors"
+                style={{ color: 'rgba(15,0,32,0.4)' }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#0F0020'; e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.06)' }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'rgba(15,0,32,0.4)'; e.currentTarget.style.backgroundColor = 'transparent' }}>
                 Dismiss
               </button>
             </div>
@@ -878,11 +907,13 @@ export default function MessagingPanel({ userId, userType: userTypeProp, initial
               <div className="flex gap-3 max-w-lg">
                 <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-bold"
                   style={{ background: 'linear-gradient(135deg, #7c3aed, #ec4899)' }}>B</div>
-                <div className="bg-gray-50 rounded-2xl rounded-tl-none px-4 py-3 max-w-sm" style={{ border: '1px solid #f3e8ff' }}>
+                <div className="rounded-2xl rounded-tl-none px-4 py-3 max-w-sm"
+                  style={{ backgroundColor: 'rgba(124,58,237,0.06)', border: '1px solid #e9d5ff' }}>
                   {WELCOME_BODY.split('\n').map((line, i) => (
-                    <p key={i} className={`text-sm text-gray-700 ${line === '' ? 'mt-2' : ''}`}>{line || ' '}</p>
+                    <p key={i} className={`text-sm ${line === '' ? 'mt-2' : ''}`}
+                      style={{ color: 'rgba(15,0,32,0.6)' }}>{line || ' '}</p>
                   ))}
-                  <p className="text-[10px] text-gray-400 mt-2">Just now</p>
+                  <p className="text-[10px] mt-2" style={{ color: 'rgba(15,0,32,0.4)' }}>Just now</p>
                 </div>
               </div>
             </div>
@@ -890,26 +921,29 @@ export default function MessagingPanel({ userId, userType: userTypeProp, initial
         ) : !activeConvId ? (
           // No conversation selected
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-            <div className="w-16 h-16 rounded-3xl flex items-center justify-center mb-5"
-              style={{ backgroundColor: '#f3e8ff' }}>
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5"
+              style={{ backgroundColor: 'rgba(124,58,237,0.1)' }}>
               <MessageSquare className="w-8 h-8" style={{ color: purple }} />
             </div>
-            <p className="font-bold text-gray-700 text-lg mb-2">Your messages</p>
-            <p className="text-sm text-gray-400 max-w-xs">
+            <p className="font-bold text-lg mb-2" style={{ color: '#0F0020' }}>Your messages</p>
+            <p className="text-sm max-w-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>
               Select a conversation from the list to read and reply to messages.
             </p>
           </div>
         ) : (
           <>
             {/* Thread header */}
-            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: '1px solid #f3e8ff' }}>
-              <button className="md:hidden p-1.5 -ml-1.5 rounded-lg hover:bg-gray-100"
+            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: '1px solid #e9d5ff' }}>
+              <button className="md:hidden p-1.5 -ml-1.5 rounded-lg transition-colors"
+                style={{ color: 'rgba(15,0,32,0.4)' }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.08)' }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
                 onClick={() => setMobileView('list')}>
-                <ChevronLeft className="w-4 h-4 text-gray-500" />
+                <ChevronLeft className="w-4 h-4" />
               </button>
               <Avatar name={otherName} src={otherAvatar} size={40} />
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-gray-900 text-sm">{otherName}</p>
+                <p className="font-bold text-sm" style={{ color: '#0F0020' }}>{otherName}</p>
                 {activeConv?.orderTitle && (
                   <p className="text-xs truncate" style={{ color: purple }}>
                     Re: {activeConv.orderTitle}
@@ -956,23 +990,27 @@ export default function MessagingPanel({ userId, userType: userTypeProp, initial
             {showOfferPanel && (
               <form onSubmit={sendOffer}
                 className="px-4 pt-3 pb-1"
-                style={{ borderTop: '1px solid #f3e8ff', backgroundColor: '#faf5ff' }}>
+                style={{ borderTop: '1px solid #e9d5ff', backgroundColor: 'rgba(124,58,237,0.04)' }}>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                  <p className="text-xs font-bold flex items-center gap-1.5" style={{ color: 'rgba(15,0,32,0.6)' }}>
                     <DollarSign className="w-3.5 h-3.5" style={{ color: purple }} />
                     Make an Offer
                   </p>
-                  <button type="button" onClick={() => setShowOfferPanel(false)}>
-                    <X className="w-4 h-4 text-gray-400" />
+                  <button type="button" onClick={() => setShowOfferPanel(false)}
+                    style={{ color: 'rgba(15,0,32,0.4)' }}>
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm font-semibold text-gray-600">₦</span>
+                  <span className="text-sm font-semibold" style={{ color: 'rgba(15,0,32,0.6)' }}>₦</span>
                   <input
                     value={offerAmount}
                     onChange={e => setOfferAmount(stripInjection(e.target.value))}
                     placeholder="Proposed budget (optional)"
-                    className="flex-1 text-sm bg-white border border-purple-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-purple-100"
+                    className="flex-1 text-sm rounded-xl outline-none transition-shadow"
+                    style={{ backgroundColor: '#fff', border: '1.5px solid #e9d5ff', color: '#0F0020', padding: '0.5rem 0.75rem', boxShadow: '0 2px 8px rgba(124,58,237,0.06)' }}
+                    onFocus={e => { e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.12), 0 2px 8px rgba(124,58,237,0.06)' }}
+                    onBlur={e => { e.target.style.boxShadow = '0 2px 8px rgba(124,58,237,0.06)' }}
                   />
                 </div>
                 <div className="flex items-end gap-2">
@@ -981,8 +1019,10 @@ export default function MessagingPanel({ userId, userType: userTypeProp, initial
                     onChange={e => setInput(stripInjection(e.target.value))}
                     placeholder="Describe your project, deliverables, timeline…"
                     rows={2}
-                    className="flex-1 text-sm bg-white border border-purple-200 rounded-xl px-3 py-2 outline-none resize-none focus:ring-2 focus:ring-purple-100"
-                    style={{ maxHeight: 100 }}
+                    className="flex-1 text-sm rounded-xl outline-none resize-none transition-shadow"
+                    style={{ backgroundColor: '#fff', border: '1.5px solid #e9d5ff', color: '#0F0020', padding: '0.5rem 0.75rem', boxShadow: '0 2px 8px rgba(124,58,237,0.06)', maxHeight: 100 }}
+                    onFocus={e => { e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.12), 0 2px 8px rgba(124,58,237,0.06)' }}
+                    onBlur={e => { e.target.style.boxShadow = '0 2px 8px rgba(124,58,237,0.06)' }}
                   />
                   <button type="submit" disabled={!input.trim() || sending}
                     className="px-4 py-2 rounded-xl text-xs font-bold text-white disabled:opacity-40"
@@ -997,10 +1037,12 @@ export default function MessagingPanel({ userId, userType: userTypeProp, initial
             {!showOfferPanel && (
               <form onSubmit={sendMessage}
                 className="flex items-end gap-2 px-4 py-3"
-                style={{ borderTop: '1px solid #f3e8ff' }}>
+                style={{ borderTop: '1px solid #e9d5ff' }}>
                 {/* File attachment */}
-                <label title="Attach file (image or PDF)" className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 cursor-pointer transition-colors hover:bg-purple-50"
-                  style={{ color: '#9ca3af' }}>
+                <label title="Attach file (image or PDF)" className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 cursor-pointer transition-colors"
+                  style={{ color: 'rgba(124,58,237,0.45)' }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.08)' }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}>
                   <Paperclip className="w-4 h-4" />
                   <input type="file" accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
                     className="hidden" onChange={sendFile} disabled={sending} />
@@ -1012,13 +1054,13 @@ export default function MessagingPanel({ userId, userType: userTypeProp, initial
                     onClick={() => setShowOfferPanel(true)}
                     title="Make an Offer"
                     className="w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 transition-colors"
-                    style={{ backgroundColor: '#f3e8ff', color: purple }}
+                    style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple }}
                   >
                     <DollarSign className="w-4 h-4" />
                   </button>
                 )}
                 <div className="flex-1 flex items-end rounded-2xl overflow-hidden px-4 py-2.5"
-                  style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff', minHeight: 46 }}>
+                  style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff', minHeight: 46, boxShadow: '0 2px 12px rgba(124,58,237,0.08)' }}>
                   <textarea
                     value={input}
                     onChange={e => setInput(stripInjection(e.target.value))}
@@ -1027,7 +1069,8 @@ export default function MessagingPanel({ userId, userType: userTypeProp, initial
                     }}
                     placeholder="Type a message…"
                     rows={1}
-                    className="flex-1 text-sm text-gray-800 bg-transparent outline-none resize-none leading-relaxed"
+                    className="flex-1 text-sm bg-transparent outline-none resize-none leading-relaxed"
+                    style={{ color: '#0F0020' }}
                     style={{ maxHeight: 120 }}
                   />
                 </div>
@@ -1047,14 +1090,15 @@ export default function MessagingPanel({ userId, userType: userTypeProp, initial
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(15,23,42,0.5)' }}>
           <div className="w-full max-w-md rounded-2xl bg-white p-6" style={{ border: '1px solid #e9d5ff' }}>
             <div className="flex items-center justify-between mb-1">
-              <h3 className="font-bold text-gray-900 text-base flex items-center gap-2">
+              <h3 className="font-bold text-base flex items-center gap-2" style={{ color: '#0F0020' }}>
                 <Scale className="w-4 h-4 text-red-500" /> Raise a Dispute
               </h3>
-              <button onClick={() => setShowDisputeModal(false)}>
-                <X className="w-4 h-4 text-gray-400" />
+              <button onClick={() => setShowDisputeModal(false)}
+                style={{ color: 'rgba(15,0,32,0.4)' }}>
+                <X className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-xs text-gray-400 mb-4">
+            <p className="text-xs mb-4" style={{ color: 'rgba(15,0,32,0.4)' }}>
               About your collaboration with {otherName}. Our team will review your evidence and the conversation history before deciding.
             </p>
 
@@ -1065,24 +1109,28 @@ export default function MessagingPanel({ userId, userType: userTypeProp, initial
             ) : (
               <form onSubmit={submitDispute} className="space-y-3">
                 <div>
-                  <label className="text-xs font-semibold text-gray-600 mb-1 block">What's the issue? <span className="text-red-500">*</span></label>
+                  <label className="text-xs font-semibold mb-1 block" style={{ color: 'rgba(15,0,32,0.6)' }}>What's the issue? <span className="text-red-500">*</span></label>
                   <input
                     value={disputeReason}
                     onChange={e => setDisputeReason(stripInjection(e.target.value))}
                     placeholder="e.g. Delivered content doesn't match the brief"
-                    className="w-full px-3.5 py-2.5 rounded-xl text-sm text-gray-800 outline-none"
-                    style={{ border: '1px solid #e5e7eb' }}
+                    className="w-full rounded-xl text-sm outline-none transition-shadow"
+                    style={{ padding: '0.625rem 0.875rem', border: '1.5px solid #e9d5ff', color: '#0F0020', boxShadow: '0 2px 8px rgba(124,58,237,0.06)' }}
+                    onFocus={e => { e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.12), 0 2px 8px rgba(124,58,237,0.06)' }}
+                    onBlur={e => { e.target.style.boxShadow = '0 2px 8px rgba(124,58,237,0.06)' }}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-600 mb-1 block">Tell us more</label>
+                  <label className="text-xs font-semibold mb-1 block" style={{ color: 'rgba(15,0,32,0.6)' }}>Tell us more</label>
                   <textarea
                     value={disputeStatement}
                     onChange={e => setDisputeStatement(stripInjection(e.target.value))}
                     rows={4}
                     placeholder="Explain what happened, with as much detail as possible…"
-                    className="w-full px-3.5 py-2.5 rounded-xl text-sm text-gray-800 outline-none resize-none"
-                    style={{ border: '1px solid #e5e7eb' }}
+                    className="w-full rounded-xl text-sm outline-none resize-none transition-shadow"
+                    style={{ padding: '0.625rem 0.875rem', border: '1.5px solid #e9d5ff', color: '#0F0020', boxShadow: '0 2px 8px rgba(124,58,237,0.06)' }}
+                    onFocus={e => { e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.12), 0 2px 8px rgba(124,58,237,0.06)' }}
+                    onBlur={e => { e.target.style.boxShadow = '0 2px 8px rgba(124,58,237,0.06)' }}
                   />
                 </div>
                 {disputeFeedback?.type === 'error' && (

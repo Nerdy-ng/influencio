@@ -13,7 +13,7 @@ const CACHE_PREFIX = 'brandior_logo_'
 const SLOT_DEFAULTS = {
   header:    '/logo.png',
   footer:    '/logo.png',
-  auth:      '/Brandio.png',
+  auth:      '/logo.png',
   landing:   '/logo.png',
   dashboard: '/logo.png',
 }
