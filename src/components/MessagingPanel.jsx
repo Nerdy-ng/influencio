@@ -416,13 +416,18 @@ export default function MessagingPanel({ userId, userType: userTypeProp, initial
 
   useEffect(() => {
     fetchConversations()
-    // Real-time: re-fetch when conversations change
+    if (!userId) return
+    // User-scoped channel so we only receive changes relevant to this user
+    const col = userType === 'brand' ? 'brand_id' : 'talent_id'
     const channel = supabase
-      .channel('conversations_realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, fetchConversations)
+      .channel(`conv_inbox_${userId}_${userType}`)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'conversations',
+        filter: `${col}=eq.${userId}`,
+      }, fetchConversations)
       .subscribe()
     return () => supabase.removeChannel(channel)
-  }, [fetchConversations])
+  }, [fetchConversations, userId, userType])
 
   // ── Fetch messages in active conv ────────────────────────────────────────────
   const fetchMessages = useCallback(async (convId) => {
@@ -466,7 +471,17 @@ export default function MessagingPanel({ userId, userType: userTypeProp, initial
       }, payload => {
         const newMsg = mapMsg(payload.new)
         setMessages(prev => {
-          if (prev.find(m => m.id === newMsg.id)) return prev
+          // Dedup by real ID (handles reconnect replays)
+          if (prev.some(m => m.id === newMsg.id)) return prev
+          // Replace matching optimistic with the confirmed message (port of mobile pattern)
+          const optIdx = prev.findIndex(m =>
+            String(m.id).startsWith('opt_') && m.senderId === newMsg.senderId && m.body === newMsg.body
+          )
+          if (optIdx !== -1) {
+            const next = [...prev]
+            next[optIdx] = newMsg
+            return next
+          }
           return [...prev, newMsg]
         })
         // reset unread if from other party
