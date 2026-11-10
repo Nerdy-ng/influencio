@@ -162,6 +162,7 @@ export function TalentCard({ talent, onGate, from = '/marketplace' }) {
   const handleMouseEnter = (e) => {
     e.currentTarget.style.boxShadow = '0 12px 36px rgba(124,58,237,0.30)'
     e.currentTarget.style.transform = 'translateY(-4px)'
+    e.currentTarget.style.border = '1px solid rgba(196,181,253,0.4)'
     if (videoRef.current && talent.featuredVideo) {
       videoRef.current.play().catch(() => {})
       setVideoPlaying(true)
@@ -171,6 +172,7 @@ export function TalentCard({ talent, onGate, from = '/marketplace' }) {
   const handleMouseLeave = (e) => {
     e.currentTarget.style.boxShadow = '0 2px 8px rgba(124,58,237,0.12)'
     e.currentTarget.style.transform = 'translateY(0)'
+    e.currentTarget.style.border = '1px solid rgba(233,213,255,0.2)'
     if (videoRef.current && talent.featuredVideo) {
       videoRef.current.pause()
       videoRef.current.currentTime = 0
@@ -188,6 +190,7 @@ export function TalentCard({ talent, onGate, from = '/marketplace' }) {
       style={{
         aspectRatio: '3/4',
         boxShadow: '0 2px 8px rgba(124,58,237,0.12)',
+        border: '1px solid rgba(233,213,255,0.2)',
       }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -640,7 +643,7 @@ export default function Marketplace() {
   } = hook
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#faf5ff' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#f3eeff' }}>
       <Helmet>
         <title>Find Creators & Influencers in Nigeria | Brandior</title>
         <meta name="description" content="Browse verified African creators and influencers for your brand campaigns. Filter by niche, platform, location and budget on Brandior." />
@@ -745,7 +748,7 @@ export default function Marketplace() {
       )}
 
       {/* Main content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8" style={{ backgroundColor: '#faf5ff' }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8" style={{ backgroundColor: '#f3eeff' }}>
         <div className="flex gap-6">
           <div className="flex-1 min-w-0">
             {/* Sort bar */}
@@ -757,7 +760,7 @@ export default function Marketplace() {
                 value={sort}
                 onChange={e => { setSort(stripInjection(e.target.value)); setVisibleCount(PAGE_SIZE) }}
                 className="text-sm rounded-xl px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-purple-300"
-                style={{ backgroundColor: '#fff', border: '1px solid rgba(124,58,237,0.2)', color: '#4c1d95' }}
+                style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', color: '#4c1d95' }}
               >
                 {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>

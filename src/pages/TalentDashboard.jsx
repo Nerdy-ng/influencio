@@ -2445,7 +2445,7 @@ export default function TalentDashboard() {
         <AnnouncementBanner role="creator" />
         {/* Top bar */}
         <div className="sticky top-0 z-30 flex items-center justify-between px-6 py-4"
-          style={{ backgroundColor: 'rgba(249,245,255,0.95)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #e9d5ff' }}>
+          style={{ backgroundColor: 'rgba(243,238,255,0.92)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #e9d5ff' }}>
           <div>
             <h1 className="font-black text-brand-dark text-lg capitalize">
               {TAB_LABELS[activeTab] ?? (activeTab === 'portfolio' ? 'Portfolio' : activeTab)}

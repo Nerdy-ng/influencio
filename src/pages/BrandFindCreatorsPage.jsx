@@ -47,7 +47,7 @@ export default function BrandFindCreatorsPage() {
       {/* Page header */}
       <div
         className="pt-10 pb-10 px-4 relative overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #000000 0%, #150030 50%, #3d0080 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #0e0020 0%, #1a0040 50%, #3d0080 100%)' }}
       >
         <div
           className="absolute inset-0 pointer-events-none"

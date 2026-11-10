@@ -867,10 +867,10 @@ export default function BrandDashboard() {
       {/* Main */}
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Top bar */}
-        <header className="sticky top-0 z-40" style={{ backgroundColor: 'rgba(249,245,255,0.95)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid #e9d5ff' }}>
+        <header className="sticky top-0 z-40" style={{ backgroundColor: 'rgba(243,238,255,0.92)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid #e9d5ff' }}>
           <div className="px-4 sm:px-6 h-16 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <button className="md:hidden p-1.5 rounded-lg transition-colors" style={{ color: '#7c3aed' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = '#ede9fe'} onMouseLeave={e => e.currentTarget.style.backgroundColor = ''} onClick={() => setSidebarOpen(true)}>
+              <button className="md:hidden p-1.5 rounded-lg transition-colors" style={{ color: '#7c3aed' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.08)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = ''} onClick={() => setSidebarOpen(true)}>
                 <Menu className="w-5 h-5" />
               </button>
               <h1 className="text-lg font-black" style={{ color: '#1e0040' }}>Brand Dashboard</h1>
@@ -898,14 +898,14 @@ export default function BrandDashboard() {
               </button>
               <button onClick={() => setActiveTab('messages')} className="relative p-2 rounded-xl transition-colors"
                 style={{ color: 'rgba(28,0,64,0.4)' }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'white'}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.08)'}
                 onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
                 <Mail className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
               </button>
               <button className="relative p-2 rounded-xl transition-colors"
                 style={{ color: 'rgba(28,0,64,0.4)' }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'white'}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.08)'}
                 onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
                 <Bell className="w-5 h-5" />
                 {pendingReview.length > 0 && (
@@ -1171,11 +1171,11 @@ function SidebarContent({ activeTab, setActiveTab, dashLogo, onSwitchToCreator }
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-left"
             style={
               activeTab === id
-                ? { backgroundColor: 'color-mix(in srgb, var(--b-brandMenuBg) 20%, transparent)', color: 'white' }
-                : { color: 'rgba(255,255,255,0.6)' }
+                ? { backgroundColor: 'color-mix(in srgb, var(--b-brandMenuBg) 15%, transparent)', color: 'var(--b-brandMenuBg)', border: '1px solid color-mix(in srgb, var(--b-brandMenuBg) 25%, transparent)' }
+                : { color: 'rgba(255,255,255,0.4)', border: '1px solid transparent' }
             }
-            onMouseEnter={e => { if (activeTab !== id) e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--b-brandMenuBg) 10%, transparent)' }}
-            onMouseLeave={e => { if (activeTab !== id) e.currentTarget.style.backgroundColor = '' }}
+            onMouseEnter={e => { if (activeTab !== id) { e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--b-brandMenuBg) 8%, transparent)'; e.currentTarget.style.color = 'var(--b-brandMenuBg)' } }}
+            onMouseLeave={e => { if (activeTab !== id) { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.4)' } }}
           >
             <Icon className="w-4 h-4 flex-shrink-0" />
             <span className="flex-1">{label}</span>

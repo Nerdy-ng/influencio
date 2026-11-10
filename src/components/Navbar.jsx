@@ -168,7 +168,7 @@ export default function Navbar() {
       <div
         className={`flex items-center justify-between gap-8 overflow-visible ${isLoggedIn ? 'w-full px-8 py-3' : 'max-w-6xl mx-auto px-6 py-3 rounded-2xl'}`}
         style={isLoggedIn
-          ? { backgroundColor: 'var(--b-navbarBg)', borderBottom: '1px solid rgba(139,92,246,0.2)' }
+          ? { backgroundColor: '#0e0020', borderBottom: '1px solid rgba(192,132,252,0.15)' }
           : { backgroundColor: 'var(--b-secondary)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 8px 32px rgba(192,132,252,0.35)' }
         }>
 
@@ -262,7 +262,7 @@ export default function Navbar() {
 
               {bellOpen && (
                 <div className="absolute right-0 top-12 w-80 rounded-2xl shadow-2xl overflow-hidden z-50"
-                  style={{ backgroundColor: '#fff', border: '1px solid var(--b-navbarBg)' }}>
+                  style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff' }}>
                   <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: '#f3eeff' }}>
                     <p className="font-bold text-sm text-brand-dark">Notifications</p>
                     {inAppNotifs.length > 0 && (
@@ -311,7 +311,7 @@ export default function Navbar() {
 
               {userOpen && (
                 <div className="absolute right-0 top-12 w-56 rounded-2xl shadow-2xl overflow-hidden z-50"
-                  style={{ backgroundColor: '#fff', border: '1px solid var(--b-navbarBg)' }}>
+                  style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff' }}>
                   {/* Profile header */}
                   <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: '#f3eeff' }}>
                     <UserAvatar profile={profile} size="sm" />
@@ -386,7 +386,7 @@ export default function Navbar() {
 
                 {joinOpen && (
                   <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl overflow-hidden shadow-2xl z-50"
-                    style={{ backgroundColor: '#fff', border: '1px solid var(--b-navbarBg)' }}>
+                    style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff' }}>
                     <div className="p-2 space-y-1">
                       <Link to="/signup?role=talent" onClick={() => setJoinOpen(false)}
                         className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
@@ -441,15 +441,15 @@ export default function Navbar() {
       {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden px-4 py-4 space-y-1 mt-2 mx-4 rounded-2xl"
-          style={{ backgroundColor: 'var(--b-navbarBg)', border: '1px solid var(--b-secondary)', boxShadow: '0 8px 32px rgba(139,92,246,0.15)' }}>
+          style={{ backgroundColor: '#0e0020', border: '1px solid rgba(192,132,252,0.15)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
           {isLoggedIn ? (
             <>
               {/* Profile info */}
-              <div className="flex items-center gap-3 px-3 py-3 mb-2 rounded-xl" style={{ backgroundColor: '#ede9fe' }}>
+              <div className="flex items-center gap-3 px-3 py-3 mb-2 rounded-xl" style={{ backgroundColor: 'rgba(124,58,237,0.2)' }}>
                 <UserAvatar profile={profile} size="sm" />
                 <div className="min-w-0">
-                  <p className="font-bold text-sm text-purple-900 truncate">{profile?.nickname || 'Your Profile'}</p>
-                  <p className="text-xs text-purple-500 truncate">{profile?.email || ''}</p>
+                  <p className="font-bold text-sm text-white truncate">{profile?.nickname || 'Your Profile'}</p>
+                  <p className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.5)' }}>{profile?.email || ''}</p>
                 </div>
               </div>
 
@@ -462,7 +462,10 @@ export default function Navbar() {
                       + {label}
                     </Link>
                   : <Link key={label} to={href} onClick={() => setMobileOpen(false)}
-                      className="flex items-center justify-between font-medium px-3 py-2.5 rounded-xl transition-all text-purple-800 hover:bg-purple-100">
+                      className="flex items-center justify-between font-medium px-3 py-2.5 rounded-xl transition-all"
+                      style={{ color: 'rgba(255,255,255,0.8)' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
                       {label}
                       {notifKey && notifs[notifKey] > 0 && (
                         <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold text-white"
@@ -473,22 +476,27 @@ export default function Navbar() {
                     </Link>
               ))}
 
-              <div className="h-px my-2" style={{ backgroundColor: '#d8b4fe' }} />
+              <div className="h-px my-2" style={{ backgroundColor: 'rgba(192,132,252,0.2)' }} />
 
               {/* Profile dropdown links */}
               {(userRole === 'brand' ? BRAND_DROPDOWN : TALENT_DROPDOWN).map(({ label, icon: Icon, href }) => (
                 <Link key={label} to={href} onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-700 hover:bg-purple-100 transition-all">
+                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+                  style={{ color: 'rgba(255,255,255,0.7)' }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
                   <Icon className="w-4 h-4 flex-shrink-0" style={{ color: '#a78bfa' }} />
                   {label}
                 </Link>
               ))}
 
-              <div className="h-px my-2" style={{ backgroundColor: '#d8b4fe' }} />
+              <div className="h-px my-2" style={{ backgroundColor: 'rgba(192,132,252,0.2)' }} />
 
               <button onClick={() => { setMobileOpen(false); handleLogout() }}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium w-full hover:bg-pink-50 transition-all"
-                style={{ color: '#F72585' }}>
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium w-full transition-all"
+                style={{ color: '#F72585' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(247,37,133,0.1)'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
                 <LogOut className="w-4 h-4" /> Log Out
               </button>
             </>
@@ -511,7 +519,10 @@ export default function Navbar() {
                 Join as Brand
               </Link>
               <Link to="/login" onClick={() => setMobileOpen(false)}
-                className="block text-center text-purple-600 font-medium py-2 hover:text-purple-900 transition-colors">
+                className="block text-center font-medium py-2 transition-colors"
+                style={{ color: 'rgba(255,255,255,0.7)' }}
+                onMouseEnter={e => e.currentTarget.style.color = 'white'}
+                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}>
                 Log in
               </Link>
             </>

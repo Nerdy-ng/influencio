@@ -4,7 +4,7 @@ import { supabase } from './supabase'
 export const THEME_VARS = {
   primary:        { key: 'theme_primary',          label: 'Primary Purple',                  default: '#7c3aed', desc: 'Active states, badges, focus rings' },
   secondary:      { key: 'theme_secondary',        label: 'Navbar (logged-out) / Accents',   default: '#c084fc', desc: 'Logged-out navbar background, pill borders' },
-  navbarBg:       { key: 'theme_navbar_bg',        label: 'Navbar Background (logged in)',   default: '#e9d5ff', desc: 'Header strip when a user is logged in' },
+  navbarBg:       { key: 'theme_navbar_bg',        label: 'Navbar Background (logged in)',   default: '#0e0020', desc: 'Header strip when a user is logged in' },
   dark:           { key: 'theme_dark',             label: 'Dark Purple',                     default: '#4c1d95', desc: '"Get Started" button, deep accent fills' },
   cta:            { key: 'theme_cta',              label: 'CTA / Orange',                    default: '#FA8112', desc: '"Post a Job" and main call-to-action buttons' },
   pink:           { key: 'theme_pink',             label: 'Creator / Pink',                  default: '#F72585', desc: 'Creator highlights, talent accent colour' },
@@ -12,8 +12,8 @@ export const THEME_VARS = {
   bodyText:       { key: 'theme_body_text',        label: 'Body Text',                       default: '#FAF3E1', desc: 'Default text colour on dark backgrounds' },
   creatorDashBg:  { key: 'theme_creator_dash_bg',  label: 'Creator Dashboard Sidebar',       default: '#0d0020', desc: 'Creator (talent) dashboard sidebar & nav background' },
   creatorMenuBg:  { key: 'theme_creator_menu_bg',  label: 'Creator Dashboard Menu Color',    default: '#c084fc', desc: 'Active/hover colour for creator menu items' },
-  brandDashBg:    { key: 'theme_brand_dash_bg',    label: 'Brand Dashboard Sidebar',         default: '#4c1d95', desc: 'Brand dashboard sidebar & nav background' },
-  brandMenuBg:    { key: 'theme_brand_menu_bg',    label: 'Brand Dashboard Menu Color',      default: '#7c3aed', desc: 'Active/hover colour for brand menu items' },
+  brandDashBg:    { key: 'theme_brand_dash_bg',    label: 'Brand Dashboard Sidebar',         default: '#0e0020', desc: 'Brand dashboard sidebar & nav background' },
+  brandMenuBg:    { key: 'theme_brand_menu_bg',    label: 'Brand Dashboard Menu Color',      default: '#c084fc', desc: 'Active/hover colour for brand menu items' },
 }
 
 // Apply a colors object to CSS custom properties on :root
