@@ -166,15 +166,15 @@ export function TalentCard({ talent, onGate, from = '/marketplace' }) {
   return (
     <div
       onClick={handleCardClick}
-      className="cursor-pointer rounded-2xl overflow-hidden transition-all duration-200"
+      className="cursor-pointer rounded-2xl overflow-hidden transition-all duration-200 flex flex-col"
       style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}
       onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 6px 24px rgba(124,58,237,0.12)'; e.currentTarget.style.borderColor = '#c4b5fd' }}
       onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 12px rgba(124,58,237,0.06)'; e.currentTarget.style.borderColor = '#e9d5ff' }}
     >
-      {/* ── Photo area ── */}
+      {/* ── Photo — compact banner, not gallery ── */}
       <div
-        className="relative overflow-hidden"
-        style={{ aspectRatio: '4/3' }}
+        className="relative overflow-hidden flex-shrink-0"
+        style={{ aspectRatio: '16/9' }}
         onMouseEnter={() => { if (videoRef.current && talent.featuredVideo) { videoRef.current.play().catch(() => {}); setVideoPlaying(true) } }}
         onMouseLeave={() => { if (videoRef.current && talent.featuredVideo) { videoRef.current.pause(); videoRef.current.currentTime = 0; setVideoPlaying(false) } }}
       >
@@ -185,8 +185,8 @@ export function TalentCard({ talent, onGate, from = '/marketplace' }) {
               muted loop playsInline preload="metadata" poster={avatarSrc} />
             {!videoPlaying && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(14,0,32,0.5)', backdropFilter: 'blur(4px)' }}>
-                  <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(14,0,32,0.5)', backdropFilter: 'blur(4px)' }}>
+                  <Play className="w-3.5 h-3.5 text-white fill-white ml-0.5" />
                 </div>
               </div>
             )}
@@ -198,37 +198,44 @@ export function TalentCard({ talent, onGate, from = '/marketplace' }) {
         )}
 
         {/* Tier badge */}
-        <div className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
+        <div className="absolute top-2 left-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
           style={{ backgroundColor: 'rgba(14,0,32,0.55)', backdropFilter: 'blur(4px)', color: tierInfo.color, border: `1px solid ${tierInfo.color}50` }}>
-          {tierInfo.diamond && <svg width="8" height="8" viewBox="0 0 24 24" fill={tierInfo.color}><path d="M12 2L2 9l10 13L22 9z" /></svg>}
+          {tierInfo.diamond && <svg width="7" height="7" viewBox="0 0 24 24" fill={tierInfo.color}><path d="M12 2L2 9l10 13L22 9z" /></svg>}
           {tierInfo.label}
         </div>
 
         {/* Heart */}
         <button onClick={ev => { ev.stopPropagation(); toggle(talent) }}
-          className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full flex items-center justify-center transition-colors"
+          className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center transition-colors"
           style={{ backgroundColor: faved ? 'rgba(255,107,157,0.35)' : 'rgba(14,0,32,0.4)', backdropFilter: 'blur(6px)' }}
           title={faved ? 'Remove from favorites' : 'Save creator'}>
-          <Heart className="w-3.5 h-3.5" style={{ color: faved ? pink : '#fff' }} fill={faved ? pink : 'none'} />
+          <Heart className="w-3 h-3" style={{ color: faved ? pink : '#fff' }} fill={faved ? pink : 'none'} />
         </button>
-
       </div>
 
       {/* ── Info panel ── */}
-      <div className="p-5 flex flex-col gap-2.5">
-        {/* Name + verified */}
-        <div className="flex items-center gap-1.5">
-          <p className="font-black text-sm truncate leading-snug" style={{ color: '#1e0040' }}>{talent.name}</p>
-          {talent.completedCampaigns >= 10 && (
-            <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: purple }}>
-              <BadgeCheck className="w-2.5 h-2.5 text-white" strokeWidth={3} />
-            </span>
-          )}
+      <div className="p-4 flex flex-col gap-2 flex-1">
+
+        {/* 1. Identity: name + verified | rating */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1 mb-0.5">
+              <p className="font-black text-sm truncate leading-snug" style={{ color: '#1e0040' }}>{talent.name}</p>
+              {talent.completedCampaigns >= 10 && (
+                <span className="w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: purple }}>
+                  <BadgeCheck className="w-2 h-2 text-white" strokeWidth={3} />
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] leading-none" style={{ color: 'rgba(76,29,149,0.5)' }}>@{talent.handle}</p>
+          </div>
+          <div className="flex-shrink-0 pt-0.5">
+            <StarRating rating={talent.avgRating} />
+          </div>
         </div>
 
-        {/* Handle + niche chips */}
-        <div className="flex items-center flex-wrap gap-1.5">
-          <span className="text-[11px]" style={{ color: 'rgba(76,29,149,0.5)' }}>@{talent.handle}</span>
+        {/* 2. Positioning: niche chips + availability */}
+        <div className="flex items-center flex-wrap gap-1">
           {(talent.niches || []).slice(0, 2).map(n => {
             const nicheObj = NICHES.find(x => x.label === n)
             return (
@@ -238,39 +245,34 @@ export function TalentCard({ talent, onGate, from = '/marketplace' }) {
               </span>
             )
           })}
-        </div>
-
-        {/* Metrics band — soft pill, same treatment as Find Work */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5 px-3 rounded-xl"
-          style={{ backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid rgba(124,58,237,0.08)' }}>
-          <span className="text-xs font-black" style={{ color: purple }}>
-            From {formatNGN(talent.minPrice)}
-          </span>
-          <span className="text-xs font-medium" style={{ color: 'rgba(30,0,64,0.5)' }}>
-            {formatFollowers(talent.totalFollowers)} followers
-          </span>
-          <span className="text-xs font-medium" style={{ color: 'rgba(30,0,64,0.5)' }}>
-            {Number(talent.avgEngagement || 0).toFixed(1)}% eng
-          </span>
-        </div>
-
-        {/* Rating + availability */}
-        <div className="flex items-center justify-between">
-          <StarRating rating={talent.avgRating} />
           {talent.availableForHire && (
-            <span className="flex items-center gap-1 text-[10px]" style={{ color: '#16a34a' }}>
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
+            <span className="flex items-center gap-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full"
+              style={{ backgroundColor: 'rgba(22,163,74,0.07)', color: '#16a34a', border: '1px solid rgba(22,163,74,0.15)' }}>
+              <span className="w-1 h-1 rounded-full bg-green-500 flex-shrink-0" />
               Available
             </span>
           )}
         </div>
 
-        {/* Full-width CTA */}
-        <button onClick={handleView}
-          className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
-          style={{ backgroundColor: purple }}>
-          View Profile →
-        </button>
+        {/* 3. Proof: compact stats text */}
+        <p className="text-[11px]" style={{ color: 'rgba(76,29,149,0.45)' }}>
+          {formatFollowers(talent.totalFollowers)} followers
+          {' · '}{Number(talent.avgEngagement || 0).toFixed(1)}% eng
+          {' · '}{talent.completedCampaigns || 0} jobs
+        </p>
+
+        {/* 4. Commercial + action */}
+        <div className="flex items-center justify-between gap-2 pt-2.5 mt-auto"
+          style={{ borderTop: '1px solid rgba(124,58,237,0.08)' }}>
+          <span className="text-sm font-black" style={{ color: purple }}>
+            From {formatNGN(talent.minPrice)}
+          </span>
+          <button onClick={handleView}
+            className="text-xs font-bold px-3.5 py-1.5 rounded-lg text-white transition-opacity hover:opacity-90 flex-shrink-0"
+            style={{ backgroundColor: purple }}>
+            View →
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -321,25 +323,24 @@ export function SortDropdown({ value, onChange }) {
 
 export function SkeletonCard() {
   return (
-    <div className="rounded-2xl overflow-hidden animate-pulse" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
-      <div style={{ aspectRatio: '4/3', backgroundColor: '#ede9fe' }} />
-      <div className="p-5 flex flex-col gap-2.5">
-        <div className="h-3.5 rounded-full" style={{ backgroundColor: '#e9d5ff', width: '52%' }} />
-        <div className="flex gap-1.5">
-          <div className="h-2.5 w-20 rounded-full" style={{ backgroundColor: '#f3eeff' }} />
-          <div className="h-5 w-14 rounded-full" style={{ backgroundColor: '#f3eeff' }} />
-          <div className="h-5 w-12 rounded-full" style={{ backgroundColor: '#f3eeff' }} />
-        </div>
-        <div className="h-2.5 rounded-full" style={{ backgroundColor: '#f3eeff', width: '75%' }} />
-        <div className="flex items-end justify-between pt-1">
+    <div className="rounded-2xl overflow-hidden animate-pulse flex flex-col" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
+      <div style={{ aspectRatio: '16/9', backgroundColor: '#ede9fe' }} />
+      <div className="p-4 flex flex-col gap-2 flex-1">
+        <div className="flex justify-between gap-2">
           <div>
-            <div className="h-2.5 rounded-full mb-1.5" style={{ backgroundColor: '#e9d5ff', width: '56px' }} />
-            <div className="h-2 rounded-full" style={{ backgroundColor: '#f3eeff', width: '44px' }} />
+            <div className="h-3 rounded-full mb-1.5" style={{ backgroundColor: '#e9d5ff', width: '104px' }} />
+            <div className="h-2 rounded-full" style={{ backgroundColor: '#f3eeff', width: '72px' }} />
           </div>
-          <div className="flex items-center gap-2">
-            <div className="h-3 w-16 rounded-full" style={{ backgroundColor: '#f3eeff' }} />
-            <div className="h-7 w-20 rounded-lg" style={{ backgroundColor: '#ede9fe' }} />
-          </div>
+          <div className="h-2.5 rounded-full" style={{ backgroundColor: '#f3eeff', width: '64px' }} />
+        </div>
+        <div className="flex gap-1">
+          <div className="h-4 w-16 rounded-full" style={{ backgroundColor: '#f3eeff' }} />
+          <div className="h-4 w-14 rounded-full" style={{ backgroundColor: '#f3eeff' }} />
+        </div>
+        <div className="h-2.5 rounded-full" style={{ backgroundColor: '#f3eeff', width: '85%' }} />
+        <div className="flex items-center justify-between gap-2 pt-2.5 mt-auto" style={{ borderTop: '1px solid rgba(124,58,237,0.08)' }}>
+          <div className="h-3.5 rounded-full" style={{ backgroundColor: '#e9d5ff', width: '80px' }} />
+          <div className="h-6 w-14 rounded-lg" style={{ backgroundColor: '#ede9fe' }} />
         </div>
       </div>
     </div>

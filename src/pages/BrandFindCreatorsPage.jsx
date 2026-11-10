@@ -24,36 +24,25 @@ export function BrandFindCreatorsContent() {
 
   return (
     <div>
-      {/* Hero — search embedded, matching Find Work treatment */}
+      {/* Compact page header — utility band, not marketing splash */}
       <div
-        className="px-4 sm:px-6 pt-10 pb-10 relative overflow-hidden"
+        className="px-4 sm:px-6 pt-5 pb-6"
         style={{
-          background: 'linear-gradient(135deg, #f5f0ff 0%, #ede9fe 50%, #f0ebff 100%)',
+          background: 'linear-gradient(to bottom, #f5f0ff, #ede9fe)',
           borderBottom: '1px solid rgba(124,58,237,0.08)',
         }}
       >
-        <div className="absolute top-0 right-0 w-72 h-72 pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(167,139,250,0.18) 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
-        <div className="absolute bottom-0 left-0 w-56 h-56 pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.10) 0%, transparent 70%)', transform: 'translate(-30%, 30%)' }} />
-
-        <div className="relative max-w-7xl mx-auto">
-          <span
-            className="inline-block text-xs font-bold tracking-widest uppercase mb-3 px-3 py-1 rounded-full"
-            style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple, border: '1px solid #e9d5ff' }}
-          >
-            Creator Discovery
-          </span>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 leading-tight" style={{ color: darkPurple }}>
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-xl sm:text-2xl font-black mb-1" style={{ color: darkPurple }}>
             Find <span style={{ color: pink }}>Creators</span>
           </h1>
-          <p className="text-sm sm:text-base mb-7" style={{ color: 'rgba(76,29,149,0.6)' }}>
-            Browse verified African creators ready to amplify your brand.
+          <p className="text-sm mb-4" style={{ color: 'rgba(76,29,149,0.6)' }}>
+            Discover verified African creators for your campaigns.
           </p>
 
-          {/* Search bar — Find Work style */}
+          {/* Search */}
           <div className="relative mb-3">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none" style={{ color: 'rgba(124,58,237,0.45)' }} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'rgba(124,58,237,0.45)' }} />
             <input
               type="text"
               placeholder="Search by name, handle or niche…"
@@ -61,10 +50,10 @@ export function BrandFindCreatorsContent() {
               onChange={e => { setSearch(stripInjection(e.target.value)); setVisibleCount(PAGE_SIZE) }}
               className="w-full rounded-2xl text-sm focus:outline-none transition-shadow"
               style={{
-                paddingLeft: '2.75rem',
-                paddingRight: search ? '2.75rem' : '1rem',
-                paddingTop: '0.875rem',
-                paddingBottom: '0.875rem',
+                paddingLeft: '2.5rem',
+                paddingRight: search ? '2.5rem' : '1rem',
+                paddingTop: '0.75rem',
+                paddingBottom: '0.75rem',
                 backgroundColor: '#fff',
                 border: '1.5px solid #e9d5ff',
                 color: '#1e0040',
@@ -76,10 +65,10 @@ export function BrandFindCreatorsContent() {
             {search && (
               <button
                 onClick={() => { setSearch(''); setVisibleCount(PAGE_SIZE) }}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full flex items-center justify-center"
                 style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple }}
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-3 h-3" />
               </button>
             )}
           </div>
@@ -88,12 +77,12 @@ export function BrandFindCreatorsContent() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setMobileFiltersOpen(true)}
-              className="relative flex items-center gap-2 text-sm font-semibold transition-all"
-              style={{ padding: '0.625rem 1rem', borderRadius: '0.75rem', border: '1.5px solid #e9d5ff', color: '#4c1d95', backgroundColor: '#fff' }}
+              className="relative flex items-center gap-1.5 text-sm font-semibold transition-all"
+              style={{ padding: '0.5rem 0.875rem', borderRadius: '0.75rem', border: '1.5px solid #e9d5ff', color: '#4c1d95', backgroundColor: '#fff' }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = '#c4b5fd'; e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.04)' }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = '#e9d5ff'; e.currentTarget.style.backgroundColor = '#fff' }}
             >
-              <SlidersHorizontal className="w-4 h-4" style={{ color: purple }} />
+              <SlidersHorizontal className="w-3.5 h-3.5" style={{ color: purple }} />
               Filters
               {activeFilterCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-white flex items-center justify-center text-[9px] font-bold" style={{ backgroundColor: pink }}>
@@ -162,7 +151,7 @@ export function BrandFindCreatorsContent() {
             )}
 
             {/* Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {loading && visibleCount === PAGE_SIZE
                 ? Array.from({ length: 9 }).map((_, i) => <SkeletonCard key={i} />)
                 : talents.slice(0, visibleCount).map(c => (
