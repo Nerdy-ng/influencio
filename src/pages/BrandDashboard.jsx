@@ -291,6 +291,41 @@ function PlatformIcon({ platform, size = 16 }) {
   )
 }
 
+// View button for a delivered file — fetches a signed URL for private-bucket files
+function DeliverableViewButton({ file, collabId }) {
+  const [loading, setLoading] = useState(false)
+  const label = file.label || file.name || 'File'
+  const hasStoragePath = !!file.storagePath
+
+  async function handleView() {
+    if (!hasStoragePath) {
+      if (file.url) window.open(file.url, '_blank')
+      return
+    }
+    setLoading(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('deliverable-url', {
+        body: { collab_id: collabId, storagePath: file.storagePath },
+      })
+      if (!error && data?.signedUrl) window.open(data.signedUrl, '_blank')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <button
+      onClick={handleView}
+      disabled={loading}
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-medium hover:bg-[rgba(124,58,237,0.04)] transition-colors disabled:opacity-50"
+      style={{ color: 'rgba(15,0,32,0.6)' }}
+    >
+      <Download className="w-3.5 h-3.5" />
+      {loading ? 'Loading…' : label}
+    </button>
+  )
+}
+
 // Individual order card
 function OrderCard({ order, onPayNow, onApprove, onRevision, onReview }) {
   const [expanded, setExpanded] = useState(false)
@@ -364,16 +399,8 @@ function OrderCard({ order, onPayNow, onApprove, onRevision, onReview }) {
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'rgba(15,0,32,0.4)' }}>Delivered Files</p>
               <div className="flex flex-wrap gap-2">
-                {order.deliveredFiles.map(f => (
-                  <a
-                    key={f.name}
-                    href={f.url}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-medium hover:bg-[rgba(124,58,237,0.04)] transition-colors" style={{ color: 'rgba(15,0,32,0.6)' }}
-                    download
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    {f.name}
-                  </a>
+                {order.deliveredFiles.map((f, i) => (
+                  <DeliverableViewButton key={f.storagePath || f.name || i} file={f} collabId={order._id} />
                 ))}
               </div>
             </div>
@@ -817,20 +844,32 @@ export default function BrandDashboard() {
   }
 
   const handleApprove = async (orderId) => {
+    const { data, error } = await supabase.functions.invoke('collab-release', {
+      body: { collab_id: orderId, next: 'release' },
+    })
+    if (error || !data?.ok) {
+      showToast('Could not approve. Please try again.', 'error')
+      return
+    }
     setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: 'completed' } : o))
-    await supabase.from('collabs').update({ status: 'completed', payment_status: 'released' }).eq('id', orderId)
-    showToast('Order approved! Payment released to talent.')
+    showToast('Order approved! Payment released to creator.')
   }
 
   const handleRevision = async (orderId, reason) => {
+    const { data, error } = await supabase.functions.invoke('collab-revision', {
+      body: { collab_id: orderId, reason },
+    })
+    if (error || !data?.ok) {
+      const msg = data?.error === 'max_revisions_reached'
+        ? 'Maximum number of revisions has been reached.'
+        : data?.error === 'invalid_state_for_revision'
+        ? 'This collab is not in a delivered state. Please refresh.'
+        : 'Could not request revision. Please try again.'
+      showToast(msg, 'error')
+      return
+    }
     setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: 'revision_requested' } : o))
-    const { data: current } = await supabase.from('collabs').select('revisions_requested').eq('id', orderId).single()
-    await supabase.from('collabs').update({
-      status: 'revision_requested',
-      revision_reason: reason,
-      revisions_requested: (current?.revisions_requested || 0) + 1,
-    }).eq('id', orderId)
-    showToast('Revision request sent to talent.')
+    showToast('Revision request sent to creator.')
   }
 
   // Derived stats

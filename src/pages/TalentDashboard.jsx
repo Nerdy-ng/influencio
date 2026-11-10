@@ -969,10 +969,14 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
   const [reviewDone, setReviewDone] = useState(false)
 
   useEffect(() => {
+    let userId = null
+    let realtimeSub = null
+
     async function fetchCollabs() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
+        userId = user.id
         const { data: rows } = await supabase
           .from('collabs')
           .select('*')
@@ -990,6 +994,20 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
         }
 
         setCollabs((rows || []).map(c => ({ ...c, brand: brandMap[c.brand_id] || null })))
+
+        realtimeSub = supabase
+          .channel(`creator_collabs_${user.id}`)
+          .on('postgres_changes', {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'collabs',
+            filter: `creator_id=eq.${user.id}`,
+          }, payload => {
+            setCollabs(prev => prev.map(c =>
+              c.id === payload.new.id ? { ...c, ...payload.new } : c
+            ))
+          })
+          .subscribe()
       } catch {
         setCollabs([])
       } finally {
@@ -997,6 +1015,7 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
       }
     }
     fetchCollabs()
+    return () => { if (realtimeSub) supabase.removeChannel(realtimeSub) }
   }, [])
 
   async function uploadDeliverable() {
@@ -1007,30 +1026,65 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
     setUploading(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      let newFile
+      if (!user) throw new Error('Not authenticated')
+
+      let deliverableFile
       if (hasFile) {
-        const path = `${user.id}/${deliverCollab.id}/${Date.now()}-${deliverFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
-        const { error } = await supabase.storage.from('deliverables').upload(path, deliverFile)
-        if (error) throw error
-        const { data: { publicUrl } } = supabase.storage.from('deliverables').getPublicUrl(path)
-        newFile = { name: deliverFile.name, url: publicUrl, size: deliverFile.size, note: deliverNote.trim() || null, uploaded_at: new Date().toISOString() }
+        const safeName = deliverFile.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120)
+        const storagePath = `${user.id}/${deliverCollab.id}/${Date.now()}-${safeName}`
+        const { error: uploadErr } = await supabase.storage
+          .from('deliverables')
+          .upload(storagePath, deliverFile, { contentType: deliverFile.type || 'application/octet-stream', upsert: false })
+        if (uploadErr) throw uploadErr
+        const sizeStr = deliverFile.size < 1024 * 1024
+          ? `${(deliverFile.size / 1024).toFixed(1)} KB`
+          : `${(deliverFile.size / (1024 * 1024)).toFixed(1)} MB`
+        deliverableFile = {
+          id: 'main',
+          label: deliverCollab.content_type || 'Deliverable',
+          storagePath,
+          mimeType: deliverFile.type || 'application/octet-stream',
+          size: sizeStr,
+          note: deliverNote.trim(),
+        }
       } else {
-        newFile = { name: 'Shared link', url: deliverLink.trim(), size: null, note: deliverNote.trim() || null, uploaded_at: new Date().toISOString() }
+        // Link-only delivery — stored as a note field; server validates storagePath only,
+        // so we pass a minimal record with the link in note and an empty storagePath marker
+        deliverableFile = {
+          id: 'main',
+          label: deliverCollab.content_type || 'Deliverable',
+          storagePath: '',
+          mimeType: 'text/uri-list',
+          size: '',
+          note: deliverLink.trim(),
+        }
       }
-      const updatedFiles = [...(deliverCollab.delivered_files || []), newFile]
 
-      await supabase.from('collabs')
-        .update({ delivered_files: updatedFiles, status: 'delivered' })
-        .eq('id', deliverCollab.id)
+      const { data, error } = await supabase.functions.invoke('collab-deliver', {
+        body: { collab_id: deliverCollab.id, files: [deliverableFile] },
+      })
+      if (error || !data?.ok) {
+        const code = data?.error ?? ''
+        if (code === 'invalid_state_for_delivery' || code === 'collab_not_found') {
+          alert('This collab is no longer accepting deliveries. Please refresh.')
+        } else {
+          alert('Could not submit work. Please try again.')
+        }
+        return
+      }
 
-      setCollabs(prev => prev.map(c => c.id === deliverCollab.id ? { ...c, delivered_files: updatedFiles, status: 'delivered' } : c))
+      setCollabs(prev => prev.map(c =>
+        c.id === deliverCollab.id
+          ? { ...c, delivered_files: [deliverableFile], status: 'delivered' }
+          : c
+      ))
       setUploadDone(true)
       setDeliverFile(null)
       setDeliverLink('')
       setDeliverNote('')
       setTimeout(() => { setDeliverCollab(null); setUploadDone(false) }, 2000)
-    } catch {
-      /* fail silently for now */
+    } catch (err) {
+      alert('Could not submit work. Please try again.')
     } finally {
       setUploading(false)
     }
