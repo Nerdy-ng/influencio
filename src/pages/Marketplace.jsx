@@ -158,7 +158,7 @@ export function TalentCard({ talent, onGate, from = '/marketplace' }) {
     navigate(`/creators/${talent.handle || talent._id || talent.id}`, { state: { from } })
   }
 
-  const avatarSrc = talent.avatar
+  const avatarSrc = talent.avatar_url || talent.avatar
     || `https://ui-avatars.com/api/?name=${encodeURIComponent(talent.name || 'Talent')}&background=4c1d95&color=fff&size=400`
 
   const tierInfo = TIERS.find(x => x.value === talent.tier) || TIERS[0]
@@ -215,8 +215,8 @@ export function TalentCard({ talent, onGate, from = '/marketplace' }) {
       </div>
 
       {/* ── Info panel ── */}
-      <div className="p-5 flex flex-col gap-2">
-        {/* Primary: name + verified */}
+      <div className="p-5 flex flex-col gap-2.5">
+        {/* Name + verified */}
         <div className="flex items-center gap-1.5">
           <p className="font-black text-sm truncate leading-snug" style={{ color: '#1e0040' }}>{talent.name}</p>
           {talent.completedCampaigns >= 10 && (
@@ -226,13 +226,13 @@ export function TalentCard({ talent, onGate, from = '/marketplace' }) {
           )}
         </div>
 
-        {/* Secondary: handle + niche chips on same line */}
+        {/* Handle + niche chips */}
         <div className="flex items-center flex-wrap gap-1.5">
           <span className="text-[11px]" style={{ color: 'rgba(76,29,149,0.5)' }}>@{talent.handle}</span>
           {(talent.niches || []).slice(0, 2).map(n => {
             const nicheObj = NICHES.find(x => x.label === n)
             return (
-              <span key={n} className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+              <span key={n} className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
                 style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple }}>
                 {nicheObj ? nicheObj.emoji + ' ' : ''}{n}
               </span>
@@ -240,33 +240,37 @@ export function TalentCard({ talent, onGate, from = '/marketplace' }) {
           })}
         </div>
 
-        {/* Tertiary: plain muted metrics text — no background treatment */}
-        <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(76,29,149,0.38)' }}>
-          {formatFollowers(talent.totalFollowers)} followers
-          {' · '}{Number(talent.avgEngagement || 0).toFixed(1)}% eng
-          {' · '}{talent.completedCampaigns || 0} jobs
-        </p>
-
-        {/* Footer: rating + availability left | price + CTA right */}
-        <div className="flex items-end justify-between gap-2 pt-1">
-          <div className="flex flex-col gap-0.5">
-            <StarRating rating={talent.avgRating} />
-            {talent.availableForHire && (
-              <span className="flex items-center gap-1 text-[10px]" style={{ color: '#16a34a' }}>
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
-                Available
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="text-xs font-black" style={{ color: purple }}>From {formatNGN(talent.minPrice)}</span>
-            <button onClick={handleView}
-              className="text-[10px] font-bold px-3 py-1.5 rounded-lg text-white transition-opacity hover:opacity-90"
-              style={{ backgroundColor: purple }}>
-              View Profile
-            </button>
-          </div>
+        {/* Metrics band — soft pill, same treatment as Find Work */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5 px-3 rounded-xl"
+          style={{ backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid rgba(124,58,237,0.08)' }}>
+          <span className="text-xs font-black" style={{ color: purple }}>
+            From {formatNGN(talent.minPrice)}
+          </span>
+          <span className="text-xs font-medium" style={{ color: 'rgba(30,0,64,0.5)' }}>
+            {formatFollowers(talent.totalFollowers)} followers
+          </span>
+          <span className="text-xs font-medium" style={{ color: 'rgba(30,0,64,0.5)' }}>
+            {Number(talent.avgEngagement || 0).toFixed(1)}% eng
+          </span>
         </div>
+
+        {/* Rating + availability */}
+        <div className="flex items-center justify-between">
+          <StarRating rating={talent.avgRating} />
+          {talent.availableForHire && (
+            <span className="flex items-center gap-1 text-[10px]" style={{ color: '#16a34a' }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
+              Available
+            </span>
+          )}
+        </div>
+
+        {/* Full-width CTA */}
+        <button onClick={handleView}
+          className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
+          style={{ backgroundColor: purple }}>
+          View Profile →
+        </button>
       </div>
     </div>
   )

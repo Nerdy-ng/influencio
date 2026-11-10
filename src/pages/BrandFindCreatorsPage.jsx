@@ -24,63 +24,85 @@ export function BrandFindCreatorsContent() {
 
   return (
     <div>
-      {/* Page header — compact */}
+      {/* Hero — search embedded, matching Find Work treatment */}
       <div
-        className="py-8 px-4 relative overflow-hidden"
-        style={{ background: 'linear-gradient(160deg, #f5f0ff 0%, #ede9fe 55%, #f0ebff 100%)' }}
+        className="px-4 sm:px-6 pt-10 pb-10 relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #f5f0ff 0%, #ede9fe 50%, #f0ebff 100%)',
+          borderBottom: '1px solid rgba(124,58,237,0.08)',
+        }}
       >
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full" style={{ background: 'radial-gradient(circle, rgba(192,132,252,0.18) 0%, transparent 70%)' }} />
-          <div className="absolute -bottom-12 -left-12 w-64 h-64 rounded-full" style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.10) 0%, transparent 70%)' }} />
-        </div>
+        <div className="absolute top-0 right-0 w-72 h-72 pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(167,139,250,0.18) 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
+        <div className="absolute bottom-0 left-0 w-56 h-56 pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.10) 0%, transparent 70%)', transform: 'translate(-30%, 30%)' }} />
+
         <div className="relative max-w-7xl mx-auto">
           <span
             className="inline-block text-xs font-bold tracking-widest uppercase mb-3 px-3 py-1 rounded-full"
-            style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple, border: '1px solid rgba(124,58,237,0.18)' }}
+            style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple, border: '1px solid #e9d5ff' }}
           >
             Creator Discovery
           </span>
-          <h1 className="text-2xl sm:text-4xl font-black mb-2 leading-tight" style={{ color: '#1e0040' }}>
-            Find Creators
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-2 leading-tight" style={{ color: darkPurple }}>
+            Find <span style={{ color: pink }}>Creators</span>
           </h1>
-          <p className="text-sm" style={{ color: 'rgba(76,29,149,0.6)' }}>
-            Browse verified African creators ready to amplify your brand
+          <p className="text-sm sm:text-base mb-7" style={{ color: 'rgba(76,29,149,0.6)' }}>
+            Browse verified African creators ready to amplify your brand.
           </p>
-        </div>
-      </div>
 
-      {/* Search + controls bar */}
-      <div style={{ backgroundColor: '#fff', borderBottom: '1px solid #e9d5ff' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'rgba(76,29,149,0.4)' }} />
+          {/* Search bar — Find Work style */}
+          <div className="relative mb-3">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none" style={{ color: 'rgba(124,58,237,0.45)' }} />
             <input
               type="text"
-              placeholder="Search by name, handle or niche..."
+              placeholder="Search by name, handle or niche…"
               value={search}
               onChange={e => { setSearch(stripInjection(e.target.value)); setVisibleCount(PAGE_SIZE) }}
-              className="w-full text-sm focus:outline-none transition-all"
-              style={{ paddingLeft: '2.75rem', paddingRight: '1rem', paddingTop: '0.625rem', paddingBottom: '0.625rem', borderRadius: '0.75rem', border: '1px solid #e9d5ff', color: '#1e0040', backgroundColor: '#faf8ff' }}
-              onFocus={e => { e.target.style.borderColor = '#c4b5fd'; e.target.style.boxShadow = '0 0 0 3px rgba(196,181,253,0.2)' }}
-              onBlur={e => { e.target.style.borderColor = '#e9d5ff'; e.target.style.boxShadow = 'none' }}
+              className="w-full rounded-2xl text-sm focus:outline-none transition-shadow"
+              style={{
+                paddingLeft: '2.75rem',
+                paddingRight: search ? '2.75rem' : '1rem',
+                paddingTop: '0.875rem',
+                paddingBottom: '0.875rem',
+                backgroundColor: '#fff',
+                border: '1.5px solid #e9d5ff',
+                color: '#1e0040',
+                boxShadow: '0 2px 12px rgba(124,58,237,0.08)',
+              }}
+              onFocus={e => { e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.12), 0 2px 12px rgba(124,58,237,0.08)' }}
+              onBlur={e => { e.target.style.boxShadow = '0 2px 12px rgba(124,58,237,0.08)' }}
             />
-          </div>
-          <button
-            onClick={() => setMobileFiltersOpen(true)}
-            className="relative flex items-center gap-2 text-sm font-semibold transition-all flex-shrink-0"
-            style={{ padding: '0.625rem 1rem', borderRadius: '0.75rem', border: '1px solid #e9d5ff', color: '#4c1d95', backgroundColor: '#fff' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#c4b5fd'; e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.04)' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = '#e9d5ff'; e.currentTarget.style.backgroundColor = '#fff' }}
-          >
-            <SlidersHorizontal className="w-4 h-4" style={{ color: purple }} />
-            Filters
-            {activeFilterCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-white flex items-center justify-center text-[9px] font-bold" style={{ backgroundColor: pink }}>
-                {activeFilterCount}
-              </span>
+            {search && (
+              <button
+                onClick={() => { setSearch(''); setVisibleCount(PAGE_SIZE) }}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+                style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple }}
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             )}
-          </button>
-          <SortDropdown value={sort} onChange={v => { setSort(v); setVisibleCount(PAGE_SIZE) }} />
+          </div>
+
+          {/* Filters + Sort */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMobileFiltersOpen(true)}
+              className="relative flex items-center gap-2 text-sm font-semibold transition-all"
+              style={{ padding: '0.625rem 1rem', borderRadius: '0.75rem', border: '1.5px solid #e9d5ff', color: '#4c1d95', backgroundColor: '#fff' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = '#c4b5fd'; e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.04)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = '#e9d5ff'; e.currentTarget.style.backgroundColor = '#fff' }}
+            >
+              <SlidersHorizontal className="w-4 h-4" style={{ color: purple }} />
+              Filters
+              {activeFilterCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-white flex items-center justify-center text-[9px] font-bold" style={{ backgroundColor: pink }}>
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+            <SortDropdown value={sort} onChange={v => { setSort(v); setVisibleCount(PAGE_SIZE) }} />
+          </div>
         </div>
       </div>
 
