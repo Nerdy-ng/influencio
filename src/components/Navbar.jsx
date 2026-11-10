@@ -118,10 +118,12 @@ export default function Navbar() {
         if (user) {
           await fetchInAppNotifs(user.id)
           realtimeSub = supabase
-            .channel('notifications')
+            .channel(`notifications_${user.id}`)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
               payload => {
-                setInAppNotifs(prev => [payload.new, ...prev])
+                setInAppNotifs(prev =>
+                  prev.some(x => x.id === payload.new.id) ? prev : [payload.new, ...prev]
+                )
                 setUnreadCount(c => c + 1)
               }
             )
@@ -132,13 +134,17 @@ export default function Navbar() {
     load()
     function onLogoUpdate() { setHeaderLogo(getLogo('header')) }
     function onSettingsUpdate(e) { if (e.detail?.key === 'platformName') setPlatformName(e.detail.value) }
-    window.addEventListener('storage', load)
+    function onNotifsClear() {
+      setInAppNotifs(prev => prev.map(n => ({ ...n, read: true })))
+      setUnreadCount(0)
+    }
     window.addEventListener('brandiór:notification', loadNotifs)
+    window.addEventListener('brandiór:notifications-cleared', onNotifsClear)
     window.addEventListener('brandior:logo-updated', onLogoUpdate)
     window.addEventListener('brandior:settings-updated', onSettingsUpdate)
     return () => {
-      window.removeEventListener('storage', load)
       window.removeEventListener('brandiór:notification', loadNotifs)
+      window.removeEventListener('brandiór:notifications-cleared', onNotifsClear)
       window.removeEventListener('brandior:logo-updated', onLogoUpdate)
       window.removeEventListener('brandior:settings-updated', onSettingsUpdate)
       if (realtimeSub) supabase.removeChannel(realtimeSub)

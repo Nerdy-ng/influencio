@@ -2818,6 +2818,8 @@ function BrandNotificationsTab() {
       setNotifs(data || [])
       setLoading(false)
       await supabase.from('notifications').update({ read: true }).eq('user_id', user.id).eq('read', false)
+      setNotifs(n => n.map(x => ({ ...x, read: true })))
+      window.dispatchEvent(new Event('brandiór:notifications-cleared'))
     })()
   }, [])
 
