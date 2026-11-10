@@ -65,10 +65,10 @@ function StarRating({ rating, size = 'sm' }) {
         <Star
           key={i}
           className={w}
-          style={{ color: i <= Math.round(display) ? '#D4AF37' : '#d1d5db', fill: i <= Math.round(display) ? '#D4AF37' : 'none' }}
+          style={{ color: i <= Math.round(display) ? '#D4AF37' : '#e9d5ff', fill: i <= Math.round(display) ? '#D4AF37' : 'none' }}
         />
       ))}
-      <span className={`ml-1 font-semibold ${size === 'lg' ? 'text-base' : 'text-sm'} text-gray-600`}>
+      <span className={`ml-1 font-semibold ${size === 'lg' ? 'text-base' : 'text-sm'}`} style={{ color: 'rgba(15,0,32,0.5)' }}>
         {Number(display).toFixed(1)}
       </span>
     </div>
@@ -211,7 +211,7 @@ function RateCardOrder({ talent, isPreview, navigate }) {
   }
 
   return (
-    <div className="bg-white rounded-3xl border border-brand-lav shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-brand-lav shadow-sm overflow-hidden">
       <div className="px-5 py-4 border-b border-brand-lav">
         <h2 className="font-bold" style={{ color: '#1e0040' }}>Rate Card</h2>
       </div>
@@ -219,7 +219,7 @@ function RateCardOrder({ talent, isPreview, navigate }) {
       <div className="p-5 space-y-5">
         {/* Content type */}
         <div>
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2.5">Services</p>
+          <p className="text-xs font-bold uppercase tracking-wide mb-2.5" style={{ color: 'rgba(15,0,32,0.4)' }}>Services</p>
           <div className="grid grid-cols-2 gap-2.5">
             {contentTypes.map(t => {
               const active = selectedType === t.id
@@ -228,10 +228,10 @@ function RateCardOrder({ talent, isPreview, navigate }) {
                   key={t.id}
                   onClick={() => setSelectedType(t.id)}
                   className="text-left rounded-2xl p-3.5 border-2 transition-colors"
-                  style={{ borderColor: active ? t.color : '#f3f4f6', backgroundColor: active ? t.color + '0f' : '#fff' }}
+                  style={{ borderColor: active ? t.color : '#e9d5ff', backgroundColor: active ? t.color + '0f' : '#fff' }}
                 >
-                  <p className="text-sm font-bold" style={{ color: active ? t.color : '#1f2937' }}>{t.label}</p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">{t.desc}</p>
+                  <p className="text-sm font-bold" style={{ color: active ? t.color : '#0F0020' }}>{t.label}</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: 'rgba(15,0,32,0.4)' }}>{t.desc}</p>
                 </button>
               )
             })}
@@ -240,7 +240,7 @@ function RateCardOrder({ talent, isPreview, navigate }) {
 
         {/* Duration */}
         <div>
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2.5">Video Duration</p>
+          <p className="text-xs font-bold uppercase tracking-wide mb-2.5" style={{ color: 'rgba(15,0,32,0.4)' }}>Video Duration</p>
           <div className="flex flex-wrap gap-2">
             {durationOptions.map(d => {
               const active = selectedDuration === d.id
@@ -251,7 +251,7 @@ function RateCardOrder({ talent, isPreview, navigate }) {
                   className="px-3.5 py-2 rounded-full text-xs font-semibold border transition-colors"
                   style={active
                     ? { backgroundColor: darkPurple, borderColor: darkPurple, color: '#fff' }
-                    : { backgroundColor: '#fff', borderColor: '#e5e7eb', color: '#6b7280' }}
+                    : { backgroundColor: '#fff', borderColor: '#e9d5ff', color: 'rgba(15,0,32,0.5)' }}
                 >
                   {d.label} · {formatNGN(d.price)}
                 </button>
@@ -263,8 +263,8 @@ function RateCardOrder({ talent, isPreview, navigate }) {
         {/* Platforms (influencer only) */}
         {isInfluencer && (
           <div>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Where should they post?</p>
-            <p className="text-[11px] text-gray-400 mb-2.5">Each platform adds its posting fee on top of production</p>
+            <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: 'rgba(15,0,32,0.4)' }}>Where should they post?</p>
+            <p className="text-[11px] mb-2.5" style={{ color: 'rgba(15,0,32,0.4)' }}>Each platform adds its posting fee on top of production</p>
             <div className="flex flex-wrap gap-2">
               {platformOptions.map(p => {
                 const active = selectedPlatforms.includes(p.id)
@@ -273,15 +273,15 @@ function RateCardOrder({ talent, isPreview, navigate }) {
                     key={p.id}
                     onClick={() => togglePlatform(p.id)}
                     className="flex flex-col items-start px-3 py-2 rounded-xl text-xs font-semibold border-2 transition-colors"
-                    style={{ borderColor: active ? p.color : '#f3f4f6', backgroundColor: active ? p.color + '10' : '#fff', color: active ? p.color : '#6b7280' }}
+                    style={{ borderColor: active ? p.color : '#e9d5ff', backgroundColor: active ? p.color + '10' : '#fff', color: active ? p.color : 'rgba(15,0,32,0.5)' }}
                   >
                     <span>{p.label}</span>
                     {(p.followers ?? 0) > 0 && (
-                      <span className="font-normal text-[11px]" style={{ color: active ? p.color + 'cc' : '#9ca3af' }}>
+                      <span className="font-normal text-[11px]" style={{ color: active ? p.color + 'cc' : 'rgba(15,0,32,0.4)' }}>
                         {formatFollowers(p.followers)} followers
                       </span>
                     )}
-                    <span className="font-normal" style={{ color: active ? p.color : '#9ca3af' }}>+{formatNGN(p.fee)}</span>
+                    <span className="font-normal" style={{ color: active ? p.color : 'rgba(15,0,32,0.4)' }}>+{formatNGN(p.fee)}</span>
                   </button>
                 )
               })}
@@ -292,7 +292,7 @@ function RateCardOrder({ talent, isPreview, navigate }) {
         {/* Add-ons */}
         {addonOptions.length > 0 && (
           <div>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2.5">Add-ons</p>
+            <p className="text-xs font-bold uppercase tracking-wide mb-2.5" style={{ color: 'rgba(15,0,32,0.4)' }}>Add-ons</p>
             <div className="space-y-2">
               {addonOptions.map(a => {
                 const on = activeAddons.includes(a.id)
@@ -301,13 +301,13 @@ function RateCardOrder({ talent, isPreview, navigate }) {
                     key={a.id}
                     onClick={() => toggleAddon(a.id)}
                     className="w-full flex items-center justify-between gap-3 rounded-2xl border-2 px-3.5 py-3 text-left transition-colors"
-                    style={{ borderColor: on ? (a.color || purple) : '#f3f4f6' }}
+                    style={{ borderColor: on ? (a.color || purple) : '#e9d5ff' }}
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-bold truncate" style={{ color: on ? (a.color || purple) : '#1f2937' }}>{a.label}</p>
-                      {a.desc && <p className="text-[11px] text-gray-400 truncate">{a.desc}</p>}
+                      <p className="text-sm font-bold truncate" style={{ color: on ? (a.color || purple) : '#0F0020' }}>{a.label}</p>
+                      {a.desc && <p className="text-[11px] truncate" style={{ color: 'rgba(15,0,32,0.4)' }}>{a.desc}</p>}
                     </div>
-                    <span className="text-xs font-bold flex-shrink-0" style={{ color: on ? (a.color || purple) : '#9ca3af' }}>+{formatNGN(a.price)}</span>
+                    <span className="text-xs font-bold flex-shrink-0" style={{ color: on ? (a.color || purple) : 'rgba(15,0,32,0.4)' }}>+{formatNGN(a.price)}</span>
                   </button>
                 )
               })}
@@ -316,25 +316,25 @@ function RateCardOrder({ talent, isPreview, navigate }) {
         )}
 
         {/* Price summary */}
-        <div className="rounded-2xl border border-brand-lav p-4 space-y-2" style={{ backgroundColor: '#faf5ff' }}>
-          <div className="flex justify-between text-xs text-gray-500">
+        <div className="rounded-2xl border border-brand-lav p-4 space-y-2" style={{ backgroundColor: 'rgba(124,58,237,0.04)' }}>
+          <div className="flex justify-between text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>
             <span>Production ({durationItem.label})</span>
-            <span className="font-semibold text-gray-700">{formatNGN(prodCost)}</span>
+            <span className="font-semibold" style={{ color: 'rgba(15,0,32,0.6)' }}>{formatNGN(prodCost)}</span>
           </div>
           {isInfluencer && platformOptions.filter(p => selectedPlatforms.includes(p.id)).map(p => (
-            <div key={p.id} className="flex justify-between text-xs text-gray-500">
+            <div key={p.id} className="flex justify-between text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>
               <span>{p.label} posting</span>
-              <span className="font-semibold text-gray-700">+{formatNGN(p.fee)}</span>
+              <span className="font-semibold" style={{ color: 'rgba(15,0,32,0.6)' }}>+{formatNGN(p.fee)}</span>
             </div>
           ))}
           {addonItems.map(a => (
-            <div key={a.id} className="flex justify-between text-xs text-gray-500">
+            <div key={a.id} className="flex justify-between text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>
               <span>{a.label}</span>
-              <span className="font-semibold text-gray-700">+{formatNGN(a.price)}</span>
+              <span className="font-semibold" style={{ color: 'rgba(15,0,32,0.6)' }}>+{formatNGN(a.price)}</span>
             </div>
           ))}
           <div className="border-t border-purple-100 pt-2 flex justify-between items-center">
-            <span className="text-sm font-extrabold text-gray-900">Total</span>
+            <span className="text-sm font-extrabold" style={{ color: '#0F0020' }}>Total</span>
             <span className="text-lg font-extrabold" style={{ color: darkPurple }}>{formatNGN(total)}</span>
           </div>
         </div>
@@ -372,60 +372,60 @@ function QuickStats({ talent: c }) {
   const isVerified = c.tier === 'top-rated' || c.tier === 'next-rated' || (c.completedCampaigns || 0) >= 5
 
   return (
-    <div className="bg-white rounded-3xl border border-brand-lav shadow-sm p-5">
-      <h3 className="font-bold text-gray-900 mb-4">Quick Stats</h3>
+    <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-5">
+      <h3 className="font-bold mb-4" style={{ color: '#0F0020' }}>Quick Stats</h3>
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>
             <Users className="w-4 h-4" />
             Total Followers
           </div>
-          <span className="font-bold text-gray-800">{formatFollowers(c.totalFollowers)}</span>
+          <span className="font-bold" style={{ color: '#0F0020' }}>{formatFollowers(c.totalFollowers)}</span>
         </div>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>
             <Heart className="w-4 h-4" />
             Avg. Engagement
           </div>
           <span className="font-bold" style={{ color: pink }}>{Number(c.avgEngagement || 0).toFixed(1)}%</span>
         </div>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>
             <CheckCircle className="w-4 h-4" />
             Campaigns Done
           </div>
-          <span className="font-bold text-gray-800">{c.completedCampaigns || 0}</span>
+          <span className="font-bold" style={{ color: '#0F0020' }}>{c.completedCampaigns || 0}</span>
         </div>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>
             <Star className="w-4 h-4" />
             Rating
           </div>
           <div className="flex items-center gap-1">
-            <span className="font-bold text-gray-800">{Number(liveRating).toFixed(1)}</span>
+            <span className="font-bold" style={{ color: '#0F0020' }}>{Number(liveRating).toFixed(1)}</span>
             {reviewCount !== null && (
-              <span className="text-xs text-gray-400">({reviewCount})</span>
+              <span className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>({reviewCount})</span>
             )}
           </div>
         </div>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>
             <MessageSquare className="w-4 h-4" />
             Response Rate
           </div>
-          <span className="font-bold text-gray-800">{responseRate}</span>
+          <span className="font-bold" style={{ color: '#0F0020' }}>{responseRate}</span>
         </div>
         <div className="pt-2 border-t border-brand-lav">
           <div className="flex items-center gap-2">
             {isVerified ? (
               <>
                 <BadgeCheck className="w-4 h-4 flex-shrink-0" style={{ color: '#3b82f6' }} />
-                <span className="text-xs text-gray-600">Identity & platform verified</span>
+                <span className="text-xs" style={{ color: 'rgba(15,0,32,0.5)' }}>Identity & platform verified</span>
               </>
             ) : (
               <>
-                <Shield className="w-4 h-4 flex-shrink-0 text-gray-300" />
-                <span className="text-xs text-gray-400">Verification pending</span>
+                <Shield className="w-4 h-4 flex-shrink-0" style={{ color: 'rgba(15,0,32,0.2)' }} />
+                <span className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>Verification pending</span>
               </>
             )}
           </div>
@@ -477,17 +477,17 @@ function ReviewsSection({ talentId }) {
 
   if (loading) return (
     <div className="bg-white rounded-3xl border border-brand-lav shadow-sm p-6 animate-pulse">
-      <div className="h-5 bg-gray-100 rounded w-40 mb-4" />
-      {[1,2].map(i => <div key={i} className="h-24 bg-gray-50 rounded-2xl mb-3" />)}
+      <div className="h-5 rounded w-40 mb-4" style={{ backgroundColor: 'rgba(124,58,237,0.08)' }} />
+      {[1,2].map(i => <div key={i} className="h-24 rounded-2xl mb-3" style={{ backgroundColor: 'rgba(124,58,237,0.06)' }} />)}
     </div>
   )
 
   return (
-    <div className="bg-white rounded-3xl border border-brand-lav shadow-sm p-6">
+    <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-bold text-gray-900">Brand Reviews</h2>
+          <h2 className="text-lg font-bold" style={{ color: '#0F0020' }}>Brand Reviews</h2>
           {reviewCount > 0 && (
             <span className="text-sm font-medium px-2.5 py-0.5 rounded-full"
               style={{ backgroundColor: '#fef9c3', color: '#854d0e' }}>
@@ -498,26 +498,26 @@ function ReviewsSection({ talentId }) {
         {reviewCount > 0 && (
           <div className="flex items-center gap-1.5">
             <Star className="w-4 h-4" style={{ fill: '#D4AF37', color: '#D4AF37' }} />
-            <span className="font-bold text-gray-900">{avgRating.toFixed(1)}</span>
-            <span className="text-sm text-gray-400">/ 5</span>
+            <span className="font-bold" style={{ color: '#0F0020' }}>{avgRating.toFixed(1)}</span>
+            <span className="text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>/ 5</span>
           </div>
         )}
       </div>
 
       {/* Rating bar breakdown */}
       {reviewCount > 0 && (
-        <div className="mb-6 p-4 rounded-2xl" style={{ backgroundColor: '#faf5ff' }}>
+        <div className="mb-6 p-4 rounded-2xl" style={{ backgroundColor: 'rgba(124,58,237,0.04)' }}>
           <div className="flex items-center gap-4">
             <div className="text-center">
-              <p className="text-4xl font-black text-gray-900">{avgRating.toFixed(1)}</p>
+              <p className="text-4xl font-black" style={{ color: '#0F0020' }}>{avgRating.toFixed(1)}</p>
               <div className="flex justify-center mt-1">
                 {[1,2,3,4,5].map(i => (
                   <Star key={i} className="w-3.5 h-3.5"
-                    style={{ fill: i <= Math.round(avgRating) ? '#D4AF37' : '#e5e7eb',
-                      color: i <= Math.round(avgRating) ? '#D4AF37' : '#e5e7eb' }} />
+                    style={{ fill: i <= Math.round(avgRating) ? '#D4AF37' : '#e9d5ff',
+                      color: i <= Math.round(avgRating) ? '#D4AF37' : '#e9d5ff' }} />
                 ))}
               </div>
-              <p className="text-xs text-gray-400 mt-1">{reviewCount} brands</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(15,0,32,0.4)' }}>{reviewCount} brands</p>
             </div>
             <div className="flex-1 space-y-1.5">
               {[5,4,3,2,1].map(star => {
@@ -525,13 +525,13 @@ function ReviewsSection({ talentId }) {
                 const pct = reviewCount > 0 ? (count / reviewCount) * 100 : 0
                 return (
                   <div key={star} className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400 w-3">{star}</span>
+                    <span className="text-xs w-3" style={{ color: 'rgba(15,0,32,0.4)' }}>{star}</span>
                     <Star className="w-3 h-3 flex-shrink-0" style={{ fill: '#D4AF37', color: '#D4AF37' }} />
-                    <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                    <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(124,58,237,0.08)' }}>
                       <div className="h-full rounded-full transition-all"
                         style={{ width: `${pct}%`, backgroundColor: '#D4AF37' }} />
                     </div>
-                    <span className="text-xs text-gray-400 w-4 text-right">{count}</span>
+                    <span className="text-xs w-4 text-right" style={{ color: 'rgba(15,0,32,0.4)' }}>{count}</span>
                   </div>
                 )
               })}
@@ -543,14 +543,14 @@ function ReviewsSection({ talentId }) {
       {/* Review cards */}
       {reviews.length === 0 ? (
         <div className="text-center py-10">
-          <MessageSquare className="w-10 h-10 mx-auto mb-3 text-gray-200" />
-          <p className="text-sm font-medium text-gray-400">No reviews yet</p>
-          <p className="text-xs text-gray-300 mt-1">Be the first brand to leave a review after your campaign</p>
+          <MessageSquare className="w-10 h-10 mx-auto mb-3" style={{ color: 'rgba(15,0,32,0.15)' }} />
+          <p className="text-sm font-medium" style={{ color: 'rgba(15,0,32,0.4)' }}>No reviews yet</p>
+          <p className="text-xs mt-1" style={{ color: 'rgba(15,0,32,0.25)' }}>Be the first brand to leave a review after your campaign</p>
         </div>
       ) : (
         <div className="space-y-4">
           {reviews.map(review => (
-            <div key={review.id} className="rounded-2xl p-4" style={{ backgroundColor: '#fafafa', border: '1px solid #f3f4f6' }}>
+            <div key={review.id} className="rounded-2xl p-4" style={{ backgroundColor: 'rgba(124,58,237,0.03)', border: '1px solid #e9d5ff' }}>
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
@@ -558,22 +558,22 @@ function ReviewsSection({ talentId }) {
                     {review.brandInitials}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">{review.brandName}</p>
+                    <p className="text-sm font-semibold" style={{ color: '#0F0020' }}>{review.brandName}</p>
                     {review.campaignType && (
-                      <p className="text-xs text-gray-400">{review.campaignType}</p>
+                      <p className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>{review.campaignType}</p>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
                   {[1,2,3,4,5].map(i => (
                     <Star key={i} className="w-3.5 h-3.5"
-                      style={{ fill: i <= review.rating ? '#D4AF37' : '#e5e7eb',
-                        color: i <= review.rating ? '#D4AF37' : '#e5e7eb' }} />
+                      style={{ fill: i <= review.rating ? '#D4AF37' : '#e9d5ff',
+                        color: i <= review.rating ? '#D4AF37' : '#e9d5ff' }} />
                   ))}
                 </div>
               </div>
-              <p className="text-sm text-gray-600 leading-relaxed mb-2">{review.comment}</p>
-              <p className="text-xs text-gray-400">{timeAgo(review.createdAt)}</p>
+              <p className="text-sm leading-relaxed mb-2" style={{ color: 'rgba(15,0,32,0.5)' }}>{review.comment}</p>
+              <p className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>{timeAgo(review.createdAt)}</p>
             </div>
           ))}
         </div>
@@ -601,13 +601,13 @@ function LiveRating({ talentId, fallbackRating }) {
       <div className="flex items-center gap-0.5">
         {[1,2,3,4,5].map(i => (
           <Star key={i} className="w-5 h-5"
-            style={{ color: i <= Math.round(rating) ? '#D4AF37' : '#d1d5db',
+            style={{ color: i <= Math.round(rating) ? '#D4AF37' : '#e9d5ff',
               fill: i <= Math.round(rating) ? '#D4AF37' : 'none' }} />
         ))}
-        <span className="ml-1 font-bold text-base text-gray-700">{Number(rating).toFixed(1)}</span>
+        <span className="ml-1 font-bold text-base" style={{ color: 'rgba(15,0,32,0.7)' }}>{Number(rating).toFixed(1)}</span>
       </div>
       {count !== null && (
-        <span className="text-sm text-gray-400">({count} review{count !== 1 ? 's' : ''})</span>
+        <span className="text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>({count} review{count !== 1 ? 's' : ''})</span>
       )}
     </div>
   )
@@ -616,25 +616,25 @@ function LiveRating({ talentId, fallbackRating }) {
 function SkeletonProfile() {
   return (
     <div className="animate-pulse">
-      <div className="bg-white rounded-3xl p-6 md:p-8 mb-6">
+      <div className="bg-white rounded-2xl p-6 md:p-8 mb-6">
         <div className="flex flex-wrap gap-6">
-          <div className="w-24 h-24 rounded-full bg-gray-200" />
+          <div className="w-24 h-24 rounded-full" style={{ backgroundColor: 'rgba(124,58,237,0.1)' }} />
           <div className="flex-1 min-w-0 space-y-3">
-            <div className="h-7 bg-gray-200 rounded w-48" />
-            <div className="h-4 bg-gray-100 rounded w-32" />
-            <div className="h-4 bg-gray-100 rounded w-40" />
+            <div className="h-7 rounded w-48" style={{ backgroundColor: 'rgba(124,58,237,0.1)' }} />
+            <div className="h-4 rounded w-32" style={{ backgroundColor: 'rgba(124,58,237,0.08)' }} />
+            <div className="h-4 rounded w-40" style={{ backgroundColor: 'rgba(124,58,237,0.08)' }} />
             <div className="flex gap-2">
-              <div className="h-6 w-24 rounded-full bg-gray-100" />
-              <div className="h-6 w-24 rounded-full bg-gray-100" />
+              <div className="h-6 w-24 rounded-full" style={{ backgroundColor: 'rgba(124,58,237,0.08)' }} />
+              <div className="h-6 w-24 rounded-full" style={{ backgroundColor: 'rgba(124,58,237,0.08)' }} />
             </div>
           </div>
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
-          {[1, 2, 3].map(i => <div key={i} className="h-56 bg-gray-100 rounded-3xl" />)}
+          {[1, 2, 3].map(i => <div key={i} className="h-56 rounded-2xl" style={{ backgroundColor: 'rgba(124,58,237,0.08)' }} />)}
         </div>
-        <div className="h-64 bg-gray-100 rounded-3xl" />
+        <div className="h-64 rounded-2xl" style={{ backgroundColor: 'rgba(124,58,237,0.08)' }} />
       </div>
     </div>
   )
@@ -843,7 +843,7 @@ export default function TalentProfilePage() {
       <div className="min-h-screen bg-white">
         <Navbar />
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-          <div className="h-8 w-40 bg-gray-200 rounded-lg mb-6 animate-pulse" />
+          <div className="h-8 w-40 rounded-lg mb-6 animate-pulse" style={{ backgroundColor: 'rgba(124,58,237,0.1)' }} />
           <SkeletonProfile />
         </div>
       </div>
@@ -855,7 +855,7 @@ export default function TalentProfilePage() {
       <div className="min-h-screen bg-white">
         <Navbar />
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 text-center">
-          <p className="text-gray-500 mb-4">Could not load this talent's profile.</p>
+          <p className="mb-4" style={{ color: 'rgba(15,0,32,0.4)' }}>Could not load this talent's profile.</p>
           <button onClick={() => navigate('/marketplace')} className="px-6 py-2.5 rounded-full text-white text-sm font-semibold" style={{ backgroundColor: darkPurple }}>
             Back to Marketplace
           </button>
@@ -902,7 +902,7 @@ export default function TalentProfilePage() {
         {!isPreview && (
           <button
             onClick={() => navigate(location.state?.from || '/marketplace')}
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 mb-6 transition-colors"
+            className="flex items-center gap-1.5 text-sm mb-6 transition-colors" style={{ color: 'rgba(15,0,32,0.5)' }} onMouseEnter={e => e.currentTarget.style.color='#0F0020'} onMouseLeave={e => e.currentTarget.style.color='rgba(15,0,32,0.5)'}
           >
             <ChevronLeft className="w-4 h-4" />
             Back to Marketplace
@@ -910,7 +910,7 @@ export default function TalentProfilePage() {
         )}
 
         {/* Profile header — clean card */}
-        <div className="bg-white rounded-3xl shadow-sm border border-brand-lav overflow-hidden mb-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-brand-lav overflow-hidden mb-6">
           {/* Top strip */}
           <div className="h-24 w-full" style={{ background: 'linear-gradient(135deg, #0d0020 0%, #3b0764 100%)' }} />
 
@@ -933,12 +933,12 @@ export default function TalentProfilePage() {
                     className="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl border transition-all"
                     style={{
                       backgroundColor: isFav(c._id || c.id) ? '#fff0f5' : 'white',
-                      borderColor: isFav(c._id || c.id) ? pink : '#e5e7eb',
-                      color: isFav(c._id || c.id) ? pink : '#6b7280',
+                      borderColor: isFav(c._id || c.id) ? pink : '#e9d5ff',
+                      color: isFav(c._id || c.id) ? pink : 'rgba(15,0,32,0.4)',
                     }}
                   >
                     <Heart className="w-3.5 h-3.5" fill={isFav(c._id || c.id) ? pink : 'none'}
-                      style={{ color: isFav(c._id || c.id) ? pink : '#6b7280' }} />
+                      style={{ color: isFav(c._id || c.id) ? pink : 'rgba(15,0,32,0.4)' }} />
                     {isFav(c._id || c.id) ? 'Saved' : 'Save'}
                   </button>
                   <button
@@ -955,31 +955,31 @@ export default function TalentProfilePage() {
 
             {/* Name + badges */}
             <div className="flex flex-wrap items-center gap-2 mb-1">
-              <h1 className="text-xl font-extrabold text-gray-900">{c.name}</h1>
+              <h1 className="text-xl font-extrabold" style={{ color: '#0F0020' }}>{c.name}</h1>
               <VerifiedBadge tier={c.tier} campaigns={c.completedCampaigns} />
               <TierBadge tier={c.tier} size="sm" />
               {c.availableForHire
                 ? <span className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 px-2.5 py-1 rounded-full"><span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />Available</span>
-                : <span className="text-xs font-medium text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">Unavailable</span>
+                : <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ color: 'rgba(15,0,32,0.4)', backgroundColor: 'rgba(124,58,237,0.06)' }}>Unavailable</span>
               }
             </div>
 
-            <p className="text-sm text-gray-400 mb-1">@{c.handle}</p>
+            <p className="text-sm mb-1" style={{ color: 'rgba(15,0,32,0.4)' }}>@{c.handle}</p>
 
-            <div className="flex items-center gap-1 text-sm text-gray-500 mb-3">
+            <div className="flex items-center gap-1 text-sm mb-3" style={{ color: 'rgba(15,0,32,0.4)' }}>
               <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
               <span>{c.location}</span>
             </div>
 
             <LiveRating talentId={c._id || c.id} fallbackRating={c.avgRating} />
 
-            {c.bio && <p className="text-sm text-gray-600 leading-relaxed mt-3 max-w-2xl">{c.bio}</p>}
+            {c.bio && <p className="text-sm leading-relaxed mt-3 max-w-2xl" style={{ color: 'rgba(15,0,32,0.5)' }}>{c.bio}</p>}
 
             {/* Niches */}
             {c.niches?.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-3">
                 {c.niches.map(n => (
-                  <span key={n} className="text-xs px-3 py-1 rounded-full font-medium" style={{ backgroundColor: '#f3e8ff', color: purple }}>{n}</span>
+                  <span key={n} className="text-xs px-3 py-1 rounded-full font-medium" style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple }}>{n}</span>
                 ))}
               </div>
             )}
@@ -990,11 +990,11 @@ export default function TalentProfilePage() {
                 {c.platforms.map(p => {
                   const pc = PLATFORM_COLORS[p.name] || { bg: '#6b7280', label: p.name }
                   return (
-                    <div key={p.name} className="flex items-center gap-2 rounded-xl px-3 py-2" style={{ backgroundColor: '#f3e8ff' }}>
+                    <div key={p.name} className="flex items-center gap-2 rounded-xl px-3 py-2" style={{ backgroundColor: 'rgba(124,58,237,0.08)' }}>
                       <span className="w-6 h-6 rounded-md flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0" style={{ backgroundColor: pc.bg }}>{p.name[0]}</span>
                       <div>
-                        <p className="text-xs font-semibold text-gray-700">{formatFollowers(p.followers)}</p>
-                        <p className="text-[10px] text-gray-400">{pc.label}</p>
+                        <p className="text-xs font-semibold" style={{ color: 'rgba(15,0,32,0.6)' }}>{formatFollowers(p.followers)}</p>
+                        <p className="text-[10px]" style={{ color: 'rgba(15,0,32,0.4)' }}>{pc.label}</p>
                       </div>
                     </div>
                   )
@@ -1007,7 +1007,7 @@ export default function TalentProfilePage() {
         {/* Portfolio */}
         {c.portfolio?.length > 0 && (
           <div className="bg-white rounded-3xl shadow-sm border border-brand-lav overflow-hidden mb-6 p-6">
-            <h2 className="font-bold text-gray-900 text-base mb-4">Portfolio</h2>
+            <h2 className="font-bold text-base mb-4" style={{ color: '#0F0020' }}>Portfolio</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {c.portfolio.map((item, i) => (
                 <a
@@ -1016,7 +1016,7 @@ export default function TalentProfilePage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group relative rounded-2xl overflow-hidden aspect-square block"
-                  style={{ backgroundColor: '#f3e8ff' }}
+                  style={{ backgroundColor: 'rgba(124,58,237,0.08)' }}
                 >
                   {item.type === 'video' ? (
                     <div className="w-full h-full flex items-center justify-center bg-gray-900">
@@ -1067,7 +1067,7 @@ export default function TalentProfilePage() {
 
             {/* Inline chat box */}
             {!isPreview && (
-              <div className="bg-white rounded-3xl border border-brand-lav shadow-sm overflow-hidden">
+              <div className="bg-white rounded-2xl border border-brand-lav shadow-sm overflow-hidden">
                 <div className="flex items-center gap-3 px-5 py-4" style={{ background: 'linear-gradient(135deg, #0d0020, #3b0764)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                   <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden">
                     {c.avatar ? <img src={c.avatar} alt={c.name} className="w-full h-full object-cover" /> : c.name?.[0]}
@@ -1082,12 +1082,12 @@ export default function TalentProfilePage() {
                 </div>
 
                 {/* Messages */}
-                <div className="overflow-y-auto px-4 py-4 space-y-2" style={{ minHeight: 180, maxHeight: 300, backgroundColor: '#faf5ff' }}>
+                <div className="overflow-y-auto px-4 py-4 space-y-2" style={{ minHeight: 180, maxHeight: 300, backgroundColor: 'rgba(124,58,237,0.04)' }}>
                   {chatMessages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-32 text-center">
                       <MessageSquare className="w-8 h-8 mb-2" style={{ color: '#c084fc' }} />
-                      <p className="text-sm font-semibold text-gray-600">Start the conversation</p>
-                      <p className="text-xs text-gray-400 mt-1">Introduce yourself and share what you're looking for</p>
+                      <p className="text-sm font-semibold" style={{ color: 'rgba(15,0,32,0.5)' }}>Start the conversation</p>
+                      <p className="text-xs mt-1" style={{ color: 'rgba(15,0,32,0.4)' }}>Introduce yourself and share what you're looking for</p>
                     </div>
                   ) : chatMessages.map(msg => (
                     <div key={msg.id} className={`flex ${msg.from === 'brand' ? 'justify-end' : 'justify-start'}`}>
@@ -1103,13 +1103,13 @@ export default function TalentProfilePage() {
                 </div>
 
                 {/* Input */}
-                <form onSubmit={sendChatMessage} className="flex items-center gap-2 px-4 py-3 border-t" style={{ borderColor: '#f3e8ff' }}>
+                <form onSubmit={sendChatMessage} className="flex items-center gap-2 px-4 py-3 border-t" style={{ borderColor: '#e9d5ff' }}>
                   <input
                     value={chatInput}
                     onChange={e => setChatInput(stripInjection(e.target.value))}
                     placeholder={`Message ${c.name?.split(' ')[0]}…`}
                     className="flex-1 px-4 py-2.5 rounded-xl text-sm outline-none"
-                    style={{ backgroundColor: '#f3e8ff', color: '#1a0030' }}
+                    style={{ backgroundColor: '#fff', border: '1.5px solid #e9d5ff', color: '#0F0020' }}
                   />
                   <button type="submit" disabled={!chatInput.trim() || chatSending}
                     className="w-9 h-9 rounded-xl flex items-center justify-center text-white flex-shrink-0 transition-opacity disabled:opacity-40"
@@ -1128,8 +1128,8 @@ export default function TalentProfilePage() {
           <div className="flex flex-col gap-4">
             <QuickStats talent={c} />
 
-            <div className="rounded-3xl p-5" style={{ background: 'linear-gradient(135deg, #f9f5ff, #fdf4ff)' }}>
-              <h3 className="font-bold text-gray-900 mb-3 text-sm">Why work with {c.name.split(' ')[0]}?</h3>
+            <div className="rounded-2xl p-5" style={{ backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid #e9d5ff' }}>
+              <h3 className="font-bold mb-3 text-sm" style={{ color: '#0F0020' }}>Why work with {c.name.split(' ')[0]}?</h3>
               <ul className="space-y-2.5">
                 {[
                   { icon: Shield, text: 'Payment protected — funds held until you approve' },
@@ -1137,7 +1137,7 @@ export default function TalentProfilePage() {
                   { icon: RefreshCw, text: 'Revisions included in every package' },
                   { icon: ExternalLink, text: 'Verified African talent' },
                 ].map(({ icon: Icon, text }) => (
-                  <li key={text} className="flex items-start gap-2.5 text-xs text-gray-600">
+                  <li key={text} className="flex items-start gap-2.5 text-xs" style={{ color: 'rgba(15,0,32,0.5)' }}>
                     <Icon className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: purple }} />
                     {text}
                   </li>
@@ -1164,11 +1164,11 @@ export default function TalentProfilePage() {
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: '1px solid #e9d5ff' }}>
             <div>
-              <p className="font-black text-gray-900">Send Custom Offer</p>
-              <p className="text-xs text-gray-400 mt-0.5">Direct offer to {c.name}</p>
+              <p className="font-black" style={{ color: '#0F0020' }}>Send Custom Offer</p>
+              <p className="text-xs mt-0.5" style={{ color: 'rgba(15,0,32,0.4)' }}>Direct offer to {c.name}</p>
             </div>
-            <button onClick={() => { setShowOfferModal(false); setOfferSent(false) }} className="p-1.5 rounded-lg hover:bg-gray-100">
-              <X className="w-4 h-4 text-gray-400" />
+            <button onClick={() => { setShowOfferModal(false); setOfferSent(false) }} className="p-1.5 rounded-lg" onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(124,58,237,0.06)'} onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
+              <X className="w-4 h-4" style={{ color: 'rgba(15,0,32,0.4)' }} />
             </button>
           </div>
 
@@ -1177,21 +1177,21 @@ export default function TalentProfilePage() {
               <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'linear-gradient(135deg, #7c3aed, #F72585)' }}>
                 <Send className="w-7 h-7 text-white" />
               </div>
-              <p className="font-black text-gray-900 text-xl mb-2">Offer Sent! 🎉</p>
-              <p className="text-gray-500 text-sm">
+              <p className="font-black text-xl mb-2" style={{ color: '#0F0020' }}>Offer Sent! 🎉</p>
+              <p className="text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>
                 Your custom offer has been sent to <span className="font-bold" style={{ color: purple }}>{c.name}</span>. They'll be notified and can accept or decline.
               </p>
             </div>
           ) : (
             <form onSubmit={sendCustomOffer} className="px-6 py-5 space-y-4">
               {/* Creator strip */}
-              <div className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: '#f9f5ff' }}>
+              <div className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: 'rgba(124,58,237,0.04)' }}>
                 <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm text-white flex-shrink-0" style={{ backgroundColor: darkPurple }}>
                   {c.name?.[0]}
                 </div>
                 <div>
-                  <p className="font-bold text-gray-800 text-sm">{c.name}</p>
-                  <p className="text-xs text-gray-400">{c.niche || c.primaryNiche || 'Creator'}</p>
+                  <p className="font-bold text-sm" style={{ color: '#0F0020' }}>{c.name}</p>
+                  <p className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>{c.niche || c.primaryNiche || 'Creator'}</p>
                 </div>
                 <div className="ml-auto flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full" style={{ backgroundColor: `${purple}15`, color: purple }}>
                   <Zap className="w-3 h-3" /> Direct
@@ -1200,26 +1200,26 @@ export default function TalentProfilePage() {
 
               {/* Title */}
               <div>
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Project title *</label>
+                <label className="text-xs font-bold uppercase tracking-widest mb-1.5 block" style={{ color: 'rgba(15,0,32,0.4)' }}>Project title *</label>
                 <input type="text" required value={offerForm.title} onChange={e => setOfferForm(f => ({ ...f, title: stripInjection(e.target.value) }))}
                   placeholder="e.g. Summer Glow UGC Campaign"
-                  className="w-full px-4 py-2.5 rounded-xl text-sm text-gray-800 outline-none"
-                  style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }} />
+                  className="w-full px-4 py-2.5 rounded-xl text-sm outline-none" style={{ color: '#0F0020' }}
+                  style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }} />
               </div>
 
               {/* Brief */}
               <div>
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Brief * <span className="normal-case font-normal text-gray-400">(min 20 chars)</span></label>
+                <label className="text-xs font-bold uppercase tracking-widest mb-1.5 block" style={{ color: 'rgba(15,0,32,0.4)' }}>Brief * <span className="normal-case font-normal" style={{ color: 'rgba(15,0,32,0.4)' }}>(min 20 chars)</span></label>
                 <textarea required rows={4} value={offerForm.brief} onChange={e => setOfferForm(f => ({ ...f, brief: stripInjection(e.target.value) }))}
                   placeholder="Describe your campaign goals, tone, target audience, and specific requirements…"
-                  className="w-full px-4 py-2.5 rounded-xl text-sm text-gray-800 outline-none resize-none"
-                  style={{ border: `1px solid ${offerForm.brief.length > 0 && offerForm.brief.length < 20 ? '#ef4444' : '#e9d5ff'}`, backgroundColor: '#f9f5ff' }} />
-                <p className={`text-[10px] mt-0.5 ${offerForm.brief.length > 0 && offerForm.brief.length < 20 ? 'text-red-500' : 'text-gray-300'}`}>{offerForm.brief.length} / 20 min</p>
+                  className="w-full px-4 py-2.5 rounded-xl text-sm outline-none resize-none" style={{ color: '#0F0020' }}
+                  style={{ border: `1.5px solid ${offerForm.brief.length > 0 && offerForm.brief.length < 20 ? '#ef4444' : '#e9d5ff'}`, backgroundColor: '#fff' }} />
+                <p className={`text-[10px] mt-0.5 ${offerForm.brief.length > 0 && offerForm.brief.length < 20 ? 'text-red-500' : ''}`} style={{ color: offerForm.brief.length > 0 && offerForm.brief.length < 20 ? undefined : 'rgba(15,0,32,0.25)' }}>{offerForm.brief.length} / 20 min</p>
               </div>
 
               {/* Deliverables */}
               <div>
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Deliverables *</label>
+                <label className="text-xs font-bold uppercase tracking-widest mb-2 block" style={{ color: 'rgba(15,0,32,0.4)' }}>Deliverables *</label>
                 <div className="flex flex-wrap gap-2">
                   {CONTENT_TYPES_LIST.map(ct => {
                     const active = offerForm.deliverables.includes(ct)
@@ -1227,8 +1227,8 @@ export default function TalentProfilePage() {
                       <button key={ct} type="button" onClick={() => toggleDeliverable(ct)}
                         className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
                         style={{
-                          backgroundColor: active ? darkPurple : '#f9f5ff',
-                          color: active ? '#fff' : '#6b7280',
+                          backgroundColor: active ? darkPurple : 'rgba(124,58,237,0.04)',
+                          color: active ? '#fff' : 'rgba(15,0,32,0.4)',
                           border: `1px solid ${active ? darkPurple : '#e9d5ff'}`,
                         }}>
                         {active && <CheckCircle className="w-3 h-3 inline mr-1" />}{ct}
@@ -1240,31 +1240,31 @@ export default function TalentProfilePage() {
 
               {/* Budget */}
               <div>
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Your offer (₦) *</label>
-                <div className="flex items-center rounded-xl overflow-hidden" style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
-                  <span className="px-3 text-sm font-bold text-gray-400">₦</span>
+                <label className="text-xs font-bold uppercase tracking-widest mb-1.5 block" style={{ color: 'rgba(15,0,32,0.4)' }}>Your offer (₦) *</label>
+                <div className="flex items-center rounded-xl overflow-hidden" style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}>
+                  <span className="px-3 text-sm font-bold" style={{ color: 'rgba(15,0,32,0.4)' }}>₦</span>
                   <input type="text" inputMode="numeric" required value={offerForm.budget}
                     onChange={e => setOfferForm(f => ({ ...f, budget: e.target.value.replace(/[^\d,]/g, '') }))}
                     placeholder="e.g. 150,000"
-                    className="flex-1 px-2 py-2.5 text-sm text-gray-800 bg-transparent outline-none font-semibold" />
+                    className="flex-1 px-2 py-2.5 text-sm bg-transparent outline-none font-semibold" style={{ color: '#0F0020' }} />
                 </div>
               </div>
 
               {/* Timeline */}
               <div className="relative">
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Timeline</label>
+                <label className="text-xs font-bold uppercase tracking-widest mb-1.5 block" style={{ color: 'rgba(15,0,32,0.4)' }}>Timeline</label>
                 <button type="button" onClick={() => setTimelineOpen(v => !v)}
                   className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm outline-none"
-                  style={{ border: '1px solid #e9d5ff', backgroundColor: '#f9f5ff' }}>
-                  <span className={offerForm.timeline ? 'text-gray-800 font-medium' : 'text-gray-400'}>{offerForm.timeline || 'Select a timeline…'}</span>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${timelineOpen ? 'rotate-180' : ''}`} />
+                  style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}>
+                  <span className={offerForm.timeline ? 'font-medium' : ''} style={{ color: offerForm.timeline ? '#0F0020' : 'rgba(15,0,32,0.4)' }}>{offerForm.timeline || 'Select a timeline…'}</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${timelineOpen ? 'rotate-180' : ''}`} style={{ color: 'rgba(15,0,32,0.4)' }} />
                 </button>
                 {timelineOpen && (
                   <div className="absolute z-10 w-full mt-1 rounded-xl bg-white shadow-xl overflow-hidden" style={{ border: '1px solid #e9d5ff' }}>
                     {TIMELINES_LIST.map(t => (
                       <button key={t} type="button" onClick={() => { setOfferForm(f => ({ ...f, timeline: t })); setTimelineOpen(false) }}
                         className="w-full px-4 py-2.5 text-left text-sm hover:bg-purple-50 transition-colors flex items-center justify-between"
-                        style={{ color: offerForm.timeline === t ? purple : '#374151', fontWeight: offerForm.timeline === t ? '700' : '400' }}>
+                        style={{ color: offerForm.timeline === t ? purple : '#0F0020', fontWeight: offerForm.timeline === t ? '700' : '400' }}>
                         {t}{offerForm.timeline === t && <CheckCircle className="w-4 h-4" style={{ color: purple }} />}
                       </button>
                     ))}
@@ -1274,7 +1274,7 @@ export default function TalentProfilePage() {
 
               <button type="submit" disabled={!canSendOffer || offerSending}
                 className="w-full py-3.5 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 disabled:opacity-40"
-                style={{ background: canSendOffer && !offerSending ? 'linear-gradient(135deg, #7c3aed, #F72585)' : '#9ca3af' }}>
+                style={{ background: canSendOffer && !offerSending ? 'linear-gradient(135deg, #7c3aed, #F72585)' : 'rgba(15,0,32,0.2)' }}>
                 {offerSending
                   ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Sending…</>
                   : <><Send className="w-4 h-4" /> Send Custom Offer</>}
@@ -1299,7 +1299,7 @@ function Navbar() {
           <span className="text-xl font-bold tracking-tight" style={{ color: darkPurple }}>Brandior</span>
         </Link>
         <div className="flex items-center gap-4">
-          <Link to="/marketplace" className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors">
+          <Link to="/marketplace" className="text-sm font-medium transition-colors" style={{ color: 'rgba(15,0,32,0.5)' }} onMouseEnter={e => e.currentTarget.style.color='#0F0020'} onMouseLeave={e => e.currentTarget.style.color='rgba(15,0,32,0.5)'}>
             Marketplace
           </Link>
           <Link
