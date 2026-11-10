@@ -212,12 +212,40 @@ function CampaignDetail({ id }) {
   )
 }
 
+const PIPELINE_FILTERS = [
+  { key: 'All',         label: 'All' },
+  { key: 'shortlisted', label: 'Shortlisted' },
+  { key: 'interview',   label: 'In Discussion' },
+  { key: 'accepted',    label: 'Hired' },
+  { key: 'rejected',    label: 'Declined' },
+]
+const APP_STATUS_COLOR = {
+  pending:       '#6366f1',
+  shortlisted:   '#FA8112',
+  interview:     '#38bdf8',
+  accepted:      '#22c55e',
+  rejected:      '#ef4444',
+}
+const APP_STATUS_LABEL = {
+  pending:       'New',
+  shortlisted:   'Shortlisted',
+  interview:     'In Discussion',
+  accepted:      'Hired',
+  rejected:      'Declined',
+}
+
 // ── Pitches ───────────────────────────────────────────────────────────────────
 function CampaignPitches({ id }) {
   const navigate = useNavigate()
-  const [campaign, setCampaign] = useState(null)
-  const [applicants, setApplicants] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [campaign, setCampaign]       = useState(null)
+  const [applicants, setApplicants]   = useState([])
+  const [loading, setLoading]         = useState(true)
+  const [activeFilter, setActiveFilter] = useState('All')
+  const [hireTarget, setHireTarget]   = useState(null)
+  const [hireAmount, setHireAmount]   = useState('')
+  const [hireDeadline, setHireDeadline] = useState('')
+  const [hireNote, setHireNote]       = useState('')
+  const [hiring, setHiring]           = useState(false)
 
   useEffect(() => {
     ;(async () => {
@@ -234,13 +262,65 @@ function CampaignPitches({ id }) {
     })()
   }, [id])
 
+  async function updateAppStatus(app, dbStatus) {
+    setApplicants(prev => prev.map(a => a.id === app.id ? { ...a, status: dbStatus } : a))
+    await supabase.from('job_applications').update({ status: dbStatus }).eq('id', app.id)
+  }
+
+  async function handleHire() {
+    if (!hireTarget || !hireAmount || hiring) return
+    setHiring(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not signed in')
+      const amount = parseInt(hireAmount.replace(/[^0-9]/g, ''), 10)
+      if (!amount) throw new Error('Enter a valid offer amount')
+
+      const { data, error } = await supabase.functions.invoke('collab-hire', {
+        body: {
+          job_id:         id,
+          application_id: hireTarget.app.id,
+          content_type:   campaign?.collab_type || 'Content',
+          total_amount:   amount,
+          brief: {
+            collabTitle:  campaign?.campaign_name || 'Collab',
+            deadline:     hireDeadline || undefined,
+            instructions: hireNote.trim() || undefined,
+            brandName:    user?.user_metadata?.company_name || user?.user_metadata?.full_name || 'Brand',
+            budget:       `₦${amount.toLocaleString()}`,
+          },
+        },
+      })
+      if (error || !data?.ok) throw new Error(data?.error ?? error?.message ?? 'Could not create offer')
+
+      await updateAppStatus(hireTarget.app, 'accepted')
+      setHireTarget(null)
+      navigate(`/brand-dashboard?newOrder=${data.collab_id}`)
+    } catch (err) {
+      alert(err.message || 'Could not hire creator. Please try again.')
+    } finally {
+      setHiring(false)
+    }
+  }
+
+  const pipelineCounts = PIPELINE_FILTERS.reduce((acc, f) => {
+    acc[f.key] = f.key === 'All'
+      ? applicants.length
+      : applicants.filter(a => a.status === f.key).length
+    return acc
+  }, {})
+
+  const filtered = activeFilter === 'All'
+    ? applicants
+    : applicants.filter(a => a.status === activeFilter)
+
   if (loading) return <div className="flex justify-center py-20"><div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" /></div>
 
   return (
     <div className="max-w-2xl mx-auto">
       {/* Mini campaign header */}
       {campaign && (
-        <div className="rounded-2xl p-4 mb-6 flex items-center justify-between gap-3"
+        <div className="rounded-2xl p-4 mb-5 flex items-center justify-between gap-3"
           style={{ background: 'linear-gradient(135deg, #1a0035, #3d0080)' }}>
           <div>
             <p className="text-xs font-bold uppercase tracking-widest mb-0.5" style={{ color: '#c084fc' }}>{campaign.niche} · {campaign.collab_type}</p>
@@ -254,18 +334,45 @@ function CampaignPitches({ id }) {
         </div>
       )}
 
-      <h3 className="font-black text-lg mb-4" style={{ color: '#1e0040' }}>
-        {applicants.length} Pitch{applicants.length !== 1 ? 'es' : ''}
+      {/* Pipeline filter */}
+      <div className="flex gap-2 overflow-x-auto pb-1 mb-5" style={{ scrollbarWidth: 'none' }}>
+        {PIPELINE_FILTERS.map(f => {
+          const active = activeFilter === f.key
+          const count  = pipelineCounts[f.key] ?? 0
+          const col    = APP_STATUS_COLOR[f.key] ?? purple
+          return (
+            <button key={f.key}
+              onClick={() => setActiveFilter(f.key)}
+              className="flex-shrink-0 flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl transition-all"
+              style={active
+                ? { backgroundColor: col + '18', color: col, border: `1.5px solid ${col}` }
+                : { backgroundColor: '#fff', color: '#6b7280', border: '1.5px solid #e9d5ff' }}>
+              {f.label}
+              {count > 0 && (
+                <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full"
+                  style={{ backgroundColor: active ? col + '30' : '#f3eeff', color: active ? col : purple }}>
+                  {count}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      <h3 className="font-black text-sm mb-4" style={{ color: 'rgba(30,0,64,0.5)' }}>
+        {filtered.length} pitch{filtered.length !== 1 ? 'es' : ''}{activeFilter !== 'All' ? ` · ${PIPELINE_FILTERS.find(f => f.key === activeFilter)?.label}` : ''}
       </h3>
 
-      {applicants.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
           <Users className="w-10 h-10 mx-auto mb-3 opacity-20" />
-          <p className="text-sm font-semibold">No pitches yet — your campaign is live and visible to creators.</p>
+          <p className="text-sm font-semibold">
+            {activeFilter === 'All' ? 'No pitches yet — your campaign is live and visible to creators.' : `No ${PIPELINE_FILTERS.find(f => f.key === activeFilter)?.label.toLowerCase()} pitches.`}
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
-          {applicants.map(app => {
+          {filtered.map(app => {
             const c = app.creator || {}
             const tierColors = {
               'fast-rising': { bg: '#f0fdf4', color: '#16a34a' },
@@ -273,6 +380,10 @@ function CampaignPitches({ id }) {
               'top-rated':   { bg: '#fefce8', color: '#d97706' },
             }
             const tc = tierColors[c.tier] || tierColors['fast-rising']
+            const sc = APP_STATUS_COLOR[app.status] ?? '#6366f1'
+            const sl = APP_STATUS_LABEL[app.status] ?? 'New'
+            const isShortlisted = app.status === 'shortlisted'
+            const isHired = app.status === 'accepted'
             return (
               <div key={app.id} className="rounded-2xl p-5 bg-white" style={{ border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
                 <div className="flex items-start gap-3 mb-3">
@@ -282,32 +393,139 @@ function CampaignPitches({ id }) {
                         {(c.full_name || '?')[0]}
                       </div>}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
                       <span className="font-bold text-sm" style={{ color: '#1e0040' }}>{c.full_name || 'Creator'}</span>
                       {c.username && <span className="text-xs text-gray-400">@{c.username}</span>}
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: tc.bg, color: tc.color }}>
                         {(c.tier || 'fast-rising').replace('-', ' ')}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
+                    <div className="flex items-center gap-3 text-xs text-gray-400">
                       {c.niches?.length > 0 && <span>{c.niches[0]}</span>}
                       {c.avg_rating > 0 && <span>⭐ {c.avg_rating}</span>}
-                      {c.min_price > 0 && <span style={{ color: purple }}>From ₦{Number(c.min_price).toLocaleString()}</span>}
+                      {app.rate > 0 && <span style={{ color: '#22c55e', fontWeight: 700 }}>₦{Number(app.rate).toLocaleString()}</span>}
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: '#f3eeff', color: purple }}>
-                    {timeAgo(app.created_at)}
-                  </span>
+                  <div className="flex flex-col items-end gap-2">
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1"
+                      style={{ backgroundColor: sc + '18', color: sc }}>
+                      <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: sc }} />
+                      {sl}
+                    </span>
+                    <span className="text-[10px]" style={{ color: '#9ca3af' }}>{timeAgo(app.created_at)}</span>
+                  </div>
                 </div>
-                <p className="text-sm leading-relaxed mb-3" style={{ color: '#374151', background: 'rgba(124,58,237,0.04)', borderRadius: 10, padding: '10px 14px' }}>"{app.pitch}"</p>
-                <Link to={`/creators/${c.username || c.id}`}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl text-white"
-                  style={{ backgroundColor: darkPurple }}>
-                  View Profile <ArrowUpRight className="w-3.5 h-3.5" />
-                </Link>
+
+                <p className="text-sm leading-relaxed mb-4" style={{ color: '#374151', background: 'rgba(124,58,237,0.04)', borderRadius: 10, padding: '10px 14px' }}>"{app.pitch}"</p>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Shortlist toggle */}
+                  {!isHired && (
+                    <button
+                      onClick={() => updateAppStatus(app, isShortlisted ? 'pending' : 'shortlisted')}
+                      className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border-1.5 transition-all"
+                      style={isShortlisted
+                        ? { backgroundColor: '#FA811210', color: '#FA8112', border: '1.5px solid #FA811240' }
+                        : { backgroundColor: '#fff', color: '#6b7280', border: '1.5px solid #e9d5ff' }}>
+                      {isShortlisted ? '★ Shortlisted' : '☆ Shortlist'}
+                    </button>
+                  )}
+
+                  <Link to={`/creators/${c.username || c.id}`}
+                    className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl"
+                    style={{ backgroundColor: '#f3eeff', color: darkPurple }}>
+                    Profile <ArrowUpRight className="w-3 h-3" />
+                  </Link>
+
+                  {!isHired && (
+                    <button
+                      onClick={() => { setHireTarget({ app, creatorName: c.full_name || 'Creator' }); setHireAmount(campaign?.budget ? String(campaign.budget) : '') }}
+                      className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl text-white ml-auto"
+                      style={{ backgroundColor: '#22c55e' }}>
+                      Hire →
+                    </button>
+                  )}
+
+                  {isHired && (
+                    <span className="ml-auto text-xs font-bold px-3 py-2 rounded-xl"
+                      style={{ backgroundColor: '#dcfce7', color: '#16a34a' }}>
+                      ✓ Hired
+                    </span>
+                  )}
+                </div>
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* ── Hire Modal ── */}
+      {hireTarget && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          onClick={() => !hiring && setHireTarget(null)}>
+          <div className="w-full max-w-lg rounded-t-3xl sm:rounded-2xl p-6 pb-10 sm:pb-6 bg-white"
+            onClick={e => e.stopPropagation()}>
+            <div className="w-9 h-1 rounded-full mx-auto mb-5" style={{ backgroundColor: '#e9d5ff' }} />
+            <h3 className="text-lg font-black mb-1" style={{ color: '#1e0040' }}>Hire {hireTarget.creatorName}</h3>
+            <p className="text-sm mb-5" style={{ color: '#9ca3af' }}>{campaign?.campaign_name}</p>
+
+            <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: '#9ca3af' }}>Offer Amount <span style={{ color: '#ef4444' }}>*</span></p>
+            <div className="flex items-center gap-2 rounded-xl px-4 py-3 mb-4"
+              style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf9ff' }}>
+              <span className="font-black text-base" style={{ color: '#1e0040' }}>₦</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={hireAmount ? Number(hireAmount).toLocaleString() : ''}
+                onChange={e => setHireAmount(e.target.value.replace(/[^0-9]/g, ''))}
+                placeholder="e.g. 150,000"
+                className="flex-1 text-sm bg-transparent outline-none font-semibold"
+                style={{ color: '#1e0040' }}
+              />
+            </div>
+
+            <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: '#9ca3af' }}>Deadline</p>
+            <input
+              type="text"
+              value={hireDeadline}
+              onChange={e => setHireDeadline(e.target.value)}
+              placeholder="e.g. 30 Jul 2026"
+              className="w-full rounded-xl px-4 py-3 text-sm outline-none mb-4"
+              style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf9ff', color: '#1e0040' }}
+            />
+
+            <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: '#9ca3af' }}>Note to Creator <span style={{ color: '#9ca3af', fontWeight: 400 }}>(optional)</span></p>
+            <textarea
+              value={hireNote}
+              onChange={e => setHireNote(e.target.value)}
+              rows={3}
+              placeholder="Extra instructions or context for the creator…"
+              className="w-full rounded-xl px-4 py-3 text-sm outline-none resize-none mb-4"
+              style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf9ff', color: '#1e0040' }}
+            />
+
+            <div className="flex items-start gap-2 rounded-xl p-3 mb-5"
+              style={{ backgroundColor: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)' }}>
+              <span className="text-green-600 mt-0.5">🔒</span>
+              <p className="text-xs" style={{ color: '#10b981' }}>Payment is held in escrow. Funds are released when you approve the creator's delivery.</p>
+            </div>
+
+            <button
+              onClick={handleHire}
+              disabled={hiring || !hireAmount}
+              className="w-full py-3.5 rounded-xl font-bold text-white text-sm mb-2 transition-opacity disabled:opacity-40"
+              style={{ backgroundColor: darkPurple }}>
+              {hiring ? 'Creating offer…' : hireAmount ? `Proceed to Payment · ₦${Number(hireAmount).toLocaleString()}` : 'Enter an amount to continue'}
+            </button>
+            <button
+              onClick={() => setHireTarget(null)}
+              disabled={hiring}
+              className="w-full py-2 text-sm font-semibold disabled:opacity-40"
+              style={{ color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer' }}>
+              Cancel
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -29,9 +29,10 @@ export default function CampaignDetailPage() {
   const [profileReady, setProfileReady]     = useState(false)
 
   // Pitch state
-  const [pitchNote, setPitchNote]     = useState('')
-  const [pitching, setPitching]       = useState(false)
-  const [pitchOpen, setPitchOpen]     = useState(false)
+  const [pitchNote, setPitchNote]       = useState('')
+  const [pitchRate, setPitchRate]       = useState('')
+  const [pitching, setPitching]         = useState(false)
+  const [pitchOpen, setPitchOpen]       = useState(false)
   const [pitchSuccess, setPitchSuccess] = useState(false)
 
   useEffect(() => {
@@ -79,7 +80,8 @@ export default function CampaignDetailPage() {
   }, [id])
 
   async function handlePitch() {
-    if (!pitchNote.trim() || pitchNote.trim().length < 20) return
+    if (!pitchNote.trim() || pitchNote.trim().length < 50) return
+    if (!pitchRate.trim()) return
     setPitching(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -95,6 +97,7 @@ export default function CampaignDetailPage() {
         job_id:     id,
         creator_id: user.id,
         pitch:      pitchNote.trim(),
+        rate:       parseInt(pitchRate.replace(/[^0-9]/g, ''), 10) || 0,
         status:     'pending',
       })
       if (error) throw error
@@ -113,6 +116,7 @@ export default function CampaignDetailPage() {
       setAlreadyApplied(true)
       setPitchOpen(false)
       setPitchNote('')
+      setPitchRate('')
       setPitchSuccess(true)
     } catch (err) {
       alert(err?.message || 'Could not submit pitch. Please try again.')
@@ -251,9 +255,9 @@ export default function CampaignDetailPage() {
             <div className="rounded-2xl p-4 text-center" style={{ backgroundColor: '#dcfce7', border: '1px solid #bbf7d0' }}>
               <p className="text-base font-black mb-1" style={{ color: '#166534' }}>🎉 Pitch Sent!</p>
               <p className="text-sm mb-3" style={{ color: '#166534' }}>Your pitch was sent successfully.</p>
-              <button onClick={() => navigate('/dashboard?tab=collabs')}
+              <button onClick={() => navigate('/dashboard?tab=pitches')}
                 className="text-sm font-bold" style={{ color: darkPurple }}>
-                View in My Collabs →
+                View My Pitches →
               </button>
             </div>
           ) : alreadyApplied ? (
@@ -289,7 +293,7 @@ export default function CampaignDetailPage() {
       {pitchOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
           style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
-          onClick={() => setPitchOpen(false)}>
+          onClick={() => { setPitchOpen(false); setPitchRate('') }}>
           <div className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 pb-10 sm:pb-6"
             style={{ backgroundColor: '#fff' }}
             onClick={e => e.stopPropagation()}>
@@ -300,22 +304,36 @@ export default function CampaignDetailPage() {
               value={pitchNote}
               onChange={e => setPitchNote(e.target.value)}
               rows={4}
-              placeholder="Briefly introduce yourself and why you're a great fit…"
+              placeholder="Briefly introduce yourself and why you're a great fit… (min 50 characters)"
               className="w-full rounded-xl px-4 py-3 text-sm outline-none resize-none mb-1"
               style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf9ff', color: '#1e0040' }}
             />
-            {pitchNote.length > 0 && pitchNote.trim().length < 20 && (
-              <p className="text-xs mb-3" style={{ color: '#ef4444' }}>At least 20 characters required ({pitchNote.trim().length}/20)</p>
+            {pitchNote.length > 0 && pitchNote.trim().length < 50 && (
+              <p className="text-xs mb-2" style={{ color: '#ef4444' }}>At least 50 characters required ({pitchNote.trim().length}/50)</p>
             )}
+            <p className="text-xs font-bold uppercase tracking-wider mb-1.5 mt-3" style={{ color: '#9ca3af' }}>Your Rate</p>
+            <div className="flex items-center gap-2 rounded-xl px-4 py-3 mb-3"
+              style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf9ff' }}>
+              <span className="font-black text-base" style={{ color: '#1e0040' }}>₦</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={pitchRate ? Number(pitchRate).toLocaleString() : ''}
+                onChange={e => setPitchRate(e.target.value.replace(/[^0-9]/g, ''))}
+                placeholder="e.g. 80,000"
+                className="flex-1 text-sm bg-transparent outline-none font-semibold"
+                style={{ color: '#1e0040' }}
+              />
+            </div>
             <button
               onClick={handlePitch}
-              disabled={pitching || pitchNote.trim().length < 20}
+              disabled={pitching || pitchNote.trim().length < 50 || !pitchRate.trim()}
               className="w-full py-3 rounded-xl font-bold text-white text-sm mb-2 transition-opacity disabled:opacity-40"
               style={{ backgroundColor: purple }}>
               {pitching ? 'Sending…' : 'Send Pitch'}
             </button>
             <button
-              onClick={() => setPitchOpen(false)}
+              onClick={() => { setPitchOpen(false); setPitchRate('') }}
               className="w-full py-2 text-sm font-semibold"
               style={{ color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer' }}>
               Cancel

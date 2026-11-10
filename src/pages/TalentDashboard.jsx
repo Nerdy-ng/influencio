@@ -197,6 +197,7 @@ const emptyProfile = {
 
 const AVATAR_NAV = [
   { id: 'collabs',      label: 'My Collabs',        icon: Inbox },
+  { id: 'pitches',      label: 'My Pitches',         icon: Send },
   { id: 'analytics',    label: 'Analytics',         icon: TrendingUp },
   { id: 'notifications',label: 'Notifications',     icon: Bell },
   { id: 'rate-card',    label: 'Rate Card',          icon: CreditCard },
@@ -337,6 +338,7 @@ function Sidebar({ active, setActive, dashLogo, onSwitchToBrand }) {
   const nav = [
     { id: 'browse',       label: 'Find Work',         icon: Briefcase },
     { id: 'collabs',      label: 'My Collabs',       icon: Inbox },
+    { id: 'pitches',      label: 'My Pitches',        icon: Send },
     { id: 'notifications',label: 'Notifications',    icon: Bell },
     { id: 'rate-card',    label: 'Rate Card',         icon: CreditCard },
     { id: 'profile',      label: 'My Profile',       icon: LayoutDashboard },
@@ -409,6 +411,240 @@ function Sidebar({ active, setActive, dashLogo, onSwitchToBrand }) {
 }
 
 const BROWSE_NICHES = ['Fashion','Beauty','Tech','Food','Fitness','Lifestyle','Comedy','Travel','Fintech','Business','Voiceover','Gaming']
+
+// ── My Pitches Tab ────────────────────────────────────────────────────────────
+const PITCH_STATUS_COLOR = {
+  pending:       '#6366f1',
+  shortlisted:   '#FA8112',
+  interview:     '#38bdf8',
+  accepted:      '#22c55e',
+  rejected:      '#ef4444',
+  withdrawn:     '#94a3b8',
+  viewed:        '#f59e0b',
+  in_discussion: '#FA8112',
+}
+const PITCH_STATUS_LABEL = {
+  pending:       'Submitted',
+  shortlisted:   'Shortlisted',
+  viewed:        'Opened',
+  interview:     'In Discussion',
+  in_discussion: 'In Discussion',
+  accepted:      'Hired',
+  rejected:      'Declined',
+  withdrawn:     'Withdrawn',
+}
+function pitchBucket(status) {
+  if (status === 'viewed' || status === 'in_discussion' || status === 'interview') return 'discussion'
+  if (status === 'accepted') return 'hired'
+  if (status === 'rejected' || status === 'withdrawn') return 'archived'
+  return 'submitted'
+}
+
+const PITCH_TABS = [
+  { key: 'submitted',  label: 'Submitted',    icon: Send },
+  { key: 'discussion', label: 'In Discussion', icon: MessageCircle },
+  { key: 'hired',      label: 'Hired',         icon: CheckCircle },
+  { key: 'archived',   label: 'Archived',      icon: Clock },
+]
+
+function MyPitchesTab({ setActiveTab }) {
+  const [tab, setTab]             = useState(0)
+  const [pitches, setPitches]     = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+
+  async function loadPitches() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setLoading(false); return }
+
+    const { data: apps } = await supabase
+      .from('job_applications')
+      .select('id, job_id, status, rate, pitch, created_at')
+      .eq('creator_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (!apps || apps.length === 0) { setPitches([]); setLoading(false); return }
+
+    const jobIds = [...new Set(apps.map(a => a.job_id).filter(Boolean))]
+    let jobMap = {}
+    if (jobIds.length > 0) {
+      const { data: jobs } = await supabase
+        .from('public_jobs')
+        .select('id, campaign_name, brand_id, budget, collab_type')
+        .in('id', jobIds)
+      if (jobs) {
+        const brandIds = [...new Set(jobs.map(j => j.brand_id).filter(Boolean))]
+        let brandMap = {}
+        if (brandIds.length > 0) {
+          const { data: brands } = await supabase
+            .from('profiles')
+            .select('id, company_name, owner_name')
+            .in('id', brandIds)
+          if (brands) brandMap = Object.fromEntries(brands.map(b => [b.id, b]))
+        }
+        jobMap = Object.fromEntries(jobs.map(j => [j.id, { ...j, _brand: brandMap[j.brand_id] ?? {} }]))
+      }
+    }
+
+    setPitches(apps.map(a => {
+      const job   = jobMap[a.job_id] ?? {}
+      const brand = job._brand ?? {}
+      const bname = brand.company_name || brand.owner_name || 'Brand'
+      return {
+        id: a.id, job_id: a.job_id,
+        brand: bname,
+        title: job.campaign_name || 'Campaign',
+        type: job.collab_type || '',
+        budget: job.budget ? `₦${Number(job.budget).toLocaleString()}` : (a.rate ? `₦${Number(a.rate).toLocaleString()}` : ''),
+        pitch: a.pitch || '',
+        status: a.status || 'pending',
+        bucket: pitchBucket(a.status || 'pending'),
+        timeAgo: (() => {
+          const diff = Date.now() - new Date(a.created_at).getTime()
+          const m = Math.floor(diff / 60000), h = Math.floor(m / 60), d = Math.floor(h / 24)
+          if (d > 0) return `${d}d ago`; if (h > 0) return `${h}h ago`; return `${m || 1}m ago`
+        })(),
+      }
+    }))
+    setLoading(false)
+  }
+
+  useEffect(() => { loadPitches() }, [])
+
+  useEffect(() => {
+    let channel = null
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      channel = supabase
+        .channel('pitches-tab-' + user.id)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'job_applications', filter: `creator_id=eq.${user.id}` }, () => loadPitches())
+        .subscribe()
+    })
+    return () => { if (channel) supabase.removeChannel(channel) }
+  }, [])
+
+  const submitted  = pitches.filter(p => p.bucket === 'submitted')
+  const discussion = pitches.filter(p => p.bucket === 'discussion')
+  const hired      = pitches.filter(p => p.bucket === 'hired')
+  const archived   = pitches.filter(p => p.bucket === 'archived')
+  const buckets    = [submitted, discussion, hired, archived]
+  const currentList = buckets[tab] ?? []
+
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto flex justify-center py-20">
+        <div className="w-7 h-7 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-4">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-xl font-black" style={{ color: '#1e0040' }}>My Pitches</h2>
+        <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: '#f3eeff', color: purple }}>
+          {pitches.length} tracked
+        </span>
+      </div>
+
+      {/* 2-column tab grid */}
+      <div className="grid grid-cols-2 gap-2 mb-2">
+        {PITCH_TABS.map((t, i) => {
+          const active = tab === i
+          const count  = buckets[i].length
+          const Icon   = t.icon
+          return (
+            <button key={t.key}
+              onClick={() => setTab(i)}
+              className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-bold transition-all text-left"
+              style={active
+                ? { backgroundColor: purple, color: '#fff', border: '1px solid transparent' }
+                : { backgroundColor: '#fff', color: 'rgba(15,0,32,0.5)', border: '1px solid #e9d5ff' }}>
+              <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="flex-1">{t.label}</span>
+              {count > 0 && (
+                <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full"
+                  style={{ backgroundColor: active ? 'rgba(255,255,255,0.25)' : '#f3eeff', color: active ? '#fff' : purple }}>
+                  {count}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      {currentList.length === 0 ? (
+        <div className="text-center py-16 rounded-2xl" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff' }}>
+          <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#f3eeff' }}>
+            {(() => { const Icon = PITCH_TABS[tab].icon; return <Icon className="w-6 h-6" style={{ color: 'rgba(124,58,237,0.4)' }} /> })()}
+          </div>
+          <p className="text-sm font-bold mb-1" style={{ color: '#1e0040' }}>
+            {tab === 0 ? 'No pitches yet' : tab === 1 ? 'No discussions yet' : tab === 2 ? 'Not hired yet' : 'Nothing archived'}
+          </p>
+          <p className="text-xs" style={{ color: '#9ca3af' }}>
+            {tab === 0 ? 'Collabs you pitch to will appear here' : tab === 1 ? 'Brands that respond will appear here' : tab === 2 ? 'Pitches that led to a collab appear here' : 'Declined or withdrawn pitches appear here'}
+          </p>
+          {tab === 0 && (
+            <button onClick={() => setActiveTab('browse')}
+              className="mt-4 px-5 py-2.5 rounded-xl text-sm font-bold text-white"
+              style={{ backgroundColor: purple }}>
+              Browse Campaigns
+            </button>
+          )}
+        </div>
+      ) : (
+        currentList.map(p => {
+          const sc = PITCH_STATUS_COLOR[p.status] ?? '#6366f1'
+          const sl = PITCH_STATUS_LABEL[p.status] ?? p.status
+          return (
+            <div key={p.id} className="rounded-2xl p-4 bg-white" style={{ border: '1px solid #e9d5ff', boxShadow: '0 2px 8px rgba(124,58,237,0.04)', opacity: p.bucket === 'archived' ? 0.72 : 1 }}>
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-sm text-white"
+                  style={{ backgroundColor: darkPurple }}>
+                  {(p.brand[0] || '?').toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold mb-0.5" style={{ color: 'rgba(15,0,32,0.5)' }}>{p.brand}</p>
+                  <p className="text-sm font-black truncate" style={{ color: '#1e0040' }}>{p.title}</p>
+                  {p.type && <p className="text-xs mt-0.5" style={{ color: 'rgba(15,0,32,0.4)' }}>{p.type}</p>}
+                </div>
+                <div className="flex flex-col items-end gap-1.5">
+                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1"
+                    style={{ backgroundColor: sc + '18', color: sc }}>
+                    <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: sc }} />
+                    {sl}
+                  </span>
+                  <span className="text-[10px]" style={{ color: '#9ca3af' }}>{p.timeAgo}</span>
+                </div>
+              </div>
+
+              {p.pitch && (
+                <p className="text-xs leading-relaxed mb-3 italic"
+                  style={{ color: 'rgba(15,0,32,0.5)', borderLeft: `2px solid ${purple}40`, paddingLeft: 10 }}>
+                  "{p.pitch.length > 120 ? p.pitch.slice(0, 120) + '…' : p.pitch}"
+                </p>
+              )}
+
+              <div className="flex items-center gap-3 flex-wrap">
+                {p.budget && (
+                  <span className="text-xs font-bold" style={{ color: '#22c55e' }}>{p.budget}</span>
+                )}
+                {p.bucket === 'hired' && (
+                  <button
+                    onClick={() => setActiveTab('messages')}
+                    className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl text-white ml-auto"
+                    style={{ backgroundColor: purple }}>
+                    <MessageCircle className="w-3.5 h-3.5" /> Open Chat
+                  </button>
+                )}
+              </div>
+            </div>
+          )
+        })
+      )}
+    </div>
+  )
+}
 
 function BrowseTab({ setActiveTab }) {
   const [jobs, setJobs] = useState([])
@@ -854,10 +1090,10 @@ function BrowseTab({ setActiveTab }) {
               <p className="text-sm leading-relaxed" style={{ color: 'rgba(15,0,32,0.4)' }}>You can track your pitch and collaboration status in My Collabs.</p>
             </div>
             <button
-              onClick={() => { setActiveTab('collabs'); setPitchSuccess(null) }}
+              onClick={() => { setActiveTab('pitches'); setPitchSuccess(null) }}
               className="w-full py-3 rounded-xl text-sm font-bold text-white mb-2 transition-opacity hover:opacity-90"
               style={{ backgroundColor: purple }}>
-              View My Collabs
+              View My Pitches
             </button>
             <button
               onClick={() => setPitchSuccess(null)}
@@ -2378,10 +2614,11 @@ export default function TalentDashboard() {
     setTimeout(() => setSaved(false), 2500)
   }
 
-  const tabs = ['browse', 'collabs', 'messages', 'rate-card', 'profile']
+  const tabs = ['browse', 'collabs', 'pitches', 'messages', 'rate-card', 'profile']
   const TAB_LABELS = {
     browse:        'Find Work',
     collabs:       'My Collabs',
+    pitches:       'My Pitches',
     messages:      'Messages',
     'rate-card':   'Rate Card',
     profile:       'My Profile',
@@ -2541,6 +2778,13 @@ export default function TalentDashboard() {
             <div className="max-w-5xl mx-auto">
               <OnboardingChecklist role="creator" setActiveTab={setActiveTab} />
               <MyCollabsTab completion={completion} setActiveTab={setActiveTab} />
+            </div>
+          )}
+
+          {/* ── PITCHES TAB ── */}
+          {activeTab === 'pitches' && (
+            <div className="max-w-5xl mx-auto">
+              <MyPitchesTab setActiveTab={setActiveTab} />
             </div>
           )}
 
