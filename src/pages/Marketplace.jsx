@@ -127,14 +127,14 @@ export function StarRating({ rating }) {
       {[1, 2, 3, 4, 5].map(i => (
         <Star
           key={i}
-          className="w-3.5 h-3.5"
+          className="w-3 h-3"
           style={{
-            color: i <= Math.round(display) ? '#D4AF37' : '#4a3070',
+            color: i <= Math.round(display) ? '#D4AF37' : '#e9d5ff',
             fill:  i <= Math.round(display) ? '#D4AF37' : 'none',
           }}
         />
       ))}
-      <span className="text-xs text-purple-300 ml-1">{Number(display).toFixed(1)}</span>
+      <span className="text-[11px] ml-1 font-semibold" style={{ color: 'rgba(76,29,149,0.5)' }}>{Number(display).toFixed(1)}</span>
     </div>
   )
 }
@@ -145,7 +145,6 @@ export function TalentCard({ talent, onGate, from = '/marketplace' }) {
   const faved = isFav(talent._id || talent.id)
   const videoRef = useRef(null)
   const [videoPlaying, setVideoPlaying] = useState(false)
-
   const isRegistered = !!localStorage.getItem('brandiór_user')
 
   const handleView = (e) => {
@@ -159,153 +158,136 @@ export function TalentCard({ talent, onGate, from = '/marketplace' }) {
     navigate(`/creators/${talent.handle || talent._id || talent.id}`, { state: { from } })
   }
 
-  const handleMouseEnter = (e) => {
-    e.currentTarget.style.boxShadow = '0 12px 36px rgba(124,58,237,0.30)'
-    e.currentTarget.style.transform = 'translateY(-4px)'
-    e.currentTarget.style.border = '1px solid rgba(196,181,253,0.4)'
-    if (videoRef.current && talent.featuredVideo) {
-      videoRef.current.play().catch(() => {})
-      setVideoPlaying(true)
-    }
-  }
-
-  const handleMouseLeave = (e) => {
-    e.currentTarget.style.boxShadow = '0 2px 8px rgba(124,58,237,0.12)'
-    e.currentTarget.style.transform = 'translateY(0)'
-    e.currentTarget.style.border = '1px solid rgba(233,213,255,0.2)'
-    if (videoRef.current && talent.featuredVideo) {
-      videoRef.current.pause()
-      videoRef.current.currentTime = 0
-      setVideoPlaying(false)
-    }
-  }
-
   const avatarSrc = talent.avatar
-    || `https://ui-avatars.com/api/?name=${encodeURIComponent(talent.name || 'Talent')}&background=4c1d95&color=fff&size=300`
+    || `https://ui-avatars.com/api/?name=${encodeURIComponent(talent.name || 'Talent')}&background=4c1d95&color=fff&size=400`
+
+  const tierInfo = TIERS.find(x => x.value === talent.tier) || TIERS[0]
 
   return (
     <div
       onClick={handleCardClick}
-      className="relative cursor-pointer rounded-2xl overflow-hidden transition-all duration-300"
-      style={{
-        aspectRatio: '3/4',
-        boxShadow: '0 2px 8px rgba(124,58,237,0.12)',
-        border: '1px solid rgba(233,213,255,0.2)',
-      }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      className="cursor-pointer rounded-2xl overflow-hidden transition-all duration-200"
+      style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 6px 24px rgba(124,58,237,0.12)'; e.currentTarget.style.borderColor = '#c4b5fd' }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 12px rgba(124,58,237,0.06)'; e.currentTarget.style.borderColor = '#e9d5ff' }}
     >
-      {/* ── Full-bleed media (video or photo) ── */}
-      {talent.featuredVideo ? (
-        <>
-          <video
-            ref={videoRef}
-            src={talent.featuredVideo}
-            className="absolute inset-0 w-full h-full object-cover"
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            poster={avatarSrc}
-          />
-          {!videoPlaying && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}>
-                <Play className="w-5 h-5 text-white fill-white ml-0.5" />
+      {/* ── Photo area ── */}
+      <div
+        className="relative overflow-hidden"
+        style={{ aspectRatio: '4/3' }}
+        onMouseEnter={() => { if (videoRef.current && talent.featuredVideo) { videoRef.current.play().catch(() => {}); setVideoPlaying(true) } }}
+        onMouseLeave={() => { if (videoRef.current && talent.featuredVideo) { videoRef.current.pause(); videoRef.current.currentTime = 0; setVideoPlaying(false) } }}
+      >
+        {talent.featuredVideo ? (
+          <>
+            <video ref={videoRef} src={talent.featuredVideo}
+              className="absolute inset-0 w-full h-full object-cover"
+              muted loop playsInline preload="metadata" poster={avatarSrc} />
+            {!videoPlaying && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(14,0,32,0.5)', backdropFilter: 'blur(4px)' }}>
+                  <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                </div>
               </div>
-            </div>
-          )}
-        </>
-      ) : (
-        <img
-          src={avatarSrc}
-          alt={talent.name}
-          className="absolute inset-0 w-full h-full object-cover"
-          onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(talent.name || 'C')}&background=4c1d95&color=fff&size=300` }}
-        />
-      )}
-
-      {/* ── Scrim ── */}
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, transparent 35%, transparent 48%, rgba(10,0,30,0.82) 75%, rgba(10,0,30,0.97) 100%)' }} />
-
-      {/* ── Top row: tier badge + heart ── */}
-      <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
-        <TierBadge tier={talent.tier} />
-        <button
-          onClick={ev => { ev.stopPropagation(); toggle(talent) }}
-          className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-          style={{ backgroundColor: faved ? 'rgba(255,107,157,0.30)' : 'rgba(0,0,0,0.35)', backdropFilter: 'blur(6px)' }}
-          title={faved ? 'Remove from favorites' : 'Save talent'}
-        >
-          <Heart className="w-4 h-4" style={{ color: faved ? pink : '#ffffff' }} fill={faved ? pink : 'none'} />
-        </button>
-      </div>
-
-      {/* ── Bottom overlay ── */}
-      <div className="absolute bottom-0 left-0 right-0 px-4 pt-3 pb-4 flex flex-col gap-2">
-        <div>
-          <div className="flex items-center gap-1.5">
-            <p className="font-bold text-white text-sm leading-tight truncate">{talent.name}</p>
-            {talent.completedCampaigns >= 10 && (
-              <BadgeCheck className="w-4 h-4 flex-shrink-0 text-blue-300" />
             )}
-          </div>
-          <p className="text-xs" style={{ color: '#d8b4fe' }}>@{talent.handle}</p>
+          </>
+        ) : (
+          <img src={avatarSrc} alt={talent.name}
+            className="absolute inset-0 w-full h-full object-cover"
+            onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(talent.name || 'C')}&background=4c1d95&color=fff&size=400` }} />
+        )}
+
+        {/* Tier badge */}
+        <div className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
+          style={{ backgroundColor: 'rgba(14,0,32,0.55)', backdropFilter: 'blur(4px)', color: tierInfo.color, border: `1px solid ${tierInfo.color}50` }}>
+          {tierInfo.diamond && <svg width="8" height="8" viewBox="0 0 24 24" fill={tierInfo.color}><path d="M12 2L2 9l10 13L22 9z" /></svg>}
+          {tierInfo.label}
         </div>
 
-        <div className="flex flex-wrap gap-1">
-          {(talent.niches || []).slice(0, 2).map(n => {
-            const nicheObj = NICHES.find(x => x.label === n)
-            return (
-              <span key={n} className="text-[11px] px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: 'rgba(192,132,252,0.22)', color: '#e9d5ff', backdropFilter: 'blur(4px)' }}>
-                {nicheObj ? nicheObj.emoji + ' ' : ''}{n}
-              </span>
-            )
-          })}
-          {(talent.niches || []).length > 2 && (
-            <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.12)', color: '#e9d5ff' }}>
-              +{talent.niches.length - 2}
+        {/* Heart */}
+        <button onClick={ev => { ev.stopPropagation(); toggle(talent) }}
+          className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full flex items-center justify-center transition-colors"
+          style={{ backgroundColor: faved ? 'rgba(255,107,157,0.35)' : 'rgba(14,0,32,0.4)', backdropFilter: 'blur(6px)' }}
+          title={faved ? 'Remove from favorites' : 'Save creator'}>
+          <Heart className="w-3.5 h-3.5" style={{ color: faved ? pink : '#fff' }} fill={faved ? pink : 'none'} />
+        </button>
+
+        {/* Availability */}
+        {talent.availableForHire && (
+          <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+            style={{ backgroundColor: 'rgba(14,0,32,0.5)', backdropFilter: 'blur(4px)', color: '#86efac' }}>
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0" />
+            Available
+          </div>
+        )}
+      </div>
+
+      {/* ── Info panel ── */}
+      <div className="p-4">
+        {/* Name + verified */}
+        <div className="flex items-center gap-1.5 mb-0.5">
+          <p className="font-black text-sm truncate" style={{ color: '#1e0040' }}>{talent.name}</p>
+          {talent.completedCampaigns >= 10 && (
+            <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: purple }}>
+              <BadgeCheck className="w-2.5 h-2.5 text-white" strokeWidth={3} />
             </span>
           )}
         </div>
 
-        <div className="grid grid-cols-3 gap-1.5 text-center">
-          <div className="rounded-xl py-1.5 px-1" style={{ backgroundColor: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(6px)' }}>
-            <p className="text-xs font-bold text-white">{formatFollowers(talent.totalFollowers)}</p>
-            <p style={{ fontSize: '10px', color: '#d8b4fe' }}>Followers</p>
-          </div>
-          <div className="rounded-xl py-1.5 px-1" style={{ backgroundColor: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(6px)' }}>
-            <p className="text-xs font-bold text-white">{Number(talent.avgEngagement || 0).toFixed(1)}%</p>
-            <p style={{ fontSize: '10px', color: '#f9a8d4' }}>Engagement</p>
-          </div>
-          <div className="rounded-xl py-1.5 px-1" style={{ backgroundColor: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(6px)' }}>
-            <p className="text-xs font-bold text-white">{talent.completedCampaigns || 0}</p>
-            <p style={{ fontSize: '10px', color: '#fde68a' }}>Jobs Done</p>
-          </div>
-        </div>
+        {/* Handle */}
+        <p className="text-xs mb-2.5" style={{ color: 'rgba(76,29,149,0.5)' }}>@{talent.handle}</p>
 
-        <div className="flex items-center justify-between pt-1" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
-          <div className="flex flex-col gap-0.5">
-            <StarRating rating={talent.avgRating} />
-            {talent.availableForHire && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-medium" style={{ color: '#86efac' }}>
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
-                Available
+        {/* Niche chips */}
+        {(talent.niches || []).length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {(talent.niches || []).slice(0, 2).map(n => {
+              const nicheObj = NICHES.find(x => x.label === n)
+              return (
+                <span key={n} className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
+                  style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple }}>
+                  {nicheObj ? nicheObj.emoji + ' ' : ''}{n}
+                </span>
+              )
+            })}
+            {(talent.niches || []).length > 2 && (
+              <span className="text-[11px] px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: 'rgba(124,58,237,0.06)', color: 'rgba(76,29,149,0.5)' }}>
+                +{talent.niches.length - 2}
               </span>
             )}
           </div>
-          <div className="flex flex-col items-end gap-1">
-            <p className="text-xs font-bold" style={{ color: '#f9a8d4' }}>From {formatNGN(talent.minPrice)}</p>
-            <button
-              onClick={handleView}
-              className="text-[11px] font-semibold px-3 py-1 rounded-full text-white transition-colors"
-              style={{ backgroundColor: 'rgba(124,58,237,0.85)', backdropFilter: 'blur(6px)' }}
-              onMouseEnter={e => e.currentTarget.style.backgroundColor = '#7c3aed'}
-              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.85)'}
-            >
-              View Profile
-            </button>
+        )}
+
+        {/* Metrics row */}
+        <div className="flex items-center py-2.5 px-3 rounded-xl mb-3"
+          style={{ backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid rgba(124,58,237,0.06)' }}>
+          <div className="flex-1 text-center">
+            <p className="text-xs font-black" style={{ color: '#1e0040' }}>{formatFollowers(talent.totalFollowers)}</p>
+            <p className="text-[10px]" style={{ color: 'rgba(76,29,149,0.5)' }}>Followers</p>
           </div>
+          <div className="w-px h-5 flex-shrink-0" style={{ backgroundColor: '#e9d5ff' }} />
+          <div className="flex-1 text-center">
+            <p className="text-xs font-black" style={{ color: '#1e0040' }}>{Number(talent.avgEngagement || 0).toFixed(1)}%</p>
+            <p className="text-[10px]" style={{ color: 'rgba(76,29,149,0.5)' }}>Engagement</p>
+          </div>
+          <div className="w-px h-5 flex-shrink-0" style={{ backgroundColor: '#e9d5ff' }} />
+          <div className="flex-1 text-center">
+            <p className="text-xs font-black" style={{ color: '#1e0040' }}>{talent.completedCampaigns || 0}</p>
+            <p className="text-[10px]" style={{ color: 'rgba(76,29,149,0.5)' }}>Jobs Done</p>
+          </div>
+        </div>
+
+        {/* Rating + price + CTA */}
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <StarRating rating={talent.avgRating} />
+            <p className="text-[11px] font-black mt-0.5" style={{ color: purple }}>From {formatNGN(talent.minPrice)}</p>
+          </div>
+          <button onClick={handleView}
+            className="text-[11px] font-bold px-3.5 py-2 rounded-xl text-white transition-opacity hover:opacity-90 flex-shrink-0"
+            style={{ backgroundColor: purple }}>
+            View Profile
+          </button>
         </div>
       </div>
     </div>
@@ -314,8 +296,24 @@ export function TalentCard({ talent, onGate, from = '/marketplace' }) {
 
 export function SkeletonCard() {
   return (
-    <div className="rounded-2xl overflow-hidden animate-pulse" style={{ aspectRatio: '3/4', backgroundColor: '#e9d5ff' }}>
-      <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%)' }} />
+    <div className="rounded-2xl overflow-hidden animate-pulse" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
+      <div style={{ aspectRatio: '4/3', backgroundColor: '#ede9fe' }} />
+      <div className="p-4">
+        <div className="h-3.5 rounded-full mb-1.5" style={{ backgroundColor: '#e9d5ff', width: '55%' }} />
+        <div className="h-2.5 rounded-full mb-3" style={{ backgroundColor: '#f3eeff', width: '35%' }} />
+        <div className="flex gap-1.5 mb-3">
+          <div className="h-5 w-16 rounded-full" style={{ backgroundColor: '#f3eeff' }} />
+          <div className="h-5 w-14 rounded-full" style={{ backgroundColor: '#f3eeff' }} />
+        </div>
+        <div className="h-10 rounded-xl mb-3" style={{ backgroundColor: '#f3eeff' }} />
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="h-2.5 rounded-full mb-1.5" style={{ backgroundColor: '#e9d5ff', width: '60px' }} />
+            <div className="h-3 rounded-full" style={{ backgroundColor: '#f3eeff', width: '80px' }} />
+          </div>
+          <div className="h-8 w-24 rounded-xl" style={{ backgroundColor: '#ede9fe' }} />
+        </div>
+      </div>
     </div>
   )
 }
@@ -658,30 +656,27 @@ export default function Marketplace() {
       {/* Hero */}
       <div
         className="pt-28 pb-14 px-4 relative overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #000000 0%, #150030 50%, #3d0080 100%)' }}
+        style={{ background: 'linear-gradient(160deg, #f5f0ff 0%, #ede9fe 55%, #f0ebff 100%)' }}
       >
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
-            backgroundSize: '28px 28px',
-            opacity: 0.07,
-          }}
-        />
+        {/* Decorative blobs */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full" style={{ background: 'radial-gradient(circle, rgba(192,132,252,0.18) 0%, transparent 70%)' }} />
+          <div className="absolute -bottom-16 -left-16 w-80 h-80 rounded-full" style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.10) 0%, transparent 70%)' }} />
+        </div>
 
         <div className="relative max-w-3xl mx-auto text-center">
           <span
             className="inline-block text-xs font-bold tracking-widest uppercase mb-4 px-3 py-1 rounded-full"
-            style={{ backgroundColor: 'rgba(192,132,252,0.15)', color: '#c084fc', border: '1px solid rgba(192,132,252,0.3)' }}
+            style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple, border: '1px solid rgba(124,58,237,0.18)' }}
           >
             Talent Marketplace
           </span>
-          <h1 className="text-3xl sm:text-5xl font-extrabold mb-4 leading-tight">
-            <span className="text-white">Find </span>
-            <span style={{ color: pink }}>Talents</span>
+          <h1 className="text-3xl sm:text-5xl font-black mb-4 leading-tight" style={{ color: '#1e0040' }}>
+            Find{' '}
+            <span style={{ color: pink }}>Creators</span>
           </h1>
-          <p className="mb-6 text-base" style={{ color: '#c4b5fd' }}>
-            Browse 500+ verified talents ready to amplify your brand
+          <p className="mb-6 text-base" style={{ color: 'rgba(76,29,149,0.65)' }}>
+            Browse 500+ verified creators ready to amplify your brand
           </p>
 
           {/* Search bar */}

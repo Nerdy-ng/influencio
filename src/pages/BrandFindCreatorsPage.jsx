@@ -8,6 +8,7 @@ import { SORT_OPTIONS } from '../lib/creatorFilters'
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '')
 
 const darkPurple = '#4c1d95'
+const purple = '#7c3aed'
 const pink = '#F72585'
 
 export default function BrandFindCreatorsPage() {
@@ -47,28 +48,25 @@ export default function BrandFindCreatorsPage() {
       {/* Page header */}
       <div
         className="pt-10 pb-10 px-4 relative overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #0e0020 0%, #1a0040 50%, #3d0080 100%)' }}
+        style={{ background: 'linear-gradient(160deg, #f5f0ff 0%, #ede9fe 55%, #f0ebff 100%)' }}
       >
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
-            backgroundSize: '28px 28px',
-            opacity: 0.07,
-          }}
-        />
+        {/* Decorative blobs */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full" style={{ background: 'radial-gradient(circle, rgba(192,132,252,0.18) 0%, transparent 70%)' }} />
+          <div className="absolute -bottom-12 -left-12 w-64 h-64 rounded-full" style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.10) 0%, transparent 70%)' }} />
+        </div>
 
         <div className="relative max-w-3xl mx-auto text-center">
           <span
             className="inline-block text-xs font-bold tracking-widest uppercase mb-4 px-3 py-1 rounded-full"
-            style={{ backgroundColor: 'rgba(192,132,252,0.15)', color: '#c084fc', border: '1px solid rgba(192,132,252,0.3)' }}
+            style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: '#7c3aed', border: '1px solid rgba(124,58,237,0.18)' }}
           >
             Creator Discovery
           </span>
-          <h1 className="text-2xl sm:text-4xl font-extrabold mb-3 leading-tight text-white">
+          <h1 className="text-2xl sm:text-4xl font-black mb-3 leading-tight" style={{ color: '#1e0040' }}>
             Find Creators
           </h1>
-          <p className="mb-6 text-sm" style={{ color: '#c4b5fd' }}>
+          <p className="mb-6 text-sm" style={{ color: 'rgba(76,29,149,0.65)' }}>
             Browse verified African creators ready to amplify your brand
           </p>
 
@@ -92,7 +90,7 @@ export default function BrandFindCreatorsPage() {
             <button
               onClick={() => setMobileFiltersOpen(true)}
               className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-10 h-10 rounded-full transition-colors"
-              style={{ backgroundColor: darkPurple }}
+              style={{ backgroundColor: purple }}
               title="Open filters"
             >
               <SlidersHorizontal className="w-4 h-4 text-white" />
