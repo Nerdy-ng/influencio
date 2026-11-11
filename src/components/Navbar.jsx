@@ -175,7 +175,7 @@ export default function Navbar() {
       <div
         className={`flex items-center justify-between gap-8 overflow-visible ${isLoggedIn ? 'w-full px-8 py-3' : 'max-w-6xl mx-auto px-6 py-3 rounded-2xl'}`}
         style={isLoggedIn
-          ? { backgroundColor: '#0e0020', borderBottom: '1px solid rgba(192,132,252,0.15)' }
+          ? { backgroundColor: '#ffffff', borderBottom: '1px solid #e9d5ff' }
           : { backgroundColor: 'var(--b-secondary)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 8px 32px rgba(192,132,252,0.35)' }
         }>
 
@@ -232,12 +232,12 @@ export default function Navbar() {
                         <Link to={href}
                           className="relative inline-flex items-center gap-1.5 text-sm px-4 py-2 rounded-full transition-all duration-200"
                           style={{
-                            color: active ? '#7c3aed' : 'rgba(255,255,255,0.8)',
-                            backgroundColor: active ? 'rgba(255,255,255,0.95)' : 'transparent',
+                            color: active ? '#7c3aed' : '#4c1d95',
+                            backgroundColor: active ? 'rgba(124,58,237,0.1)' : 'transparent',
                             fontWeight: active ? 700 : 500,
                           }}
-                          onMouseEnter={e => { if (!active) { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'white' } }}
-                          onMouseLeave={e => { if (!active) { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.8)' } }}>
+                          onMouseEnter={e => { if (!active) { e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.07)'; e.currentTarget.style.color = '#7c3aed' } }}
+                          onMouseLeave={e => { if (!active) { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#4c1d95' } }}>
                           {label}
                           {notifKey && notifs[notifKey] > 0 && (
                             <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold text-white"
@@ -268,8 +268,8 @@ export default function Navbar() {
                   }
                 }}
                 className="relative p-2 rounded-xl transition-colors focus:outline-none"
-                style={{ color: 'rgba(255,255,255,0.7)' }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.07)'}
+                style={{ color: 'rgba(76,29,149,0.7)' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.07)'}
                 onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
@@ -320,16 +320,16 @@ export default function Navbar() {
             </div>
 
             {/* Separator */}
-            <div style={{ width: 1, height: 24, backgroundColor: 'rgba(255,255,255,0.12)', flexShrink: 0 }} />
+            <div style={{ width: 1, height: 24, backgroundColor: '#e9d5ff', flexShrink: 0 }} />
 
             {/* ── Avatar dropdown ── */}
             <div className="relative" ref={userRef}>
               <button onClick={() => setUserOpen(o => !o)} className="relative focus:outline-none flex items-center gap-1.5">
                 <div className="relative">
                   <UserAvatar profile={profile} />
-                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400" style={{ boxShadow: '0 0 0 2px #0e0020' }} />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400" style={{ boxShadow: '0 0 0 2px #fff' }} />
                 </div>
-                <ChevronDown className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.5)' }} />
+                <ChevronDown className="w-3.5 h-3.5" style={{ color: 'rgba(76,29,149,0.5)' }} />
               </button>
 
               {userOpen && (
@@ -455,7 +455,7 @@ export default function Navbar() {
 
         {/* Mobile toggle */}
         <div className="md:hidden flex items-center flex-shrink-0">
-          <button className="text-white/80 hover:text-white p-1" onClick={() => setMobileOpen(!mobileOpen)}>
+          <button className="p-1" style={{ color: '#4c1d95' }} onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
@@ -464,15 +464,15 @@ export default function Navbar() {
       {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden px-4 py-4 space-y-1 mt-2 mx-4 rounded-2xl"
-          style={{ backgroundColor: '#0e0020', border: '1px solid rgba(192,132,252,0.15)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
+          style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 8px 32px rgba(124,58,237,0.1)' }}>
           {isLoggedIn ? (
             <>
               {/* Profile info */}
-              <div className="flex items-center gap-3 px-3 py-3 mb-2 rounded-xl" style={{ backgroundColor: 'rgba(124,58,237,0.2)' }}>
+              <div className="flex items-center gap-3 px-3 py-3 mb-2 rounded-xl" style={{ backgroundColor: 'rgba(124,58,237,0.08)' }}>
                 <UserAvatar profile={profile} size="sm" />
                 <div className="min-w-0">
-                  <p className="font-bold text-sm text-white truncate">{profile?.nickname || 'Your Profile'}</p>
-                  <p className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.5)' }}>{profile?.email || ''}</p>
+                  <p className="font-bold text-sm truncate" style={{ color: '#0e0020' }}>{profile?.nickname || 'Your Profile'}</p>
+                  <p className="text-xs truncate" style={{ color: 'rgba(15,0,32,0.5)' }}>{profile?.email || ''}</p>
                 </div>
               </div>
 
@@ -486,8 +486,8 @@ export default function Navbar() {
                     </Link>
                   : <Link key={label} to={href} onClick={() => setMobileOpen(false)}
                       className="flex items-center justify-between font-medium px-3 py-2.5 rounded-xl transition-all"
-                      style={{ color: 'rgba(255,255,255,0.8)' }}
-                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'}
+                      style={{ color: '#4c1d95' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.07)'}
                       onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
                       {label}
                       {notifKey && notifs[notifKey] > 0 && (
@@ -499,21 +499,21 @@ export default function Navbar() {
                     </Link>
               ))}
 
-              <div className="h-px my-2" style={{ backgroundColor: 'rgba(192,132,252,0.2)' }} />
+              <div className="h-px my-2" style={{ backgroundColor: '#e9d5ff' }} />
 
               {/* Profile dropdown links */}
               {(userRole === 'brand' ? BRAND_DROPDOWN : TALENT_DROPDOWN).map(({ label, icon: Icon, href }) => (
                 <Link key={label} to={href} onClick={() => setMobileOpen(false)}
                   className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-                  style={{ color: 'rgba(255,255,255,0.7)' }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'}
+                  style={{ color: 'rgba(76,29,149,0.7)' }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.07)'}
                   onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
                   <Icon className="w-4 h-4 flex-shrink-0" style={{ color: '#a78bfa' }} />
                   {label}
                 </Link>
               ))}
 
-              <div className="h-px my-2" style={{ backgroundColor: 'rgba(192,132,252,0.2)' }} />
+              <div className="h-px my-2" style={{ backgroundColor: '#e9d5ff' }} />
 
               <button onClick={() => { setMobileOpen(false); handleLogout() }}
                 className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium w-full transition-all"
