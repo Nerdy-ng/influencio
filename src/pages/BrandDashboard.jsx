@@ -1564,6 +1564,29 @@ function PostCampaignTab({ onCreated }) {
 }
 
 // ── My Campaigns ──────────────────────────────────────────────────────────────
+function CampaignSkeleton() {
+  return (
+    <div className="rounded-2xl p-5 animate-pulse" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff' }}>
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex-1 space-y-1.5">
+          <div className="h-2.5 rounded-full w-28" style={{ backgroundColor: '#f3eeff' }} />
+          <div className="h-4 rounded-full w-56" style={{ backgroundColor: '#ede9fe' }} />
+        </div>
+        <div className="h-5 w-14 rounded-full" style={{ backgroundColor: '#f3eeff' }} />
+      </div>
+      <div className="flex gap-3 mb-4">
+        <div className="h-2.5 rounded-full w-20" style={{ backgroundColor: '#f3eeff' }} />
+        <div className="h-2.5 rounded-full w-24" style={{ backgroundColor: '#f3eeff' }} />
+        <div className="h-2.5 rounded-full w-16" style={{ backgroundColor: '#f3eeff' }} />
+      </div>
+      <div className="flex gap-2">
+        <div className="flex-1 h-9 rounded-xl" style={{ backgroundColor: '#ede9fe' }} />
+        <div className="w-20 h-9 rounded-xl" style={{ backgroundColor: '#f3eeff' }} />
+      </div>
+    </div>
+  )
+}
+
 function MyCampaignsTab() {
   const [campaigns, setCampaigns]       = useState([])
   const [loading, setLoading]           = useState(true)
@@ -1607,82 +1630,104 @@ function MyCampaignsTab() {
     setToggling(null)
   }
 
+  // ── Detail view ──────────────────────────────────────────────────────────────
   if (selected) {
+    const tierColors = { 'fast-rising': { bg: '#f0fdf4', color: '#16a34a' }, 'next-rated': { bg: '#f5f3ff', color: '#7c3aed' }, 'top-rated': { bg: '#fefce8', color: '#d97706' } }
     return (
       <div className="max-w-3xl mx-auto">
         <button onClick={() => setSelected(null)}
-          className="flex items-center gap-1.5 text-sm font-semibold mb-5"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold mb-5 transition-opacity hover:opacity-70"
           style={{ color: '#7c3aed', background: 'none', border: 'none', cursor: 'pointer' }}>
-          <ChevronLeft className="w-4 h-4" /> Back to My Campaigns
+          <ChevronLeft className="w-4 h-4" /> My Campaigns
         </button>
 
-        <div className="rounded-2xl p-5 mb-5" style={{ background: 'linear-gradient(135deg, #1a0035, #3d0080)', border: '1px solid rgba(196,181,253,0.2)' }}>
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#c084fc' }}>{selected.niche} · {selected.collab_type}</p>
-              <h2 className="text-xl font-black text-white">{selected.campaign_name}</h2>
-              <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.55)' }}>₦{Number(selected.budget).toLocaleString()} · {selected.timeline}</p>
-            </div>
-            <span className="text-[11px] font-bold px-3 py-1 rounded-full flex-shrink-0 mt-1"
-              style={{ backgroundColor: selected.status === 'open' ? 'rgba(34,197,94,0.2)' : 'rgba(156,163,175,0.2)', color: selected.status === 'open' ? '#86efac' : '#d1d5db' }}>
+        {/* Campaign header card */}
+        <div className="rounded-2xl p-5 sm:p-6 mb-5" style={{ background: 'linear-gradient(135deg, #1a0035, #3d0080)', border: '1px solid rgba(196,181,253,0.2)' }}>
+          <div className="flex items-start justify-between gap-3 mb-1">
+            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#c084fc' }}>
+              {[selected.niche, selected.collab_type].filter(Boolean).join(' · ')}
+            </p>
+            <span className="text-[11px] font-bold px-3 py-1 rounded-full flex-shrink-0"
+              style={{ backgroundColor: selected.status === 'open' ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.1)', color: selected.status === 'open' ? '#86efac' : 'rgba(255,255,255,0.5)' }}>
               {selected.status === 'open' ? 'Open' : 'Closed'}
             </span>
           </div>
-          {selected.brief && <p className="text-sm mt-3 leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)' }}>{selected.brief}</p>}
+          <h2 className="text-xl font-black text-white mb-2">{selected.campaign_name}</h2>
+          <div className="flex flex-wrap gap-4 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            <span className="font-semibold" style={{ color: '#c084fc' }}>₦{Number(selected.budget).toLocaleString()}</span>
+            <span>{selected.timeline}</span>
+          </div>
+          {selected.brief && (
+            <p className="text-sm mt-4 leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1rem' }}>
+              {selected.brief}
+            </p>
+          )}
         </div>
 
+        {/* Pitches header row */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-black text-lg" style={{ color: '#1e0040' }}>
+          <h3 className="font-black text-lg" style={{ color: '#0e0020' }}>
             {appsLoading ? 'Loading pitches…' : `${applicants.length} Pitch${applicants.length !== 1 ? 'es' : ''}`}
           </h3>
           <button onClick={() => toggleStatus(selected)} disabled={toggling === selected.id}
-            className="text-xs font-bold px-4 py-2 rounded-xl border transition-colors disabled:opacity-40"
-            style={{ borderColor: '#e9d5ff', color: '#7c3aed', background: '#fff' }}>
+            className="text-xs font-bold px-4 py-2 rounded-xl border transition-all disabled:opacity-40"
+            style={{ borderColor: '#e9d5ff', color: '#7c3aed', backgroundColor: '#fff' }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.04)'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = '#fff'}>
             {toggling === selected.id ? 'Updating…' : selected.status === 'open' ? 'Close Campaign' : 'Reopen Campaign'}
           </button>
         </div>
 
         {appsLoading ? (
-          <div className="flex justify-center py-16"><div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" /></div>
+          <div className="flex justify-center py-16">
+            <div className="w-6 h-6 rounded-full animate-spin" style={{ border: '2px solid #e9d5ff', borderTopColor: '#7c3aed' }} />
+          </div>
         ) : applicants.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
-            <Users className="w-10 h-10 mx-auto mb-3 opacity-20" />
-            <p className="text-sm font-semibold">No pitches yet — your campaign is live and visible to creators.</p>
+          <div className="text-center py-16">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+              style={{ backgroundColor: 'rgba(124,58,237,0.07)', border: '1px solid #e9d5ff' }}>
+              <Users className="w-6 h-6" style={{ color: '#7c3aed' }} />
+            </div>
+            <p className="font-black mb-1" style={{ color: '#0e0020' }}>No pitches yet</p>
+            <p className="text-sm" style={{ color: 'rgba(15,0,32,0.5)' }}>Your campaign is live and visible to creators.</p>
           </div>
         ) : (
           <div className="space-y-4">
             {applicants.map(app => {
               const c = app.creator || {}
               const tier = c.tier || 'fast-rising'
-              const tierColors = { 'fast-rising': { bg: '#f0fdf4', color: '#16a34a' }, 'next-rated': { bg: '#f5f3ff', color: '#7c3aed' }, 'top-rated': { bg: '#fefce8', color: '#d97706' } }
               const tc = tierColors[tier] || tierColors['fast-rising']
               return (
-                <div key={app.id} className="rounded-2xl p-5 bg-white" style={{ border: '1px solid #e9d5ff' }}>
+                <div key={app.id} className="rounded-2xl p-5" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 10px rgba(124,58,237,0.04)' }}>
                   <div className="flex items-start gap-3 mb-3">
                     {c.avatar_url
-                      ? <img src={c.avatar_url} alt={c.full_name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
-                      : <div className="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-white flex-shrink-0" style={{ background: '#4c1d95' }}>{(c.full_name || '?')[0]}</div>}
+                      ? <img src={c.avatar_url} alt={c.full_name} className="w-11 h-11 rounded-xl object-cover flex-shrink-0" />
+                      : <div className="w-11 h-11 rounded-xl flex items-center justify-center font-bold text-white text-sm flex-shrink-0" style={{ backgroundColor: '#4c1d95' }}>{(c.full_name || '?')[0]}</div>}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-sm" style={{ color: '#1e0040' }}>{c.full_name || 'Creator'}</span>
-                        {c.username && <span className="text-xs text-gray-400">@{c.username}</span>}
+                        <span className="font-bold text-sm" style={{ color: '#0e0020' }}>{c.full_name || 'Creator'}</span>
+                        {c.username && <span className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>@{c.username}</span>}
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: tc.bg, color: tc.color }}>
                           {tier.replace('-', ' ')}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
+                      <div className="flex items-center gap-3 mt-1 text-xs" style={{ color: 'rgba(15,0,32,0.45)' }}>
                         {c.niches?.length > 0 && <span>{c.niches[0]}</span>}
-                        {c.avg_rating > 0 && <span>⭐ {c.avg_rating}</span>}
+                        {c.avg_rating > 0 && <span>★ {c.avg_rating}</span>}
                         {c.min_price > 0 && <span style={{ color: '#7c3aed' }}>From ₦{Number(c.min_price).toLocaleString()}</span>}
                       </div>
                     </div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: '#f3eeff', color: '#7c3aed' }}>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5"
+                      style={{ backgroundColor: '#f3eeff', color: '#7c3aed' }}>
                       {timeAgo(app.created_at)}
                     </span>
                   </div>
-                  <p className="text-sm leading-relaxed mb-3" style={{ color: 'rgba(15,0,32,0.6)', background: 'rgba(124,58,237,0.04)', borderRadius: 10, padding: '10px 14px' }}>"{app.pitch}"</p>
+                  <p className="text-sm leading-relaxed mb-3"
+                    style={{ color: 'rgba(15,0,32,0.6)', backgroundColor: 'rgba(124,58,237,0.04)', borderRadius: '0.625rem', padding: '0.625rem 0.875rem' }}>
+                    "{app.pitch}"
+                  </p>
                   <Link to={`/creators/${c.username || c.id}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl text-white"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl text-white transition-opacity hover:opacity-90"
                     style={{ backgroundColor: '#4c1d95' }}>
                     View Profile <ArrowUpRight className="w-3.5 h-3.5" />
                   </Link>
@@ -1695,57 +1740,118 @@ function MyCampaignsTab() {
     )
   }
 
-  if (loading) return <div className="flex justify-center py-20"><div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" /></div>
-
+  // ── List view ────────────────────────────────────────────────────────────────
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+
+      {/* Header row */}
+      <div className="flex items-center justify-between gap-4 mb-6">
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#7c3aed' }}>Campaigns</p>
-          <h2 className="text-2xl font-black" style={{ color: '#1e0040' }}>My Campaigns</h2>
+          <h2 className="text-xl sm:text-2xl font-black leading-tight" style={{ color: '#0e0020' }}>My Campaigns</h2>
+          <p className="text-sm mt-0.5" style={{ color: 'rgba(15,0,32,0.5)' }}>
+            {loading ? '' : `${campaigns.length} campaign${campaigns.length !== 1 ? 's' : ''}`}
+          </p>
         </div>
+        <Link
+          to="/brand/post-campaign"
+          className="inline-flex items-center gap-1.5 text-sm font-bold px-4 py-2.5 rounded-xl text-white flex-shrink-0 transition-opacity hover:opacity-90"
+          style={{ backgroundColor: '#7c3aed' }}
+          onClick={() => {
+            const event = new CustomEvent('brandior:set-tab', { detail: 'post-campaign' })
+            window.dispatchEvent(event)
+          }}>
+          <Plus className="w-4 h-4" /> New Campaign
+        </Link>
       </div>
 
-      {campaigns.length === 0 ? (
-        <div className="text-center py-20 text-gray-400">
-          <Megaphone className="w-10 h-10 mx-auto mb-3 opacity-20" />
-          <p className="font-semibold text-sm mb-4">No campaigns posted yet.</p>
-          <p className="text-sm mb-6">Post a campaign and creators will apply directly to it.</p>
+      {/* Loading skeletons */}
+      {loading && (
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => <CampaignSkeleton key={i} />)}
         </div>
-      ) : (
+      )}
+
+      {/* Empty state */}
+      {!loading && campaigns.length === 0 && (
+        <div className="rounded-2xl p-10 text-center" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff' }}>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5"
+            style={{ backgroundColor: 'rgba(124,58,237,0.07)', border: '1px solid #e9d5ff' }}>
+            <Megaphone className="w-6 h-6" style={{ color: '#7c3aed' }} />
+          </div>
+          <p className="font-black text-base mb-2" style={{ color: '#0e0020' }}>No campaigns yet</p>
+          <p className="text-sm mb-7" style={{ color: 'rgba(15,0,32,0.5)', lineHeight: '1.65' }}>
+            Post a campaign and creators on Brandior<br />will discover it and pitch directly.
+          </p>
+          <Link
+            to="/brand/post-campaign"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: '#7c3aed' }}>
+            <Plus className="w-4 h-4" /> Post a Campaign
+          </Link>
+        </div>
+      )}
+
+      {/* Campaign list */}
+      {!loading && campaigns.length > 0 && (
         <div className="space-y-4">
           {campaigns.map(c => {
             const appCount = c.applications?.[0]?.count ?? 0
+            const isOpen = c.status === 'open'
             return (
-              <div key={c.id} className="rounded-2xl p-5 bg-white" style={{ border: '1px solid #e9d5ff' }}>
-                <div className="flex items-start justify-between gap-3 mb-2">
+              <div
+                key={c.id}
+                className="rounded-2xl p-5 transition-all"
+                style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.05)' }}
+                onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 20px rgba(124,58,237,0.10)'; e.currentTarget.style.borderColor = '#c4b5fd' }}
+                onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 12px rgba(124,58,237,0.05)'; e.currentTarget.style.borderColor = '#e9d5ff' }}
+              >
+                {/* Title row */}
+                <div className="flex items-start justify-between gap-3 mb-1.5">
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold mb-1" style={{ color: '#7c3aed' }}>{c.niche} · {c.collab_type}</p>
-                    <h3 className="font-black text-base" style={{ color: '#1e0040' }}>{c.campaign_name}</h3>
+                    <p className="text-xs font-semibold mb-1" style={{ color: '#7c3aed' }}>
+                      {[c.niche, c.collab_type].filter(Boolean).join(' · ')}
+                    </p>
+                    <h3 className="font-black text-base leading-snug" style={{ color: '#0e0020' }}>{c.campaign_name}</h3>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full"
-                      style={{ backgroundColor: c.status === 'open' ? '#dcfce7' : '#f3f4f6', color: c.status === 'open' ? '#16a34a' : '#6b7280' }}>
-                      {c.status === 'open' ? 'Open' : 'Closed'}
-                    </span>
-                  </div>
+                  <span
+                    className="text-[11px] font-bold px-2.5 py-1 rounded-full flex-shrink-0 mt-0.5"
+                    style={{ backgroundColor: isOpen ? '#dcfce7' : 'rgba(15,0,32,0.06)', color: isOpen ? '#16a34a' : 'rgba(15,0,32,0.45)' }}>
+                    {isOpen ? 'Open' : 'Closed'}
+                  </span>
                 </div>
-                <div className="flex flex-wrap gap-4 text-xs font-semibold mb-4" style={{ color: '#374151' }}>
-                  <span style={{ color: '#7c3aed' }}>₦{Number(c.budget).toLocaleString()}</span>
-                  <span>📅 {c.timeline}</span>
-                  <span>👥 {appCount} pitch{appCount !== 1 ? 'es' : ''}</span>
-                  <span style={{ color: '#9ca3af' }}>{timeAgo(c.created_at)}</span>
+
+                {/* Meta row */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-4 text-xs" style={{ color: 'rgba(15,0,32,0.45)' }}>
+                  <span className="font-semibold" style={{ color: '#7c3aed' }}>₦{Number(c.budget).toLocaleString()}</span>
+                  <span>{c.timeline}</span>
+                  <span>{timeAgo(c.created_at)}</span>
                 </div>
+
+                {/* Pitch count signal */}
+                <div className="flex items-center gap-2 mb-4 py-2.5 px-3 rounded-xl"
+                  style={{ backgroundColor: appCount > 0 ? 'rgba(124,58,237,0.06)' : 'rgba(15,0,32,0.03)', border: `1px solid ${appCount > 0 ? '#e9d5ff' : 'rgba(15,0,32,0.06)'}` }}>
+                  <Users className="w-3.5 h-3.5 flex-shrink-0" style={{ color: appCount > 0 ? '#7c3aed' : 'rgba(15,0,32,0.3)' }} />
+                  <span className={`text-sm font-black`} style={{ color: appCount > 0 ? '#4c1d95' : 'rgba(15,0,32,0.35)' }}>
+                    {appCount} {appCount === 1 ? 'pitch' : 'pitches'}
+                  </span>
+                  {appCount > 0 && <span className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>— ready to review</span>}
+                </div>
+
+                {/* Actions */}
                 <div className="flex gap-2">
-                  <button onClick={() => viewApplicants(c)}
-                    className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
-                    style={{ backgroundColor: '#4c1d95' }}>
-                    View Pitches ({appCount})
+                  <button
+                    onClick={() => viewApplicants(c)}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
+                    style={{ backgroundColor: '#7c3aed' }}>
+                    View Pitches
                   </button>
-                  <button onClick={() => toggleStatus(c)} disabled={toggling === c.id}
-                    className="px-4 py-2.5 rounded-xl text-sm font-bold border disabled:opacity-40"
-                    style={{ borderColor: '#e9d5ff', color: '#7c3aed', background: '#fff' }}>
-                    {toggling === c.id ? '…' : c.status === 'open' ? 'Close' : 'Reopen'}
+                  <button
+                    onClick={() => toggleStatus(c)} disabled={toggling === c.id}
+                    className="px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all disabled:opacity-40"
+                    style={{ borderColor: '#e9d5ff', color: '#7c3aed', backgroundColor: '#fff' }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.04)'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = '#fff'}>
+                    {toggling === c.id ? '…' : isOpen ? 'Close' : 'Reopen'}
                   </button>
                 </div>
               </div>
