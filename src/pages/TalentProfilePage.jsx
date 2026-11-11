@@ -474,6 +474,8 @@ function ReviewsSection({ talentId }) {
     </div>
   )
 
+  if (reviews.length === 0) return null
+
   return (
     <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-6">
       {/* Header */}
@@ -1075,61 +1077,6 @@ export default function TalentProfilePage() {
                 <Send className="w-4 h-4" />
                 Send a Custom Offer
               </button>
-            )}
-
-            {/* Inline chat box */}
-            {!isPreview && (
-              <div className="bg-white rounded-2xl border border-brand-lav shadow-sm overflow-hidden">
-                <div className="flex items-center gap-3 px-5 py-4" style={{ background: 'linear-gradient(135deg, #0d0020, #3b0764)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                  <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden">
-                    {c.avatar ? <img src={c.avatar} alt={c.name} className="w-full h-full object-cover" /> : c.name?.[0]}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-bold text-sm">Message {c.name.split(' ')[0]}</p>
-                    <p className="text-purple-300 text-xs">Discuss your project directly</p>
-                  </div>
-                  <span className="flex items-center gap-1.5 text-xs text-green-400 font-medium">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" /> Online
-                  </span>
-                </div>
-
-                {/* Messages */}
-                <div className="overflow-y-auto px-4 py-4 space-y-2" style={{ minHeight: 180, maxHeight: 300, backgroundColor: 'rgba(124,58,237,0.04)' }}>
-                  {chatMessages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-32 text-center">
-                      <MessageSquare className="w-8 h-8 mb-2" style={{ color: '#c084fc' }} />
-                      <p className="text-sm font-semibold" style={{ color: 'rgba(15,0,32,0.5)' }}>Start the conversation</p>
-                      <p className="text-xs mt-1" style={{ color: 'rgba(15,0,32,0.4)' }}>Introduce yourself and share what you're looking for</p>
-                    </div>
-                  ) : chatMessages.map(msg => (
-                    <div key={msg.id} className={`flex ${msg.from === 'brand' ? 'justify-end' : 'justify-start'}`}>
-                      <div className="max-w-[80%] px-3.5 py-2 rounded-2xl text-sm"
-                        style={msg.from === 'brand'
-                          ? { backgroundColor: '#4c1d95', color: '#fff', borderBottomRightRadius: 4 }
-                          : { backgroundColor: '#fff', color: '#1a0030', border: '1px solid #e9d5ff', borderBottomLeftRadius: 4 }}>
-                        {msg.text}
-                      </div>
-                    </div>
-                  ))}
-                  <div ref={chatBottomRef} />
-                </div>
-
-                {/* Input */}
-                <form onSubmit={sendChatMessage} className="flex items-center gap-2 px-4 py-3 border-t" style={{ borderColor: '#e9d5ff' }}>
-                  <input
-                    value={chatInput}
-                    onChange={e => setChatInput(stripInjection(e.target.value))}
-                    placeholder={`Message ${c.name?.split(' ')[0]}…`}
-                    className="flex-1 px-4 py-2.5 rounded-xl text-sm outline-none"
-                    style={{ backgroundColor: '#fff', border: '1.5px solid #e9d5ff', color: '#0F0020' }}
-                  />
-                  <button type="submit" disabled={!chatInput.trim() || chatSending}
-                    className="w-9 h-9 rounded-xl flex items-center justify-center text-white flex-shrink-0 transition-opacity disabled:opacity-40"
-                    style={{ backgroundColor: darkPurple }}>
-                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
-                  </button>
-                </form>
-              </div>
             )}
 
             {/* Reviews */}
