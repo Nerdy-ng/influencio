@@ -1086,8 +1086,6 @@ export default function TalentProfilePage() {
 
           {/* Right sidebar */}
           <div className="flex flex-col gap-4">
-            <QuickStats talent={c} />
-
             <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-start gap-2.5">
               <Shield className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
               <div>
