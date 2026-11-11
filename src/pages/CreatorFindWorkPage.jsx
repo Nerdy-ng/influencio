@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, X, Users, Calendar, CheckCircle, Heart, ChevronDown } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -28,6 +28,70 @@ function BagIcon() {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'rgba(15,0,32,0.35)', flexShrink: 0 }}>
       <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
     </svg>
+  )
+}
+
+// Module-level component: stable function reference means React never remounts it
+// during parent state updates (e.g. while a slider handle is being dragged).
+// Document-level listeners survive re-renders; callback refs prevent stale closures.
+function DualRangeSlider({ min, max, step, valueMin, valueMax, onChangeMin, onChangeMax }) {
+  const trackRef = useRef(null)
+  const cbMin = useRef(onChangeMin)
+  const cbMax = useRef(onChangeMax)
+  cbMin.current = onChangeMin
+  cbMax.current = onChangeMax
+
+  function getValueFromX(clientX) {
+    const rect = trackRef.current.getBoundingClientRect()
+    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+    return Math.round((pct * (max - min)) / step) * step + min
+  }
+
+  function startDrag(handle, e) {
+    e.preventDefault()
+    const getX = ev => ev.touches ? ev.touches[0].clientX : ev.clientX
+    function onMove(moveE) {
+      if (!trackRef.current) return
+      const val = getValueFromX(getX(moveE))
+      if (handle === 'min') cbMin.current(val)
+      else cbMax.current(val)
+    }
+    function onUp() {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+      document.removeEventListener('touchmove', onMove)
+      document.removeEventListener('touchend', onUp)
+    }
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+    document.addEventListener('touchmove', onMove, { passive: false })
+    document.addEventListener('touchend', onUp)
+  }
+
+  const minPct = ((valueMin - min) / (max - min)) * 100
+  const maxPct = ((valueMax - min) / (max - min)) * 100
+  const thumb = {
+    position: 'absolute', top: '50%',
+    width: 16, height: 16, borderRadius: '50%',
+    backgroundColor: '#7c3aed', border: '2px solid #fff',
+    boxShadow: '0 1px 4px rgba(124,58,237,0.4)',
+    transform: 'translate(-50%, -50%)',
+    cursor: 'grab', touchAction: 'none',
+  }
+
+  return (
+    <div ref={trackRef} style={{ position: 'relative', height: 20, margin: '0 0 4px', userSelect: 'none' }}>
+      <div
+        style={{ ...thumb, left: `${minPct}%`, zIndex: maxPct >= 99 ? 3 : 2 }}
+        onMouseDown={e => startDrag('min', e)}
+        onTouchStart={e => startDrag('min', e)}
+      />
+      <div
+        style={{ ...thumb, left: `${maxPct}%`, zIndex: maxPct >= 99 ? 2 : 3 }}
+        onMouseDown={e => startDrag('max', e)}
+        onTouchStart={e => startDrag('max', e)}
+      />
+    </div>
   )
 }
 
@@ -201,17 +265,15 @@ export default function CreatorFindWorkPage() {
                 }} />
               </div>
               {/* Dual handles */}
-              <div className="dual-range">
-                <input type="range" min={0} max={sliderMax} step={5000} value={budgetMin}
-                  onChange={e => setBudgetMin(Math.min(Number(e.target.value), maxHandlePos - 5000))}
-                />
-                <input type="range" min={0} max={sliderMax} step={5000} value={maxHandlePos}
-                  onChange={e => {
-                    const v = Number(e.target.value)
-                    setBudgetMax(v >= sliderMax ? Infinity : Math.max(v, budgetMin + 5000))
-                  }}
-                />
-              </div>
+              <DualRangeSlider
+                min={0}
+                max={sliderMax}
+                step={5000}
+                valueMin={budgetMin}
+                valueMax={maxHandlePos}
+                onChangeMin={v => setBudgetMin(Math.min(v, maxHandlePos - 5000))}
+                onChangeMax={v => setBudgetMax(v >= sliderMax ? Infinity : Math.max(v, budgetMin + 5000))}
+              />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'rgba(15,0,32,0.5)', marginTop: 6 }}>
                 <span>₦{budgetMin.toLocaleString()}</span>
                 <span>{budgetMax === Infinity ? '₦' + sliderMax.toLocaleString() + '+' : '₦' + budgetMax.toLocaleString()}</span>
@@ -329,7 +391,7 @@ export default function CreatorFindWorkPage() {
               Clear all
             </button>
           </div>
-          <FilterPanelContent />
+          {FilterPanelContent({})}
         </aside>
 
         {/* ── Right content ── */}
@@ -574,30 +636,13 @@ export default function CreatorFindWorkPage() {
                 </button>
               </div>
             </div>
-            <FilterPanelContent onApply={() => setFiltersOpen(false)} />
+            {FilterPanelContent({ onApply: () => setFiltersOpen(false) })}
           </div>
         </div>
       )}
 
       <style>{`
         @keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
-        .dual-range { position: relative; height: 24px; margin: 4px 0; }
-        .dual-range input[type=range] {
-          -webkit-appearance: none; appearance: none;
-          position: absolute; width: 100%; height: 24px;
-          background: none; pointer-events: none; margin: 0; padding: 0;
-        }
-        .dual-range input[type=range]::-webkit-slider-thumb {
-          -webkit-appearance: none; pointer-events: all;
-          width: 16px; height: 16px; border-radius: 50%;
-          background: #7c3aed; cursor: pointer;
-          border: 2px solid #fff; box-shadow: 0 1px 4px rgba(124,58,237,0.4);
-        }
-        .dual-range input[type=range]::-moz-range-thumb {
-          pointer-events: all; width: 16px; height: 16px; border-radius: 50%;
-          background: #7c3aed; cursor: pointer;
-          border: 2px solid #fff; box-shadow: 0 1px 4px rgba(124,58,237,0.4);
-        }
       `}</style>
     </div>
   )
