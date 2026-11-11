@@ -169,7 +169,7 @@ export function BrandFindCreatorsContent() {
 
       {/* ── Hero banner ─────────────────────────────────────────── */}
       <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #f3eeff 0%, #ede9fe 60%, #ddd6fe 100%)' }}>
-        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-8 sm:py-12 flex items-center justify-between gap-6">
+        <div className="px-4 sm:px-6 lg:px-10 py-8 sm:py-12 flex items-center justify-between gap-6">
           <div className="flex-1 min-w-0">
             <h1 className="text-3xl sm:text-4xl font-black leading-tight mb-2">
               <span style={{ color: '#0e0020' }}>Find </span>
@@ -201,10 +201,10 @@ export function BrandFindCreatorsContent() {
 
       {/* ── Sticky search + controls bar ────────────────────────── */}
       <div
-        className="sticky z-30 px-4 sm:px-6 py-3"
+        className="sticky z-30 px-4 sm:px-6 lg:px-10 py-3"
         style={{ top: '64px', backgroundColor: 'rgba(243,238,255,0.95)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid #e9d5ff' }}
       >
-        <div className="max-w-screen-xl mx-auto space-y-2.5">
+        <div className="space-y-2.5">
 
           {/* Search row */}
           <div className="relative">
@@ -316,7 +316,7 @@ export function BrandFindCreatorsContent() {
       )}
 
       {/* ── Results ─────────────────────────────────────────────── */}
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 pt-5 pb-24 md:pb-8">
+      <div className="px-4 sm:px-6 lg:px-10 pt-5 pb-24 md:pb-8">
 
         {/* Count row */}
         {!loading && (
@@ -348,7 +348,7 @@ export function BrandFindCreatorsContent() {
         )}
 
         {/* Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-5">
           {loading && visibleCount === PAGE_SIZE
             ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
             : talents.slice(0, visibleCount).map(c => (

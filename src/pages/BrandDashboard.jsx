@@ -987,16 +987,6 @@ export default function BrandDashboard() {
         />
       )}
 
-      {/* Mobile sidebar overlay (More button) */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-50 flex md:hidden">
-          <div className="bg-black/40 flex-1" onClick={() => setSidebarOpen(false)} />
-          <aside className="w-60 flex flex-col" style={{ backgroundColor: 'var(--b-brandDashBg)' }}>
-            <SidebarContent activeTab={activeTab} setActiveTab={(t) => { setActiveTab(t); setSidebarOpen(false) }} dashLogo={dashLogo} onSwitchToCreator={openCreatorSetup} />
-          </aside>
-        </div>
-      )}
-
       {/* ── Top navigation bar ── */}
       <header className="sticky top-0 z-40 bg-white" style={{ borderBottom: '1px solid #e9d5ff', boxShadow: '0 1px 8px rgba(124,58,237,0.06)' }}>
         <div className="px-4 sm:px-6 h-16 flex items-center gap-4 max-w-screen-2xl mx-auto">
@@ -1128,16 +1118,16 @@ export default function BrandDashboard() {
             paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           }}>
           {[
-            { id: 'talents',   label: 'Discover',  Icon: Search },
-            { id: 'collabs',   label: 'Collabs',   Icon: ShoppingBag },
-            { id: 'messages',  label: 'Messages',  Icon: Mail },
-            { id: 'wallet',    label: 'Wallet',    Icon: Wallet },
-          ].map(({ id, label, Icon }) => (
+            { id: 'talents',      label: 'Find',     Icon: Search,      routed: '/brand/find-creators' },
+            { id: 'my-campaigns', label: 'Campaigns', Icon: Megaphone,  routed: '/brand/my-campaigns' },
+            { id: 'collabs',      label: 'Collabs',  Icon: ShoppingBag },
+            { id: 'messages',     label: 'Messages', Icon: Mail },
+            { id: 'favorites',    label: 'Saved',    Icon: Heart },
+          ].map(({ id, label, Icon, routed }) => (
             <button key={id} onClick={() => {
-              if (ROUTED_BRAND_TABS[id]) {
-                navigate(ROUTED_BRAND_TABS[id])
-              } else if (location.pathname !== '/brand-dashboard') {
-                navigate(id === 'overview' ? '/brand-dashboard' : `/brand-dashboard?tab=${id}`)
+              if (routed) { navigate(routed); return }
+              if (location.pathname !== '/brand-dashboard') {
+                navigate(`/brand-dashboard?tab=${id}`)
               } else {
                 setActiveTab(id)
               }
@@ -1148,13 +1138,6 @@ export default function BrandDashboard() {
               {label}
             </button>
           ))}
-          {/* Menu — opens sidebar overlay */}
-          <button onClick={() => setSidebarOpen(true)}
-            className="flex-1 flex flex-col items-center gap-1 py-2.5 text-[10px] font-bold transition-colors"
-            style={{ color: ['post-campaign','my-campaigns','overview','favorites','analytics','payments','notifications','invite','settings'].includes(activeTab) ? '#c084fc' : 'rgba(196,181,253,0.4)' }}>
-            <Menu className="w-5 h-5" />
-            More
-          </button>
         </nav>
 
       {/* Modals */}
@@ -1273,28 +1256,48 @@ function BrandAvatarMenu({ onSwitchToCreator }) {
         <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-500 ring-2 ring-white" title="Online" />
       </button>
       {open && (
-        <div className="absolute right-0 top-11 w-52 rounded-2xl shadow-xl overflow-hidden z-50"
+        <div className="absolute right-0 top-11 w-56 rounded-2xl shadow-xl overflow-hidden z-50"
           style={{ backgroundColor: '#1e0a3c', border: '1px solid rgba(196,181,253,0.15)' }}>
           <div className="px-4 py-3 border-b" style={{ borderColor: 'rgba(196,181,253,0.1)' }}>
             <p className="text-white text-sm font-semibold">Brand Account</p>
             <p className="text-white/35 text-xs truncate">{userEmail || 'Loading...'}</p>
           </div>
-          <button
-            onClick={() => { setOpen(false); onSwitchToCreator() }}
-            className="flex items-center gap-2.5 px-4 py-3 text-sm font-medium w-full transition-colors text-left"
-            style={{ color: 'rgba(255,255,255,0.45)' }}
-            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(255,255,255,0.75)' }}
-            onMouseLeave={e => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.45)' }}>
-            <ArrowLeftRight className="w-4 h-4" /> Switch to Creator Account
-          </button>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2.5 px-4 py-3 text-sm font-medium w-full transition-colors text-left"
-            style={{ color: '#c4b5fd' }}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(196,181,253,0.08)'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
-            <LogOut className="w-4 h-4" /> Log Out
-          </button>
+          {/* Secondary destinations */}
+          {[
+            { label: 'Dashboard',     Icon: LayoutDashboard, href: '/brand-dashboard' },
+            { label: 'Analytics',     Icon: TrendingUp,      href: '/brand-dashboard?tab=analytics' },
+            { label: 'Wallet',        Icon: Wallet,          href: '/brand-dashboard?tab=wallet' },
+            { label: 'Transactions',  Icon: ArrowLeftRight,  href: '/brand-dashboard?tab=payments' },
+            { label: 'Notifications', Icon: Bell,            href: '/brand-dashboard?tab=notifications' },
+            { label: 'Settings',      Icon: Settings,        href: '/brand-dashboard?tab=settings' },
+          ].map(({ label, Icon, href }) => (
+            <button key={label}
+              onClick={() => { setOpen(false); navigate(href) }}
+              className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium w-full transition-colors text-left"
+              style={{ color: 'rgba(255,255,255,0.45)' }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(255,255,255,0.75)' }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.45)' }}>
+              <Icon className="w-4 h-4 flex-shrink-0" /> {label}
+            </button>
+          ))}
+          <div className="border-t" style={{ borderColor: 'rgba(196,181,253,0.1)' }}>
+            <button
+              onClick={() => { setOpen(false); onSwitchToCreator() }}
+              className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium w-full transition-colors text-left"
+              style={{ color: 'rgba(255,255,255,0.45)' }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(255,255,255,0.75)' }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.45)' }}>
+              <ArrowLeftRight className="w-4 h-4" /> Switch to Creator Account
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium w-full transition-colors text-left"
+              style={{ color: '#c4b5fd' }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(196,181,253,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
+              <LogOut className="w-4 h-4" /> Log Out
+            </button>
+          </div>
         </div>
       )}
     </div>
