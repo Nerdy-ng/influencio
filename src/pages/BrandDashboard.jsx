@@ -69,27 +69,36 @@ function stepIndex(status) {
 function CollabStepper({ status }) {
   const step = stepIndex(status)
   return (
-    <div className="flex items-center mt-2">
+    <div className="flex items-start w-full mt-3">
       {STEPS.map((label, i) => {
         const done   = i < step
         const active = i === step
-        const color  = STEP_COLORS[i]
+        const col    = STEP_COLORS[i]
         return (
-          <div key={label} className="flex items-center" style={{ flex: i < STEPS.length - 1 ? '1' : 'none' }}>
-            <span
-              className="flex items-center gap-1 text-xs font-black px-2 py-1 rounded-full border-2 whitespace-nowrap flex-shrink-0"
-              style={{
-                backgroundColor: active ? color : done ? color + '28' : 'rgba(124,58,237,0.04)',
-                borderColor:     active ? color : done ? color + '80' : '#e9d5ff',
-                color:           active ? '#fff' : done ? color : 'rgba(15,0,32,0.4)',
-              }}
-            >
-              {done && <span style={{ fontSize: 9 }}>✓</span>}
-              {active && <span style={{ width: 5, height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.6)', display: 'inline-block' }} />}
-              {label}
-            </span>
+          <div key={label} className="flex items-start" style={{ flex: i < STEPS.length - 1 ? '1' : 'none', minWidth: 0 }}>
+            <div className="flex flex-col items-center gap-1 flex-shrink-0">
+              <div style={{
+                width:  active ? 10 : 7,
+                height: active ? 10 : 7,
+                borderRadius: '50%',
+                backgroundColor: active ? col : done ? col : '#e9d5ff',
+                boxShadow: active ? `0 0 0 3px ${col}22` : 'none',
+                flexShrink: 0,
+              }} />
+              <span style={{
+                fontSize: 9,
+                fontWeight: active ? 800 : done ? 700 : 500,
+                color: active ? col : done ? col + 'bb' : 'rgba(15,0,32,0.3)',
+                lineHeight: 1,
+                whiteSpace: 'nowrap',
+              }}>{label}</span>
+            </div>
             {i < STEPS.length - 1 && (
-              <div className="mx-1 rounded-full" style={{ flex: 1, height: 2.5, backgroundColor: done ? color + '55' : '#e9d5ff', minWidth: 8 }} />
+              <div style={{
+                flex: 1, height: 1.5, marginTop: 4.5,
+                marginLeft: 4, marginRight: 4, borderRadius: 1,
+                backgroundColor: done ? col + '50' : '#e9d5ff',
+              }} />
             )}
           </div>
         )
@@ -135,7 +144,7 @@ function PaymentModal({ order, onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
         {step === 'confirm' && (
           <>
             <div className="flex items-center justify-between mb-6">
@@ -213,9 +222,9 @@ function RevisionModal({ order, onClose, onSubmit }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-xl font-black text-brand-dpurple">Request Revision</h2>
+          <h2 className="text-xl font-black" style={{ color: darkPurple }}>Request Revision</h2>
           <button onClick={onClose}><X className="w-5 h-5" style={{ color: 'rgba(15,0,32,0.4)' }} /></button>
         </div>
         <p className="text-sm mb-4" style={{ color: 'rgba(15,0,32,0.4)' }}>Describe what you'd like the talent to change or improve.</p>
@@ -326,8 +335,10 @@ function DeliverableViewButton({ file, collabId }) {
     <button
       onClick={handleView}
       disabled={loading}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-medium hover:bg-[rgba(124,58,237,0.04)] transition-colors disabled:opacity-50"
-      style={{ color: 'rgba(15,0,32,0.6)' }}
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold disabled:opacity-50 transition-all"
+      style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff', color: 'rgba(15,0,32,0.6)' }}
+      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.04)'}
+      onMouseLeave={e => e.currentTarget.style.backgroundColor = '#fff'}
     >
       <Download className="w-3.5 h-3.5" />
       {loading ? 'Loading…' : label}
@@ -338,82 +349,133 @@ function DeliverableViewButton({ file, collabId }) {
 // Individual order card
 function OrderCard({ order, onPayNow, onApprove, onRevision, onReview }) {
   const [expanded, setExpanded] = useState(false)
+  const hasDeliverables = order.deliveredFiles && order.deliveredFiles.length > 0
+  const isRevision = order.status === 'revision_requested'
+  const isDelivered = order.status === 'delivered'
 
   return (
-    <div className="bg-white rounded-2xl border border-brand-lav overflow-hidden" style={{ boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
-      {/* Main row */}
+    <div
+      className="rounded-2xl overflow-hidden transition-all"
+      style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.05)' }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 20px rgba(124,58,237,0.10)'; e.currentTarget.style.borderColor = '#c4b5fd' }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 12px rgba(124,58,237,0.05)'; e.currentTarget.style.borderColor = '#e9d5ff' }}
+    >
       <div className="p-5">
-        <div className="flex flex-wrap items-start gap-4">
-          {/* Talent */}
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <img
-              src={order.talent?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(order.talent?.name || 'C')}&background=7c3aed&color=fff&size=40`}
-              alt={order.talent?.name}
-              className="w-10 h-10 rounded-full object-cover"
-              onError={e => { e.target.src = `https://ui-avatars.com/api/?name=C&background=7c3aed&color=fff&size=40` }}
-            />
-            <div>
-              <p className="font-semibold text-sm" style={{ color: '#0F0020' }}>{order.talent?.name}</p>
-              <p className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>@{order.talent?.handle}</p>
+        {/* Row 1: Creator identity + status */}
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-3 min-w-0">
+            {order.talent?.avatar
+              ? <img src={order.talent.avatar} alt={order.talent?.name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0"
+                  onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }} />
+              : null}
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white text-sm flex-shrink-0"
+              style={{ backgroundColor: darkPurple, display: order.talent?.avatar ? 'none' : 'flex' }}>
+              {(order.talent?.name || '?')[0]}
+            </div>
+            <div className="min-w-0">
+              <p className="font-black text-sm leading-snug" style={{ color: '#0F0020' }}>{order.talent?.name || 'Creator'}</p>
+              {order.talent?.handle && <p className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>@{order.talent.handle}</p>}
             </div>
           </div>
+          <StatusBadge status={order.status} />
+        </div>
 
-          {/* Package + status */}
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-1">
-              <span className="text-sm font-medium" style={{ color: 'rgba(15,0,32,0.6)' }}>{order.package?.name}</span>
-              {order.package?.platform && (
-                <span title={order.package.platform} className="inline-flex items-center rounded-lg overflow-hidden flex-shrink-0" style={{ lineHeight: 0 }}>
-                  <PlatformIcon platform={order.package.platform} size={20} />
-                </span>
-              )}
+        {/* Row 2: Content type, platform, budget */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-1 text-xs" style={{ color: 'rgba(15,0,32,0.5)' }}>
+          <span className="font-semibold" style={{ color: purple }}>{order.package?.name}</span>
+          {order.package?.platform && (
+            <span className="inline-flex items-center rounded-md overflow-hidden flex-shrink-0" style={{ lineHeight: 0 }}>
+              <PlatformIcon platform={order.package.platform} size={18} />
+            </span>
+          )}
+          <span className="font-black" style={{ color: '#0F0020' }}>{formatNGN(order.total)}</span>
+          <span style={{ color: 'rgba(15,0,32,0.35)' }}>{timeAgo(order.createdAt)}</span>
+        </div>
+
+        {/* Stepper */}
+        <CollabStepper status={order.status} />
+
+        {/* Revision notice */}
+        {isRevision && (
+          <div className="flex items-start gap-2 mt-3 p-3 rounded-xl"
+            style={{ backgroundColor: 'rgba(250,129,18,0.07)', border: '1px solid rgba(250,129,18,0.25)' }}>
+            <RotateCcw className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#FA8112' }} />
+            <p className="text-xs font-semibold leading-relaxed" style={{ color: '#9a3412' }}>
+              Revision requested — the creator is reworking your content.
+            </p>
+          </div>
+        )}
+
+        {/* Deliverable indicator (visible without expanding) */}
+        {hasDeliverables && !isRevision && (
+          <div className="mt-3 pt-3" style={{ borderTop: '1px solid #f3eeff' }}>
+            <p className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: 'rgba(124,58,237,0.5)' }}>
+              Delivered Work
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {order.deliveredFiles.map((f, i) => (
+                <DeliverableViewButton key={f.storagePath || f.name || i} file={f} collabId={order._id} />
+              ))}
             </div>
-            <p className="text-xs mb-1.5" style={{ color: 'rgba(15,0,32,0.4)' }}>{order.brief?.productName} · {timeAgo(order.createdAt)}</p>
-            <StatusBadge status={order.status} />
-            <CollabStepper status={order.status} />
           </div>
+        )}
 
-          {/* Price + actions */}
-          <div className="flex flex-col items-end gap-2 flex-shrink-0">
-            <p className="font-bold" style={{ color: '#0F0020' }}>{formatNGN(order.total)}</p>
-            <OrderActions order={order} onPayNow={onPayNow} onApprove={onApprove} onRevision={onRevision} onReview={onReview} />
-          </div>
-
-          {/* Expand */}
-          <button onClick={() => setExpanded(!expanded)} className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-700">
-            <ChevronDown className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+        {/* Bottom row: brief expand + action */}
+        <div className="flex items-center justify-between gap-3 mt-4 pt-3" style={{ borderTop: '1px solid #f3eeff' }}>
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center gap-1.5 text-xs font-semibold transition-opacity hover:opacity-70"
+            style={{ color: 'rgba(15,0,32,0.4)', background: 'none', border: 'none', cursor: 'pointer' }}>
+            Brief & payment
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`} />
           </button>
+          <OrderActions order={order} onPayNow={onPayNow} onApprove={onApprove} onRevision={onRevision} onReview={onReview} />
         </div>
       </div>
 
-      {/* Expanded details */}
+      {/* Expanded brief + payment details */}
       {expanded && (
-        <div className="border-t border-brand-lav p-5" style={{ backgroundColor: "rgba(124,58,237,0.04)" }}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: 'rgba(15,0,32,0.4)' }}>Brief Summary</p>
-              <p className="text-sm" style={{ color: 'rgba(15,0,32,0.6)' }}><span className="font-medium">Brand:</span> {order.brief?.brandName}</p>
-              <p className="text-sm" style={{ color: 'rgba(15,0,32,0.6)' }}><span className="font-medium">Product:</span> {order.brief?.productName}</p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: 'rgba(15,0,32,0.4)' }}>Payment</p>
-              <p className="text-sm" style={{ color: 'rgba(15,0,32,0.6)' }}><span className="font-medium">Package:</span> {formatNGN(order.packagePrice)}</p>
-              <p className="text-sm" style={{ color: 'rgba(15,0,32,0.6)' }}><span className="font-medium">Platform fee:</span> {formatNGN(order.platformFee)}</p>
-              <p className="text-sm font-bold" style={{ color: '#0F0020' }}><span className="font-medium">Total:</span> {formatNGN(order.total)}</p>
-            </div>
-          </div>
-
-          {/* Delivered files */}
-          {order.deliveredFiles && order.deliveredFiles.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'rgba(15,0,32,0.4)' }}>Delivered Files</p>
-              <div className="flex flex-wrap gap-2">
-                {order.deliveredFiles.map((f, i) => (
-                  <DeliverableViewButton key={f.storagePath || f.name || i} file={f} collabId={order._id} />
-                ))}
+        <div className="p-5 pt-0">
+          <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: 'rgba(124,58,237,0.03)', border: '1px solid #f3eeff' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: 'rgba(15,0,32,0.35)' }}>Brief</p>
+                {order.brief?.brandName && (
+                  <p className="text-sm mb-1" style={{ color: 'rgba(15,0,32,0.6)' }}>
+                    <span className="font-semibold">Brand:</span> {order.brief.brandName}
+                  </p>
+                )}
+                {order.brief?.productName && (
+                  <p className="text-sm" style={{ color: 'rgba(15,0,32,0.6)' }}>
+                    <span className="font-semibold">Product:</span> {order.brief.productName}
+                  </p>
+                )}
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: 'rgba(15,0,32,0.35)' }}>Payment</p>
+                <p className="text-sm mb-1" style={{ color: 'rgba(15,0,32,0.6)' }}>
+                  <span className="font-semibold">Package:</span> {formatNGN(order.packagePrice)}
+                </p>
+                <p className="text-sm mb-1" style={{ color: 'rgba(15,0,32,0.6)' }}>
+                  <span className="font-semibold">Platform fee:</span> {formatNGN(order.platformFee)}
+                </p>
+                <p className="text-sm font-black" style={{ color: '#0F0020' }}>
+                  Total: {formatNGN(order.total)}
+                </p>
               </div>
             </div>
-          )}
+            {/* Delivered files in expanded view (for revision state) */}
+            {isRevision && hasDeliverables && (
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: 'rgba(15,0,32,0.35)' }}>Previously Delivered</p>
+                <div className="flex flex-wrap gap-2">
+                  {order.deliveredFiles.map((f, i) => (
+                    <DeliverableViewButton key={f.storagePath || f.name || i} file={f} collabId={order._id} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -425,8 +487,8 @@ function OrderActions({ order, onPayNow, onApprove, onRevision, onReview }) {
     return (
       <button
         onClick={() => onPayNow(order)}
-        className="px-4 py-2 rounded-full text-xs font-bold text-white"
-        style={{ backgroundColor: '#eab308' }}
+        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white transition-opacity hover:opacity-90"
+        style={{ backgroundColor: '#d97706' }}
       >
         Pay Now
       </button>
@@ -434,8 +496,8 @@ function OrderActions({ order, onPayNow, onApprove, onRevision, onReview }) {
   }
   if (order.status === 'in_progress') {
     return (
-      <span className="px-4 py-2 rounded-full text-xs font-semibold" style={{ backgroundColor: 'rgba(124,58,237,0.06)', color: 'rgba(15,0,32,0.4)' }}>
-        In Progress
+      <span className="px-3 py-1.5 rounded-xl text-xs font-semibold" style={{ backgroundColor: 'rgba(124,58,237,0.06)', color: 'rgba(15,0,32,0.45)' }}>
+        Awaiting delivery
       </span>
     )
   }
@@ -443,37 +505,49 @@ function OrderActions({ order, onPayNow, onApprove, onRevision, onReview }) {
     return (
       <div className="flex gap-2">
         <button
-          onClick={() => onApprove(order._id)}
-          className="px-3 py-1.5 rounded-full text-xs font-bold text-white bg-green-600 hover:bg-green-700 transition-colors"
+          onClick={() => onRevision(order)}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all"
+          style={{ border: '1.5px solid #FA8112', color: '#9a3412', backgroundColor: '#fff' }}
+          onMouseEnter={e => e.currentTarget.style.backgroundColor = '#fff7ed'}
+          onMouseLeave={e => e.currentTarget.style.backgroundColor = '#fff'}
         >
-          Approve ✓
+          <RotateCcw className="w-3 h-3" />
+          Request Revision
         </button>
         <button
-          onClick={() => onRevision(order)}
-          className="px-3 py-1.5 rounded-full text-xs font-bold border-2 border-orange-500 text-orange-600 hover:bg-orange-50 transition-colors"
+          onClick={() => onApprove(order._id)}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white transition-opacity hover:opacity-90"
+          style={{ backgroundColor: '#16a34a' }}
         >
-          Request Revision
+          <CheckCircle className="w-3.5 h-3.5" />
+          Approve
         </button>
       </div>
     )
   }
   if (order.status === 'revision_requested') {
     return (
-      <span className="px-3 py-1.5 rounded-full text-xs font-semibold" style={{ backgroundColor: '#ffedd5', color: '#9a3412' }}>
-        Revision Pending
+      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
+        style={{ backgroundColor: 'rgba(250,129,18,0.1)', color: '#9a3412' }}>
+        <RotateCcw className="w-3 h-3" />
+        Revision Sent
       </span>
     )
   }
   if (order.status === 'completed') {
     return (
-      <div className="flex gap-2">
-        <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-          Completed ✓
+      <div className="flex items-center gap-2">
+        <span className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold"
+          style={{ backgroundColor: '#dcfce7', color: '#15803d' }}>
+          <CheckCircle className="w-3 h-3" />
+          Completed
         </span>
         <button
           onClick={() => onReview?.(order)}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors hover:bg-yellow-50"
-          style={{ borderColor: '#D4AF37', color: '#854d0e' }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+          style={{ border: `1.5px solid #D4AF37`, color: '#854d0e', backgroundColor: '#fff' }}
+          onMouseEnter={e => e.currentTarget.style.backgroundColor = '#fefce8'}
+          onMouseLeave={e => e.currentTarget.style.backgroundColor = '#fff'}
         >
           <Star className="w-3 h-3" style={{ fill: '#D4AF37', color: '#D4AF37' }} />
           Review
@@ -2055,37 +2129,58 @@ const ORDER_STATUS_FILTERS = [
 
 function CampaignsTab({ activeOrders, completedOrders, onPayNow, onApprove, onRevision, onReview }) {
   const [sub, setSub] = useState('active')
+  const needsAttention = activeOrders.filter(o => o.status === 'delivered').length
   const tabs = [
     { id: 'active',    label: 'Active',    count: activeOrders.length },
     { id: 'completed', label: 'Completed', count: completedOrders.length },
   ]
   return (
     <div className="space-y-5">
-      {/* Sub-tab bar */}
-      <div className="flex gap-2 p-1 rounded-xl w-fit" style={{ backgroundColor: '#f3eeff' }}>
-        {tabs.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setSub(t.id)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
-            style={sub === t.id
-              ? { backgroundColor: '#7c3aed', color: '#fff', boxShadow: '0 2px 8px rgba(124,58,237,0.25)' }
-              : { color: '#7c3aed' }}
-          >
-            {t.label}
-            <span className="text-xs px-1.5 py-0.5 rounded-full font-bold"
-              style={sub === t.id ? { backgroundColor: 'rgba(255,255,255,0.25)', color: '#fff' } : { backgroundColor: '#ede9fe', color: '#7c3aed' }}>
-              {t.count}
+      {/* Page header */}
+      <div>
+        <div className="flex items-baseline gap-3 flex-wrap mb-1">
+          <h1 className="text-xl sm:text-2xl font-black leading-tight" style={{ color: '#0e0020' }}>Collabs</h1>
+          {needsAttention > 0 && (
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full"
+              style={{ backgroundColor: 'rgba(34,197,94,0.1)', color: '#15803d', border: '1px solid rgba(34,197,94,0.3)' }}>
+              {needsAttention} ready to review
             </span>
-          </button>
-        ))}
+          )}
+        </div>
+        <p className="text-sm" style={{ color: 'rgba(15,0,32,0.5)' }}>
+          Manage your active and completed creator collaborations.
+        </p>
+      </div>
+
+      {/* Sub-tab bar */}
+      <div className="flex gap-2">
+        {tabs.map(t => {
+          const active = sub === t.id
+          return (
+            <button
+              key={t.id}
+              onClick={() => setSub(t.id)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all"
+              style={active
+                ? { backgroundColor: purple, color: '#fff', boxShadow: '0 2px 10px rgba(124,58,237,0.25)' }
+                : { backgroundColor: '#fff', color: purple, border: '1.5px solid #e9d5ff' }}>
+              {t.label}
+              <span className="text-xs px-1.5 py-0.5 rounded-full font-black"
+                style={active
+                  ? { backgroundColor: 'rgba(255,255,255,0.22)', color: '#fff' }
+                  : { backgroundColor: '#f3eeff', color: purple }}>
+                {t.count}
+              </span>
+            </button>
+          )
+        })}
       </div>
 
       {sub === 'active' && (
         <OrdersTab
           title="Active Collabs"
           orders={activeOrders}
-          emptyMsg="No active collabs. Browse talents to get started!"
+          emptyMsg="No active collabs yet."
           onPayNow={onPayNow}
           onApprove={onApprove}
           onRevision={onRevision}
@@ -2117,79 +2212,90 @@ function OrdersTab({ title, orders, emptyMsg, onPayNow, onApprove, onRevision, o
   })
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-black text-brand-dpurple">{title}</h2>
-        <span className="text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>{filtered.length} of {orders.length} order{orders.length !== 1 ? 's' : ''}</span>
-      </div>
+    <div className="space-y-4">
+      {/* Count */}
+      {orders.length > 0 && (
+        <p className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>
+          <span className="font-black" style={{ color: darkPurple }}>{filtered.length}</span>
+          {filtered.length !== orders.length && ` of ${orders.length}`}
+          {' '}collab{filtered.length !== 1 ? 's' : ''}
+        </p>
+      )}
 
       {/* Filters bar */}
       {orders.length > 0 && (
-        <div className="bg-white rounded-2xl border border-brand-lav p-4 space-y-3">
+        <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff' }}>
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'rgba(124,58,237,0.45)' }} />
             <input
               value={search}
               onChange={e => setSearch(stripInjection(e.target.value))}
-              placeholder="Search by talent name…"
+              placeholder="Search by creator name…"
               className="w-full rounded-xl text-sm focus:outline-none transition-shadow"
               style={{
                 paddingLeft: '2.5rem',
                 paddingRight: search ? '2.5rem' : '1rem',
                 paddingTop: '0.625rem',
                 paddingBottom: '0.625rem',
-                backgroundColor: '#fff',
+                backgroundColor: '#faf9ff',
                 border: '1.5px solid #e9d5ff',
-                color: '#1e0040',
-                boxShadow: '0 2px 12px rgba(124,58,237,0.08)',
+                color: '#0F0020',
               }}
-              onFocus={e => { e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.12), 0 2px 12px rgba(124,58,237,0.08)' }}
-              onBlur={e => { e.target.style.boxShadow = '0 2px 12px rgba(124,58,237,0.08)' }}
+              onFocus={e => { e.target.style.borderColor = '#c4b5fd'; e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.10)' }}
+              onBlur={e => { e.target.style.borderColor = '#e9d5ff'; e.target.style.boxShadow = 'none' }}
             />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: '#7c3aed' }}>
+              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple }}>
                 <X className="w-3 h-3" />
               </button>
             )}
           </div>
           {/* Status pills */}
           <div className="flex flex-wrap gap-1.5">
-            {ORDER_STATUS_FILTERS.map(f => (
-              <button
-                key={f.value}
-                onClick={() => setStatusFilter(f.value)}
-                className="text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors"
-                style={
-                  statusFilter === f.value
-                    ? { backgroundColor: darkPurple, color: 'white', borderColor: darkPurple }
-                    : { backgroundColor: 'white', color: '#6b7280', borderColor: '#e5e7eb' }
-                }
-              >
-                {f.label}
-              </button>
-            ))}
+            {ORDER_STATUS_FILTERS.map(f => {
+              const active = statusFilter === f.value
+              return (
+                <button
+                  key={f.value}
+                  onClick={() => setStatusFilter(f.value)}
+                  className="text-xs font-bold px-3 py-1.5 rounded-xl transition-all"
+                  style={active
+                    ? { backgroundColor: darkPurple, color: '#fff', border: '1.5px solid transparent' }
+                    : { backgroundColor: '#fff', color: 'rgba(15,0,32,0.5)', border: '1.5px solid #e9d5ff' }}
+                >
+                  {f.label}
+                </button>
+              )
+            })}
           </div>
         </div>
       )}
 
       {orders.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-2xl border border-brand-lav">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'rgba(124,58,237,0.1)' }}>
-            <ShoppingBag className="w-7 h-7" style={{ color: purple }} />
+        <div className="text-center py-16 rounded-2xl" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff' }}>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5"
+            style={{ backgroundColor: 'rgba(124,58,237,0.07)', border: '1px solid #e9d5ff' }}>
+            <ShoppingBag className="w-6 h-6" style={{ color: purple }} />
           </div>
-          <p className="text-sm mb-5" style={{ color: 'rgba(15,0,32,0.4)' }}>{emptyMsg}</p>
-          <Link to="/brand/find-creators" className="px-6 py-2.5 rounded-full text-white text-sm font-semibold" style={{ backgroundColor: darkPurple }}>
-            Browse Talents
+          <p className="font-black text-base mb-2" style={{ color: '#0e0020' }}>No collabs yet</p>
+          <p className="text-sm mb-7" style={{ color: 'rgba(15,0,32,0.5)', lineHeight: '1.65' }}>
+            Hire a creator and your collaboration<br />will appear here.
+          </p>
+          <Link to="/brand/find-creators"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: purple }}>
+            Find Creators
           </Link>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-14 bg-white rounded-2xl border border-brand-lav">
-          <p className="text-sm mb-3" style={{ color: 'rgba(15,0,32,0.4)' }}>No orders match your filters</p>
+        <div className="text-center py-12 rounded-2xl" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff' }}>
+          <p className="text-sm mb-3" style={{ color: 'rgba(15,0,32,0.4)' }}>No collabs match your filters</p>
           <button
             onClick={() => { setSearch(''); setStatusFilter('all') }}
-            className="text-sm font-semibold px-4 py-2 rounded-full"
-            style={{ color: purple }}
+            className="text-sm font-bold px-4 py-2 rounded-xl transition-opacity hover:opacity-70"
+            style={{ color: purple, background: 'none', border: 'none', cursor: 'pointer' }}
           >
             Clear filters
           </button>
@@ -3153,7 +3259,7 @@ function BrandCustomOffersPanel() {
     offer_pending: { label: 'Awaiting response', bg: '#fef9c3', color: '#854d0e' },
     accepted:      { label: 'Accepted', bg: '#dcfce7', color: '#15803d' },
     declined:      { label: 'Declined', bg: '#fef2f2', color: '#991b1b' },
-    withdrawn:     { label: 'Withdrawn', bg: '#f3f4f6', color: '#6b7280' },
+    withdrawn:     { label: 'Withdrawn', bg: 'rgba(15,0,32,0.05)', color: 'rgba(15,0,32,0.4)' },
   }
 
   return (
