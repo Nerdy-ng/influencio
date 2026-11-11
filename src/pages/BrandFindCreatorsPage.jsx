@@ -45,7 +45,7 @@ function BrandCreatorCard({ talent, from = '/brand/find-creators' }) {
       {/* Portrait image */}
       <div
         className="relative overflow-hidden flex-shrink-0"
-        style={{ aspectRatio: '4/5' }}
+        style={{ aspectRatio: '5/4' }}
         onMouseEnter={() => { if (videoRef.current && talent.featuredVideo) { videoRef.current.play().catch(() => {}); setVideoPlaying(true) } }}
         onMouseLeave={() => { if (videoRef.current && talent.featuredVideo) { videoRef.current.pause(); videoRef.current.currentTime = 0; setVideoPlaying(false) } }}
       >
@@ -169,7 +169,7 @@ export function BrandFindCreatorsContent() {
 
       {/* ── Hero banner ─────────────────────────────────────────── */}
       <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #f3eeff 0%, #ede9fe 60%, #ddd6fe 100%)' }}>
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 flex items-center justify-between gap-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 flex items-center justify-between gap-6">
           <div className="flex-1 min-w-0">
             <h1 className="text-3xl sm:text-4xl font-black leading-tight mb-2">
               <span style={{ color: '#0e0020' }}>Find </span>
@@ -204,7 +204,7 @@ export function BrandFindCreatorsContent() {
         className="sticky z-30 px-4 sm:px-6 lg:px-8 py-3"
         style={{ top: '64px', backgroundColor: 'rgba(243,238,255,0.95)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid #e9d5ff' }}
       >
-        <div className="max-w-[1440px] mx-auto space-y-2.5">
+        <div className="max-w-7xl mx-auto space-y-2.5">
 
           {/* Search row */}
           <div className="relative">
@@ -316,7 +316,7 @@ export function BrandFindCreatorsContent() {
       )}
 
       {/* ── Results ─────────────────────────────────────────────── */}
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-24 md:pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-24 md:pb-8">
 
         {/* Count row */}
         {!loading && (

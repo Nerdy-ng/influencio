@@ -17,13 +17,12 @@ const TALENT_DROPDOWN = [
 ]
 
 const BRAND_DROPDOWN = [
-  { label: 'Dashboard',        icon: LayoutDashboard, href: '/brand-dashboard' },
-  { label: 'Analytics',        icon: TrendingUp,      href: '/brand-dashboard?tab=overview' },
-  { label: 'Wallet',           icon: Wallet,          href: '/brand-dashboard?tab=wallet' },
-  { label: 'Transactions',     icon: CreditCard,      href: '/brand-dashboard?tab=payments' },
-  { label: 'Notifications',    icon: Bell,            href: '/brand-dashboard?tab=notifications' },
-  { label: 'Settings',         icon: Settings,        href: '/brand-dashboard?tab=settings' },
-  { label: 'Switch Workspace', icon: ArrowLeftRight,  href: '/workspace-selector' },
+  { label: 'Dashboard',     icon: LayoutDashboard, href: '/brand-dashboard' },
+  { label: 'Analytics',     icon: TrendingUp,      href: '/brand-dashboard?tab=overview' },
+  { label: 'Wallet',        icon: Wallet,          href: '/brand-dashboard?tab=wallet' },
+  { label: 'Transactions',  icon: CreditCard,      href: '/brand-dashboard?tab=payments' },
+  { label: 'Notifications', icon: Bell,            href: '/brand-dashboard?tab=notifications' },
+  { label: 'Settings',      icon: Settings,        href: '/brand-dashboard?tab=settings' },
 ]
 
 const TALENT_NAV = [
@@ -70,6 +69,7 @@ export default function Navbar({ forceRole } = {}) {
   const [notifs, setNotifs] = useState({})
   const [inAppNotifs, setInAppNotifs] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [hasCreatorAccess, setHasCreatorAccess] = useState(false)
 
   const joinRef = useRef(null)
   const userRef = useRef(null)
@@ -120,6 +120,12 @@ export default function Navbar({ forceRole } = {}) {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
           await fetchInAppNotifs(user.id)
+          const { data: profileRow } = await supabase
+            .from('profiles')
+            .select('has_creator_access')
+            .eq('id', user.id)
+            .single()
+          if (profileRow) setHasCreatorAccess(!!profileRow.has_creator_access)
           realtimeSub = supabase
             .channel(`notifications_${user.id}`)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
@@ -357,19 +363,30 @@ export default function Navbar({ forceRole } = {}) {
                         {label}
                       </Link>
                     ))}
+                    {role === 'brand' && hasCreatorAccess && (
+                      <Link to="/workspace-selector" onClick={() => setUserOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-brand-dark/70 font-medium w-full transition-colors"
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.06)'}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
+                        <ArrowLeftRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#a78bfa' }} />
+                        Switch to Creator Account
+                      </Link>
+                    )}
                   </div>
 
                   <div className="border-t" style={{ borderColor: '#f3eeff' }} />
 
-                  {/* View public profile */}
-                  <Link to={`/creators/${profile?.handle || profile?.nickname || 'me'}`} target="_blank" rel="noopener noreferrer"
-                    onClick={() => setUserOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium w-full transition-colors"
-                    style={{ color: '#7c3aed' }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.06)'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
-                    <Eye className="w-3.5 h-3.5" /> View Public Profile
-                  </Link>
+                  {/* View public profile — hidden for brand role */}
+                  {role !== 'brand' && (
+                    <Link to={`/creators/${profile?.handle || profile?.nickname || 'me'}`} target="_blank" rel="noopener noreferrer"
+                      onClick={() => setUserOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium w-full transition-colors"
+                      style={{ color: '#7c3aed' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.06)'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
+                      <Eye className="w-3.5 h-3.5" /> View Public Profile
+                    </Link>
+                  )}
 
                   {/* Log out */}
                   <button onClick={handleLogout}
