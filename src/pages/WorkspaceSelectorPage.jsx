@@ -23,7 +23,7 @@ export default function WorkspaceSelectorPage() {
             return
           }
           if (data.has_creator_access && !data.has_brand_access) {
-            navigate('/dashboard', { replace: true })
+            navigate('/creator/find-work', { replace: true })
             return
           }
           setCapabilities(data)
@@ -40,7 +40,7 @@ export default function WorkspaceSelectorPage() {
       if (error) throw error
       localStorage.setItem('brandiór_workspace', workspace)
       localStorage.setItem('brandiór_role', workspace === 'brand' ? 'brand' : 'talent')
-      navigate(workspace === 'brand' ? '/brand-dashboard' : '/dashboard', { replace: true })
+      navigate(workspace === 'brand' ? '/brand-dashboard' : '/creator/find-work', { replace: true })
     } catch {
       setSelecting(null)
     }

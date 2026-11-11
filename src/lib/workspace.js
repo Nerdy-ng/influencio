@@ -16,7 +16,7 @@ export function resolveWorkspaceDestination(profile, appMetaRole) {
   // 1. Dual-role: both capabilities present — route by active_workspace (authoritative preference)
   if (hasBrand && hasCreator) {
     if (ws === 'brand')   return { workspace: 'brand',   path: '/brand-dashboard', role: 'brand' }
-    if (ws === 'creator') return { workspace: 'creator', path: '/dashboard',       role: 'talent' }
+    if (ws === 'creator') return { workspace: 'creator', path: '/creator/find-work', role: 'talent' }
     // Both capabilities but no valid active_workspace → selector
     return { workspace: null, path: '/workspace-select', role: appMetaRole || 'talent' }
   }
@@ -34,10 +34,10 @@ export function resolveWorkspaceDestination(profile, appMetaRole) {
     if (appMetaRole === 'brand') {
       return { workspace: 'brand', path: '/brand-dashboard', role: 'brand' }
     }
-    return { workspace: 'creator', path: '/dashboard', role: 'talent' }
+    return { workspace: 'creator', path: '/creator/find-work', role: 'talent' }
   }
 
   // 3. Zero capabilities: fall back to app_metadata.role (legacy/pre-migration users)
   if (appMetaRole === 'brand') return { workspace: 'brand',   path: '/brand-dashboard', role: 'brand' }
-  return { workspace: 'creator', path: '/dashboard', role: 'talent' }
+  return { workspace: 'creator', path: '/creator/find-work', role: 'talent' }
 }

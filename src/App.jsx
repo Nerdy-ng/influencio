@@ -113,7 +113,7 @@ function PublicOnly({ children }) {
     const params = new URLSearchParams(window.location.search)
     if (params.get('step') === 'complete') return children  // profile completion allowed while logged in
     const role = localStorage.getItem('brandiór_role')
-    return <Navigate to={role === 'talent' ? '/dashboard' : '/brand-dashboard'} replace />
+    return <Navigate to={role === 'talent' ? '/creator/find-work' : '/brand-dashboard'} replace />
   }
   return children
 }
@@ -130,7 +130,7 @@ function PrivateRoute({ children, isRecoverySession, requiredWorkspace }) {
     // Use stored workspace if available; fall back to role for pre-migration sessions
     const effectiveWs = ws || (role === 'brand' ? 'brand' : role === 'talent' ? 'creator' : null)
     if (effectiveWs && effectiveWs !== requiredWorkspace) {
-      return <Navigate to={effectiveWs === 'brand' ? '/brand-dashboard' : '/dashboard'} replace />
+      return <Navigate to={effectiveWs === 'brand' ? '/brand-dashboard' : '/creator/find-work'} replace />
     }
   }
   return children
@@ -141,7 +141,7 @@ function RootRoute() {
   const user = localStorage.getItem('brandiór_user')
   if (user) {
     const role = localStorage.getItem('brandiór_role')
-    return <Navigate to={role === 'talent' ? '/dashboard' : '/brand-dashboard'} replace />
+    return <Navigate to={role === 'talent' ? '/creator/find-work' : '/brand-dashboard'} replace />
   }
   return <Navigate to="/login" replace />
 }

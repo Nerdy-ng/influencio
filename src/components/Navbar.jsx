@@ -181,11 +181,11 @@ export default function Navbar() {
 
         {/* Logo */}
         <Link
-          to={isLoggedIn ? (userRole === 'brand' ? '/marketplace' : '/dashboard') : '/'}
+          to={isLoggedIn ? (userRole === 'brand' ? '/marketplace' : '/creator/find-work') : '/'}
           onClick={e => {
             if (!isLoggedIn) return
             e.preventDefault()
-            const home = userRole === 'brand' ? '/marketplace' : '/dashboard'
+            const home = userRole === 'brand' ? '/marketplace' : '/creator/find-work'
             if (window.location.pathname === home) {
               window.location.reload()
             } else {
