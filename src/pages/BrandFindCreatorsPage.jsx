@@ -246,9 +246,10 @@ export function BrandFindCreatorsContent() {
 
           {/* Filters + sort row */}
           <div className="flex items-center gap-2">
+            {/* Mobile-only filter trigger — hidden on lg+ where the panel is visible */}
             <button
               onClick={() => setMobileFiltersOpen(true)}
-              className="relative inline-flex items-center gap-1.5 text-sm font-semibold transition-all flex-shrink-0"
+              className="lg:hidden relative inline-flex items-center gap-1.5 text-sm font-semibold transition-all flex-shrink-0"
               style={{ padding: '0.5rem 1rem', borderRadius: '0.75rem', border: '1.5px solid #e9d5ff', color: darkPurple, backgroundColor: '#fff' }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = '#c4b5fd'; e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.04)' }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = '#e9d5ff'; e.currentTarget.style.backgroundColor = '#fff' }}
@@ -267,7 +268,7 @@ export function BrandFindCreatorsContent() {
             {activeFilterCount > 0 && (
               <button
                 onClick={resetFilters}
-                className="text-xs font-semibold transition-colors flex-shrink-0"
+                className="lg:hidden text-xs font-semibold transition-colors flex-shrink-0"
                 style={{ color: 'rgba(76,29,149,0.5)', padding: '0.5rem 0.75rem' }}
                 onMouseEnter={e => e.currentTarget.style.color = darkPurple}
                 onMouseLeave={e => e.currentTarget.style.color = 'rgba(76,29,149,0.5)'}
@@ -315,82 +316,112 @@ export function BrandFindCreatorsContent() {
         </div>
       )}
 
-      {/* ── Results ─────────────────────────────────────────────── */}
+      {/* ── Main content: filter panel + grid ──────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-24 md:pb-8">
+        <div className="flex gap-6 items-start">
 
-        {/* Count row */}
-        {!loading && (
-          <p className="text-xs mb-5" style={{ color: 'rgba(76,29,149,0.45)' }}>
-            <span className="font-black" style={{ color: darkPurple }}>{total.toLocaleString()}</span>
-            {' '}creator{total !== 1 ? 's' : ''} found
-            {search && <span> matching <em style={{ fontStyle: 'normal', color: purple }}>"{search}"</em></span>}
-          </p>
-        )}
-
-        {/* Error */}
-        {error && !loading && talents.length === 0 && (
-          <div className="text-center py-16">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-              style={{ backgroundColor: 'rgba(124,58,237,0.08)', border: '1px solid #e9d5ff' }}>
-              <Users className="w-6 h-6" style={{ color: purple }} />
+          {/* ── Left filter panel (desktop only) ──────────────── */}
+          <aside
+            className="hidden lg:block flex-shrink-0 sticky top-28 self-start overflow-y-auto rounded-2xl pb-4"
+            style={{ width: '230px', maxHeight: 'calc(100vh - 7.5rem)', backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.05)' }}
+          >
+            <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+              <span className="text-xs font-black uppercase tracking-wider" style={{ color: darkPurple }}>Filters</span>
+              {activeFilterCount > 0 && (
+                <button
+                  onClick={resetFilters}
+                  className="text-xs font-semibold transition-colors"
+                  style={{ color: 'rgba(76,29,149,0.45)' }}
+                  onMouseEnter={e => e.currentTarget.style.color = darkPurple}
+                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(76,29,149,0.45)'}
+                >
+                  Clear all
+                </button>
+              )}
             </div>
-            <p className="text-sm font-semibold mb-4" style={{ color: 'rgba(76,29,149,0.6)' }}>
-              Could not load creators
-            </p>
-            <button
-              onClick={fetchTalents}
-              className="px-6 py-2.5 rounded-full text-white text-sm font-bold transition-opacity hover:opacity-90"
-              style={{ backgroundColor: darkPurple }}
-            >
-              Try again
-            </button>
+            <div className="px-3">
+              <FilterSidebar {...hook} hideReset />
+            </div>
+          </aside>
+
+          {/* ── Creator grid ────────────────────────────────────── */}
+          <div className="flex-1 min-w-0">
+
+            {/* Count row */}
+            {!loading && (
+              <p className="text-xs mb-5" style={{ color: 'rgba(76,29,149,0.45)' }}>
+                <span className="font-black" style={{ color: darkPurple }}>{total.toLocaleString()}</span>
+                {' '}creator{total !== 1 ? 's' : ''} found
+                {search && <span> matching <em style={{ fontStyle: 'normal', color: purple }}>"{search}"</em></span>}
+              </p>
+            )}
+
+            {/* Error */}
+            {error && !loading && talents.length === 0 && (
+              <div className="text-center py-16">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                  style={{ backgroundColor: 'rgba(124,58,237,0.08)', border: '1px solid #e9d5ff' }}>
+                  <Users className="w-6 h-6" style={{ color: purple }} />
+                </div>
+                <p className="text-sm font-semibold mb-4" style={{ color: 'rgba(76,29,149,0.6)' }}>
+                  Could not load creators
+                </p>
+                <button
+                  onClick={fetchTalents}
+                  className="px-6 py-2.5 rounded-full text-white text-sm font-bold transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: darkPurple }}
+                >
+                  Try again
+                </button>
+              </div>
+            )}
+
+            {/* Grid — 2 col mobile, 2 col sm, 3 col lg, 4 col xl */}
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+              {loading && visibleCount === PAGE_SIZE
+                ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
+                : talents.slice(0, visibleCount).map(c => (
+                  <BrandCreatorCard key={c._id || c.id} talent={c} from="/brand/find-creators" />
+                ))
+              }
+            </div>
+
+            {/* Empty */}
+            {!loading && talents.length === 0 && !error && (
+              <div className="text-center py-20">
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                  style={{ backgroundColor: 'rgba(124,58,237,0.08)', border: '1px solid #e9d5ff' }}>
+                  <Users className="w-7 h-7" style={{ color: purple }} />
+                </div>
+                <p className="font-black text-base mb-1.5" style={{ color: darkPurple }}>
+                  {search ? `No creators match "${search}"` : 'No creators found'}
+                </p>
+                <p className="text-sm mb-6" style={{ color: 'rgba(76,29,149,0.5)' }}>
+                  Try a different search or adjust your filters.
+                </p>
+                <button
+                  onClick={resetFilters}
+                  className="px-6 py-2.5 rounded-full text-white text-sm font-bold transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: darkPurple }}
+                >
+                  Clear filters
+                </button>
+              </div>
+            )}
+
+            {/* Infinite scroll sentinel */}
+            <div ref={sentinelRef} className="flex justify-center py-8">
+              {visibleCount < talents.length && (
+                <div className="flex items-center gap-2 text-sm" style={{ color: '#a78bfa' }}>
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeOpacity="0.25"/>
+                    <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  Loading more…
+                </div>
+              )}
+            </div>
           </div>
-        )}
-
-        {/* Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
-          {loading && visibleCount === PAGE_SIZE
-            ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
-            : talents.slice(0, visibleCount).map(c => (
-              <BrandCreatorCard key={c._id || c.id} talent={c} from="/brand/find-creators" />
-            ))
-          }
-        </div>
-
-        {/* Empty */}
-        {!loading && talents.length === 0 && !error && (
-          <div className="text-center py-20">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-              style={{ backgroundColor: 'rgba(124,58,237,0.08)', border: '1px solid #e9d5ff' }}>
-              <Users className="w-7 h-7" style={{ color: purple }} />
-            </div>
-            <p className="font-black text-base mb-1.5" style={{ color: darkPurple }}>
-              {search ? `No creators match "${search}"` : 'No creators found'}
-            </p>
-            <p className="text-sm mb-6" style={{ color: 'rgba(76,29,149,0.5)' }}>
-              Try a different search or adjust your filters.
-            </p>
-            <button
-              onClick={resetFilters}
-              className="px-6 py-2.5 rounded-full text-white text-sm font-bold transition-opacity hover:opacity-90"
-              style={{ backgroundColor: darkPurple }}
-            >
-              Clear filters
-            </button>
-          </div>
-        )}
-
-        {/* Infinite scroll sentinel */}
-        <div ref={sentinelRef} className="flex justify-center py-8">
-          {visibleCount < talents.length && (
-            <div className="flex items-center gap-2 text-sm" style={{ color: '#a78bfa' }}>
-              <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeOpacity="0.25"/>
-                <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              Loading more…
-            </div>
-          )}
         </div>
       </div>
     </div>
