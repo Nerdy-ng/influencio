@@ -11,6 +11,7 @@ import {
   Send, X, ChevronDown,
 } from 'lucide-react'
 import { useFavorites } from '../hooks/useFavorites'
+import Navbar from '../components/Navbar'
 
 async function fetchReviews(talentId) {
   const { data } = await supabase
@@ -1087,23 +1088,6 @@ export default function TalentProfilePage() {
           <div className="flex flex-col gap-4">
             <QuickStats talent={c} />
 
-            <div className="rounded-2xl p-5" style={{ backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid #e9d5ff' }}>
-              <h3 className="font-bold mb-3 text-sm" style={{ color: '#0F0020' }}>Why work with {c.name.split(' ')[0]}?</h3>
-              <ul className="space-y-2.5">
-                {[
-                  { icon: Shield, text: 'Payment protected — funds held until you approve' },
-                  { icon: CheckCircle, text: `${c.completedCampaigns || 0}+ completed campaigns` },
-                  { icon: RefreshCw, text: 'Revisions included in every package' },
-                  { icon: ExternalLink, text: 'Verified African talent' },
-                ].map(({ icon: Icon, text }) => (
-                  <li key={text} className="flex items-start gap-2.5 text-xs" style={{ color: 'rgba(15,0,32,0.5)' }}>
-                    <Icon className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: purple }} />
-                    {text}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
             <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-start gap-2.5">
               <Shield className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
               <div>
@@ -1247,29 +1231,3 @@ export default function TalentProfilePage() {
   )
 }
 
-function Navbar() {
-  return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-brand-lav shadow-sm">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: darkPurple }}>
-            <Zap className="w-4 h-4 text-orange-400" />
-          </div>
-          <span className="text-xl font-bold tracking-tight" style={{ color: darkPurple }}>Brandior</span>
-        </Link>
-        <div className="flex items-center gap-4">
-          <Link to="/marketplace" className="text-sm font-medium transition-colors" style={{ color: 'rgba(15,0,32,0.5)' }} onMouseEnter={e => e.currentTarget.style.color='#0F0020'} onMouseLeave={e => e.currentTarget.style.color='rgba(15,0,32,0.5)'}>
-            Marketplace
-          </Link>
-          <Link
-            to="/brand-dashboard"
-            className="text-sm font-semibold px-4 py-2 rounded-full text-white"
-            style={{ backgroundColor: darkPurple }}
-          >
-            My Dashboard
-          </Link>
-        </div>
-      </div>
-    </nav>
-  )
-}
