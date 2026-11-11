@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ChevronLeft, Users } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import Navbar from '../components/Navbar'
 
 const purple     = '#7c3aed'
 const darkPurple = '#4c1d95'
@@ -156,71 +157,76 @@ export default function CampaignDetailPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#f3eeff' }}>
-      {/* Top bar */}
-      <header className="sticky top-0 z-30 px-4 sm:px-6 py-3 flex items-center gap-3"
-        style={{ backgroundColor: '#f3eeff', borderBottom: '1px solid #e9d5ff' }}>
-        <button onClick={() => navigate(-1)}
-          className="flex items-center gap-1.5 text-sm font-semibold transition-opacity hover:opacity-70 flex-shrink-0"
-          style={{ color: purple }}>
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <div className="flex items-center gap-2 text-sm flex-wrap min-w-0">
-          <button onClick={() => navigate('/creator/find-work')}
-            className="font-semibold transition-opacity hover:opacity-70 flex-shrink-0" style={{ color: purple }}>
-            Find Work
+      <Navbar />
+
+      {/* Breadcrumb — sits below the fixed Navbar */}
+      <div style={{ paddingTop: 60 }}>
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3"
+          style={{ borderBottom: '1px solid #e9d5ff' }}>
+          <button onClick={() => navigate(-1)}
+            className="flex items-center gap-1.5 text-sm font-semibold transition-opacity hover:opacity-70 flex-shrink-0"
+            style={{ color: purple, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+            <ChevronLeft className="w-4 h-4" />
           </button>
-          <span style={{ color: 'rgba(124,58,237,0.3)' }} className="flex-shrink-0">/</span>
-          <span className="font-bold truncate" style={{ color: darkPurple }}>{campaign.campaign_name}</span>
+          <div className="flex items-center gap-2 text-sm flex-wrap min-w-0">
+            <button onClick={() => navigate('/creator/find-work')}
+              className="font-semibold transition-opacity hover:opacity-70 flex-shrink-0"
+              style={{ color: purple, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+              Find Work
+            </button>
+            <span style={{ color: 'rgba(124,58,237,0.3)' }} className="flex-shrink-0">/</span>
+            <span className="font-bold truncate" style={{ color: darkPurple }}>{campaign.campaign_name}</span>
+          </div>
         </div>
-      </header>
+      </div>
 
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 pb-28">
 
         {/* Campaign hero card */}
         <div className="rounded-2xl p-6 mb-6"
-          style={{ background: 'linear-gradient(135deg, #1a0035 0%, #3d0080 100%)', border: '1px solid rgba(196,181,253,0.15)' }}>
+          style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-2">
                 {campaign.niche && (
-                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(124,58,237,0.3)', color: '#c4b5fd' }}>
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple }}>
                     {campaign.niche}
                   </span>
                 )}
                 {campaign.collab_type && (
-                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}>
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: darkPurple }}>
                     {campaign.collab_type}
                   </span>
                 )}
               </div>
-              <h1 className="text-2xl font-black text-white leading-tight mb-1">{campaign.campaign_name}</h1>
-              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>by {campaign.brandName}</p>
+              <h1 className="text-2xl font-black leading-tight mb-1" style={{ color: '#0e0020' }}>{campaign.campaign_name}</h1>
+              <p className="text-sm" style={{ color: 'rgba(15,0,32,0.5)' }}>by {campaign.brandName}</p>
             </div>
             <span className="text-[11px] font-bold px-3 py-1 rounded-full flex-shrink-0 mt-1"
-              style={{ backgroundColor: isClosed ? 'rgba(156,163,175,0.2)' : 'rgba(34,197,94,0.2)', color: isClosed ? '#d1d5db' : '#86efac' }}>
+              style={{ backgroundColor: isClosed ? '#f3f4f6' : '#dcfce7', color: isClosed ? 'rgba(15,0,32,0.4)' : '#16a34a' }}>
               {isClosed ? 'Closed' : 'Open'}
             </span>
           </div>
 
           {/* Key metrics */}
-          <div className="flex flex-wrap gap-x-5 gap-y-2 mt-4 text-sm">
+          <div className="flex flex-wrap gap-x-6 gap-y-3 mt-4 pt-4" style={{ borderTop: '1px solid #e9d5ff' }}>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Budget</p>
-              <p className="font-black text-white">₦{Number(campaign.budget).toLocaleString()}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: 'rgba(15,0,32,0.4)' }}>Budget</p>
+              <p className="font-black text-sm" style={{ color: '#0e0020' }}>₦{Number(campaign.budget).toLocaleString()}</p>
             </div>
             {campaign.timeline && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Timeline</p>
-                <p className="font-black text-white">{campaign.timeline}</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: 'rgba(15,0,32,0.4)' }}>Timeline</p>
+                <p className="font-black text-sm" style={{ color: '#0e0020' }}>{campaign.timeline}</p>
               </div>
             )}
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Pitches</p>
-              <p className="font-black text-white">{campaign.appCount} applied</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: 'rgba(15,0,32,0.4)' }}>Pitches</p>
+              <p className="font-black text-sm" style={{ color: '#0e0020' }}>{campaign.appCount} applied</p>
             </div>
           </div>
 
-          <p className="text-[11px] mt-4" style={{ color: 'rgba(255,255,255,0.3)' }}>Posted {timeAgo(campaign.created_at)}</p>
+          <p className="text-[11px] mt-3" style={{ color: 'rgba(15,0,32,0.35)' }}>Posted {timeAgo(campaign.created_at)}</p>
         </div>
 
         {/* Content types */}
