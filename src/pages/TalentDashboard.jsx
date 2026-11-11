@@ -336,10 +336,8 @@ const ROUTED_CREATOR_TABS = { browse: '/creator/find-work' }
 function Sidebar({ active, setActive, dashLogo, onSwitchToBrand }) {
   const navigateTo = useNavigate()
   const nav = [
-    { id: 'browse',       label: 'Find Work',         icon: Briefcase },
     { id: 'collabs',      label: 'My Collabs',       icon: Inbox },
     { id: 'pitches',      label: 'My Pitches',        icon: Send },
-    { id: 'notifications',label: 'Notifications',    icon: Bell },
     { id: 'rate-card',    label: 'Rate Card',         icon: CreditCard },
     { id: 'profile',      label: 'My Profile',       icon: LayoutDashboard },
     { id: 'portfolio',    label: 'Portfolio',         icon: ImagePlus },
