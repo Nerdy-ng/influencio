@@ -339,15 +339,7 @@ function RateCardOrder({ talent, isPreview, navigate }) {
           </div>
         </div>
 
-        {!isPreview && (
-          <button
-            onClick={goToCollab}
-            className="w-full py-3.5 rounded-2xl text-white text-sm font-bold transition-opacity hover:opacity-90"
-            style={{ backgroundColor: darkPurple }}
-          >
-            Make an Offer
-          </button>
-        )}
+        {/* Rate card is browse-only; Collab CTA is in the profile header */}
       </div>
     </div>
   )
@@ -730,6 +722,12 @@ export default function TalentProfilePage() {
 
   async function startConversation() { openChat() }
 
+  function startCollab() {
+    navigate('/collab/brief', {
+      state: { creator: talent, creatorId: talent?._id || talent?.id, typeLabel: '', durationLabel: '', total: 0 }
+    })
+  }
+
   async function sendChatMessage(e) {
     e.preventDefault()
     const text = chatInput.trim()
@@ -927,24 +925,38 @@ export default function TalentProfilePage() {
                 <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-400 ring-2 ring-white" />
               </div>
               {!isPreview && (
-                <div className="flex items-center gap-2 pb-1">
-                  <button
-                    onClick={() => toggle(c)}
-                    className="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl border transition-all"
-                    style={{
-                      backgroundColor: isFav(c._id || c.id) ? '#fff0f5' : 'white',
-                      borderColor: isFav(c._id || c.id) ? pink : '#e9d5ff',
-                      color: isFav(c._id || c.id) ? pink : 'rgba(15,0,32,0.4)',
-                    }}
-                  >
-                    <Heart className="w-3.5 h-3.5" fill={isFav(c._id || c.id) ? pink : 'none'}
-                      style={{ color: isFav(c._id || c.id) ? pink : 'rgba(15,0,32,0.4)' }} />
-                    {isFav(c._id || c.id) ? 'Saved' : 'Save'}
-                  </button>
+                <div className="flex flex-col items-end gap-2 pb-1">
+                  <div className="flex items-center gap-2">
+                    {/* Heart icon — no label */}
+                    <button
+                      onClick={() => toggle(c)}
+                      className="p-2 rounded-xl border transition-all"
+                      style={{
+                        backgroundColor: isFav(c._id || c.id) ? '#fff0f5' : 'white',
+                        borderColor: isFav(c._id || c.id) ? pink : '#e9d5ff',
+                      }}
+                      title={isFav(c._id || c.id) ? 'Saved' : 'Save'}
+                    >
+                      <Heart className="w-4 h-4" fill={isFav(c._id || c.id) ? pink : 'none'}
+                        style={{ color: isFav(c._id || c.id) ? pink : 'rgba(15,0,32,0.4)' }} />
+                    </button>
+                    {/* Primary CTA: Collab */}
+                    <button
+                      onClick={startCollab}
+                      className="flex items-center gap-1.5 text-sm font-bold px-5 py-2.5 rounded-xl text-white transition-opacity hover:opacity-90"
+                      style={{ backgroundColor: darkPurple }}
+                    >
+                      <Users className="w-4 h-4" />
+                      Collab
+                    </button>
+                  </div>
+                  {/* Secondary CTA: Message */}
                   <button
                     onClick={openChat}
-                    className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl text-white transition-colors"
-                    style={{ backgroundColor: darkPurple }}
+                    className="flex items-center justify-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl border transition-colors w-full"
+                    style={{ borderColor: '#e9d5ff', color: purple, backgroundColor: 'rgba(124,58,237,0.04)' }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.08)' }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.04)' }}
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
                     Message {c.name.split(' ')[0]}
