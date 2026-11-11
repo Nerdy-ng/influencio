@@ -842,7 +842,7 @@ export default function TalentProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
-        <Navbar />
+        <Navbar forceRole="brand" />
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
           <div className="h-8 w-40 rounded-lg mb-6 animate-pulse" style={{ backgroundColor: 'rgba(124,58,237,0.1)' }} />
           <SkeletonProfile />
@@ -854,7 +854,7 @@ export default function TalentProfilePage() {
   if (error && !talent) {
     return (
       <div className="min-h-screen bg-white">
-        <Navbar />
+        <Navbar forceRole="brand" />
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 text-center">
           <p className="mb-4" style={{ color: 'rgba(15,0,32,0.4)' }}>Could not load this talent's profile.</p>
           <button onClick={() => navigate('/marketplace')} className="px-6 py-2.5 rounded-full text-white text-sm font-semibold" style={{ backgroundColor: darkPurple }}>
@@ -883,7 +883,7 @@ export default function TalentProfilePage() {
         {talent.avatar && <meta property="og:image" content={talent.avatar} />}
         <link rel="canonical" href={`https://brandior.africa/creators/${creatorHandle}`} />
       </Helmet>
-      <Navbar />
+      <Navbar forceRole="brand" />
 
       {/* Preview banner */}
       {isPreview && (

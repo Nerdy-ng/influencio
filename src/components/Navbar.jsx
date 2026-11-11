@@ -55,7 +55,7 @@ function UserAvatar({ profile, size = 'md' }) {
   )
 }
 
-export default function Navbar() {
+export default function Navbar({ forceRole } = {}) {
   const navigate = useNavigate()
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -65,6 +65,7 @@ export default function Navbar() {
   const [profile, setProfile] = useState(null)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userRole, setUserRole] = useState('talent')
+  const role = forceRole || userRole
   const [notifs, setNotifs] = useState({})
   const [inAppNotifs, setInAppNotifs] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -181,11 +182,11 @@ export default function Navbar() {
 
         {/* Logo */}
         <Link
-          to={isLoggedIn ? (userRole === 'brand' ? '/marketplace' : '/creator/find-work') : '/'}
+          to={isLoggedIn ? (role === 'brand' ? '/marketplace' : '/creator/find-work') : '/'}
           onClick={e => {
             if (!isLoggedIn) return
             e.preventDefault()
-            const home = userRole === 'brand' ? '/marketplace' : '/creator/find-work'
+            const home = role === 'brand' ? '/marketplace' : '/creator/find-work'
             if (window.location.pathname === home) {
               window.location.reload()
             } else {
@@ -203,7 +204,7 @@ export default function Navbar() {
 
         {/* Desktop nav */}
         <ul className="hidden md:flex items-center gap-1 flex-1 justify-center">
-          {(isLoggedIn ? (userRole === 'brand' ? BRAND_NAV : TALENT_NAV) : [
+          {(isLoggedIn ? (role === 'brand' ? BRAND_NAV : TALENT_NAV) : [
             { label: 'Work with Brands', href: '#pricing', isAnchor: true },
             { label: 'Hire Talents', href: '#talents',      isAnchor: true },
             { label: 'How it Works', href: '#how-it-works', isAnchor: true },
@@ -346,7 +347,7 @@ export default function Navbar() {
 
                   {/* Nav items */}
                   <div className="py-1">
-                    {(userRole === 'brand' ? BRAND_DROPDOWN : TALENT_DROPDOWN).map(({ label, icon: Icon, href }) => (
+                    {(role === 'brand' ? BRAND_DROPDOWN : TALENT_DROPDOWN).map(({ label, icon: Icon, href }) => (
                       <Link key={label} to={href} onClick={() => setUserOpen(false)}
                         className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-brand-dark/70 font-medium w-full transition-colors"
                         onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.06)'}
@@ -477,7 +478,7 @@ export default function Navbar() {
               </div>
 
               {/* Main nav links */}
-              {(userRole === 'brand' ? BRAND_NAV : TALENT_NAV).map(({ label, href, notifKey, isCta }) => (
+              {(role === 'brand' ? BRAND_NAV : TALENT_NAV).map(({ label, href, notifKey, isCta }) => (
                 isCta
                   ? <Link key={label} to={href} onClick={() => setMobileOpen(false)}
                       className="flex items-center justify-center gap-2 font-bold px-4 py-2.5 rounded-xl text-sm mb-1"
@@ -502,7 +503,7 @@ export default function Navbar() {
               <div className="h-px my-2" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }} />
 
               {/* Profile dropdown links */}
-              {(userRole === 'brand' ? BRAND_DROPDOWN : TALENT_DROPDOWN).map(({ label, icon: Icon, href }) => (
+              {(role === 'brand' ? BRAND_DROPDOWN : TALENT_DROPDOWN).map(({ label, icon: Icon, href }) => (
                 <Link key={label} to={href} onClick={() => setMobileOpen(false)}
                   className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
                   style={{ color: 'rgba(255,255,255,0.75)' }}
