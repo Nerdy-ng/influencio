@@ -1402,114 +1402,162 @@ function PostCampaignTab({ onCreated }) {
     }
   }
 
+  const inputStyle = { border: '1.5px solid #e9d5ff', backgroundColor: '#fff', color: '#0F0020' }
+  const focusOn  = e => { e.target.style.borderColor = '#c4b5fd'; e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.10)' }
+  const focusOff = e => { e.target.style.borderColor = '#e9d5ff'; e.target.style.boxShadow = 'none' }
+
   if (done) {
     return (
-      <div className="max-w-xl mx-auto text-center py-20 space-y-4">
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto" style={{ background: '#dcfce7' }}>
-          <CheckCircle className="w-8 h-8 text-green-600" />
+      <div className="max-w-2xl mx-auto">
+        <div className="rounded-2xl p-10 text-center" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 20px rgba(124,58,237,0.07)' }}>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ backgroundColor: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)' }}>
+            <CheckCircle className="w-7 h-7" style={{ color: '#16a34a' }} />
+          </div>
+          <h2 className="text-xl font-black mb-2" style={{ color: '#0e0020' }}>Campaign Posted!</h2>
+          <p className="text-sm mb-7" style={{ color: 'rgba(15,0,32,0.5)', lineHeight: '1.65' }}>
+            Creators can now discover and pitch for your campaign.<br />Go to <strong style={{ color: '#4c1d95' }}>My Campaigns</strong> to review applicants.
+          </p>
+          <button
+            onClick={() => { setDone(false); setTitle(''); setNiche(''); setBrief(''); setBudget(''); setTimeline('') }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: '#7c3aed' }}>
+            <Plus className="w-4 h-4" /> Post another campaign
+          </button>
         </div>
-        <h2 className="text-2xl font-black" style={{ color: '#1e0040' }}>Campaign Posted!</h2>
-        <p className="text-gray-500 text-sm">Creators can now discover and pitch for your campaign. Check <strong>My Campaigns</strong> to see applicants.</p>
-        <button onClick={() => { setDone(false); setTitle(''); setNiche(''); setBrief(''); setBudget(''); setTimeline('') }}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white"
-          style={{ background: '#4c1d95' }}>
-          <Plus className="w-4 h-4" /> Post another
-        </button>
       </div>
     )
   }
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="mb-6">
-        <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#7c3aed' }}>New Campaign</p>
-        <h2 className="text-2xl font-black" style={{ color: '#1e0040' }}>Post a Campaign</h2>
-        <p className="text-sm text-gray-500 mt-1">Creators on Brandior will discover your campaign and pitch for it. You choose who to hire.</p>
+
+      {/* ── Page header ── */}
+      <div className="mb-7">
+        <h2 className="text-xl sm:text-2xl font-black leading-tight" style={{ color: '#0e0020' }}>Post a Campaign</h2>
+        <p className="text-sm mt-1" style={{ color: 'rgba(15,0,32,0.5)' }}>
+          Publish a brief. Creators discover it and pitch. You choose who to hire.
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Campaign name */}
-        <div>
-          <label className="text-xs font-bold uppercase tracking-widest block mb-2" style={{ color: '#374151' }}>Campaign Title</label>
-          <input value={title} onChange={e => setTitle(e.target.value)}
-            placeholder="e.g. Ramadan campaign — Instagram Reel"
-            className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-            style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff', color: '#1e0040' }} />
+      <form onSubmit={handleSubmit} className="space-y-4">
+
+        {/* ── 01 Campaign basics ── */}
+        <div className="rounded-2xl p-5 sm:p-6" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.05)' }}>
+          <p className="text-[10px] font-black uppercase tracking-widest mb-4" style={{ color: 'rgba(124,58,237,0.5)' }}>01 — Campaign basics</p>
+          <div>
+            <label className="text-xs font-bold uppercase tracking-widest block mb-2" style={{ color: 'rgba(15,0,32,0.4)' }}>Campaign title</label>
+            <input
+              value={title} onChange={e => setTitle(e.target.value)}
+              placeholder="e.g. Ramadan campaign — Instagram Reel"
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+              style={inputStyle}
+              onFocus={focusOn} onBlur={focusOff}
+            />
+          </div>
         </div>
 
-        {/* Niche + Type row */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs font-bold uppercase tracking-widest block mb-2" style={{ color: '#374151' }}>Niche</label>
-            <div className="flex flex-wrap gap-2">
-              {CAMPAIGN_NICHES.map(n => (
-                <button key={n} type="button" onClick={() => setNiche(n)}
-                  className="text-xs font-bold px-3 py-1.5 rounded-full transition-all"
-                  style={{
-                    backgroundColor: niche === n ? '#7c3aed' : '#f3eeff',
-                    color: niche === n ? '#fff' : '#6d28d9',
-                    border: niche === n ? 'none' : '1px solid #e9d5ff',
-                  }}>
-                  {n}
-                </button>
-              ))}
+        {/* ── 02 Creator requirements ── */}
+        <div className="rounded-2xl p-5 sm:p-6" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.05)' }}>
+          <p className="text-[10px] font-black uppercase tracking-widest mb-4" style={{ color: 'rgba(124,58,237,0.5)' }}>02 — Creator requirements</p>
+
+          <div className="space-y-5">
+            <div>
+              <label className="text-xs font-bold uppercase tracking-widest block mb-2.5" style={{ color: 'rgba(15,0,32,0.4)' }}>Niche</label>
+              <div className="flex flex-wrap gap-2">
+                {CAMPAIGN_NICHES.map(n => (
+                  <button key={n} type="button" onClick={() => setNiche(n)}
+                    className="text-xs font-bold px-3 py-1.5 rounded-full transition-all"
+                    style={niche === n
+                      ? { backgroundColor: '#7c3aed', color: '#fff', border: '1.5px solid #7c3aed' }
+                      : { backgroundColor: '#f3eeff', color: '#4c1d95', border: '1.5px solid #e9d5ff' }}>
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold uppercase tracking-widest block mb-2.5" style={{ color: 'rgba(15,0,32,0.4)' }}>Content type</label>
+              <div className="flex flex-wrap gap-2">
+                {COLLAB_TYPES.map(t => (
+                  <button key={t} type="button" onClick={() => setType(t)}
+                    className="text-xs font-bold px-3 py-1.5 rounded-full transition-all"
+                    style={type === t
+                      ? { backgroundColor: '#4c1d95', color: '#fff', border: '1.5px solid #4c1d95' }
+                      : { backgroundColor: '#f3eeff', color: '#4c1d95', border: '1.5px solid #e9d5ff' }}>
+                    {t}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-          <div>
-            <label className="text-xs font-bold uppercase tracking-widest block mb-2" style={{ color: '#374151' }}>Content Type</label>
-            <div className="flex flex-wrap gap-2">
-              {COLLAB_TYPES.map(t => (
-                <button key={t} type="button" onClick={() => setType(t)}
-                  className="text-xs font-bold px-3 py-1.5 rounded-full transition-all"
-                  style={{
-                    backgroundColor: type === t ? '#4c1d95' : '#f3eeff',
-                    color: type === t ? '#fff' : '#6d28d9',
-                    border: type === t ? 'none' : '1px solid #e9d5ff',
-                  }}>
-                  {t}
-                </button>
-              ))}
+        </div>
+
+        {/* ── 03 Campaign brief ── */}
+        <div className="rounded-2xl p-5 sm:p-6" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.05)' }}>
+          <p className="text-[10px] font-black uppercase tracking-widest mb-4" style={{ color: 'rgba(124,58,237,0.5)' }}>03 — Campaign brief</p>
+          <label className="text-xs font-bold uppercase tracking-widest block mb-2" style={{ color: 'rgba(15,0,32,0.4)' }}>Brief</label>
+          <textarea
+            value={brief} onChange={e => setBrief(e.target.value)} rows={7}
+            placeholder="Describe what you need. Include product details, key messages, dos/don'ts, required hashtags, deliverables, etc."
+            className="w-full px-4 py-3.5 rounded-xl text-sm outline-none resize-none leading-relaxed transition-all"
+            style={inputStyle}
+            onFocus={focusOn} onBlur={focusOff}
+          />
+          <p className="text-[11px] mt-2" style={{ color: 'rgba(15,0,32,0.35)' }}>
+            A clear, detailed brief attracts better-matched creators.
+          </p>
+        </div>
+
+        {/* ── 04 Budget & timeline ── */}
+        <div className="rounded-2xl p-5 sm:p-6" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.05)' }}>
+          <p className="text-[10px] font-black uppercase tracking-widest mb-4" style={{ color: 'rgba(124,58,237,0.5)' }}>04 — Budget & timeline</p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-bold uppercase tracking-widest block mb-2" style={{ color: 'rgba(15,0,32,0.4)' }}>Budget</label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold pointer-events-none" style={{ color: 'rgba(124,58,237,0.5)' }}>₦</span>
+                <input
+                  value={budget} onChange={e => setBudget(e.target.value.replace(/\D/g, ''))} inputMode="numeric"
+                  placeholder="50,000"
+                  className="w-full pl-8 pr-4 py-3 rounded-xl text-sm outline-none transition-all"
+                  style={inputStyle}
+                  onFocus={focusOn} onBlur={focusOff}
+                />
+              </div>
+              <p className="text-[11px] mt-1.5" style={{ color: 'rgba(15,0,32,0.35)' }}>Minimum ₦20,000</p>
+            </div>
+            <div>
+              <label className="text-xs font-bold uppercase tracking-widest block mb-2" style={{ color: 'rgba(15,0,32,0.4)' }}>Deadline / timeline</label>
+              <input
+                value={timeline} onChange={e => setTimeline(e.target.value)}
+                placeholder="e.g. 7 days, Dec 31 2026"
+                className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+                style={inputStyle}
+                onFocus={focusOn} onBlur={focusOff}
+              />
             </div>
           </div>
         </div>
 
-        {/* Brief */}
-        <div>
-          <label className="text-xs font-bold uppercase tracking-widest block mb-2" style={{ color: '#374151' }}>Campaign Brief</label>
-          <textarea value={brief} onChange={e => setBrief(e.target.value)} rows={5} placeholder="Describe what you need. Include product details, messaging, dos/don'ts, hashtags, etc."
-            className="w-full px-4 py-3 rounded-xl text-sm outline-none resize-none"
-            style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff', color: '#1e0040' }} />
-        </div>
-
-        {/* Budget + Timeline row */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs font-bold uppercase tracking-widest block mb-2" style={{ color: '#374151' }}>Budget (₦)</label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold" style={{ color: '#9ca3af' }}>₦</span>
-              <input value={budget} onChange={e => setBudget(e.target.value.replace(/\D/g, ''))} inputMode="numeric"
-                placeholder="50000"
-                className="w-full pl-8 pr-4 py-3 rounded-xl text-sm outline-none"
-                style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff', color: '#1e0040' }} />
-            </div>
-            <p className="text-xs text-gray-400 mt-1">Minimum ₦20,000</p>
+        {/* ── 05 Publish ── */}
+        {error && (
+          <div className="rounded-xl px-4 py-3 text-sm font-semibold" style={{ backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca' }}>
+            {error}
           </div>
-          <div>
-            <label className="text-xs font-bold uppercase tracking-widest block mb-2" style={{ color: '#374151' }}>Timeline / Deadline</label>
-            <input value={timeline} onChange={e => setTimeline(e.target.value)}
-              placeholder="e.g. 7 days, Dec 31 2026"
-              className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-              style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff', color: '#1e0040' }} />
-          </div>
-        </div>
+        )}
 
-        {error && <p className="text-sm font-semibold text-red-500">{error}</p>}
-
-        <button type="submit" disabled={saving}
-          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-white text-sm disabled:opacity-50"
-          style={{ backgroundColor: '#4c1d95' }}>
-          {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Posting…</> : <><Megaphone className="w-4 h-4" /> Post Campaign</>}
+        <button
+          type="submit" disabled={saving}
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-black text-white text-sm disabled:opacity-50 transition-opacity hover:opacity-92"
+          style={{ backgroundColor: '#7c3aed' }}>
+          {saving
+            ? <><Loader2 className="w-4 h-4 animate-spin" /> Publishing…</>
+            : <><Megaphone className="w-4 h-4" /> Publish Campaign</>}
         </button>
+        <p className="text-center text-xs" style={{ color: 'rgba(15,0,32,0.35)' }}>
+          Your campaign will be visible to all creators on Brandior immediately.
+        </p>
       </form>
     </div>
   )
