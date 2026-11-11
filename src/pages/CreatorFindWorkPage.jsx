@@ -272,24 +272,23 @@ export default function CreatorFindWorkPage() {
     <div style={{ backgroundColor: '#f3eeff', minHeight: '100vh' }}>
 
       {/* ── Page heading area ── */}
-      <div style={{ padding: '32px 48px 20px' }} className="sm:px-12 px-4">
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-8 lg:px-12 pt-8 pb-5">
         <h1 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 900, color: '#0e0020', marginBottom: 6, lineHeight: 1.1 }}>
           Find Work
         </h1>
-        <p style={{ fontSize: 14, color: 'rgba(15,0,32,0.5)', marginBottom: 20, lineHeight: 1.5, maxWidth: 500 }}>
-          Discover brand campaigns, collaborations and paid opportunities<br className="hidden sm:block" /> that match your skills and audience.
+        <p style={{ fontSize: 14, color: 'rgba(15,0,32,0.5)', marginBottom: 20, lineHeight: 1.5, maxWidth: 520 }}>
+          Discover brand campaigns, collaborations and paid opportunities that match your skills and audience.
         </p>
 
         {/* Search bar with Search button */}
         <div
           style={{
-            display: 'flex', alignItems: 'center', gap: 0,
+            display: 'flex', alignItems: 'center',
             backgroundColor: '#fff',
             border: '1.5px solid #e9d5ff',
             borderRadius: 999,
             boxShadow: '0 2px 12px rgba(124,58,237,0.07)',
             padding: '4px 4px 4px 20px',
-            maxWidth: 700,
           }}
         >
           <Search style={{ width: 18, height: 18, color: 'rgba(124,58,237,0.4)', flexShrink: 0 }} />
@@ -323,16 +322,13 @@ export default function CreatorFindWorkPage() {
       </div>
 
       {/* ── Two-column layout ── */}
-      <div
-        style={{ display: 'flex', gap: 24, padding: '0 48px 48px', alignItems: 'flex-start' }}
-        className="px-4 sm:px-12 flex-col lg:flex-row"
-      >
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-8 lg:px-12 pb-16 flex flex-col lg:flex-row gap-6 items-start">
 
         {/* ── Left filter panel (desktop) ── */}
         <aside
-          className="hidden lg:block"
+          className="hidden lg:block flex-shrink-0"
           style={{
-            width: 280, flexShrink: 0,
+            width: 272,
             backgroundColor: '#fff',
             borderRadius: 16,
             border: '1px solid #e9d5ff',
@@ -687,14 +683,7 @@ export default function CreatorFindWorkPage() {
         </div>
       )}
 
-      <style>{`
-        @keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
-        @media (max-width: 1023px) {
-          .lg\\:block { display: none !important; }
-          .lg\\:flex-row { flex-direction: column !important; }
-          .hidden.lg\\:block { display: none !important; }
-        }
-      `}</style>
+      <style>{`@keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }`}</style>
     </div>
   )
 }
