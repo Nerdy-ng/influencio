@@ -1,13 +1,155 @@
 import { useState, useRef } from 'react'
-import { Search, SlidersHorizontal, X, Users, ChevronDown } from 'lucide-react'
+import { Search, SlidersHorizontal, X, Users, Heart, BadgeCheck, Play } from 'lucide-react'
 import { useCreatorSearch, PAGE_SIZE } from '../hooks/useCreatorSearch'
-import { TalentCard, FilterSidebar, SkeletonCard, SortDropdown } from './Marketplace'
+import { FilterSidebar, SkeletonCard, SortDropdown, StarRating } from './Marketplace'
+import { useNavigate } from 'react-router-dom'
+import { useFavorites } from '../hooks/useFavorites'
+import { NICHES, formatNGN, formatFollowers } from '../lib/creatorFilters'
 
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '')
 
 const darkPurple = '#4c1d95'
 const purple     = '#7c3aed'
 const pink       = '#F72585'
+
+const TIERS = [
+  { value: 'fast-rising', label: 'Fast Rising', color: '#22c55e' },
+  { value: 'next-rated',  label: 'Next Rated',  color: '#a78bfa', diamond: true },
+  { value: 'top-rated',   label: 'Top Rated',   color: '#D4AF37', diamond: true },
+]
+
+function BrandCreatorCard({ talent, from = '/brand/find-creators' }) {
+  const navigate = useNavigate()
+  const { toggle, isFav } = useFavorites()
+  const faved = isFav(talent._id || talent.id)
+  const videoRef = useRef(null)
+  const [videoPlaying, setVideoPlaying] = useState(false)
+
+  const avatarSrc = talent.avatar_url || talent.avatar
+    || null // fall through to initials
+
+  const tierInfo = TIERS.find(x => x.value === talent.tier) || TIERS[0]
+
+  function handleClick() {
+    navigate(`/creators/${talent.handle || talent._id || talent.id}`, { state: { from } })
+  }
+
+  return (
+    <div
+      onClick={handleClick}
+      className="cursor-pointer rounded-2xl overflow-hidden flex flex-col transition-all duration-200"
+      style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 28px rgba(124,58,237,0.13)'; e.currentTarget.style.borderColor = '#c4b5fd' }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 12px rgba(124,58,237,0.06)'; e.currentTarget.style.borderColor = '#e9d5ff' }}
+    >
+      {/* Portrait image */}
+      <div
+        className="relative overflow-hidden flex-shrink-0"
+        style={{ aspectRatio: '4/5' }}
+        onMouseEnter={() => { if (videoRef.current && talent.featuredVideo) { videoRef.current.play().catch(() => {}); setVideoPlaying(true) } }}
+        onMouseLeave={() => { if (videoRef.current && talent.featuredVideo) { videoRef.current.pause(); videoRef.current.currentTime = 0; setVideoPlaying(false) } }}
+      >
+        {talent.featuredVideo ? (
+          <>
+            <video ref={videoRef} src={talent.featuredVideo}
+              className="absolute inset-0 w-full h-full object-cover"
+              muted loop playsInline preload="metadata"
+              poster={avatarSrc || undefined} />
+            {!videoPlaying && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(14,0,32,0.5)', backdropFilter: 'blur(4px)' }}>
+                  <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                </div>
+              </div>
+            )}
+          </>
+        ) : avatarSrc ? (
+          <img src={avatarSrc} alt={talent.name}
+            className="absolute inset-0 w-full h-full object-cover"
+            onError={e => { e.target.style.display = 'none' }} />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center font-black text-4xl" style={{ background: 'linear-gradient(135deg, #f3eeff, #e9d5ff)', color: '#7c3aed' }}>
+            {(talent.name || 'C')[0].toUpperCase()}
+          </div>
+        )}
+
+        {/* Tier badge */}
+        <div className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
+          style={{ backgroundColor: tierInfo.color + '22', color: tierInfo.color, border: `1px solid ${tierInfo.color}55`, backdropFilter: 'blur(8px)' }}>
+          {tierInfo.diamond
+            ? <><svg width="7" height="7" viewBox="0 0 24 24" fill={tierInfo.color}><path d="M12 2L2 9l10 13L22 9z"/></svg>{tierInfo.label}</>
+            : tierInfo.label}
+        </div>
+
+        {/* Heart */}
+        <button
+          onClick={ev => { ev.stopPropagation(); toggle(talent) }}
+          className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full flex items-center justify-center transition-colors"
+          style={{ backgroundColor: faved ? 'rgba(247,37,133,0.25)' : 'rgba(14,0,32,0.35)', backdropFilter: 'blur(6px)' }}
+        >
+          <Heart className="w-3.5 h-3.5" style={{ color: faved ? pink : '#fff' }} fill={faved ? pink : 'none'} />
+        </button>
+      </div>
+
+      {/* Info */}
+      <div className="p-3.5 flex flex-col gap-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1">
+              <p className="font-black text-sm truncate" style={{ color: '#0F0020' }}>{talent.name}</p>
+              {talent.completedCampaigns >= 10 && (
+                <span className="w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: purple }}>
+                  <BadgeCheck className="w-2 h-2 text-white" strokeWidth={3} />
+                </span>
+              )}
+            </div>
+            <p className="text-[11px]" style={{ color: 'rgba(76,29,149,0.5)' }}>@{talent.handle}</p>
+          </div>
+          <StarRating rating={talent.avgRating} />
+        </div>
+
+        <div className="flex flex-wrap gap-1">
+          {(talent.niches || []).slice(0, 2).map(n => {
+            const nicheObj = NICHES.find(x => x.label === n)
+            return (
+              <span key={n} className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple }}>
+                {nicheObj ? nicheObj.emoji + ' ' : ''}{n}
+              </span>
+            )
+          })}
+          {talent.availableForHire && (
+            <span className="flex items-center gap-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full"
+              style={{ backgroundColor: 'rgba(22,163,74,0.07)', color: '#16a34a', border: '1px solid rgba(22,163,74,0.15)' }}>
+              <span className="w-1 h-1 rounded-full bg-green-500 flex-shrink-0" />
+              Available
+            </span>
+          )}
+        </div>
+
+        <p className="text-[11px]" style={{ color: 'rgba(76,29,149,0.45)' }}>
+          {formatFollowers(talent.totalFollowers)} followers
+          {' · '}{Number(talent.avgEngagement || 0).toFixed(1)}% eng
+          {' · '}{talent.completedCampaigns || 0} jobs
+        </p>
+
+        <div className="flex items-center justify-between gap-2 pt-2 mt-auto"
+          style={{ borderTop: '1px solid rgba(124,58,237,0.08)' }}>
+          <span className="text-sm font-black" style={{ color: purple }}>
+            From {formatNGN(talent.minPrice)}
+          </span>
+          <button
+            onClick={e => { e.stopPropagation(); navigate(`/creators/${talent.handle || talent._id || talent.id}`, { state: { from } }) }}
+            className="text-xs font-bold px-3.5 py-1.5 rounded-lg text-white transition-opacity hover:opacity-90 flex-shrink-0"
+            style={{ backgroundColor: purple }}
+          >
+            View Profile →
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export function BrandFindCreatorsContent() {
   const hook = useCreatorSearch()
@@ -25,23 +167,35 @@ export function BrandFindCreatorsContent() {
   return (
     <div style={{ backgroundColor: '#f3eeff', minHeight: '100%' }}>
 
-      {/* ── Page intro ─────────────────────────────────────────── */}
-      <div className="px-4 sm:px-6 pt-6 pb-5">
-        <div className="max-w-screen-xl mx-auto">
-          <div className="flex items-baseline gap-3 flex-wrap">
-            <h1 className="text-xl sm:text-2xl font-black leading-tight" style={{ color: '#0e0020' }}>
-              Find Creators
+      {/* ── Hero banner ─────────────────────────────────────────── */}
+      <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #f3eeff 0%, #ede9fe 60%, #ddd6fe 100%)' }}>
+        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-8 sm:py-12 flex items-center justify-between gap-6">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-3xl sm:text-4xl font-black leading-tight mb-2">
+              <span style={{ color: '#0e0020' }}>Find </span>
+              <span style={{ color: '#7c3aed' }}>Creators</span>
             </h1>
-            <span
-              className="text-xs font-semibold tracking-wide uppercase px-2.5 py-1 rounded-full"
-              style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple, border: '1px solid #e9d5ff' }}
-            >
-              Brand workspace
-            </span>
+            <p className="text-sm sm:text-base mb-5" style={{ color: 'rgba(15,0,32,0.55)' }}>
+              Discover verified African creators for your next campaign.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { icon: '🛡️', label: 'Vetted Creators' },
+                { icon: '🌍', label: 'Across Africa' },
+                { icon: '⚡', label: 'Ready to Collaborate' },
+              ].map(({ icon, label }) => (
+                <span key={label} className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full"
+                  style={{ backgroundColor: 'rgba(124,58,237,0.1)', color: darkPurple, border: '1px solid rgba(124,58,237,0.15)' }}>
+                  {icon} {label}
+                </span>
+              ))}
+            </div>
           </div>
-          <p className="mt-1 text-sm" style={{ color: 'rgba(15,0,32,0.5)' }}>
-            Discover verified African creators for your next campaign.
-          </p>
+          {/* Decorative circle motif */}
+          <div className="hidden sm:block flex-shrink-0 relative w-32 h-32 sm:w-40 sm:h-40">
+            <div className="absolute inset-0 rounded-full opacity-20" style={{ background: 'radial-gradient(circle, #7c3aed 0%, transparent 70%)' }} />
+            <div className="absolute inset-4 rounded-full opacity-15" style={{ background: 'radial-gradient(circle, #F72585 0%, transparent 70%)' }} />
+          </div>
         </div>
       </div>
 
@@ -198,7 +352,7 @@ export function BrandFindCreatorsContent() {
           {loading && visibleCount === PAGE_SIZE
             ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
             : talents.slice(0, visibleCount).map(c => (
-              <TalentCard key={c._id || c.id} talent={c} from="/brand/find-creators" />
+              <BrandCreatorCard key={c._id || c.id} talent={c} from="/brand/find-creators" />
             ))
           }
         </div>

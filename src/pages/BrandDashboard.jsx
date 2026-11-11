@@ -962,8 +962,23 @@ export default function BrandDashboard() {
 
   const recentOrders = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5)
 
+  // Top-nav tabs (mockup: Find Creators, My Campaigns, Collabs, Messages, Saved Talents)
+  const TOP_NAV_TABS = [
+    { id: 'talents',       label: 'Find Creators', routed: '/brand/find-creators' },
+    { id: 'my-campaigns',  label: 'My Campaigns',  routed: '/brand/my-campaigns' },
+    { id: 'collabs',       label: 'Collabs' },
+    { id: 'messages',      label: 'Messages', notif: true },
+    { id: 'favorites',     label: 'Saved Talents' },
+  ]
+
+  function handleTopNavTab(tab) {
+    if (tab.routed) { navigate(tab.routed); return }
+    if (location.pathname !== '/brand-dashboard') { navigate(`/brand-dashboard?tab=${tab.id}`); return }
+    setActiveTab(tab.id)
+  }
+
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#f3eeff' }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#f3eeff' }}>
       {showTour && (
         <OnboardingTour
           role="brand"
@@ -971,83 +986,84 @@ export default function BrandDashboard() {
           setActiveTab={setActiveTab}
         />
       )}
-      {/* Sidebar */}
-      <>
-        {/* Desktop sidebar */}
-        <aside
-          className="hidden md:flex flex-col w-60 flex-shrink-0 min-h-screen sticky top-0"
-          style={{ backgroundColor: 'var(--b-brandDashBg)' }}
-        >
-          <SidebarContent activeTab={activeTab} setActiveTab={setActiveTab} dashLogo={dashLogo} onSwitchToCreator={openCreatorSetup} />
-        </aside>
 
-        {/* Mobile sidebar overlay */}
-        {sidebarOpen && (
-          <div className="fixed inset-0 z-50 flex md:hidden">
-            <div className="bg-black/40 flex-1" onClick={() => setSidebarOpen(false)} />
-            <aside className="w-60 flex flex-col" style={{ backgroundColor: 'var(--b-brandDashBg)' }}>
-              <SidebarContent activeTab={activeTab} setActiveTab={(t) => { setActiveTab(t); setSidebarOpen(false) }} dashLogo={dashLogo} onSwitchToCreator={openCreatorSetup} />
-            </aside>
-          </div>
-        )}
-      </>
+      {/* Mobile sidebar overlay (More button) */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+          <div className="bg-black/40 flex-1" onClick={() => setSidebarOpen(false)} />
+          <aside className="w-60 flex flex-col" style={{ backgroundColor: 'var(--b-brandDashBg)' }}>
+            <SidebarContent activeTab={activeTab} setActiveTab={(t) => { setActiveTab(t); setSidebarOpen(false) }} dashLogo={dashLogo} onSwitchToCreator={openCreatorSetup} />
+          </aside>
+        </div>
+      )}
 
-      {/* Main */}
-      <div className="flex-1 min-w-0 flex flex-col">
-        {/* Top bar */}
-        <header className="sticky top-0 z-40" style={{ backgroundColor: 'rgba(243,238,255,0.92)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid #e9d5ff' }}>
-          <div className="px-4 sm:px-6 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button className="md:hidden p-1.5 rounded-lg transition-colors" style={{ color: '#7c3aed' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.08)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = ''} onClick={() => setSidebarOpen(true)}>
-                <Menu className="w-5 h-5" />
-              </button>
-              <h1 className="text-lg font-black" style={{ color: '#0F0020' }}>Brand Dashboard</h1>
+      {/* ── Top navigation bar ── */}
+      <header className="sticky top-0 z-40 bg-white" style={{ borderBottom: '1px solid #e9d5ff', boxShadow: '0 1px 8px rgba(124,58,237,0.06)' }}>
+        <div className="px-4 sm:px-6 h-16 flex items-center gap-4 max-w-screen-2xl mx-auto">
+
+          {/* Logo */}
+          <Link to="/brand-dashboard" className="flex items-center gap-2 flex-shrink-0 mr-2">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #7c3aed, #F72585)' }}>
+              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white"><path d="M13 2L4.5 13.5H11L10 22l9-12h-6.5L13 2z"/></svg>
             </div>
-            <div className="flex items-center gap-3">
-              <Link
-                to="/marketplace"
-                className="hidden sm:flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full transition-colors"
-                style={{ border: '1px solid #e9d5ff', color: '#7c3aed' }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#ede9fe'}
-                onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                Browse Talents
-              </Link>
-              <button
-                onClick={() => navigate('/brand/find-creators')}
-                className="sm:hidden p-2 rounded-xl transition-colors"
-                style={{ color: 'rgba(28,0,64,0.4)' }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'white'}
-                onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}
-                title="Find Creators"
-              >
-                <Search className="w-5 h-5" />
-              </button>
-              <button onClick={() => setActiveTab('messages')} className="relative p-2 rounded-xl transition-colors"
-                style={{ color: 'rgba(28,0,64,0.4)' }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.08)'}
-                onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
-                <Mail className="w-5 h-5" />
+            <span className="font-black text-base hidden sm:block" style={{ color: '#0e0020' }}>Brandior</span>
+          </Link>
+
+          {/* Desktop tab links */}
+          <nav className="hidden md:flex items-center gap-1 flex-1">
+            {TOP_NAV_TABS.map(tab => {
+              const isActive = activeTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTopNavTab(tab)}
+                  className="relative flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+                  style={{
+                    color: isActive ? '#7c3aed' : 'rgba(15,0,32,0.45)',
+                    backgroundColor: isActive ? 'rgba(124,58,237,0.08)' : 'transparent',
+                  }}
+                  onMouseEnter={e => { if (!isActive) { e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.05)'; e.currentTarget.style.color = '#7c3aed' } }}
+                  onMouseLeave={e => { if (!isActive) { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'rgba(15,0,32,0.45)' } }}
+                >
+                  {tab.label}
+                  {tab.notif && (
+                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: '#F72585' }}>1</span>
+                  )}
+                  {isActive && <span className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full" style={{ backgroundColor: '#7c3aed' }} />}
+                </button>
+              )
+            })}
+          </nav>
+
+          {/* Right: Post Campaign + icons + avatar */}
+          <div className="flex items-center gap-2 ml-auto">
+            <button
+              onClick={() => {
+                if (location.pathname !== '/brand-dashboard') { navigate('/brand-dashboard?tab=post-campaign') } else { setActiveTab('post-campaign') }
+              }}
+              className="hidden sm:flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl text-white transition-opacity hover:opacity-90"
+              style={{ backgroundColor: '#7c3aed' }}
+            >
+              <Plus className="w-4 h-4" />
+              Post Campaign
+            </button>
+            <button className="relative p-2 rounded-xl transition-colors"
+              style={{ color: 'rgba(28,0,64,0.4)' }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
+              <Bell className="w-5 h-5" />
+              {pendingReview.length > 0 && (
                 <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
-              </button>
-              <button className="relative p-2 rounded-xl transition-colors"
-                style={{ color: 'rgba(28,0,64,0.4)' }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.08)'}
-                onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
-                <Bell className="w-5 h-5" />
-                {pendingReview.length > 0 && (
-                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
-                )}
-              </button>
-              <BrandAvatarMenu onSwitchToCreator={openCreatorSetup} />
-            </div>
+              )}
+            </button>
+            <BrandAvatarMenu onSwitchToCreator={openCreatorSetup} />
           </div>
-        </header>
+        </div>
+      </header>
 
-        <AnnouncementBanner role="brand" />
-        {/* Content */}
-        <main className="flex-1 overflow-hidden">
+      <AnnouncementBanner role="brand" />
+      {/* Content */}
+      <main className="flex-1 overflow-hidden">
           {activeTab === 'talents' ? (
             <div className="pb-24 md:pb-0">
               <BrandFindCreatorsContent />
@@ -1140,7 +1156,6 @@ export default function BrandDashboard() {
             More
           </button>
         </nav>
-      </div>
 
       {/* Modals */}
       {paymentModal && (
