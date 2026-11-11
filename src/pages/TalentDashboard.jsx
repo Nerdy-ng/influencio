@@ -4212,14 +4212,9 @@ const TX_STATUS = {
   'withdrawn': { label: 'Withdrawn',        color: '#9ca3af', bg: '#9ca3af15', dot: '#9ca3af' },
 }
 
-const nigerianBanks = [
-  'Access Bank', 'GTBank', 'Zenith Bank', 'First Bank', 'UBA',
-  'Fidelity Bank', 'Sterling Bank', 'Opay', 'Kuda Bank', 'Moniepoint',
-]
-
 function TransactionsTab({ showWithdraw, setShowWithdraw }) {
-  const [withdrawForm, setWithdrawForm] = useState({ amount: '', bank: '', accountNumber: '', accountName: '' })
-  const [withdrawStep, setWithdrawStep] = useState('form') // 'form' | 'confirm' | 'success'
+  const [withdrawAmount, setWithdrawAmount] = useState('')
+  const [withdrawStep, setWithdrawStep] = useState('account') // 'account' | 'confirm' | 'success'
   const [processing, setProcessing] = useState(false)
   const [filter, setFilter] = useState('all')
   const [transactions, setTransactions] = useState([])
@@ -4229,46 +4224,92 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
   const [withdrawError, setWithdrawError] = useState('')
   const [txUser, setTxUser]               = useState(null)
   const [txProfile, setTxProfile]         = useState(null)
+  const [payoutAccounts, setPayoutAccounts] = useState([])
+  const [selectedAccountId, setSelectedAccountId] = useState(null)
+
+  function isAccountRestricted(acc) {
+    if (!acc.added_at) return false
+    return Date.now() - new Date(acc.added_at).getTime() < 24 * 60 * 60 * 1000
+  }
+  function accountHoursLeft(acc) {
+    if (!acc.added_at) return 0
+    const ms = 24 * 60 * 60 * 1000 - (Date.now() - new Date(acc.added_at).getTime())
+    return Math.max(1, Math.ceil(ms / (60 * 60 * 1000)))
+  }
+
+  async function loadData(uid) {
+    const [collabsRes, payoutsRes] = await Promise.all([
+      supabase.from('collabs')
+        .select('id, creator_payout, status, payment_status, content_type, created_at, brand:profiles!brand_id(company_name, full_name)')
+        .eq('creator_id', uid)
+        .neq('payment_status', 'unpaid')
+        .order('created_at', { ascending: false }),
+      supabase.from('rubies_transactions')
+        .select('id, amount, destination, status, created_at')
+        .eq('user_id', uid)
+        .eq('type', 'payout')
+        .order('created_at', { ascending: false }),
+    ])
+    const collabTxs = (collabsRes.data || []).map(mapCollabToTx)
+    const payoutTxs = (payoutsRes.data || []).map(p => ({
+      id: 'payout-' + p.id,
+      desc: `Withdrawal to ${p.destination || 'Bank'}`,
+      amount: p.amount,
+      date: new Date(p.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }),
+      status: 'withdrawn',
+      type: 'debit',
+    }))
+    const all = [...collabTxs, ...payoutTxs].sort((a, b) => new Date(b.date) - new Date(a.date))
+    setTransactions(all)
+    setTxLoading(false)
+  }
 
   useEffect(() => {
+    let channel = null
     ;(async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setTxLoading(false); setRubiesLoading(false); return }
       setTxUser(user)
-      const { data: prof } = await supabase.from('profiles').select('full_name, role').eq('id', user.id).maybeSingle()
+      const { data: prof } = await supabase.from('profiles').select('full_name, role, payout_accounts').eq('id', user.id).maybeSingle()
       setTxProfile(prof)
-      const { data } = await supabase
-        .from('collabs')
-        .select('id, creator_payout, status, payment_status, content_type, created_at, brand:profiles!brand_id(company_name, full_name)')
-        .eq('creator_id', user.id)
-        .neq('payment_status', 'unpaid')
-        .order('created_at', { ascending: false })
-      if (data) setTransactions(data.map(mapCollabToTx))
-      setTxLoading(false)
+      if (prof?.payout_accounts) {
+        setPayoutAccounts(prof.payout_accounts)
+        const def = prof.payout_accounts.find(a => a.isDefault && !isAccountRestricted(a))
+        if (def) setSelectedAccountId(def.id)
+      }
 
-      // Load Rubies wallet balance
+      await loadData(user.id)
+
       const { data: rb } = await supabase.functions.invoke('rubies-balance')
       if (rb?.ok) setRubiesBalance(rb.balance)
       setRubiesLoading(false)
+
+      channel = supabase
+        .channel('creator-txns-' + user.id)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'collabs', filter: `creator_id=eq.${user.id}` }, () => loadData(user.id))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'rubies_transactions', filter: `user_id=eq.${user.id}` }, () => {
+          loadData(user.id)
+          supabase.functions.invoke('rubies-balance').then(({ data: rb }) => { if (rb?.ok) setRubiesBalance(rb.balance) })
+        })
+        .subscribe()
     })()
+    return () => { if (channel) supabase.removeChannel(channel) }
   }, [])
 
   const wipTotal       = transactions.filter(t => t.status === 'wip').reduce((s, t) => s + t.amount, 0)
   const reviewTotal    = transactions.filter(t => t.status === 'in-review').reduce((s, t) => s + t.amount, 0)
-  const availableTotal = transactions.filter(t => t.status === 'available').reduce((s, t) => s + t.amount, 0)
-
-  function handleWithdraw(e) {
-    e.preventDefault()
-    setWithdrawStep('confirm')
-  }
+  const availableTotal = rubiesBalance !== null ? rubiesBalance : transactions.filter(t => t.status === 'available').reduce((s, t) => s + t.amount, 0)
+  const selectedAccount = payoutAccounts.find(a => a.id === selectedAccountId)
 
   async function confirmWithdraw() {
+    if (!selectedAccount) { setWithdrawError('Please select a payout account.'); return }
+    const amount = Number(withdrawAmount)
+    if (!amount || amount < 5000) { setWithdrawError('Minimum withdrawal is ₦5,000.'); return }
     setProcessing(true)
     setWithdrawError('')
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setWithdrawError('Session expired. Please log in again.'); setProcessing(false); return }
 
-    // Block if a pending request already exists
     const { data: existing } = await supabase
       .from('payout_requests')
       .select('id')
@@ -4281,20 +4322,16 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
       return
     }
 
-    const { data: prof } = await supabase
-      .from('profiles')
-      .select('full_name, handle')
-      .eq('id', user.id)
-      .maybeSingle()
+    const { data: prof } = await supabase.from('profiles').select('full_name, handle').eq('id', user.id).maybeSingle()
 
     const { error } = await supabase.from('payout_requests').insert({
       user_id:        user.id,
       creator_name:   prof?.full_name || user.email || '',
       creator_handle: prof?.handle   || '',
-      amount:         Number(withdrawForm.amount),
-      bank_name:      withdrawForm.bank,
-      account_number: withdrawForm.accountNumber,
-      account_name:   withdrawForm.accountName,
+      amount,
+      bank_name:      selectedAccount.bankName,
+      account_number: selectedAccount.accountNumber,
+      account_name:   selectedAccount.accountName,
       status:         'pending',
     })
     if (error) {
@@ -4308,8 +4345,9 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
 
   function resetWithdraw() {
     setShowWithdraw(false)
-    setWithdrawStep('form')
-    setWithdrawForm({ amount: '', bank: '', accountNumber: '', accountName: '' })
+    setWithdrawStep('account')
+    setWithdrawAmount('')
+    setWithdrawError('')
   }
 
   const filtered = filter === 'all' ? transactions : transactions.filter(t => t.status === filter)
@@ -4557,76 +4595,78 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
             </div>
 
             <div className="px-6 py-5">
-              {withdrawStep === 'form' && (
-                <form onSubmit={handleWithdraw} className="space-y-4">
+              {withdrawStep === 'account' && (
+                <div className="space-y-4">
+                  {/* Amount */}
                   <div>
                     <label className="text-xs font-medium text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Amount (₦)</label>
                     <input
-                      type="number"
-                      min="5000"
-                      max={availableTotal}
-                      required
-                      value={withdrawForm.amount}
-                      onChange={e => setWithdrawForm(f => ({ ...f, amount: stripInjection(e.target.value) }))}
+                      type="number" inputMode="numeric"
+                      min="5000" max={availableTotal}
+                      value={withdrawAmount}
+                      onChange={e => setWithdrawAmount(e.target.value.replace(/[^0-9]/g, ''))}
                       placeholder="e.g. 10000"
                       className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none"
                       style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}
                     />
-                    <p className="text-[10px] text-brand-dark/30 mt-1">Minimum ₦5,000</p>
+                    <p className="text-[10px] text-brand-dark/30 mt-1">Min ₦5,000 · Available: ₦{availableTotal.toLocaleString()}</p>
                   </div>
+                  {/* Account picker */}
                   <div>
-                    <label className="text-xs font-medium text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Bank</label>
-                    <select
-                      required
-                      value={withdrawForm.bank}
-                      onChange={e => setWithdrawForm(f => ({ ...f, bank: stripInjection(e.target.value) }))}
-                      className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none appearance-none"
-                      style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}>
-                      <option value="">Select your bank</option>
-                      {nigerianBanks.map(b => <option key={b}>{b}</option>)}
-                    </select>
+                    <label className="text-xs font-medium text-brand-dark/40 uppercase tracking-widest mb-2 block">Payout account</label>
+                    {payoutAccounts.length === 0 ? (
+                      <p className="text-sm text-brand-dark/40 py-2">No bank account linked. Add one in Payout Settings.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {payoutAccounts.map(acc => {
+                          const restricted = isAccountRestricted(acc)
+                          const selected = selectedAccountId === acc.id
+                          return (
+                            <button key={acc.id}
+                              onClick={() => !restricted && setSelectedAccountId(acc.id)}
+                              disabled={restricted}
+                              className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all disabled:opacity-50"
+                              style={{ border: `1.5px solid ${selected ? darkPurple : '#e9d5ff'}`, backgroundColor: selected ? `${darkPurple}08` : '#fff' }}>
+                              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${purple}12` }}>
+                                <CreditCard className="w-4 h-4" style={{ color: purple }} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-brand-dark truncate">{acc.bankName}</p>
+                                <p className="text-xs text-brand-dark/50">•••• {acc.accountNumber?.slice(-4)} · {acc.accountName}</p>
+                                {restricted && <p className="text-[10px] text-amber-500 font-semibold mt-0.5">Available in {accountHoursLeft(acc)}h (new account)</p>}
+                              </div>
+                              {selected && !restricted && <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: darkPurple }} />}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <label className="text-xs font-medium text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Account Number</label>
-                    <input
-                      type="text"
-                      maxLength={10}
-                      required
-                      value={withdrawForm.accountNumber}
-                      onChange={e => setWithdrawForm(f => ({ ...f, accountNumber: e.target.value.replace(/\D/g, '') }))}
-                      placeholder="10-digit account number"
-                      className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none font-mono"
-                      style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Account Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={withdrawForm.accountName}
-                      onChange={e => setWithdrawForm(f => ({ ...f, accountName: stripInjection(e.target.value) }))}
-                      placeholder="Name on account"
-                      className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none"
-                      style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}
-                    />
-                  </div>
-                  <button type="submit"
-                    className="w-full py-3.5 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2"
+                  {withdrawError && <p className="text-xs font-semibold text-red-500">{withdrawError}</p>}
+                  <button
+                    onClick={() => {
+                      setWithdrawError('')
+                      const amount = Number(withdrawAmount)
+                      if (!amount || amount < 5000) { setWithdrawError('Minimum withdrawal is ₦5,000.'); return }
+                      if (!selectedAccount) { setWithdrawError('Please select a payout account.'); return }
+                      setWithdrawStep('confirm')
+                    }}
+                    disabled={!withdrawAmount || !selectedAccountId}
+                    className="w-full py-3.5 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 disabled:opacity-40"
                     style={{ backgroundColor: darkPurple }}>
                     <ArrowUpRight className="w-4 h-4" /> Continue
                   </button>
-                </form>
+                </div>
               )}
 
               {withdrawStep === 'confirm' && (
                 <div className="space-y-4">
                   <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid #e9d5ff' }}>
                     {[
-                      { label: 'Amount',         value: `₦${Number(withdrawForm.amount).toLocaleString()}` },
-                      { label: 'Bank',           value: withdrawForm.bank },
-                      { label: 'Account Number', value: withdrawForm.accountNumber },
-                      { label: 'Account Name',   value: withdrawForm.accountName },
+                      { label: 'Amount',         value: `₦${Number(withdrawAmount).toLocaleString()}` },
+                      { label: 'Bank',           value: selectedAccount?.bankName },
+                      { label: 'Account Number', value: selectedAccount?.accountNumber },
+                      { label: 'Account Name',   value: selectedAccount?.accountName },
                     ].map(({ label, value }) => (
                       <div key={label} className="flex items-center justify-between">
                         <span className="text-xs text-brand-dark/40">{label}</span>
@@ -4641,7 +4681,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
                     </div>
                   )}
                   <div className="flex gap-3">
-                    <button onClick={() => { setWithdrawStep('form'); setWithdrawError('') }}
+                    <button onClick={() => { setWithdrawStep('account'); setWithdrawError('') }}
                       className="flex-1 py-3 rounded-xl font-semibold text-sm transition-colors" style={{ border: '1px solid #e9d5ff', color: 'rgba(15,0,32,0.5)' }} onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(124,58,237,0.04)'} onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
                       Edit
                     </button>
@@ -4662,8 +4702,8 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
                     <Clock className="w-8 h-8" style={{ color: '#7c3aed' }} />
                   </div>
                   <p className="font-black text-brand-dark text-lg mb-1">Request Submitted!</p>
-                  <p className="text-brand-dark/60 text-sm mb-1">₦{Number(withdrawForm.amount).toLocaleString()} withdrawal is pending admin approval.</p>
-                  <p className="text-brand-dark/30 text-xs mb-1">{withdrawForm.bank} · {withdrawForm.accountNumber}</p>
+                  <p className="text-brand-dark/60 text-sm mb-1">₦{Number(withdrawAmount).toLocaleString()} withdrawal is pending admin approval.</p>
+                  <p className="text-brand-dark/30 text-xs mb-1">{selectedAccount?.bankName} · {selectedAccount?.accountNumber}</p>
                   <p className="text-brand-dark/30 text-xs mb-6">You'll be notified once approved (1–2 business days).</p>
                   <button onClick={resetWithdraw}
                     className="px-6 py-2.5 rounded-full font-bold text-white text-sm"
@@ -5366,13 +5406,27 @@ function RCSection({ label, hint, children }) {
 // ── Payout Settings Tab ───────────────────────────────────────────────────────
 
 const NIGERIAN_BANKS_LIST = [
-  'Access Bank', 'Citibank', 'Ecobank', 'Fidelity Bank', 'First Bank',
-  'First City Monument Bank (FCMB)', 'Globus Bank', 'GT Bank',
-  'Heritage Bank', 'Keystone Bank', 'Kuda Bank', 'Moniepoint',
-  'Opay', 'Palmpay', 'Polaris Bank', 'Providus Bank',
-  'Stanbic IBTC Bank', 'Standard Chartered', 'Sterling Bank',
-  'Suntrust Bank', 'Union Bank', 'United Bank for Africa (UBA)',
-  'Unity Bank', 'VFD Microfinance Bank', 'Wema Bank', 'Zenith Bank',
+  { name: 'Access Bank',                     code: '044' },
+  { name: 'Ecobank',                          code: '050' },
+  { name: 'Fidelity Bank',                   code: '070' },
+  { name: 'First Bank',                       code: '011' },
+  { name: 'First City Monument Bank (FCMB)', code: '214' },
+  { name: 'GT Bank',                          code: '058' },
+  { name: 'Heritage Bank',                    code: '030' },
+  { name: 'Keystone Bank',                   code: '082' },
+  { name: 'Kuda Bank',                        code: '090267' },
+  { name: 'Moniepoint',                       code: '50515' },
+  { name: 'Opay',                             code: '100004' },
+  { name: 'Palmpay',                          code: '999991' },
+  { name: 'Polaris Bank',                     code: '076' },
+  { name: 'Providus Bank',                    code: '101' },
+  { name: 'Stanbic IBTC Bank',               code: '221' },
+  { name: 'Sterling Bank',                    code: '232' },
+  { name: 'Union Bank',                       code: '032' },
+  { name: 'United Bank for Africa (UBA)',     code: '033' },
+  { name: 'Unity Bank',                       code: '215' },
+  { name: 'Wema Bank',                        code: '035' },
+  { name: 'Zenith Bank',                      code: '057' },
 ]
 
 const SECURITY_QUESTIONS_LIST = [
@@ -5394,11 +5448,12 @@ function PayoutSettingsTab() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [bankSearch, setBankSearch] = useState('')
   const [showBankPicker, setShowBankPicker] = useState(false)
-  const [newBank, setNewBank] = useState('')
+  const [newBank, setNewBank] = useState(null) // { name, code }
   const [newAccNum, setNewAccNum] = useState('')
   const [newAccName, setNewAccName] = useState('')
   const [verifying, setVerifying] = useState(false)
   const [verified, setVerified] = useState(false)
+  const [verifyError, setVerifyError] = useState('')
 
   const [secQuestion, setSecQuestion] = useState(null)
   const [showSecModal, setShowSecModal] = useState(false)
@@ -5429,36 +5484,44 @@ function PayoutSettingsTab() {
   }
 
   function resetForm() {
-    setNewBank(''); setNewAccNum(''); setNewAccName(''); setVerified(false); setVerifying(false); setBankSearch('')
+    setNewBank(null); setNewAccNum(''); setNewAccName(''); setVerified(false); setVerifying(false); setVerifyError(''); setBankSearch('')
   }
 
   function handleAccNumChange(val) {
     const digits = val.replace(/\D/g, '').slice(0, 10)
-    setNewAccNum(digits); setVerified(false); setNewAccName('')
-    if (digits.length === 10 && newBank) simulateVerify(digits, newBank)
+    setNewAccNum(digits); setVerified(false); setNewAccName(''); setVerifyError('')
+    if (digits.length === 10 && newBank) resolveAccount(digits, newBank)
   }
 
   function handleSelectBank(bank) {
     setNewBank(bank); setShowBankPicker(false); setBankSearch('')
-    setVerified(false); setNewAccName('')
-    if (newAccNum.length === 10) simulateVerify(newAccNum, bank)
+    setVerified(false); setNewAccName(''); setVerifyError('')
+    if (newAccNum.length === 10) resolveAccount(newAccNum, bank)
   }
 
-  function simulateVerify(accNum, bank) {
-    setVerifying(true)
-    setTimeout(() => {
-      setVerifying(false); setVerified(true)
-      setNewAccName(accounts.length === 0 ? '' : accounts[0].accountName)
-    }, 1200)
+  async function resolveAccount(accNum, bank) {
+    setVerifying(true); setVerifyError('')
+    try {
+      const { data, error } = await supabase.functions.invoke('resolve-bank-account', {
+        body: { account_number: accNum, bank_code: bank.code },
+      })
+      if (error || !data?.account_name) throw new Error(data?.error || 'Could not verify this account. Check the details and try again.')
+      setNewAccName(data.account_name)
+      setVerified(true)
+    } catch (e) {
+      setVerifyError(e.message || 'Verification failed. Please check the account number and try again.')
+    } finally {
+      setVerifying(false)
+    }
   }
 
   async function handleSaveAccount() {
-    if (!verified || saving) return
+    if (!verified || !newBank || saving) return
     setSaving(true)
     const isFirst = accounts.length === 0
     const next = [
       ...accounts.map(a => ({ ...a, isDefault: false })),
-      { id: Date.now().toString(), bankName: newBank, accountNumber: newAccNum, accountName: newAccName || 'Account Holder', isDefault: isFirst },
+      { id: Date.now().toString(), bankName: newBank.name, bankCode: newBank.code, accountNumber: newAccNum, accountName: newAccName, isDefault: isFirst, added_at: new Date().toISOString() },
     ]
     await persistAccounts(next)
     setAccounts(next)
@@ -5497,8 +5560,17 @@ function PayoutSettingsTab() {
     setSecQuestion(draftQuestion); setShowSecModal(false)
   }
 
-  const filteredBanks = NIGERIAN_BANKS_LIST.filter(b => b.toLowerCase().includes(bankSearch.toLowerCase()))
-  const canSave = verified && !saving
+  function isRestricted(acc) {
+    if (!acc.added_at) return false
+    return Date.now() - new Date(acc.added_at).getTime() < 24 * 60 * 60 * 1000
+  }
+  function hoursLeft(acc) {
+    if (!acc.added_at) return 0
+    const ms = 24 * 60 * 60 * 1000 - (Date.now() - new Date(acc.added_at).getTime())
+    return Math.max(1, Math.ceil(ms / (60 * 60 * 1000)))
+  }
+  const filteredBanks = NIGERIAN_BANKS_LIST.filter(b => b.name.toLowerCase().includes(bankSearch.toLowerCase()))
+  const canSave = verified && !saving && !!newBank
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -5668,7 +5740,7 @@ function PayoutSettingsTab() {
                 <button onClick={() => setShowBankPicker(true)}
                   className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm outline-none text-left"
                   style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}>
-                  <span className={newBank ? 'text-brand-dark font-semibold' : 'text-brand-dark/40'}>{newBank || 'Select your bank'}</span>
+                  <span className={newBank ? 'text-brand-dark font-semibold' : 'text-brand-dark/40'}>{newBank?.name || 'Select your bank'}</span>
                   <ChevronDown className="w-4 h-4 text-brand-dark/40" />
                 </button>
               </div>
@@ -5692,20 +5764,10 @@ function PayoutSettingsTab() {
                     <span className="text-sm font-bold text-green-600">{newAccName}</span>
                   </div>
                 )}
+                {verifyError && (
+                  <p className="text-xs font-semibold text-red-500 mt-2">{verifyError}</p>
+                )}
               </div>
-              {/* Account name (editable if verify didn't auto-fill) */}
-              {verified && !newAccName && (
-                <div>
-                  <label className="text-xs font-bold text-brand-dark/40 uppercase tracking-widest mb-1.5 block">Account Name *</label>
-                  <input
-                    type="text" value={newAccName}
-                    onChange={e => setNewAccName(stripInjection(e.target.value))}
-                    placeholder="Name on account"
-                    className="w-full px-4 py-3 rounded-xl text-sm text-brand-dark outline-none"
-                    style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}
-                  />
-                </div>
-              )}
               <button onClick={handleSaveAccount} disabled={!canSave}
                 className="w-full py-3.5 rounded-xl font-bold text-white text-sm disabled:opacity-40"
                 style={{ backgroundColor: darkPurple }}>
@@ -5735,11 +5797,11 @@ function PayoutSettingsTab() {
             </div>
             <div className="overflow-y-auto" style={{ maxHeight: '50vh' }}>
               {filteredBanks.map((bank, i) => (
-                <button key={bank} onClick={() => handleSelectBank(bank)}
+                <button key={bank.code} onClick={() => handleSelectBank(bank)}
                   className="w-full flex items-center justify-between px-6 py-3.5 text-sm hover:bg-[rgba(124,58,237,0.04)] transition-colors text-left"
                   style={{ borderBottom: i < filteredBanks.length - 1 ? '1px solid #f3eeff' : 'none' }}>
-                  <span className={`font-medium ${newBank === bank ? 'font-bold' : ''}`} style={{ color: newBank === bank ? darkPurple : '#0F0020' }}>{bank}</span>
-                  {newBank === bank && <CheckCircle className="w-4 h-4" style={{ color: darkPurple }} />}
+                  <span className={`font-medium ${newBank?.code === bank.code ? 'font-bold' : ''}`} style={{ color: newBank?.code === bank.code ? darkPurple : '#0F0020' }}>{bank.name}</span>
+                  {newBank?.code === bank.code && <CheckCircle className="w-4 h-4" style={{ color: darkPurple }} />}
                 </button>
               ))}
             </div>

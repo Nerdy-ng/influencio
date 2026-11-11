@@ -15,93 +15,17 @@ export default function PromoCodeRedeemer({ userId, userRole, userName, onSucces
     setLoading(true);
     setResult(null);
 
-    const upper = code.trim().toUpperCase();
+    const { data, error } = await supabase.functions.invoke("redeem-promo-code", {
+      body: { code: code.trim().toUpperCase() },
+    });
 
-    // Fetch the code
-    const { data: promo } = await supabase
-      .from("promo_codes")
-      .select("*")
-      .eq("code", upper)
-      .eq("active", true)
-      .maybeSingle();
-
-    if (!promo) {
-      setResult({ ok: false, message: "Invalid or inactive code." });
+    if (error || !data?.ok) {
+      setResult({ ok: false, message: data?.message ?? "Something went wrong. Please try again." });
       setLoading(false);
       return;
     }
 
-    // Check expiry
-    if (promo.expires_at && new Date(promo.expires_at) < new Date()) {
-      setResult({ ok: false, message: "This code has expired." });
-      setLoading(false);
-      return;
-    }
-
-    // Check max uses
-    if (promo.max_uses && promo.uses_count >= promo.max_uses) {
-      setResult({ ok: false, message: "This code has reached its usage limit." });
-      setLoading(false);
-      return;
-    }
-
-    // Check role
-    if (promo.target_role !== "all" && promo.target_role !== userRole) {
-      setResult({ ok: false, message: `This code is only valid for ${promo.target_role}s.` });
-      setLoading(false);
-      return;
-    }
-
-    // Check if already used by this user
-    const { data: alreadyUsed } = await supabase
-      .from("promo_code_uses")
-      .select("id")
-      .eq("code_id", promo.id)
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    if (alreadyUsed) {
-      setResult({ ok: false, message: "You've already redeemed this code." });
-      setLoading(false);
-      return;
-    }
-
-    // Compute discount
-    const { data: profile } = await supabase.from("profiles").select("wallet_balance").eq("id", userId).maybeSingle();
-    const currentBalance = Number(profile?.wallet_balance || 0);
-    let credit;
-    if (promo.discount_type === "fixed") {
-      credit = Number(promo.discount_value);
-    } else {
-      // Percentage of current balance (min ₦100 bonus so it's never worthless)
-      credit = Math.max(100, Math.round(currentBalance * Number(promo.discount_value) / 100));
-    }
-
-    // Credit wallet
-    const { error: walletErr } = await supabase
-      .from("profiles")
-      .update({ wallet_balance: currentBalance + credit })
-      .eq("id", userId);
-
-    if (walletErr) {
-      setResult({ ok: false, message: "Something went wrong. Please try again." });
-      setLoading(false);
-      return;
-    }
-
-    // Record use + increment counter
-    await Promise.all([
-      supabase.from("promo_code_uses").insert({
-        code_id:         promo.id,
-        user_id:         userId,
-        user_name:       userName,
-        user_role:       userRole,
-        discount_applied: credit,
-        context:         "wallet_credit",
-      }),
-      supabase.from("promo_codes").update({ uses_count: (promo.uses_count || 0) + 1 }).eq("id", promo.id),
-    ]);
-
+    const credit = data.credit ?? 0;
     setResult({ ok: true, message: `₦${credit.toLocaleString()} added to your wallet!`, amount: credit });
     setCode("");
     onSuccess?.(credit);
