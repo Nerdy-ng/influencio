@@ -45,7 +45,7 @@ export default function CreatorFindWorkPage() {
   const [typeOpen, setTypeOpen]         = useState(true)
   const [budgetOpen, setBudgetOpen]     = useState(true)
   const [budgetMin, setBudgetMin]       = useState(0)
-  const [budgetMax, setBudgetMax]       = useState(500000)
+  const [budgetMax, setBudgetMax]       = useState(Infinity)  // Infinity = no upper limit
   const [sortBy, setSortBy]             = useState('recent')
   const [sortOpen, setSortOpen]         = useState(false)
   const { toggle: toggleFav, isFav }    = useFavorites()
@@ -115,12 +115,20 @@ export default function CreatorFindWorkPage() {
   const allTypes      = Object.keys(typeCounts).sort()
   const displayTypes  = allTypes.length > 0 ? allTypes : PREDEFINED_TYPES
 
+  // Derive slider ceiling from actual campaign budgets — rounded up to next ₦100k, min ₦500k
+  const sliderMax = (() => {
+    const budgets = jobs.map(j => j.budgetRaw).filter(v => v > 0)
+    if (!budgets.length) return 500000
+    const highest = Math.max(...budgets)
+    return Math.max(Math.ceil(highest / 100000) * 100000, 500000)
+  })()
+
   const visible = jobs.filter(j => {
     const q = search.toLowerCase()
     const matchesSearch  = !q || j.title.toLowerCase().includes(q) || j.brand.toLowerCase().includes(q)
     const matchesNiche   = nicheFilter === 'All' || (j.tags || []).some(t => t.toLowerCase() === nicheFilter.toLowerCase())
     const matchesType    = typeFilters.length === 0 || typeFilters.includes(j.type)
-    const matchesBudget  = j.budgetRaw >= budgetMin && (budgetMax >= 500000 || j.budgetRaw <= budgetMax)
+    const matchesBudget  = j.budgetRaw >= budgetMin && (budgetMax === Infinity || j.budgetRaw <= budgetMax)
     return matchesSearch && matchesNiche && matchesType && matchesBudget
   })
 
@@ -135,9 +143,9 @@ export default function CreatorFindWorkPage() {
   ]
   const sortLabel = SORT_OPTIONS.find(o => o.value === sortBy)?.label || 'Most Recent'
 
-  const hasActiveFilter = nicheFilter !== 'All' || typeFilters.length > 0 || budgetMin > 0 || budgetMax < 500000
+  const hasActiveFilter = nicheFilter !== 'All' || typeFilters.length > 0 || budgetMin > 0 || budgetMax !== Infinity
 
-  function clearFilters() { setNicheFilter('All'); setTypeFilters([]); setBudgetMin(0); setBudgetMax(500000) }
+  function clearFilters() { setNicheFilter('All'); setTypeFilters([]); setBudgetMin(0); setBudgetMax(Infinity) }
 
   // ── Filter panel content (shared between sidebar and drawer) ──────
   function FilterPanelContent({ onApply }) {
@@ -179,31 +187,38 @@ export default function CreatorFindWorkPage() {
             <span style={{ fontSize: 13, fontWeight: 800, color: '#0e0020' }}>Budget Range</span>
             <ChevronDown style={{ width: 14, height: 14, color: 'rgba(15,0,32,0.4)', transform: budgetOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />
           </button>
-          {budgetOpen && (
+          {budgetOpen && (() => {
+            // maxHandlePos: the pixel position of the right handle (clamped to sliderMax)
+            const maxHandlePos = budgetMax === Infinity ? sliderMax : Math.min(budgetMax, sliderMax)
+            return (
             <div style={{ marginTop: 14 }}>
               {/* Filled track */}
               <div style={{ position: 'relative', height: 4, backgroundColor: '#e9d5ff', borderRadius: 2, margin: '0 0 4px' }}>
                 <div style={{
                   position: 'absolute', height: '100%', borderRadius: 2, backgroundColor: purple,
-                  left: `${(budgetMin / 500000) * 100}%`,
-                  right: `${100 - (budgetMax / 500000) * 100}%`,
+                  left: `${(budgetMin / sliderMax) * 100}%`,
+                  right: `${100 - (maxHandlePos / sliderMax) * 100}%`,
                 }} />
               </div>
               {/* Dual handles */}
               <div className="dual-range">
-                <input type="range" min={0} max={500000} step={5000} value={budgetMin}
-                  onChange={e => setBudgetMin(Math.min(Number(e.target.value), budgetMax - 5000))}
+                <input type="range" min={0} max={sliderMax} step={5000} value={budgetMin}
+                  onChange={e => setBudgetMin(Math.min(Number(e.target.value), maxHandlePos - 5000))}
                 />
-                <input type="range" min={0} max={500000} step={5000} value={budgetMax}
-                  onChange={e => setBudgetMax(Math.max(Number(e.target.value), budgetMin + 5000))}
+                <input type="range" min={0} max={sliderMax} step={5000} value={maxHandlePos}
+                  onChange={e => {
+                    const v = Number(e.target.value)
+                    setBudgetMax(v >= sliderMax ? Infinity : Math.max(v, budgetMin + 5000))
+                  }}
                 />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'rgba(15,0,32,0.5)', marginTop: 6 }}>
                 <span>₦{budgetMin.toLocaleString()}</span>
-                <span>{budgetMax >= 500000 ? '₦500,000+' : '₦' + budgetMax.toLocaleString()}</span>
+                <span>{budgetMax === Infinity ? '₦' + sliderMax.toLocaleString() + '+' : '₦' + budgetMax.toLocaleString()}</span>
               </div>
             </div>
-          )}
+            )
+          })()}
         </div>
 
         {/* Niche section */}
