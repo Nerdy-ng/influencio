@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ChevronLeft, X, Users, Calendar, CheckCircle, Heart, ChevronDown } from 'lucide-react'
+import { Search, X, Users, Calendar, CheckCircle, Heart, ChevronDown } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useFavorites } from '../hooks/useFavorites'
+import Navbar from '../components/Navbar'
 
 const purple     = '#7c3aed'
 const darkPurple = '#4c1d95'
@@ -270,9 +271,10 @@ export default function CreatorFindWorkPage() {
 
   return (
     <div style={{ backgroundColor: '#f3eeff', minHeight: '100vh' }}>
+      <Navbar />
 
       {/* ── Page heading area ── */}
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-8 lg:px-12 pt-8 pb-5">
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-8 lg:px-12 pt-24 pb-5">
         <h1 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 900, color: '#0e0020', marginBottom: 6, lineHeight: 1.1 }}>
           Find Work
         </h1>
