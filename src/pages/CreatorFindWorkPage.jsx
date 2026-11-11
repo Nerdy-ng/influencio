@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Briefcase, ChevronLeft, X, Users, Calendar, CheckCircle, Heart, SlidersHorizontal, ChevronDown } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { useFavorites } from '../hooks/useFavorites'
 
 const purple     = '#7c3aed'
 const darkPurple = '#4c1d95'
@@ -28,7 +29,7 @@ export default function CreatorFindWorkPage() {
   const [applied, setApplied]     = useState([])
   const [search, setSearch]       = useState('')
   const [nicheFilter, setNicheFilter] = useState('All')
-  const [favourites, setFavourites]   = useState([])
+  const { toggle: toggleFav, isFav }  = useFavorites()
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [nicheOpen, setNicheOpen]     = useState(true)
 
@@ -157,9 +158,9 @@ export default function CreatorFindWorkPage() {
     }
   }
 
-  function toggleFavourite(e, id) {
+  function toggleFavourite(e, job) {
     e.stopPropagation()
-    setFavourites(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+    toggleFav(job)
   }
 
   function handleCardClick(job) {
@@ -471,7 +472,7 @@ export default function CreatorFindWorkPage() {
               {!loading && visible.map(job => {
                 const bgColor = brandColor(job.brand)
                 const isPitched = applied.includes(job.id)
-                const isFaved = favourites.includes(job.id)
+                const isFaved = isFav(job.id)
 
                 return (
                   <div
@@ -525,7 +526,7 @@ export default function CreatorFindWorkPage() {
 
                         {/* Heart icon */}
                         <button
-                          onClick={e => toggleFavourite(e, job.id)}
+                          onClick={e => toggleFavourite(e, job)}
                           className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors"
                           style={{ backgroundColor: isFaved ? `${pink}12` : 'rgba(124,58,237,0.05)' }}
                           onMouseEnter={e => e.currentTarget.style.backgroundColor = isFaved ? `${pink}20` : 'rgba(124,58,237,0.1)'}
