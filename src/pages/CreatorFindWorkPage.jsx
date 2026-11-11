@@ -10,6 +10,7 @@ const darkPurple = '#4c1d95'
 const pink       = '#F72585'
 
 const BROWSE_NICHES = ['Fashion','Beauty','Tech','Food','Fitness','Lifestyle','Comedy','Travel','Fintech','Business','Voiceover','Gaming']
+const PREDEFINED_TYPES = ['UGC Content','Paid Campaign','Product Collaboration','Event / Experience']
 
 function brandInitials(name) {
   return (name || '?').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
@@ -181,8 +182,9 @@ export default function CreatorFindWorkPage() {
     setTypeFilters(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type])
   }
 
-  const typeCounts = jobs.reduce((acc, j) => { acc[j.type] = (acc[j.type] || 0) + 1; return acc }, {})
-  const allTypes   = Object.keys(typeCounts).sort()
+  const typeCounts    = jobs.reduce((acc, j) => { acc[j.type] = (acc[j.type] || 0) + 1; return acc }, {})
+  const allTypes      = Object.keys(typeCounts).sort()
+  const displayTypes  = allTypes.length > 0 ? allTypes : PREDEFINED_TYPES
 
   const visible = jobs.filter(j => {
     const q = search.toLowerCase()
@@ -205,34 +207,32 @@ export default function CreatorFindWorkPage() {
   function FilterPanelContent({ onApply }) {
     return (
       <div>
-        {/* Collab Type section */}
-        {allTypes.length > 0 && (
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid #e9d5ff' }}>
-            <button
-              onClick={() => setTypeOpen(o => !o)}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-            >
-              <span style={{ fontSize: 13, fontWeight: 800, color: '#0e0020' }}>Collab Type</span>
-              <ChevronDown style={{ width: 14, height: 14, color: 'rgba(15,0,32,0.4)', transform: typeOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />
-            </button>
-            {typeOpen && (
-              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {allTypes.map(t => (
-                  <label key={t} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={typeFilters.includes(t)}
-                      onChange={() => { toggleTypeFilter(t); onApply?.() }}
-                      style={{ width: 15, height: 15, accentColor: purple, cursor: 'pointer', flexShrink: 0 }}
-                    />
-                    <span style={{ flex: 1, fontSize: 13, color: 'rgba(15,0,32,0.7)', fontWeight: typeFilters.includes(t) ? 700 : 500 }}>{t}</span>
-                    <span style={{ fontSize: 12, color: 'rgba(15,0,32,0.35)', fontWeight: 500 }}>({typeCounts[t]})</span>
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        {/* Collab Type section — always visible */}
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #e9d5ff' }}>
+          <button
+            onClick={() => setTypeOpen(o => !o)}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
+            <span style={{ fontSize: 13, fontWeight: 800, color: '#0e0020' }}>Collab Type</span>
+            <ChevronDown style={{ width: 14, height: 14, color: 'rgba(15,0,32,0.4)', transform: typeOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />
+          </button>
+          {typeOpen && (
+            <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {displayTypes.map(t => (
+                <label key={t} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={typeFilters.includes(t)}
+                    onChange={() => { toggleTypeFilter(t); onApply?.() }}
+                    style={{ width: 15, height: 15, accentColor: purple, cursor: 'pointer', flexShrink: 0 }}
+                  />
+                  <span style={{ flex: 1, fontSize: 13, color: 'rgba(15,0,32,0.7)', fontWeight: typeFilters.includes(t) ? 700 : 500 }}>{t}</span>
+                  <span style={{ fontSize: 12, color: 'rgba(15,0,32,0.35)', fontWeight: 500 }}>({typeCounts[t] || 0})</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Niche section */}
         <div style={{ padding: '16px 20px' }}>
@@ -244,23 +244,18 @@ export default function CreatorFindWorkPage() {
             <ChevronDown style={{ width: 14, height: 14, color: 'rgba(15,0,32,0.4)', transform: nicheOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />
           </button>
           {nicheOpen && (
-            <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
               {['All', ...BROWSE_NICHES].map(n => (
-                <button
-                  key={n}
-                  onClick={() => { setNicheFilter(n); onApply?.() }}
-                  style={{
-                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '6px 8px', borderRadius: 8, border: 'none', cursor: 'pointer', textAlign: 'left',
-                    backgroundColor: nicheFilter === n ? 'rgba(124,58,237,0.08)' : 'transparent',
-                    color: nicheFilter === n ? purple : 'rgba(15,0,32,0.6)',
-                    fontWeight: nicheFilter === n ? 700 : 500,
-                    fontSize: 13,
-                  }}
-                >
-                  <span>{n}</span>
-                  {nicheFilter === n && <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: purple }} />}
-                </button>
+                <label key={n} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="niche-filter"
+                    checked={nicheFilter === n}
+                    onChange={() => { setNicheFilter(n); onApply?.() }}
+                    style={{ width: 15, height: 15, accentColor: purple, cursor: 'pointer', flexShrink: 0 }}
+                  />
+                  <span style={{ flex: 1, fontSize: 13, color: 'rgba(15,0,32,0.7)', fontWeight: nicheFilter === n ? 700 : 500 }}>{n}</span>
+                </label>
               ))}
             </div>
           )}
@@ -343,11 +338,9 @@ export default function CreatorFindWorkPage() {
           {/* Panel header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #e9d5ff' }}>
             <span style={{ fontSize: 15, fontWeight: 800, color: '#0e0020' }}>Filters</span>
-            {hasActiveFilter && (
-              <button onClick={clearFilters} style={{ fontSize: 13, fontWeight: 600, color: purple, background: 'none', border: 'none', cursor: 'pointer' }}>
-                Clear all
-              </button>
-            )}
+            <button onClick={clearFilters} style={{ fontSize: 13, fontWeight: 600, color: hasActiveFilter ? purple : 'rgba(15,0,32,0.25)', background: 'none', border: 'none', cursor: hasActiveFilter ? 'pointer' : 'default' }}>
+              Clear all
+            </button>
           </div>
           <FilterPanelContent />
         </aside>
