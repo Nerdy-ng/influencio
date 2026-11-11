@@ -541,7 +541,7 @@ function MyPitchesTab({ setActiveTab }) {
   return (
     <div className="max-w-2xl mx-auto space-y-4">
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-xl font-black" style={{ color: '#1e0040' }}>My Pitches</h2>
+        <h2 className="text-xl font-black" style={{ color: '#0F0020' }}>My Pitches</h2>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: '#f3eeff', color: purple }}>
           {pitches.length} tracked
         </span>
@@ -578,10 +578,10 @@ function MyPitchesTab({ setActiveTab }) {
           <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#f3eeff' }}>
             {(() => { const Icon = PITCH_TABS[tab].icon; return <Icon className="w-6 h-6" style={{ color: 'rgba(124,58,237,0.4)' }} /> })()}
           </div>
-          <p className="text-sm font-bold mb-1" style={{ color: '#1e0040' }}>
+          <p className="text-sm font-bold mb-1" style={{ color: '#0F0020' }}>
             {tab === 0 ? 'No pitches yet' : tab === 1 ? 'No discussions yet' : tab === 2 ? 'Not hired yet' : 'Nothing archived'}
           </p>
-          <p className="text-xs" style={{ color: '#9ca3af' }}>
+          <p className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>
             {tab === 0 ? 'Collabs you pitch to will appear here' : tab === 1 ? 'Brands that respond will appear here' : tab === 2 ? 'Pitches that led to a collab appear here' : 'Declined or withdrawn pitches appear here'}
           </p>
           {tab === 0 && (
@@ -605,7 +605,7 @@ function MyPitchesTab({ setActiveTab }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold mb-0.5" style={{ color: 'rgba(15,0,32,0.5)' }}>{p.brand}</p>
-                  <p className="text-sm font-black truncate" style={{ color: '#1e0040' }}>{p.title}</p>
+                  <p className="text-sm font-black truncate" style={{ color: '#0F0020' }}>{p.title}</p>
                   {p.type && <p className="text-xs mt-0.5" style={{ color: 'rgba(15,0,32,0.4)' }}>{p.type}</p>}
                 </div>
                 <div className="flex flex-col items-end gap-1.5">
@@ -614,7 +614,7 @@ function MyPitchesTab({ setActiveTab }) {
                     <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: sc }} />
                     {sl}
                   </span>
-                  <span className="text-[10px]" style={{ color: '#9ca3af' }}>{p.timeAgo}</span>
+                  <span className="text-[10px]" style={{ color: 'rgba(15,0,32,0.4)' }}>{p.timeAgo}</span>
                 </div>
               </div>
 
@@ -978,8 +978,8 @@ function BrowseTab({ setActiveTab }) {
       <div style={{ position: 'relative' }}>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search opportunities…"
           className="w-full rounded-xl px-4 py-3 text-sm outline-none"
-          style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff', color: '#1e0040' }} />
-        {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}>✕</button>}
+          style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff', color: '#0F0020' }} />
+        {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(15,0,32,0.4)' }}>✕</button>}
       </div>
 
       {/* ── Niche filter chips ── */}
@@ -1016,11 +1016,11 @@ function BrowseTab({ setActiveTab }) {
       ) : visible.map(job => (
         <div key={job.id} className="rounded-2xl p-5" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff' }}>
           <div className="flex items-start justify-between gap-3 mb-1">
-            <h3 className="font-black text-base" style={{ color: '#1e0040' }}>{job.title}</h3>
+            <h3 className="font-black text-base" style={{ color: '#0F0020' }}>{job.title}</h3>
             {job.isNew && <span className="flex-shrink-0 text-[10px] font-black px-2 py-0.5 rounded-full" style={{ backgroundColor: '#F7258518', color: '#F72585' }}>New</span>}
           </div>
           <p className="text-xs font-semibold mb-3" style={{ color: 'rgba(15,0,32,0.6)' }}>{job.brand} · {job.type}</p>
-          <p className="text-sm mb-3 leading-relaxed" style={{ color: '#1e0040' }}>{job.description}</p>
+          <p className="text-sm mb-3 leading-relaxed" style={{ color: '#0F0020' }}>{job.description}</p>
           <div className="flex flex-wrap gap-2 mb-3">
             {job.tags.map(t => <span key={t} className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: '#f5f3ff', color: '#7c3aed' }}>{t}</span>)}
           </div>
@@ -1057,12 +1057,12 @@ function BrowseTab({ setActiveTab }) {
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }} onClick={() => setPitchJob(null)}>
           <div className="w-full max-w-lg rounded-t-3xl p-6 pb-10" style={{ backgroundColor: '#fff' }} onClick={e => e.stopPropagation()}>
             <div className="w-9 h-1 rounded-full mx-auto mb-5" style={{ backgroundColor: '#e9d5ff' }} />
-            <h3 className="text-lg font-black mb-1" style={{ color: '#1e0040' }}>Pitch for this collab</h3>
+            <h3 className="text-lg font-black mb-1" style={{ color: '#0F0020' }}>Pitch for this collab</h3>
             <p className="text-sm mb-4" style={{ color: 'rgba(15,0,32,0.4)' }}>{pitchJob.title}</p>
             <textarea value={pitchNote} onChange={e => setPitchNote(e.target.value)} rows={4}
               placeholder="Briefly introduce yourself and why you're a great fit…"
               className="w-full rounded-xl px-4 py-3 text-sm outline-none resize-none mb-1"
-              style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf9ff', color: '#1e0040' }} />
+              style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf9ff', color: '#0F0020' }} />
             {pitchNote.length > 0 && pitchNote.trim().length < 20 && (
               <p className="text-xs mb-3" style={{ color: '#ef4444' }}>At least 20 characters required ({pitchNote.trim().length}/20)</p>
             )}
@@ -1085,8 +1085,8 @@ function BrowseTab({ setActiveTab }) {
               <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#dcfce7' }}>
                 <span className="text-3xl">🎉</span>
               </div>
-              <h3 className="text-lg font-black mb-1" style={{ color: '#1e0040' }}>Pitch Sent!</h3>
-              <p className="text-sm font-semibold mb-2" style={{ color: '#1e0040' }}>Your pitch was sent successfully.</p>
+              <h3 className="text-lg font-black mb-1" style={{ color: '#0F0020' }}>Pitch Sent!</h3>
+              <p className="text-sm font-semibold mb-2" style={{ color: '#0F0020' }}>Your pitch was sent successfully.</p>
               <p className="text-sm leading-relaxed" style={{ color: 'rgba(15,0,32,0.4)' }}>You can track your pitch and collaboration status in My Collabs.</p>
             </div>
             <button
@@ -1184,7 +1184,7 @@ const COLLAB_STATUS = {
   delivered:           { label: 'Delivered',    bg: '#ede9fe', color: '#6d28d9', icon: Upload },
   revision_requested:  { label: 'Revision Requested', bg: '#fee2e2', color: '#b91c1c', icon: AlertCircle },
   completed:           { label: 'Completed',    bg: '#dcfce7', color: '#166534', icon: CheckCircle },
-  cancelled:           { label: 'Cancelled',    bg: '#f3f4f6', color: '#6b7280', icon: X },
+  cancelled:           { label: 'Cancelled',    bg: '#f3f4f6', color: 'rgba(15,0,32,0.4)', icon: X },
 }
 
 function MyCollabsTab({ completion = 100, setActiveTab }) {
@@ -2850,11 +2850,11 @@ export default function TalentDashboard() {
                       {/* Available for hire badge */}
                       <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"
                         style={{
-                          backgroundColor: profile.availableForHire ? '#22c55e18' : '#9ca3af12',
-                          color: profile.availableForHire ? '#16a34a' : '#9ca3af',
+                          backgroundColor: profile.availableForHire ? '#22c55e18' : 'rgba(15,0,32,0.4)12',
+                          color: profile.availableForHire ? '#16a34a' : 'rgba(15,0,32,0.4)',
                           border: `1px solid ${profile.availableForHire ? '#22c55e40' : '#e5e7eb'}`,
                         }}>
-                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: profile.availableForHire ? '#22c55e' : '#9ca3af' }} />
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: profile.availableForHire ? '#22c55e' : 'rgba(15,0,32,0.4)' }} />
                         {profile.availableForHire ? 'Available for hire' : 'Not available'}
                       </span>
                     </div>
@@ -3335,7 +3335,7 @@ export default function TalentDashboard() {
                         {[
                           { label: 'Female', pct: 62, color: pink },
                           { label: 'Male',   pct: 35, color: purple },
-                          { label: 'Other',  pct: 3,  color: '#9ca3af' },
+                          { label: 'Other',  pct: 3,  color: 'rgba(15,0,32,0.4)' },
                         ].map(({ label, pct, color }) => (
                           <div key={label} className="flex items-center gap-2">
                             <span className="text-xs text-brand-dark/50 w-10 flex-shrink-0">{label}</span>
@@ -4209,7 +4209,7 @@ const TX_STATUS = {
   'wip':       { label: 'Work in Progress', color: '#0a0a0a', bg: '#0a0a0a08', dot: '#0a0a0a' },
   'in-review': { label: 'In Review',        color: '#0a0a0a', bg: '#0a0a0a08', dot: '#0a0a0a' },
   'available': { label: 'Available',        color: '#0a0a0a', bg: '#0a0a0a08', dot: '#0a0a0a' },
-  'withdrawn': { label: 'Withdrawn',        color: '#9ca3af', bg: '#9ca3af15', dot: '#9ca3af' },
+  'withdrawn': { label: 'Withdrawn',        color: 'rgba(15,0,32,0.4)', bg: 'rgba(15,0,32,0.4)15', dot: 'rgba(15,0,32,0.4)' },
 }
 
 function TransactionsTab({ showWithdraw, setShowWithdraw }) {
@@ -4431,8 +4431,8 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
             sub: 'Already paid out',
             value: transactions.filter(t => t.status === 'withdrawn').reduce((s, t) => s + t.amount, 0),
             icon: ArrowUpRight,
-            color: '#9ca3af',
-            bg: '#9ca3af0d',
+            color: 'rgba(15,0,32,0.4)',
+            bg: 'rgba(15,0,32,0.4)0d',
             border: '#e5e7eb',
             muted: true,
           },
@@ -4467,7 +4467,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
           { label: '→', color: '#c4b5fd' },
           { label: 'Available',        color: '#0a0a0a' },
           { label: '→', color: '#c4b5fd' },
-          { label: 'Withdrawn',        color: '#9ca3af' },
+          { label: 'Withdrawn',        color: 'rgba(15,0,32,0.4)' },
         ].map((s, i) => (
           <span key={i} className="text-xs font-semibold" style={{ color: s.color }}>{s.label}</span>
         ))}
@@ -4558,7 +4558,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
                 </div>
                 {/* Amount + status badge */}
                 <div className="text-right flex-shrink-0">
-                  <p className="font-bold text-sm mb-1" style={{ color: tx.type === 'debit' ? '#9ca3af' : s.color }}>
+                  <p className="font-bold text-sm mb-1" style={{ color: tx.type === 'debit' ? 'rgba(15,0,32,0.4)' : s.color }}>
                     {tx.type === 'debit' ? '−' : '+'}₦{tx.amount.toLocaleString()}
                   </p>
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"

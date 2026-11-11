@@ -243,7 +243,7 @@ function RevisionModal({ order, onClose, onSubmit }) {
             onClick={handleSubmit}
             disabled={submitting || !reason.trim()}
             className="flex-1 py-3 rounded-full text-sm font-semibold text-white flex items-center justify-center gap-2"
-            style={{ backgroundColor: submitting || !reason.trim() ? '#9ca3af' : '#ea580c' }}
+            style={{ backgroundColor: submitting || !reason.trim() ? 'rgba(15,0,32,0.4)' : '#ea580c' }}
           >
             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             Submit Revision
@@ -303,7 +303,7 @@ function PlatformIcon({ platform, size = 16 }) {
   // Generic fallback
   return (
     <span className="inline-flex items-center justify-center rounded font-bold text-white text-[9px]"
-      style={{ width: s, height: s, backgroundColor: '#6b7280', fontSize: s * 0.45 }}>
+      style={{ width: s, height: s, backgroundColor: 'rgba(15,0,32,0.4)', fontSize: s * 0.45 }}>
       {(platform || '?')[0]}
     </span>
   )
@@ -648,11 +648,11 @@ function ReviewModal({ order, onClose, onSubmitted }) {
               rows={4}
               placeholder="Describe your experience with this creator — quality of content, communication, delivery time…"
               className="w-full rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none border"
-              style={{ borderColor: '#e9d5ff', backgroundColor: '#fff', color: '#1e0040' }}
+              style={{ borderColor: '#e9d5ff', backgroundColor: '#fff', color: '#0F0020' }}
               onFocus={e => e.target.style.borderColor = purple}
               onBlur={e => e.target.style.borderColor = '#e9d5ff'}
             />
-            <p className="text-right text-xs mt-1 mb-4" style={{ color: comment.length > 500 ? '#f97316' : '#9ca3af' }}>
+            <p className="text-right text-xs mt-1 mb-4" style={{ color: comment.length > 500 ? '#f97316' : 'rgba(15,0,32,0.4)' }}>
               {comment.length}/500
             </p>
 
@@ -697,7 +697,7 @@ function StatCard({ label, value, icon: Icon, color }) {
           <Icon className="w-4.5 h-4.5" style={{ color, width: '18px', height: '18px' }} />
         </div>
       </div>
-      <p className="text-2xl font-extrabold" style={{ color: '#1e0040' }}>{value}</p>
+      <p className="text-2xl font-extrabold" style={{ color: '#0F0020' }}>{value}</p>
     </div>
   )
 }
@@ -1001,7 +1001,7 @@ export default function BrandDashboard() {
               <button className="md:hidden p-1.5 rounded-lg transition-colors" style={{ color: '#7c3aed' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.08)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = ''} onClick={() => setSidebarOpen(true)}>
                 <Menu className="w-5 h-5" />
               </button>
-              <h1 className="text-lg font-black" style={{ color: '#1e0040' }}>Brand Dashboard</h1>
+              <h1 className="text-lg font-black" style={{ color: '#0F0020' }}>Brand Dashboard</h1>
             </div>
             <div className="flex items-center gap-3">
               <Link
@@ -1971,7 +1971,7 @@ function BrandAnalyticsTab() {
           { label: 'Avg Rating',    value: data.avgRating ? `${data.avgRating}★` : '—', color: '#D4AF37' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-2xl p-4 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
-            <p className="text-xs text-gray-400 mb-1">{s.label}</p>
+            <p className="text-xs mb-1" style={{ color: 'rgba(15,0,32,0.4)' }}>{s.label}</p>
             <p className="text-2xl font-black" style={{ color: s.color }}>{s.value}</p>
           </div>
         ))}
@@ -1979,7 +1979,7 @@ function BrandAnalyticsTab() {
 
       {/* Collabs over time */}
       <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
-        <p className="font-bold mb-4" style={{ color: "#1e0040" }}>Collabs — Last 30 Days</p>
+        <p className="font-bold mb-4" style={{ color: "#0F0020" }}>Collabs — Last 30 Days</p>
         {data.dailyCollabs.some(d => d.count > 0) ? (
           <ResponsiveContainer width="100%" height={180}>
             <LineChart data={data.dailyCollabs}>
@@ -1990,14 +1990,14 @@ function BrandAnalyticsTab() {
             </LineChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex items-center justify-center h-28 text-sm text-gray-400">No collabs yet</div>
+          <div className="flex items-center justify-center h-28 text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>No collabs yet</div>
         )}
       </div>
 
       <div className="grid sm:grid-cols-2 gap-5">
         {/* Collab status breakdown */}
         <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
-          <p className="font-bold mb-4" style={{ color: "#1e0040" }}>Collab Status</p>
+          <p className="font-bold mb-4" style={{ color: "#0F0020" }}>Collab Status</p>
           {pieData.length > 0 ? (
             <div className="flex items-center gap-4">
               <ResponsiveContainer width={120} height={120}>
@@ -2011,20 +2011,20 @@ function BrandAnalyticsTab() {
                 {pieData.map(d => (
                   <div key={d.name} className="flex items-center gap-2 text-sm">
                     <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
-                    <span className="text-gray-600">{d.name}</span>
-                    <span className="font-bold text-gray-900 ml-auto">{d.value}</span>
+                    <span className="" style={{ color: 'rgba(15,0,32,0.6)' }}>{d.name}</span>
+                    <span className="font-bold ml-auto" style={{ color: '#0F0020' }}>{d.value}</span>
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-center h-28 text-sm text-gray-400">No collabs yet</div>
+            <div className="flex items-center justify-center h-28 text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>No collabs yet</div>
           )}
         </div>
 
         {/* Top creators by collabs */}
         <div className="bg-white rounded-2xl p-5 shadow-sm" style={{ border: '1px solid #e9d5ff' }}>
-          <p className="font-bold mb-4" style={{ color: "#1e0040" }}>Top Creators by Collabs</p>
+          <p className="font-bold mb-4" style={{ color: "#0F0020" }}>Top Creators by Collabs</p>
           {data.topCreators.length > 0 ? (
             <ResponsiveContainer width="100%" height={140}>
               <BarChart data={data.topCreators} layout="vertical">
@@ -2035,7 +2035,7 @@ function BrandAnalyticsTab() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex items-center justify-center h-28 text-sm text-gray-400">No creators yet</div>
+            <div className="flex items-center justify-center h-28 text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>No creators yet</div>
           )}
         </div>
       </div>
@@ -2074,7 +2074,7 @@ function OverviewTab({ activeOrders, pendingReview, completedOrders, setActiveTa
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-black" style={{ color: '#1e0040' }}>Overview</h2>
+      <h2 className="text-xl font-black" style={{ color: '#0F0020' }}>Overview</h2>
 
       {/* New-brand hero — visible only when no activity yet */}
       {isNewAccount && (
@@ -2105,7 +2105,7 @@ function OverviewTab({ activeOrders, pendingReview, completedOrders, setActiveTa
       {featuredCreators.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-black" style={{ color: '#1e0040' }}>Top Creators</h3>
+            <h3 className="font-black" style={{ color: '#0F0020' }}>Top Creators</h3>
             <Link to="/brand/find-creators" className="text-sm font-medium flex items-center gap-1" style={{ color: purple }}>
               Browse all <ChevronRight className="w-4 h-4" />
             </Link>
@@ -2323,36 +2323,36 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-5">
-          <p className="text-sm text-gray-500 mb-1">Total Spent</p>
+          <p className="text-sm mb-1" style={{ color: 'rgba(15,0,32,0.5)' }}>Total Spent</p>
           <p className="text-2xl font-extrabold" style={{ color: '#7c3aed' }}>{formatNGN(totalSpent)}</p>
         </div>
         <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-5">
-          <p className="text-sm text-gray-500 mb-1">Platform Fees Paid</p>
-          <p className="text-2xl font-extrabold text-gray-800">{formatNGN(totalFees)}</p>
+          <p className="text-sm mb-1" style={{ color: 'rgba(15,0,32,0.5)' }}>Platform Fees Paid</p>
+          <p className="text-2xl font-extrabold" style={{ color: '#0F0020' }}>{formatNGN(totalFees)}</p>
         </div>
         <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-5">
-          <p className="text-sm text-gray-500 mb-1">Transactions</p>
-          <p className="text-2xl font-extrabold text-gray-800">{paidOrders.length}</p>
+          <p className="text-sm mb-1" style={{ color: 'rgba(15,0,32,0.5)' }}>Transactions</p>
+          <p className="text-2xl font-extrabold" style={{ color: '#0F0020' }}>{paidOrders.length}</p>
         </div>
       </div>
 
       {/* Recent Orders */}
       <div className="bg-white rounded-2xl border border-brand-lav shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-brand-lav">
-          <h3 className="font-bold" style={{ color: "#1e0040" }}>Recent Orders</h3>
+          <h3 className="font-bold" style={{ color: "#0F0020" }}>Recent Orders</h3>
         </div>
         {recentOrders.length === 0 ? (
-          <div className="px-5 py-12 text-center text-gray-400 text-sm">No orders yet</div>
+          <div className="px-5 py-12 text-center text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>No orders yet</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr style={{ backgroundColor: "rgba(124,58,237,0.04)" }}>
-                  <th className="text-left text-xs font-semibold text-gray-500 px-5 py-3">Talent</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Package</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Status</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Amount</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Date</th>
+                  <th className="text-left text-xs font-semibold px-5 py-3" style={{ color: 'rgba(15,0,32,0.5)' }}>Talent</th>
+                  <th className="text-left text-xs font-semibold px-3 py-3" style={{ color: 'rgba(15,0,32,0.5)' }}>Package</th>
+                  <th className="text-left text-xs font-semibold px-3 py-3" style={{ color: 'rgba(15,0,32,0.5)' }}>Status</th>
+                  <th className="text-left text-xs font-semibold px-3 py-3" style={{ color: 'rgba(15,0,32,0.5)' }}>Amount</th>
+                  <th className="text-left text-xs font-semibold px-3 py-3" style={{ color: 'rgba(15,0,32,0.5)' }}>Date</th>
                   <th className="px-3 py-3" />
                 </tr>
               </thead>
@@ -2366,13 +2366,13 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
                           className="w-8 h-8 rounded-full" alt=""
                           onError={e => { e.target.src = `https://ui-avatars.com/api/?name=C&background=4c1d95&color=fff&size=32` }}
                         />
-                        <span className="text-sm font-medium text-gray-800 whitespace-nowrap">{order.talent?.name}</span>
+                        <span className="text-sm font-medium whitespace-nowrap" style={{ color: '#0F0020' }}>{order.talent?.name}</span>
                       </div>
                     </td>
-                    <td className="px-3 py-3 text-sm text-gray-600 whitespace-nowrap">{order.package?.name}</td>
+                    <td className="px-3 py-3 text-sm whitespace-nowrap" style={{ color: 'rgba(15,0,32,0.6)' }}>{order.package?.name}</td>
                     <td className="px-3 py-3"><StatusBadge status={order.status} /></td>
-                    <td className="px-3 py-3 text-sm font-semibold text-gray-800 whitespace-nowrap">{formatNGN(order.total)}</td>
-                    <td className="px-3 py-3 text-xs text-gray-400 whitespace-nowrap">{timeAgo(order.createdAt)}</td>
+                    <td className="px-3 py-3 text-sm font-semibold whitespace-nowrap" style={{ color: '#0F0020' }}>{formatNGN(order.total)}</td>
+                    <td className="px-3 py-3 text-xs whitespace-nowrap" style={{ color: 'rgba(15,0,32,0.4)' }}>{timeAgo(order.createdAt)}</td>
                     <td className="px-3 py-3">
                       <OrderActions order={order} onPayNow={onPayNow} onApprove={onApprove} onRevision={onRevision} onReview={onReview} />
                     </td>
@@ -2387,36 +2387,36 @@ function PaymentsTab({ orders, totalSpent, onPayNow, onApprove, onRevision }) {
       {/* Payment history */}
       <div className="bg-white rounded-2xl border border-brand-lav shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-brand-lav">
-          <h3 className="font-bold" style={{ color: "#1e0040" }}>Payment History</h3>
+          <h3 className="font-bold" style={{ color: "#0F0020" }}>Payment History</h3>
         </div>
         {paidOrders.length === 0 ? (
-          <div className="px-5 py-12 text-center text-gray-400 text-sm">No payments yet</div>
+          <div className="px-5 py-12 text-center text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>No payments yet</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr style={{ backgroundColor: "rgba(124,58,237,0.04)" }}>
-                  <th className="text-left text-xs font-semibold text-gray-500 px-5 py-3">Talent</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Package</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Amount</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Platform Fee</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Payment Status</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 px-3 py-3">Date</th>
+                  <th className="text-left text-xs font-semibold px-5 py-3" style={{ color: 'rgba(15,0,32,0.5)' }}>Talent</th>
+                  <th className="text-left text-xs font-semibold px-3 py-3" style={{ color: 'rgba(15,0,32,0.5)' }}>Package</th>
+                  <th className="text-left text-xs font-semibold px-3 py-3" style={{ color: 'rgba(15,0,32,0.5)' }}>Amount</th>
+                  <th className="text-left text-xs font-semibold px-3 py-3" style={{ color: 'rgba(15,0,32,0.5)' }}>Platform Fee</th>
+                  <th className="text-left text-xs font-semibold px-3 py-3" style={{ color: 'rgba(15,0,32,0.5)' }}>Payment Status</th>
+                  <th className="text-left text-xs font-semibold px-3 py-3" style={{ color: 'rgba(15,0,32,0.5)' }}>Date</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {paidOrders.map(order => (
                   <tr key={order._id} className="hover:bg-[rgba(124,58,237,0.04)] transition-colors">
-                    <td className="px-5 py-3 text-sm font-medium text-gray-800 whitespace-nowrap">{order.talent?.name}</td>
-                    <td className="px-3 py-3 text-sm text-gray-600 whitespace-nowrap">{order.package?.name}</td>
-                    <td className="px-3 py-3 text-sm font-semibold text-gray-800 whitespace-nowrap">{formatNGN(order.total)}</td>
-                    <td className="px-3 py-3 text-sm text-gray-600 whitespace-nowrap">{formatNGN(order.platformFee)}</td>
+                    <td className="px-5 py-3 text-sm font-medium whitespace-nowrap" style={{ color: '#0F0020' }}>{order.talent?.name}</td>
+                    <td className="px-3 py-3 text-sm whitespace-nowrap" style={{ color: 'rgba(15,0,32,0.6)' }}>{order.package?.name}</td>
+                    <td className="px-3 py-3 text-sm font-semibold whitespace-nowrap" style={{ color: '#0F0020' }}>{formatNGN(order.total)}</td>
+                    <td className="px-3 py-3 text-sm whitespace-nowrap" style={{ color: 'rgba(15,0,32,0.6)' }}>{formatNGN(order.platformFee)}</td>
                     <td className="px-3 py-3">
                       <span className={`text-xs font-medium px-2 py-1 rounded-full ${order.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                         {order.status === 'completed' ? 'Released' : 'Active'}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-xs text-gray-400 whitespace-nowrap">{timeAgo(order.createdAt)}</td>
+                    <td className="px-3 py-3 text-xs whitespace-nowrap" style={{ color: 'rgba(15,0,32,0.4)' }}>{timeAgo(order.createdAt)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -2569,7 +2569,7 @@ function WalletTab() {
       {/* Promo code */}
       {userId && (
         <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-5">
-          <h3 className="font-bold flex items-center gap-2 mb-3" style={{ color: "#1e0040" }}>
+          <h3 className="font-bold flex items-center gap-2 mb-3" style={{ color: "#0F0020" }}>
             <span className="text-purple-600">🎟</span> Redeem Promo Code
           </h3>
           <PromoCodeRedeemer
@@ -2583,13 +2583,13 @@ function WalletTab() {
 
       {/* Fund wallet */}
       <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-6 space-y-5">
-        <h3 className="font-bold flex items-center gap-2" style={{ color: "#1e0040" }}>
+        <h3 className="font-bold flex items-center gap-2" style={{ color: "#0F0020" }}>
           <Plus className="w-4 h-4" style={{ color: purple }} /> Fund Wallet
         </h3>
 
         {/* Quick amounts */}
         <div>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Quick amounts</p>
+          <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'rgba(15,0,32,0.4)' }}>Quick amounts</p>
           <div className="flex flex-wrap gap-2">
             {QUICK_AMOUNTS.map(a => (
               <button
@@ -2608,9 +2608,9 @@ function WalletTab() {
 
         {/* Custom amount */}
         <div>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Custom amount</p>
+          <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'rgba(15,0,32,0.4)' }}>Custom amount</p>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">₦</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>₦</span>
             <input
               type="number"
               placeholder="0"
@@ -2623,7 +2623,7 @@ function WalletTab() {
 
         {/* Method */}
         <div>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Payment method</p>
+          <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'rgba(15,0,32,0.4)' }}>Payment method</p>
           <div className="flex flex-col gap-2">
             {FUND_METHODS.map(m => {
               const Icon = m.icon
@@ -2639,11 +2639,11 @@ function WalletTab() {
                 >
                   <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
                     style={{ backgroundColor: active ? purple + '18' : '#f3f4f6' }}>
-                    <Icon className="w-4 h-4" style={{ color: active ? purple : '#6b7280' }} />
+                    <Icon className="w-4 h-4" style={{ color: active ? purple : 'rgba(15,0,32,0.4)' }} />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-800">{m.label}</p>
-                    <p className="text-xs text-gray-400">{m.desc}</p>
+                    <p className="text-sm font-semibold" style={{ color: '#0F0020' }}>{m.label}</p>
+                    <p className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>{m.desc}</p>
                   </div>
                   <div className="w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0"
                     style={{ borderColor: active ? purple : '#d1d5db', backgroundColor: active ? purple : 'transparent' }}>
@@ -2665,7 +2665,7 @@ function WalletTab() {
           {funding ? 'Processing…' : `Fund ${amount ? formatNGN(Number(amount)) : 'Wallet'}`}
         </button>
 
-        <p className="text-xs text-gray-400 text-center">
+        <p className="text-xs text-center" style={{ color: 'rgba(15,0,32,0.4)' }}>
           Minimum ₦5,000 · Card payments processed via Interswitch · Wallet credited after confirmation
         </p>
       </div>
@@ -2673,13 +2673,13 @@ function WalletTab() {
       {/* Transaction history */}
       <div className="bg-white rounded-2xl border border-brand-lav shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-brand-lav flex items-center justify-between">
-          <h3 className="font-bold" style={{ color: "#1e0040" }}>Transaction History</h3>
-          <span className="text-xs text-gray-400">{txns.length} records</span>
+          <h3 className="font-bold" style={{ color: "#0F0020" }}>Transaction History</h3>
+          <span className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>{txns.length} records</span>
         </div>
         {txns.length === 0 ? (
           <div className="px-5 py-12 text-center">
-            <ArrowUpRight className="w-8 h-8 text-gray-200 mx-auto mb-3" />
-            <p className="text-sm text-gray-400">No transactions yet</p>
+            <ArrowUpRight className="w-8 h-8 mx-auto mb-3" style={{ color: '#e9d5ff' }} />
+            <p className="text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>No transactions yet</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-50">
@@ -2695,13 +2695,13 @@ function WalletTab() {
                     }
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-800 truncate">
+                    <p className="text-sm font-semibold truncate" style={{ color: '#0F0020' }}>
                       {t._type === 'topup' ? 'Wallet Top-up' : `${t.content_type || 'Collab'} · ${t.creator?.full_name || 'Creator'}`}
                     </p>
-                    <p className="text-xs text-gray-400">{new Date(t.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                    <p className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>{new Date(t.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-sm font-bold text-gray-800">{formatNGN(t.total_amount)}</p>
+                    <p className="text-sm font-bold" style={{ color: '#0F0020' }}>{formatNGN(t.total_amount)}</p>
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
                       style={{ backgroundColor: sc.bg, color: sc.color }}>
                       {txnStatusLabel(t.payment_status)}
@@ -2726,8 +2726,8 @@ function FavoritesTab() {
         <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4" style={{ backgroundColor: '#fff0f5' }}>
           <Heart className="w-7 h-7" style={{ color: pink }} />
         </div>
-        <p className="font-bold text-gray-700 text-lg mb-2">No saved talents yet</p>
-        <p className="text-sm text-gray-400 mb-6 max-w-xs">
+        <p className="font-bold text-lg mb-2" style={{ color: 'rgba(15,0,32,0.7)' }}>No saved talents yet</p>
+        <p className="text-sm mb-6 max-w-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>
           Tap the heart on any talent profile or marketplace listing to save them here.
         </p>
         <Link to="/marketplace"
@@ -2743,7 +2743,7 @@ function FavoritesTab() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-black text-brand-dpurple">Saved Talents</h2>
-        <span className="text-sm text-gray-400">{favorites.length} saved</span>
+        <span className="text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>{favorites.length} saved</span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {favorites.map(talent => {
@@ -2762,8 +2762,8 @@ function FavoritesTab() {
                     onError={e => { e.target.src = `https://ui-avatars.com/api/?name=T&background=4c1d95&color=fff&size=48` }}
                   />
                   <div className="min-w-0">
-                    <p className="font-bold text-gray-900 text-sm truncate">{talent.name}</p>
-                    <p className="text-xs text-gray-400 truncate">@{talent.handle}</p>
+                    <p className="font-bold text-sm truncate" style={{ color: '#0F0020' }}>{talent.name}</p>
+                    <p className="text-xs truncate" style={{ color: 'rgba(15,0,32,0.4)' }}>@{talent.handle}</p>
                   </div>
                 </div>
                 <button
@@ -2782,11 +2782,11 @@ function FavoritesTab() {
                   {tier.label}
                 </span>
                 {talent.niches?.[0] && (
-                  <span className="text-xs text-gray-500 truncate">{talent.niches[0]}</span>
+                  <span className="text-xs truncate" style={{ color: 'rgba(15,0,32,0.5)' }}>{talent.niches[0]}</span>
                 )}
               </div>
               {/* Stats */}
-              <div className="flex items-center justify-between text-xs text-gray-500">
+              <div className="flex items-center justify-between text-xs" style={{ color: 'rgba(15,0,32,0.5)' }}>
                 <span className="flex items-center gap-1">
                   <Users className="w-3 h-3" />
                   {talent.totalFollowers >= 1000 ? (talent.totalFollowers / 1000).toFixed(1) + 'K' : talent.totalFollowers || talent.followers || '—'}
@@ -2944,7 +2944,7 @@ function SettingsTab() {
 
   const field = (label, key, opts = {}) => (
     <div>
-      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">{label}</label>
+      <label className="block text-xs font-bold uppercase tracking-wide mb-1.5" style={{ color: 'rgba(15,0,32,0.5)' }}>{label}</label>
       <input
         type={opts.type || 'text'}
         value={form[key]}
@@ -3031,12 +3031,12 @@ function SettingsTab() {
       </div>
 
       <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-6 space-y-5">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Brand Info</p>
+        <p className="text-xs font-bold uppercase tracking-wide" style={{ color: 'rgba(15,0,32,0.4)' }}>Brand Info</p>
         {field('Company / Brand name', 'companyName', { placeholder: 'e.g. GlowUp Cosmetics' })}
         {field('Owner / Contact name', 'ownerName',   { placeholder: 'e.g. Chisom Adeyemi' })}
         {field('Website', 'website', { type: 'url', placeholder: 'https://yourbrand.com' })}
         <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Industry</label>
+          <label className="block text-xs font-bold uppercase tracking-wide mb-1.5" style={{ color: 'rgba(15,0,32,0.5)' }}>Industry</label>
           <select value={form.industry} onChange={e => setForm(f => ({ ...f, industry: stripInjection(e.target.value) }))}
             className="w-full px-4 py-3 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 bg-white">
             <option value="">Select industry…</option>
@@ -3046,9 +3046,9 @@ function SettingsTab() {
       </div>
 
       <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-6 space-y-5">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Account</p>
+        <p className="text-xs font-bold uppercase tracking-wide" style={{ color: 'rgba(15,0,32,0.4)' }}>Account</p>
         {field('Email', 'email', { type: 'email', disabled: true })}
-        <p className="text-xs text-gray-400">To change your email, contact support@brandior.africa</p>
+        <p className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>To change your email, contact support@brandior.africa</p>
       </div>
 
       <button onClick={handleSave} disabled={saving}
@@ -3059,10 +3059,10 @@ function SettingsTab() {
 
       {/* Change Password */}
       <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-6 space-y-4">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Change Password</p>
+        <p className="text-xs font-bold uppercase tracking-wide" style={{ color: 'rgba(15,0,32,0.4)' }}>Change Password</p>
         {['next', 'confirm'].map(k => (
           <div key={k}>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wide mb-1.5" style={{ color: 'rgba(15,0,32,0.5)' }}>
               {k === 'next' ? 'New password' : 'Confirm new password'}
             </label>
             <input type="password" value={pwForm[k]} onChange={e => setPwForm(f => ({ ...f, [k]: e.target.value }))}
@@ -3082,11 +3082,11 @@ function SettingsTab() {
 
       {/* Privacy & Data */}
       <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-6">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-4">Privacy & Data</p>
+        <p className="text-xs font-bold uppercase tracking-wide mb-4" style={{ color: 'rgba(15,0,32,0.4)' }}>Privacy & Data</p>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold text-gray-800">Download my data</p>
-            <p className="text-xs text-gray-400 mt-0.5">Get a JSON export of your account, collabs, and notifications</p>
+            <p className="text-sm font-semibold" style={{ color: '#0F0020' }}>Download my data</p>
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(15,0,32,0.4)' }}>Get a JSON export of your account, collabs, and notifications</p>
           </div>
           <button onClick={handleDownloadData} disabled={downloading}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity disabled:opacity-50"
@@ -3108,7 +3108,7 @@ const BRAND_NOTIF_ICONS = {
   revision_requested: { color: '#ea580c', bg: '#fff7ed' },
   completed:          { color: '#16a34a', bg: '#dcfce7' },
   message:            { color: '#0284c7', bg: '#e0f2fe' },
-  default:            { color: '#6b7280', bg: '#f3f4f6' },
+  default:            { color: 'rgba(15,0,32,0.4)', bg: '#f3f4f6' },
 }
 
 function BrandNotificationsTab() {
@@ -3169,8 +3169,8 @@ function BrandNotificationsTab() {
               <div className="flex items-center gap-3">
                 <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
                 <div>
-                  <p className="text-sm font-bold text-gray-800">{label}</p>
-                  <p className="text-xs text-gray-400">{desc}</p>
+                  <p className="text-sm font-bold" style={{ color: '#0F0020' }}>{label}</p>
+                  <p className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>{desc}</p>
                 </div>
               </div>
               <button onClick={() => togglePref(key)}
@@ -3189,14 +3189,14 @@ function BrandNotificationsTab() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-black" style={{ color: darkPurple }}>Recent Activity</h2>
         {notifs.length > 0 && (
-          <span className="text-xs text-gray-400">{notifs.filter(n => !n.read).length} unread</span>
+          <span className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>{notifs.filter(n => !n.read).length} unread</span>
         )}
       </div>
       {notifs.length === 0 ? (
         <div className="text-center py-20">
-          <Bell className="w-12 h-12 mx-auto mb-4 opacity-20 text-gray-400" />
-          <p className="font-semibold text-gray-500">No notifications yet</p>
-          <p className="text-sm text-gray-400 mt-1">We'll let you know when creators submit work or respond to your collabs</p>
+          <Bell className="w-12 h-12 mx-auto mb-4 opacity-20" style={{ color: purple }} />
+          <p className="font-semibold" style={{ color: 'rgba(15,0,32,0.5)' }}>No notifications yet</p>
+          <p className="text-sm mt-1" style={{ color: 'rgba(15,0,32,0.4)' }}>We'll let you know when creators submit work or respond to your collabs</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -3210,9 +3210,9 @@ function BrandNotificationsTab() {
                   <Bell className="w-4 h-4" style={{ color: meta.color }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-gray-900">{n.title}</p>
-                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{n.body}</p>
-                  <p className="text-[10px] text-gray-400 mt-1.5">{new Date(n.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                  <p className="text-sm font-bold" style={{ color: '#0F0020' }}>{n.title}</p>
+                  <p className="text-xs mt-0.5 leading-relaxed" style={{ color: 'rgba(15,0,32,0.5)' }}>{n.body}</p>
+                  <p className="text-[10px] mt-1.5" style={{ color: 'rgba(15,0,32,0.4)' }}>{new Date(n.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                 </div>
                 {!n.read && <span className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: meta.color }} />}
               </div>

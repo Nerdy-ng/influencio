@@ -24,7 +24,7 @@ export default function CollabReviewPage() {
     return (
       <div className="min-h-screen flex items-center justify-center px-6 text-center" style={{ backgroundColor: '#f3eeff' }}>
         <div>
-          <p className="text-gray-500 mb-4">No collab in progress.</p>
+          <p className="mb-4" style={{ color: 'rgba(15,0,32,0.5)' }}>No collab in progress.</p>
           <button onClick={() => navigate('/marketplace')} className="px-6 py-2.5 rounded-full text-white text-sm font-semibold" style={{ backgroundColor: darkPurple }}>
             Back to Marketplace
           </button>
@@ -110,7 +110,7 @@ export default function CollabReviewPage() {
           Back
         </button>
 
-        <h1 className="text-xl font-black mb-6" style={{ color: '#1e0040' }}>Review Collab</h1>
+        <h1 className="text-xl font-black mb-6" style={{ color: '#0F0020' }}>Review Collab</h1>
 
         {/* Creator pill */}
         <div className="flex items-center gap-3 rounded-2xl p-4 mb-4"
@@ -120,7 +120,7 @@ export default function CollabReviewPage() {
             {creator?.initials || creator?.name?.[0] || 'C'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold truncate" style={{ color: '#1e0040' }}>{creator?.name}</p>
+            <p className="text-sm font-bold truncate" style={{ color: '#0F0020' }}>{creator?.name}</p>
             <p className="text-xs truncate" style={{ color: 'rgba(76,29,149,0.5)' }}>{creator?.role || ''}</p>
           </div>
           <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: darkPurple }}>
@@ -158,7 +158,7 @@ export default function CollabReviewPage() {
             <Row label={typeLabel || 'Collab'} value={fmt(total)} last />
           )}
           <div className="flex justify-between items-center pt-3 mt-2" style={{ borderTop: '2px solid #e9d5ff' }}>
-            <span className="text-sm font-extrabold" style={{ color: '#1e0040' }}>Total</span>
+            <span className="text-sm font-extrabold" style={{ color: '#0F0020' }}>Total</span>
             <span className="text-lg font-extrabold" style={{ color: darkPurple }}>{fmt(total)}</span>
           </div>
         </div>
@@ -211,7 +211,7 @@ function Row({ label, value, last }) {
     <div className="flex justify-between items-start gap-3 py-2.5"
       style={!last ? { borderBottom: '1px solid rgba(124,58,237,0.06)' } : {}}>
       <span className="text-sm flex-shrink-0" style={{ color: 'rgba(76,29,149,0.5)' }}>{label}</span>
-      <span className="text-sm font-semibold text-right" style={{ color: '#1e0040' }}>{value}</span>
+      <span className="text-sm font-semibold text-right" style={{ color: '#0F0020' }}>{value}</span>
     </div>
   )
 }

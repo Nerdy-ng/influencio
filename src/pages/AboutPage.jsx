@@ -21,7 +21,7 @@ export default function AboutPage() {
       <Navbar />
 
       {/* Hero */}
-      <section style={{ background: 'linear-gradient(135deg, #1e0040 0%, #4c1d95 100%)' }} className="pt-28 pb-20 px-6">
+      <section style={{ background: 'linear-gradient(135deg, #0e0020 0%, #4c1d95 100%)' }} className="pt-28 pb-20 px-6">
         <div className="max-w-3xl mx-auto text-center">
           <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: '#c084fc' }}>Our Story</p>
           <h1 className="text-4xl lg:text-5xl font-black text-white leading-tight mb-6" style={{ textWrap: 'balance' }}>

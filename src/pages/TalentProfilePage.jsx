@@ -213,7 +213,7 @@ function RateCardOrder({ talent, isPreview, navigate }) {
   return (
     <div className="bg-white rounded-2xl border border-brand-lav shadow-sm overflow-hidden">
       <div className="px-5 py-4 border-b border-brand-lav">
-        <h2 className="font-bold" style={{ color: '#1e0040' }}>Rate Card</h2>
+        <h2 className="font-bold" style={{ color: '#0F0020' }}>Rate Card</h2>
       </div>
 
       <div className="p-5 space-y-5">
@@ -443,7 +443,7 @@ function VerifiedBadge({ tier, campaigns }) {
     <span className="relative group inline-flex items-center">
       <BadgeCheck className="w-5 h-5" style={{ color: '#3b82f6' }} />
       <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex whitespace-nowrap text-[11px] font-medium px-2.5 py-1.5 rounded-lg shadow-lg z-10 pointer-events-none"
-        style={{ backgroundColor: '#1e0040', color: 'white' }}>
+        style={{ backgroundColor: '#0e0020', color: 'white' }}>
         Verified creator · {campaigns || 0}+ campaigns on Brandior
       </span>
     </span>
@@ -988,7 +988,7 @@ export default function TalentProfilePage() {
             {c.platforms?.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-brand-lav">
                 {c.platforms.map(p => {
-                  const pc = PLATFORM_COLORS[p.name] || { bg: '#6b7280', label: p.name }
+                  const pc = PLATFORM_COLORS[p.name] || { bg: 'rgba(15,0,32,0.4)', label: p.name }
                   return (
                     <div key={p.name} className="flex items-center gap-2 rounded-xl px-3 py-2" style={{ backgroundColor: 'rgba(124,58,237,0.08)' }}>
                       <span className="w-6 h-6 rounded-md flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0" style={{ backgroundColor: pc.bg }}>{p.name[0]}</span>

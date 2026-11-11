@@ -40,7 +40,7 @@ export default function ContactPage() {
   }
 
   const inputCls = 'w-full rounded-xl px-4 py-3 text-sm outline-none transition-all'
-  const inputStyle = { border: '1.5px solid #e9d5ff', background: '#faf9ff', color: '#1e0040' }
+  const inputStyle = { border: '1.5px solid #e9d5ff', background: '#faf9ff', color: '#0F0020' }
   const focusStyle = { borderColor: '#7c3aed' }
 
   return (
@@ -52,7 +52,7 @@ export default function ContactPage() {
       <Navbar />
 
       {/* Header */}
-      <section style={{ background: 'linear-gradient(135deg, #1e0040 0%, #4c1d95 100%)' }} className="pt-28 pb-16 px-6">
+      <section style={{ background: 'linear-gradient(135deg, #0e0020 0%, #4c1d95 100%)' }} className="pt-28 pb-16 px-6">
         <div className="max-w-2xl mx-auto text-center">
           <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: '#c084fc' }}>Get in Touch</p>
           <h1 className="text-4xl font-black text-white mb-4">We'd love to hear from you</h1>
@@ -69,7 +69,7 @@ export default function ContactPage() {
               <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ background: '#ede9fe' }}>
                 <Mail className="w-5 h-5" style={{ color: '#7c3aed' }} />
               </div>
-              <h3 className="font-bold text-sm mb-1" style={{ color: '#1e0040' }}>Email us</h3>
+              <h3 className="font-bold text-sm mb-1" style={{ color: '#0F0020' }}>Email us</h3>
               <a href="mailto:support@brandior.africa" className="text-sm font-semibold" style={{ color: '#7c3aed' }}>
                 support@brandior.africa
               </a>
@@ -79,7 +79,7 @@ export default function ContactPage() {
               <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ background: '#ede9fe' }}>
                 <MapPin className="w-5 h-5" style={{ color: '#7c3aed' }} />
               </div>
-              <h3 className="font-bold text-sm mb-1" style={{ color: '#1e0040' }}>Our office</h3>
+              <h3 className="font-bold text-sm mb-1" style={{ color: '#0F0020' }}>Our office</h3>
               <p className="text-gray-500 text-sm leading-relaxed">4, Bashorun Estate,<br />Kolapo Ishola GRA,<br />Ibadan.</p>
             </div>
 
@@ -87,12 +87,12 @@ export default function ContactPage() {
               <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ background: '#ede9fe' }}>
                 <MessageSquare className="w-5 h-5" style={{ color: '#7c3aed' }} />
               </div>
-              <h3 className="font-bold text-sm mb-1" style={{ color: '#1e0040' }}>Response time</h3>
+              <h3 className="font-bold text-sm mb-1" style={{ color: '#0F0020' }}>Response time</h3>
               <p className="text-gray-500 text-sm">We typically respond within 24–48 business hours.</p>
             </div>
 
             <div className="rounded-2xl p-6" style={{ background: '#fff0f7', border: '1px solid #fce7f3' }}>
-              <h3 className="font-bold text-sm mb-2" style={{ color: '#1e0040' }}>Quick links</h3>
+              <h3 className="font-bold text-sm mb-2" style={{ color: '#0F0020' }}>Quick links</h3>
               <ul className="space-y-2">
                 {[
                   { label: 'How it Works', href: '/how-it-works' },
@@ -115,7 +115,7 @@ export default function ContactPage() {
                 <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: '#f0fdf4' }}>
                   <CheckCircle className="w-8 h-8 text-green-500" />
                 </div>
-                <h3 className="text-xl font-black" style={{ color: '#1e0040' }}>Message sent!</h3>
+                <h3 className="text-xl font-black" style={{ color: '#0F0020' }}>Message sent!</h3>
                 <p className="text-gray-500 text-sm max-w-xs">Your email client should have opened. We'll reply to <strong>{form.email}</strong> within 48 hours.</p>
                 <button onClick={() => { setSubmitted(false); setForm({ name: '', email: '', type: '', message: '' }) }}
                   className="mt-2 text-sm font-semibold" style={{ color: '#7c3aed' }}>

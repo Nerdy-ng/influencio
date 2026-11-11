@@ -220,7 +220,7 @@ export function TalentCard({ talent, onGate, from = '/marketplace' }) {
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1 mb-0.5">
-              <p className="font-black text-sm truncate leading-snug" style={{ color: '#1e0040' }}>{talent.name}</p>
+              <p className="font-black text-sm truncate leading-snug" style={{ color: '#0F0020' }}>{talent.name}</p>
               {talent.completedCampaigns >= 10 && (
                 <span className="w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: purple }}>
                   <BadgeCheck className="w-2 h-2 text-white" strokeWidth={3} />
@@ -698,7 +698,7 @@ export default function Marketplace() {
           >
             Talent Marketplace
           </span>
-          <h1 className="text-3xl sm:text-5xl font-black mb-2 leading-tight" style={{ color: '#1e0040' }}>
+          <h1 className="text-3xl sm:text-5xl font-black mb-2 leading-tight" style={{ color: '#0F0020' }}>
             Find{' '}
             <span style={{ color: pink }}>Creators</span>
           </h1>
@@ -719,7 +719,7 @@ export default function Marketplace() {
               value={search}
               onChange={e => { setSearch(stripInjection(e.target.value)); setVisibleCount(PAGE_SIZE) }}
               className="w-full text-sm focus:outline-none transition-all"
-              style={{ paddingLeft: '2.75rem', paddingRight: '1rem', paddingTop: '0.625rem', paddingBottom: '0.625rem', borderRadius: '0.75rem', border: '1.5px solid #e9d5ff', color: '#1e0040', backgroundColor: '#fff', boxShadow: '0 2px 12px rgba(124,58,237,0.08)' }}
+              style={{ paddingLeft: '2.75rem', paddingRight: '1rem', paddingTop: '0.625rem', paddingBottom: '0.625rem', borderRadius: '0.75rem', border: '1.5px solid #e9d5ff', color: '#0F0020', backgroundColor: '#fff', boxShadow: '0 2px 12px rgba(124,58,237,0.08)' }}
               onFocus={e => { e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.12), 0 2px 12px rgba(124,58,237,0.08)' }}
               onBlur={e => { e.target.style.boxShadow = '0 2px 12px rgba(124,58,237,0.08)' }}
             />

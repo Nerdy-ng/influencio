@@ -46,7 +46,7 @@ export default function HowItWorksPage() {
       <Navbar />
 
       {/* Header */}
-      <section style={{ background: 'linear-gradient(135deg, #1e0040 0%, #4c1d95 100%)' }} className="pt-28 pb-16 px-6">
+      <section style={{ background: 'linear-gradient(135deg, #0e0020 0%, #4c1d95 100%)' }} className="pt-28 pb-16 px-6">
         <div className="max-w-2xl mx-auto text-center">
           <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: '#c084fc' }}>The Process</p>
           <h1 className="text-4xl font-black text-white mb-4">Simple. Transparent. Protected.</h1>

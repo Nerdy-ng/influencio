@@ -142,7 +142,7 @@ export default function CampaignDetailPage() {
           <span className="text-3xl">🔍</span>
         </div>
         <h1 className="text-xl font-black mb-2" style={{ color: darkPurple }}>Campaign Not Found</h1>
-        <p className="text-sm mb-6" style={{ color: '#9ca3af' }}>This campaign may have been closed or removed.</p>
+        <p className="text-sm mb-6" style={{ color: 'rgba(15,0,32,0.4)' }}>This campaign may have been closed or removed.</p>
         <button onClick={() => navigate('/creator/find-work')}
           className="px-6 py-3 rounded-xl text-sm font-bold text-white"
           style={{ backgroundColor: darkPurple }}>
@@ -226,7 +226,7 @@ export default function CampaignDetailPage() {
         {/* Content types */}
         {campaign.content_types?.length > 0 && (
           <div className="mb-5">
-            <h2 className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#9ca3af' }}>Content Types</h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: 'rgba(15,0,32,0.4)' }}>Content Types</h2>
             <div className="flex flex-wrap gap-2">
               {campaign.content_types.map(ct => (
                 <span key={ct} className="text-xs font-semibold px-3 py-1.5 rounded-full" style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple }}>
@@ -240,7 +240,7 @@ export default function CampaignDetailPage() {
         {/* Brief */}
         {campaign.brief && (
           <div className="mb-6">
-            <h2 className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#9ca3af' }}>Campaign Brief</h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: 'rgba(15,0,32,0.4)' }}>Campaign Brief</h2>
             <div className="rounded-2xl p-5" style={{ backgroundColor: '#fff', border: '1px solid #e9d5ff', boxShadow: '0 2px 12px rgba(124,58,237,0.06)' }}>
               <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: '#374151' }}>{campaign.brief}</p>
             </div>
@@ -265,7 +265,7 @@ export default function CampaignDetailPage() {
               ✓ You've already pitched for this campaign
             </div>
           ) : isClosed ? (
-            <div className="rounded-2xl py-3 px-5 text-center font-bold text-sm" style={{ backgroundColor: '#f3f4f6', color: '#6b7280' }}>
+            <div className="rounded-2xl py-3 px-5 text-center font-bold text-sm" style={{ backgroundColor: '#f3f4f6', color: 'rgba(15,0,32,0.4)' }}>
               This campaign is closed
             </div>
           ) : !profileReady ? (
@@ -274,7 +274,7 @@ export default function CampaignDetailPage() {
                 🔒 Complete your profile to pitch
               </div>
               <button onClick={() => navigate('/creator/find-work')}
-                className="w-full text-center text-xs font-semibold" style={{ color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer' }}>
+                className="w-full text-center text-xs font-semibold" style={{ color: 'rgba(15,0,32,0.4)', background: 'none', border: 'none', cursor: 'pointer' }}>
                 Go to Find Work to complete setup →
               </button>
             </div>
@@ -298,23 +298,23 @@ export default function CampaignDetailPage() {
             style={{ backgroundColor: '#fff' }}
             onClick={e => e.stopPropagation()}>
             <div className="w-9 h-1 rounded-full mx-auto mb-5" style={{ backgroundColor: '#e9d5ff' }} />
-            <h3 className="text-lg font-black mb-1" style={{ color: '#1e0040' }}>Pitch for this Campaign</h3>
-            <p className="text-sm mb-4" style={{ color: '#9ca3af' }}>{campaign.campaign_name}</p>
+            <h3 className="text-lg font-black mb-1" style={{ color: '#0F0020' }}>Pitch for this Campaign</h3>
+            <p className="text-sm mb-4" style={{ color: 'rgba(15,0,32,0.4)' }}>{campaign.campaign_name}</p>
             <textarea
               value={pitchNote}
               onChange={e => setPitchNote(e.target.value)}
               rows={4}
               placeholder="Briefly introduce yourself and why you're a great fit… (min 50 characters)"
               className="w-full rounded-xl px-4 py-3 text-sm outline-none resize-none mb-1"
-              style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf9ff', color: '#1e0040' }}
+              style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf9ff', color: '#0F0020' }}
             />
             {pitchNote.length > 0 && pitchNote.trim().length < 50 && (
               <p className="text-xs mb-2" style={{ color: '#ef4444' }}>At least 50 characters required ({pitchNote.trim().length}/50)</p>
             )}
-            <p className="text-xs font-bold uppercase tracking-wider mb-1.5 mt-3" style={{ color: '#9ca3af' }}>Your Rate</p>
+            <p className="text-xs font-bold uppercase tracking-wider mb-1.5 mt-3" style={{ color: 'rgba(15,0,32,0.4)' }}>Your Rate</p>
             <div className="flex items-center gap-2 rounded-xl px-4 py-3 mb-3"
               style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#faf9ff' }}>
-              <span className="font-black text-base" style={{ color: '#1e0040' }}>₦</span>
+              <span className="font-black text-base" style={{ color: '#0F0020' }}>₦</span>
               <input
                 type="text"
                 inputMode="numeric"
@@ -322,7 +322,7 @@ export default function CampaignDetailPage() {
                 onChange={e => setPitchRate(e.target.value.replace(/[^0-9]/g, ''))}
                 placeholder="e.g. 80,000"
                 className="flex-1 text-sm bg-transparent outline-none font-semibold"
-                style={{ color: '#1e0040' }}
+                style={{ color: '#0F0020' }}
               />
             </div>
             <button
@@ -335,7 +335,7 @@ export default function CampaignDetailPage() {
             <button
               onClick={() => { setPitchOpen(false); setPitchRate('') }}
               className="w-full py-2 text-sm font-semibold"
-              style={{ color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer' }}>
+              style={{ color: 'rgba(15,0,32,0.4)', background: 'none', border: 'none', cursor: 'pointer' }}>
               Cancel
             </button>
           </div>

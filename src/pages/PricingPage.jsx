@@ -36,7 +36,7 @@ export default function PricingPage() {
       <Navbar />
 
       {/* Header */}
-      <section style={{ background: 'linear-gradient(135deg, #1e0040 0%, #4c1d95 100%)' }} className="pt-28 pb-16 px-6">
+      <section style={{ background: 'linear-gradient(135deg, #0e0020 0%, #4c1d95 100%)' }} className="pt-28 pb-16 px-6">
         <div className="max-w-2xl mx-auto text-center">
           <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: '#c084fc' }}>Pricing</p>
           <h1 className="text-4xl font-black text-white mb-4">No surprises. No subscriptions.</h1>
@@ -54,7 +54,7 @@ export default function PricingPage() {
               For Creators
             </div>
             <div className="mb-2">
-              <span className="text-5xl font-black" style={{ color: '#1e0040' }}>Free</span>
+              <span className="text-5xl font-black" style={{ color: '#0F0020' }}>Free</span>
             </div>
             <p className="text-gray-500 text-sm mb-8">
               Join and build your profile at no cost. You only earn — Brandior never charges creators a subscription.
@@ -83,7 +83,7 @@ export default function PricingPage() {
               For Brands
             </div>
             <div className="mb-2">
-              <span className="text-5xl font-black" style={{ color: '#1e0040' }}>Pay-as-you-go</span>
+              <span className="text-5xl font-black" style={{ color: '#0F0020' }}>Pay-as-you-go</span>
             </div>
             <p className="text-gray-500 text-sm mb-8">
               Browse creators and build your brief for free. Only pay when you book a collab — no lock-in, no monthly fee.
@@ -114,7 +114,7 @@ export default function PricingPage() {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-5" style={{ background: '#ede9fe' }}>
             <ShieldCheck className="w-7 h-7" style={{ color: '#7c3aed' }} />
           </div>
-          <h2 className="text-2xl font-black mb-4" style={{ color: '#1e0040' }}>Every transaction is payment protected</h2>
+          <h2 className="text-2xl font-black mb-4" style={{ color: '#0F0020' }}>Every transaction is payment protected</h2>
           <p className="text-gray-500 max-w-xl mx-auto text-sm leading-relaxed mb-8">
             When a brand books a collab, they pay the full amount upfront. Brandior holds it securely until the creator delivers and the brand approves. If the creator doesn't deliver, the brand gets a full refund. If the brand ghosts after delivery, the funds are auto-released to the creator.
           </p>
@@ -127,7 +127,7 @@ export default function PricingPage() {
       {/* FAQ */}
       <section className="py-16 px-6 bg-white">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl font-black mb-10 text-center" style={{ color: '#1e0040' }}>Pricing FAQ</h2>
+          <h2 className="text-2xl font-black mb-10 text-center" style={{ color: '#0F0020' }}>Pricing FAQ</h2>
           <div className="space-y-4">
             {[
               { q: 'What is the platform fee?', a: 'The platform fee is a percentage added to each transaction. The exact amount is displayed in the order summary before either party confirms the collab.' },
@@ -137,7 +137,7 @@ export default function PricingPage() {
               { q: 'Do brands pay for browsing and messaging?', a: 'No. Browsing creator profiles and exchanging messages is free. You only pay when you formally book a collab through the order flow.' },
             ].map(({ q, a }) => (
               <div key={q} className="rounded-xl p-5 bg-white" style={{ border: '1px solid #e9d5ff' }}>
-                <p className="font-bold text-sm mb-2" style={{ color: '#1e0040' }}>{q}</p>
+                <p className="font-bold text-sm mb-2" style={{ color: '#0F0020' }}>{q}</p>
                 <p className="text-gray-500 text-sm leading-relaxed">{a}</p>
               </div>
             ))}
