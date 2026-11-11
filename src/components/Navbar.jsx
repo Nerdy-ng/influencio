@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Menu, X, Zap, LayoutDashboard, ImagePlus, TrendingUp, Wallet, Mail, Settings, UserPlus, HelpCircle, Eye, LogOut, Briefcase, Bell, ChevronDown } from 'lucide-react'
+import { Menu, X, Zap, LayoutDashboard, ImagePlus, TrendingUp, Wallet, Mail, Settings, UserPlus, HelpCircle, Eye, LogOut, Briefcase, Bell, ChevronDown, ArrowLeftRight, CreditCard } from 'lucide-react'
 import { getLogo } from '../lib/brandSettings'
 import { getSetting } from '../lib/siteSettings'
 import { logout } from '../lib/logout'
@@ -17,13 +17,13 @@ const TALENT_DROPDOWN = [
 ]
 
 const BRAND_DROPDOWN = [
-  { label: 'My Dashboard',     icon: LayoutDashboard, href: '/brand-dashboard' },
+  { label: 'Dashboard',        icon: LayoutDashboard, href: '/brand-dashboard' },
   { label: 'Analytics',        icon: TrendingUp,      href: '/brand-dashboard?tab=overview' },
-  { label: 'Collabs',          icon: Briefcase,       href: '/brand-dashboard?tab=collabs' },
-  { label: 'Messages',         icon: Mail,            href: '/brand-dashboard?tab=messages' },
+  { label: 'Wallet',           icon: Wallet,          href: '/brand-dashboard?tab=wallet' },
+  { label: 'Transactions',     icon: CreditCard,      href: '/brand-dashboard?tab=payments' },
+  { label: 'Notifications',    icon: Bell,            href: '/brand-dashboard?tab=notifications' },
   { label: 'Settings',         icon: Settings,        href: '/brand-dashboard?tab=settings' },
-  { label: 'Invite Creators',  icon: UserPlus,        href: '/brand-dashboard?tab=invite' },
-  { label: 'Support',          icon: HelpCircle,      href: '/brand-dashboard?tab=support' },
+  { label: 'Switch Workspace', icon: ArrowLeftRight,  href: '/workspace-selector' },
 ]
 
 const TALENT_NAV = [
@@ -33,11 +33,12 @@ const TALENT_NAV = [
 ]
 
 const BRAND_NAV = [
-  { label: 'Analytics',      href: '/brand-dashboard?tab=overview' },
-  { label: 'Collabs',        href: '/brand-dashboard?tab=collabs',  notifKey: 'collabs' },
-  { label: 'Messages',       href: '/brand-dashboard?tab=messages', notifKey: 'messages' },
-  { label: 'Invite Creator', href: '/brand-dashboard?tab=invite' },
-  { label: 'Find a Creator', href: '/marketplace', isCta: true },
+  { label: 'Find Creators',   href: '/brand/find-creators' },
+  { label: 'My Campaigns',    href: '/brand/my-campaigns' },
+  { label: 'Collabs',         href: '/brand-dashboard?tab=collabs',  notifKey: 'collabs' },
+  { label: 'Messages',        href: '/brand-dashboard?tab=messages', notifKey: 'messages' },
+  { label: 'Saved Talents',   href: '/brand-dashboard?tab=favorites' },
+  { label: 'Post Campaign',   href: '/brand-dashboard?tab=post-campaign', isCta: true },
 ]
 
 function UserAvatar({ profile, size = 'md' }) {

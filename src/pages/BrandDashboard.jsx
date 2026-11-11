@@ -24,6 +24,7 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContai
 import OnboardingTour from '../components/OnboardingTour'
 import OnboardingChecklist from '../components/OnboardingChecklist'
 import { BrandFindCreatorsContent } from './BrandFindCreatorsPage'
+import Navbar from '../components/Navbar'
 
 const pink = '#F72585'
 const darkPurple = '#4c1d95'
@@ -978,7 +979,7 @@ export default function BrandDashboard() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#f3eeff' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#f3eeff' }}>
       {showTour && (
         <OnboardingTour
           role="brand"
@@ -987,73 +988,13 @@ export default function BrandDashboard() {
         />
       )}
 
-      {/* ── Top navigation bar ── */}
-      <header className="sticky top-0 z-40 bg-white" style={{ borderBottom: '1px solid #e9d5ff', boxShadow: '0 1px 8px rgba(124,58,237,0.06)' }}>
-        <div className="px-4 sm:px-6 h-16 flex items-center gap-4 max-w-screen-2xl mx-auto">
+      {/* ── Official Brandior Navbar ── */}
+      <Navbar forceRole="brand" />
 
-          {/* Logo */}
-          <Link to="/brand-dashboard" className="flex items-center gap-2 flex-shrink-0 mr-2">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #7c3aed, #F72585)' }}>
-              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white"><path d="M13 2L4.5 13.5H11L10 22l9-12h-6.5L13 2z"/></svg>
-            </div>
-            <span className="font-black text-base hidden sm:block" style={{ color: '#0e0020' }}>Brandior</span>
-          </Link>
-
-          {/* Desktop tab links */}
-          <nav className="hidden md:flex items-center gap-1 flex-1">
-            {TOP_NAV_TABS.map(tab => {
-              const isActive = activeTab === tab.id
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTopNavTab(tab)}
-                  className="relative flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
-                  style={{
-                    color: isActive ? '#7c3aed' : 'rgba(15,0,32,0.45)',
-                    backgroundColor: isActive ? 'rgba(124,58,237,0.08)' : 'transparent',
-                  }}
-                  onMouseEnter={e => { if (!isActive) { e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.05)'; e.currentTarget.style.color = '#7c3aed' } }}
-                  onMouseLeave={e => { if (!isActive) { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'rgba(15,0,32,0.45)' } }}
-                >
-                  {tab.label}
-                  {tab.notif && (
-                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: '#F72585' }}>1</span>
-                  )}
-                  {isActive && <span className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full" style={{ backgroundColor: '#7c3aed' }} />}
-                </button>
-              )
-            })}
-          </nav>
-
-          {/* Right: Post Campaign + icons + avatar */}
-          <div className="flex items-center gap-2 ml-auto">
-            <button
-              onClick={() => {
-                if (location.pathname !== '/brand-dashboard') { navigate('/brand-dashboard?tab=post-campaign') } else { setActiveTab('post-campaign') }
-              }}
-              className="hidden sm:flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl text-white transition-opacity hover:opacity-90"
-              style={{ backgroundColor: '#7c3aed' }}
-            >
-              <Plus className="w-4 h-4" />
-              Post Campaign
-            </button>
-            <button className="relative p-2 rounded-xl transition-colors"
-              style={{ color: 'rgba(28,0,64,0.4)' }}
-              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.08)'}
-              onMouseLeave={e => e.currentTarget.style.backgroundColor = ''}>
-              <Bell className="w-5 h-5" />
-              {pendingReview.length > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
-              )}
-            </button>
-            <BrandAvatarMenu onSwitchToCreator={openCreatorSetup} />
-          </div>
-        </div>
-      </header>
-
-      <AnnouncementBanner role="brand" />
-      {/* Content */}
-      <main className="flex-1 overflow-hidden">
+      {/* Content — pt-16 clears the fixed Navbar */}
+      <div className="pt-16 flex flex-col min-h-screen">
+        <AnnouncementBanner role="brand" />
+        <main className="flex-1 overflow-hidden">
           {activeTab === 'talents' ? (
             <div className="pb-24 md:pb-0">
               <BrandFindCreatorsContent />
@@ -1139,6 +1080,7 @@ export default function BrandDashboard() {
             </button>
           ))}
         </nav>
+      </div>{/* end pt-16 wrapper */}
 
       {/* Modals */}
       {paymentModal && (
