@@ -5,8 +5,10 @@ import { supabase } from '../lib/supabase'
 import { normalizePortfolio } from '../lib/portfolioItem'
 import { Helmet } from 'react-helmet-async'
 import {
-  ChevronLeft, MapPin, Star, Users, Heart,
-  Shield, BadgeCheck, MessageSquare,
+  ChevronLeft, MapPin, Star, CheckCircle, Users, Heart,
+  RefreshCw, Shield, ExternalLink, Zap, MessageCircle, Loader2,
+  BadgeCheck, ThumbsUp, MessageSquare, TrendingUp,
+  Send, X, ChevronDown,
 } from 'lucide-react'
 import { useFavorites } from '../hooks/useFavorites'
 import Navbar from '../components/Navbar'
@@ -344,6 +346,88 @@ function RateCardOrder({ talent, isPreview, navigate }) {
   )
 }
 
+// ── Quick Stats sidebar card ─────────────────────────────────────────────────
+function QuickStats({ talent: c }) {
+  const [reviewCount, setReviewCount] = useState(c.reviewCount || null)
+  const [liveRating, setLiveRating] = useState(c.avgRating || 0)
+
+  useEffect(() => {
+    const tid = c._id || c.id
+    if (!tid) return
+    fetchReviews(tid).then(d => {
+      setReviewCount(d.reviewCount)
+      if (d.avgRating) setLiveRating(d.avgRating)
+    })
+  }, [c._id, c.id])
+
+  // Derive response rate: top-rated = 98%, next-rated = 95%, fast-rising = 90%
+  const responseRate = c.tier === 'top-rated' ? '98%' : c.tier === 'next-rated' ? '95%' : '90%'
+  const isVerified = c.tier === 'top-rated' || c.tier === 'next-rated' || (c.completedCampaigns || 0) >= 5
+
+  return (
+    <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-5">
+      <h3 className="font-bold mb-4" style={{ color: '#0F0020' }}>Quick Stats</h3>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>
+            <Users className="w-4 h-4" />
+            Total Followers
+          </div>
+          <span className="font-bold" style={{ color: '#0F0020' }}>{formatFollowers(c.totalFollowers)}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>
+            <Heart className="w-4 h-4" />
+            Avg. Engagement
+          </div>
+          <span className="font-bold" style={{ color: pink }}>{Number(c.avgEngagement || 0).toFixed(1)}%</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>
+            <CheckCircle className="w-4 h-4" />
+            Campaigns Done
+          </div>
+          <span className="font-bold" style={{ color: '#0F0020' }}>{c.completedCampaigns || 0}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>
+            <Star className="w-4 h-4" />
+            Rating
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="font-bold" style={{ color: '#0F0020' }}>{Number(liveRating).toFixed(1)}</span>
+            {reviewCount !== null && (
+              <span className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>({reviewCount})</span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>
+            <MessageSquare className="w-4 h-4" />
+            Response Rate
+          </div>
+          <span className="font-bold" style={{ color: '#0F0020' }}>{responseRate}</span>
+        </div>
+        <div className="pt-2 border-t border-brand-lav">
+          <div className="flex items-center gap-2">
+            {isVerified ? (
+              <>
+                <BadgeCheck className="w-4 h-4 flex-shrink-0" style={{ color: '#3b82f6' }} />
+                <span className="text-xs" style={{ color: 'rgba(15,0,32,0.5)' }}>Identity & platform verified</span>
+              </>
+            ) : (
+              <>
+                <Shield className="w-4 h-4 flex-shrink-0" style={{ color: 'rgba(15,0,32,0.2)' }} />
+                <span className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>Verification pending</span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Verified badge ──────────────────────────────────────────────────────────
 function VerifiedBadge({ tier, campaigns }) {
   const isVerified = tier === 'top-rated' || tier === 'next-rated' || (campaigns || 0) >= 5
@@ -569,6 +653,42 @@ export default function TalentProfilePage() {
   const conversationIdRef = useRef(null)
   const { toggle, isFav } = useFavorites()
 
+  // Custom offer state
+  const TIMELINES_LIST = ['Less than a week', '1 week', '2 weeks', '1 month', '2 months', '3 months']
+  const CONTENT_TYPES_LIST = ['Instagram Reel', 'TikTok Video', 'YouTube Video', 'Instagram Stories', 'Photo Post', 'Blog Post', 'Podcast Mention', 'UGC (unposted)']
+  const [showOfferModal, setShowOfferModal] = useState(false)
+  const [offerForm, setOfferForm] = useState({ title: '', brief: '', budget: '', timeline: '', deliverables: [] })
+  const [offerSending, setOfferSending] = useState(false)
+  const [offerSent, setOfferSent] = useState(false)
+  const [timelineOpen, setTimelineOpen] = useState(false)
+
+  function toggleDeliverable(ct) {
+    setOfferForm(f => ({ ...f, deliverables: f.deliverables.includes(ct) ? f.deliverables.filter(x => x !== ct) : [...f.deliverables, ct] }))
+  }
+
+  async function sendCustomOffer(e) {
+    e.preventDefault()
+    if (offerSending) return
+    if (!offerForm.title.trim() || offerForm.brief.trim().length < 20 || !offerForm.budget || offerForm.deliverables.length === 0) return
+    setOfferSending(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setOfferSending(false); return }
+    await supabase.from('custom_offers').insert({
+      brand_id: user.id,
+      creator_id: talent._id || talent.id,
+      title: offerForm.title.trim(),
+      brief: offerForm.brief.trim(),
+      deliverables: offerForm.deliverables,
+      budget: parseFloat(offerForm.budget.replace(/,/g, '')),
+      timeline: offerForm.timeline || null,
+    })
+    setOfferSending(false)
+    setOfferSent(true)
+    setTimeout(() => { setShowOfferModal(false); setOfferSent(false); setOfferForm({ title: '', brief: '', budget: '', timeline: '', deliverables: [] }) }, 2200)
+  }
+
+  const canSendOffer = offerForm.title.trim().length > 0 && offerForm.brief.trim().length >= 20 && offerForm.budget.length > 0 && offerForm.deliverables.length > 0
+
   async function openChat() {
     setChatOpen(true)
     setTimeout(() => chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
@@ -793,17 +913,17 @@ export default function TalentProfilePage() {
         {/* Profile header — clean card */}
         <div className="bg-white rounded-2xl shadow-sm border border-brand-lav overflow-hidden mb-6">
           {/* Top strip */}
-          <div className="h-32 w-full" style={{ background: 'linear-gradient(135deg, #0d0020 0%, #3b0764 100%)' }} />
+          <div className="h-24 w-full" style={{ background: 'linear-gradient(135deg, #0d0020 0%, #3b0764 100%)' }} />
 
           <div className="px-6 md:px-8 pb-6">
             {/* Avatar row */}
-            <div className="flex flex-wrap items-end justify-between gap-4 -mt-14 mb-4">
+            <div className="flex flex-wrap items-end justify-between gap-4 -mt-12 mb-4">
               <div className="relative">
                 <img
-                  src={c.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=7c3aed&color=fff&size=112`}
+                  src={c.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=7c3aed&color=fff&size=96`}
                   alt={c.name}
-                  className="w-28 h-28 rounded-2xl object-cover ring-4 ring-white shadow-xl"
-                  onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=7c3aed&color=fff&size=112` }}
+                  className="w-20 h-20 rounded-2xl object-cover ring-4 ring-white shadow-lg"
+                  onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=7c3aed&color=fff&size=96` }}
                 />
                 <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-400 ring-2 ring-white" />
               </div>
@@ -850,7 +970,7 @@ export default function TalentProfilePage() {
 
             {/* Name + badges */}
             <div className="flex flex-wrap items-center gap-2 mb-1">
-              <h1 className="text-2xl font-black" style={{ color: '#0F0020' }}>{c.name}</h1>
+              <h1 className="text-xl font-extrabold" style={{ color: '#0F0020' }}>{c.name}</h1>
               <VerifiedBadge tier={c.tier} campaigns={c.completedCampaigns} />
               <TierBadge tier={c.tier} size="sm" />
               {c.availableForHire
@@ -942,24 +1062,172 @@ export default function TalentProfilePage() {
           </div>
         )}
 
-        {/* Rate Card → Payment Protected → Reviews */}
-        <div className="space-y-5">
-          <RateCardOrder talent={c} isPreview={isPreview} navigate={navigate} />
+        {/* 2-col lower section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left — rate card + chat + reviews */}
+          <div className="lg:col-span-2 space-y-5">
 
-          <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-start gap-2.5">
-            <Shield className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-green-800">Payment Protected</p>
-              <p className="text-xs text-green-600 mt-0.5">All payments are held securely until you approve deliverables.</p>
-            </div>
+            {/* Rate Card */}
+            <RateCardOrder talent={c} isPreview={isPreview} navigate={navigate} />
+
+            {/* Custom Offer CTA */}
+            {!isPreview && (
+              <button onClick={() => setShowOfferModal(true)}
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90"
+                style={{ background: 'linear-gradient(135deg, #7c3aed, #F72585)', color: '#fff', border: 'none' }}>
+                <Send className="w-4 h-4" />
+                Send a Custom Offer
+              </button>
+            )}
+
+            {/* Reviews */}
+            <ReviewsSection talentId={c._id || c.id} />
           </div>
 
-          <ReviewsSection talentId={c._id || c.id} />
+          {/* Right sidebar */}
+          <div className="flex flex-col gap-4">
+            <QuickStats talent={c} />
+
+            <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-start gap-2.5">
+              <Shield className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-green-800">Payment Protected</p>
+                <p className="text-xs text-green-600 mt-0.5">Payment held securely until you approve deliverables.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-</>
+    {/* ── Custom Offer Modal ── */}
+    {talent && showOfferModal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}>
+        <div className="w-full max-w-lg rounded-3xl bg-white shadow-2xl overflow-hidden" style={{ border: '1px solid #e9d5ff', maxHeight: '90vh', overflowY: 'auto' }}>
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: '1px solid #e9d5ff' }}>
+            <div>
+              <p className="font-black" style={{ color: '#0F0020' }}>Send Custom Offer</p>
+              <p className="text-xs mt-0.5" style={{ color: 'rgba(15,0,32,0.4)' }}>Direct offer to {c.name}</p>
+            </div>
+            <button onClick={() => { setShowOfferModal(false); setOfferSent(false) }} className="p-1.5 rounded-lg" onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(124,58,237,0.06)'} onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
+              <X className="w-4 h-4" style={{ color: 'rgba(15,0,32,0.4)' }} />
+            </button>
+          </div>
+
+          {offerSent ? (
+            <div className="text-center py-12 px-6">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'linear-gradient(135deg, #7c3aed, #F72585)' }}>
+                <Send className="w-7 h-7 text-white" />
+              </div>
+              <p className="font-black text-xl mb-2" style={{ color: '#0F0020' }}>Offer Sent! 🎉</p>
+              <p className="text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>
+                Your custom offer has been sent to <span className="font-bold" style={{ color: purple }}>{c.name}</span>. They'll be notified and can accept or decline.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={sendCustomOffer} className="px-6 py-5 space-y-4">
+              {/* Creator strip */}
+              <div className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: 'rgba(124,58,237,0.04)' }}>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm text-white flex-shrink-0" style={{ backgroundColor: darkPurple }}>
+                  {c.name?.[0]}
+                </div>
+                <div>
+                  <p className="font-bold text-sm" style={{ color: '#0F0020' }}>{c.name}</p>
+                  <p className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>{c.niche || c.primaryNiche || 'Creator'}</p>
+                </div>
+                <div className="ml-auto flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full" style={{ backgroundColor: `${purple}15`, color: purple }}>
+                  <Zap className="w-3 h-3" /> Direct
+                </div>
+              </div>
+
+              {/* Title */}
+              <div>
+                <label className="text-xs font-bold uppercase tracking-widest mb-1.5 block" style={{ color: 'rgba(15,0,32,0.4)' }}>Project title *</label>
+                <input type="text" required value={offerForm.title} onChange={e => setOfferForm(f => ({ ...f, title: stripInjection(e.target.value) }))}
+                  placeholder="e.g. Summer Glow UGC Campaign"
+                  className="w-full px-4 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ color: '#0F0020', border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }} />
+              </div>
+
+              {/* Brief */}
+              <div>
+                <label className="text-xs font-bold uppercase tracking-widest mb-1.5 block" style={{ color: 'rgba(15,0,32,0.4)' }}>Brief * <span className="normal-case font-normal" style={{ color: 'rgba(15,0,32,0.4)' }}>(min 20 chars)</span></label>
+                <textarea required rows={4} value={offerForm.brief} onChange={e => setOfferForm(f => ({ ...f, brief: stripInjection(e.target.value) }))}
+                  placeholder="Describe your campaign goals, tone, target audience, and specific requirements…"
+                  className="w-full px-4 py-2.5 rounded-xl text-sm outline-none resize-none"
+                  style={{ color: '#0F0020', border: `1.5px solid ${offerForm.brief.length > 0 && offerForm.brief.length < 20 ? '#ef4444' : '#e9d5ff'}`, backgroundColor: '#fff' }} />
+                <p className={`text-[10px] mt-0.5 ${offerForm.brief.length > 0 && offerForm.brief.length < 20 ? 'text-red-500' : ''}`} style={{ color: offerForm.brief.length > 0 && offerForm.brief.length < 20 ? undefined : 'rgba(15,0,32,0.25)' }}>{offerForm.brief.length} / 20 min</p>
+              </div>
+
+              {/* Deliverables */}
+              <div>
+                <label className="text-xs font-bold uppercase tracking-widest mb-2 block" style={{ color: 'rgba(15,0,32,0.4)' }}>Deliverables *</label>
+                <div className="flex flex-wrap gap-2">
+                  {CONTENT_TYPES_LIST.map(ct => {
+                    const active = offerForm.deliverables.includes(ct)
+                    return (
+                      <button key={ct} type="button" onClick={() => toggleDeliverable(ct)}
+                        className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+                        style={{
+                          backgroundColor: active ? darkPurple : 'rgba(124,58,237,0.04)',
+                          color: active ? '#fff' : 'rgba(15,0,32,0.4)',
+                          border: `1px solid ${active ? darkPurple : '#e9d5ff'}`,
+                        }}>
+                        {active && <CheckCircle className="w-3 h-3 inline mr-1" />}{ct}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Budget */}
+              <div>
+                <label className="text-xs font-bold uppercase tracking-widest mb-1.5 block" style={{ color: 'rgba(15,0,32,0.4)' }}>Your offer (₦) *</label>
+                <div className="flex items-center rounded-xl overflow-hidden" style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}>
+                  <span className="px-3 text-sm font-bold" style={{ color: 'rgba(15,0,32,0.4)' }}>₦</span>
+                  <input type="text" inputMode="numeric" required value={offerForm.budget}
+                    onChange={e => setOfferForm(f => ({ ...f, budget: e.target.value.replace(/[^\d,]/g, '') }))}
+                    placeholder="e.g. 150,000"
+                    className="flex-1 px-2 py-2.5 text-sm bg-transparent outline-none font-semibold" style={{ color: '#0F0020' }} />
+                </div>
+              </div>
+
+              {/* Timeline */}
+              <div className="relative">
+                <label className="text-xs font-bold uppercase tracking-widest mb-1.5 block" style={{ color: 'rgba(15,0,32,0.4)' }}>Timeline</label>
+                <button type="button" onClick={() => setTimelineOpen(v => !v)}
+                  className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ border: '1.5px solid #e9d5ff', backgroundColor: '#fff' }}>
+                  <span className={offerForm.timeline ? 'font-medium' : ''} style={{ color: offerForm.timeline ? '#0F0020' : 'rgba(15,0,32,0.4)' }}>{offerForm.timeline || 'Select a timeline…'}</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${timelineOpen ? 'rotate-180' : ''}`} style={{ color: 'rgba(15,0,32,0.4)' }} />
+                </button>
+                {timelineOpen && (
+                  <div className="absolute z-10 w-full mt-1 rounded-xl bg-white shadow-xl overflow-hidden" style={{ border: '1px solid #e9d5ff' }}>
+                    {TIMELINES_LIST.map(t => (
+                      <button key={t} type="button" onClick={() => { setOfferForm(f => ({ ...f, timeline: t })); setTimelineOpen(false) }}
+                        className="w-full px-4 py-2.5 text-left text-sm hover:bg-[rgba(124,58,237,0.06)] transition-colors flex items-center justify-between"
+                        style={{ color: offerForm.timeline === t ? purple : '#0F0020', fontWeight: offerForm.timeline === t ? '700' : '400' }}>
+                        {t}{offerForm.timeline === t && <CheckCircle className="w-4 h-4" style={{ color: purple }} />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <button type="submit" disabled={!canSendOffer || offerSending}
+                className="w-full py-3.5 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 disabled:opacity-40"
+                style={{ background: canSendOffer && !offerSending ? 'linear-gradient(135deg, #7c3aed, #F72585)' : 'rgba(15,0,32,0.2)' }}>
+                {offerSending
+                  ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Sending…</>
+                  : <><Send className="w-4 h-4" /> Send Custom Offer</>}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    )}
+    </>
   )
 }
 
