@@ -2289,13 +2289,13 @@ export default function TalentDashboard() {
         socials: m.socials || p.socials,
       }))
       // Load portfolio, avatar, and tier from profiles table
-      const { data: profileRow } = await supabase.from('profiles').select('portfolio, avatar_url, tier').eq('id', user.id).single()
+      const { data: profileRow } = await supabase.from('profiles').select('portfolio, avatar_url, creator_avatar_url, tier').eq('id', user.id).single()
       if (profileRow) {
         const newTier = profileRow.tier || null
         setProfile(p => ({
           ...p,
           portfolio: profileRow.portfolio?.length ? profileRow.portfolio : p.portfolio,
-          avatar: profileRow.avatar_url || m.avatar || p.avatar,
+          avatar: profileRow.avatar_url || profileRow.creator_avatar_url || m.avatar || p.avatar,
           tier: newTier,
         }))
         // Detect tier upgrade
@@ -2514,7 +2514,7 @@ export default function TalentDashboard() {
       const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
       setProfile(p => ({ ...p, avatar: publicUrl }))
       await supabase.auth.updateUser({ data: { avatar: publicUrl } })
-      await supabase.from('profiles').upsert({ id: user.id, avatar_url: publicUrl, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+      await supabase.from('profiles').upsert({ id: user.id, avatar_url: publicUrl, creator_avatar_url: publicUrl, updated_at: new Date().toISOString() }, { onConflict: 'id' })
     } catch { /* keep preview */ }
   }
 
@@ -3514,6 +3514,34 @@ export default function TalentDashboard() {
                     <Eye className="w-3 h-3" /> Visible to brands
                   </span>
                 </div>
+
+                {/* Profile picture */}
+                <div className="flex items-center gap-4 mb-5 pb-5" style={{ borderBottom: '1px solid #e9d5ff' }}>
+                  <div className="relative flex-shrink-0">
+                    {profile.avatar ? (
+                      <img src={profile.avatar} alt={profile.nickname || 'Profile'}
+                        className="w-16 h-16 rounded-2xl object-cover" style={{ border: '2px solid #e9d5ff' }} />
+                    ) : (
+                      <div className="w-16 h-16 rounded-2xl flex items-center justify-center font-black text-xl"
+                        style={{ backgroundColor: '#f3eeff', border: '2px solid #e9d5ff', color: '#7c3aed' }}>
+                        {profile.initials !== '?' ? profile.initials : (
+                          <svg viewBox="0 0 24 24" className="w-8 h-8" fill="#c084fc"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-brand-dark mb-1">Profile Photo</p>
+                    <p className="text-[11px] text-brand-dark/40 mb-2">Shown on your public profile and pitches</p>
+                    <button
+                      onClick={() => avatarFileRef.current?.click()}
+                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+                      style={{ backgroundColor: '#f3eeff', color: '#7c3aed', border: '1px solid #e9d5ff' }}>
+                      <Camera className="w-3 h-3" /> {profile.avatar ? 'Change photo' : 'Upload photo'}
+                    </button>
+                  </div>
+                </div>
+
                 <div className="grid sm:grid-cols-2 gap-5 mb-5">
                   <EditableField label="Nickname / Talent Name" value={profile.nickname} onChange={v => updateField('nickname', v)} placeholder="e.g. BeautyByAmaka" isEditing={settingsEditMode} />
                   <EditableField label="Brandior Username" value={profile.handle} onChange={v => updateField('handle', v)} placeholder="@yourhandle" isEditing={settingsEditMode} />
