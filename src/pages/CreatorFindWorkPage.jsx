@@ -43,6 +43,11 @@ export default function CreatorFindWorkPage() {
   const [filtersOpen, setFiltersOpen]   = useState(false)
   const [nicheOpen, setNicheOpen]       = useState(true)
   const [typeOpen, setTypeOpen]         = useState(true)
+  const [budgetOpen, setBudgetOpen]     = useState(true)
+  const [budgetMin, setBudgetMin]       = useState(0)
+  const [budgetMax, setBudgetMax]       = useState(500000)
+  const [sortBy, setSortBy]             = useState('recent')
+  const [sortOpen, setSortOpen]         = useState(false)
   const { toggle: toggleFav, isFav }    = useFavorites()
 
   // Setup wizard
@@ -188,15 +193,27 @@ export default function CreatorFindWorkPage() {
 
   const visible = jobs.filter(j => {
     const q = search.toLowerCase()
-    const matchesSearch = !q || j.title.toLowerCase().includes(q) || j.brand.toLowerCase().includes(q)
-    const matchesNiche  = nicheFilter === 'All' || (j.tags || []).some(t => t.toLowerCase() === nicheFilter.toLowerCase())
-    const matchesType   = typeFilters.length === 0 || typeFilters.includes(j.type)
-    return matchesSearch && matchesNiche && matchesType
+    const matchesSearch  = !q || j.title.toLowerCase().includes(q) || j.brand.toLowerCase().includes(q)
+    const matchesNiche   = nicheFilter === 'All' || (j.tags || []).some(t => t.toLowerCase() === nicheFilter.toLowerCase())
+    const matchesType    = typeFilters.length === 0 || typeFilters.includes(j.type)
+    const matchesBudget  = j.budgetRaw >= budgetMin && (budgetMax >= 500000 || j.budgetRaw <= budgetMax)
+    return matchesSearch && matchesNiche && matchesType && matchesBudget
   })
 
-  const hasActiveFilter = nicheFilter !== 'All' || typeFilters.length > 0
+  const sortedVisible = sortBy === 'budget_high' ? [...visible].sort((a, b) => b.budgetRaw - a.budgetRaw)
+    : sortBy === 'budget_low' ? [...visible].sort((a, b) => a.budgetRaw - b.budgetRaw)
+    : visible
 
-  function clearFilters() { setNicheFilter('All'); setTypeFilters([]) }
+  const SORT_OPTIONS = [
+    { value: 'recent',      label: 'Most Recent' },
+    { value: 'budget_high', label: 'Highest Budget' },
+    { value: 'budget_low',  label: 'Lowest Budget' },
+  ]
+  const sortLabel = SORT_OPTIONS.find(o => o.value === sortBy)?.label || 'Most Recent'
+
+  const hasActiveFilter = nicheFilter !== 'All' || typeFilters.length > 0 || budgetMin > 0 || budgetMax < 500000
+
+  function clearFilters() { setNicheFilter('All'); setTypeFilters([]); setBudgetMin(0); setBudgetMax(500000) }
 
   const cardStyle = {
     transform: sliding ? 'translateX(-110%)' : slideIn ? 'translateX(0)' : 'translateX(0)',
@@ -230,6 +247,42 @@ export default function CreatorFindWorkPage() {
                   <span style={{ fontSize: 12, color: 'rgba(15,0,32,0.35)', fontWeight: 500 }}>({typeCounts[t] || 0})</span>
                 </label>
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* Budget Range section */}
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #e9d5ff' }}>
+          <button
+            onClick={() => setBudgetOpen(o => !o)}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
+            <span style={{ fontSize: 13, fontWeight: 800, color: '#0e0020' }}>Budget Range</span>
+            <ChevronDown style={{ width: 14, height: 14, color: 'rgba(15,0,32,0.4)', transform: budgetOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />
+          </button>
+          {budgetOpen && (
+            <div style={{ marginTop: 14 }}>
+              {/* Filled track */}
+              <div style={{ position: 'relative', height: 4, backgroundColor: '#e9d5ff', borderRadius: 2, margin: '0 0 4px' }}>
+                <div style={{
+                  position: 'absolute', height: '100%', borderRadius: 2, backgroundColor: purple,
+                  left: `${(budgetMin / 500000) * 100}%`,
+                  right: `${100 - (budgetMax / 500000) * 100}%`,
+                }} />
+              </div>
+              {/* Dual handles */}
+              <div className="dual-range">
+                <input type="range" min={0} max={500000} step={5000} value={budgetMin}
+                  onChange={e => setBudgetMin(Math.min(Number(e.target.value), budgetMax - 5000))}
+                />
+                <input type="range" min={0} max={500000} step={5000} value={budgetMax}
+                  onChange={e => setBudgetMax(Math.max(Number(e.target.value), budgetMin + 5000))}
+                />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'rgba(15,0,32,0.5)', marginTop: 6 }}>
+                <span>₦{budgetMin.toLocaleString()}</span>
+                <span>{budgetMax >= 500000 ? '₦500,000+' : '₦' + budgetMax.toLocaleString()}</span>
+              </div>
             </div>
           )}
         </div>
@@ -484,12 +537,36 @@ export default function CreatorFindWorkPage() {
             </div>
           )}
 
-          {/* Results count */}
+          {/* Results count + sort */}
           {!loading && (
-            <p style={{ fontSize: 14, color: 'rgba(15,0,32,0.5)', marginBottom: 16 }}>
-              <span style={{ fontWeight: 700, color: '#0e0020' }}>{visible.length}</span>{' '}
-              {visible.length === 1 ? 'opportunity' : 'opportunities'} found
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <p style={{ fontSize: 14, color: 'rgba(15,0,32,0.5)' }}>
+                <span style={{ fontWeight: 700, color: '#0e0020' }}>{visible.length}</span>{' '}
+                {visible.length === 1 ? 'opportunity' : 'opportunities'} found
+              </p>
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setSortOpen(o => !o)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: 'rgba(15,0,32,0.6)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}
+                >
+                  Sort by: <strong style={{ color: '#0e0020', marginLeft: 2 }}>{sortLabel}</strong>
+                  <ChevronDown style={{ width: 13, height: 13, marginLeft: 2, color: 'rgba(15,0,32,0.4)' }} />
+                </button>
+                {sortOpen && (
+                  <div style={{ position: 'absolute', right: 0, top: '110%', zIndex: 20, backgroundColor: '#fff', border: '1px solid #e9d5ff', borderRadius: 10, overflow: 'hidden', minWidth: 160, boxShadow: '0 4px 16px rgba(124,58,237,0.1)' }}>
+                    {SORT_OPTIONS.map(opt => (
+                      <button
+                        key={opt.value}
+                        onClick={() => { setSortBy(opt.value); setSortOpen(false) }}
+                        style={{ display: 'block', width: '100%', padding: '9px 14px', fontSize: 13, textAlign: 'left', border: 'none', backgroundColor: sortBy === opt.value ? 'rgba(124,58,237,0.08)' : '#fff', color: sortBy === opt.value ? purple : 'rgba(15,0,32,0.7)', cursor: 'pointer', fontWeight: sortBy === opt.value ? 700 : 500 }}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           )}
 
           {/* Loading */}
@@ -512,7 +589,7 @@ export default function CreatorFindWorkPage() {
 
           {/* ── Opportunity cards ── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {!loading && visible.map(job => {
+            {!loading && sortedVisible.map(job => {
               const bgColor  = brandColor(job.brand)
               const isPitched = applied.includes(job.id)
               const isFaved   = isFav(job.id)
@@ -678,7 +755,26 @@ export default function CreatorFindWorkPage() {
         </div>
       )}
 
-      <style>{`@keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }`}</style>
+      <style>{`
+        @keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        .dual-range { position: relative; height: 24px; margin: 4px 0; }
+        .dual-range input[type=range] {
+          -webkit-appearance: none; appearance: none;
+          position: absolute; width: 100%; height: 24px;
+          background: none; pointer-events: none; margin: 0; padding: 0;
+        }
+        .dual-range input[type=range]::-webkit-slider-thumb {
+          -webkit-appearance: none; pointer-events: all;
+          width: 16px; height: 16px; border-radius: 50%;
+          background: #7c3aed; cursor: pointer;
+          border: 2px solid #fff; box-shadow: 0 1px 4px rgba(124,58,237,0.4);
+        }
+        .dual-range input[type=range]::-moz-range-thumb {
+          pointer-events: all; width: 16px; height: 16px; border-radius: 50%;
+          background: #7c3aed; cursor: pointer;
+          border: 2px solid #fff; box-shadow: 0 1px 4px rgba(124,58,237,0.4);
+        }
+      `}</style>
     </div>
   )
 }

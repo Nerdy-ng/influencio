@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Menu, X, Zap, LayoutDashboard, ImagePlus, TrendingUp, Wallet, Mail, Settings, UserPlus, HelpCircle, Eye, LogOut, Briefcase, Bell } from 'lucide-react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Menu, X, Zap, LayoutDashboard, ImagePlus, TrendingUp, Wallet, Mail, Settings, UserPlus, HelpCircle, Eye, LogOut, Briefcase, Bell, ChevronDown } from 'lucide-react'
 import { getLogo } from '../lib/brandSettings'
 import { getSetting } from '../lib/siteSettings'
 import { logout } from '../lib/logout'
@@ -27,9 +27,9 @@ const BRAND_DROPDOWN = [
 ]
 
 const TALENT_NAV = [
-  { label: 'My Dashboard',  href: '/dashboard' },
-  { label: 'Messages',      href: '/dashboard?tab=messages', notifKey: 'messages' },
-  { label: 'Invite Brands', href: '/dashboard?tab=invite' },
+  { label: 'Find Work',   href: '/creator/find-work' },
+  { label: 'My Collabs',  href: '/dashboard?tab=collabs' },
+  { label: 'Messages',    href: '/dashboard?tab=messages', notifKey: 'messages' },
 ]
 
 const BRAND_NAV = [
@@ -57,6 +57,7 @@ function UserAvatar({ profile, size = 'md' }) {
 
 export default function Navbar() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [joinOpen, setJoinOpen] = useState(false)
   const [userOpen, setUserOpen] = useState(false)
@@ -224,19 +225,29 @@ export default function Navbar() {
                       onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--b-cta)'}>
                       + {label}
                     </Link>
-                  : <Link to={href}
-                      className="relative inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-xl transition-all duration-200"
-                      style={{ color: 'rgba(255,255,255,0.8)' }}
-                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#7c3aed'; e.currentTarget.style.color = 'white' }}
-                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.8)' }}>
-                      {label}
-                      {notifKey && notifs[notifKey] > 0 && (
-                        <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold text-white"
-                          style={{ backgroundColor: '#ef4444' }}>
-                          {notifs[notifKey] > 9 ? '9+' : notifs[notifKey]}
-                        </span>
-                      )}
-                    </Link>
+                  : (() => {
+                      const full = location.pathname + location.search
+                      const active = href.includes('?') ? full === href : location.pathname === href
+                      return (
+                        <Link to={href}
+                          className="relative inline-flex items-center gap-1.5 text-sm px-4 py-2 rounded-full transition-all duration-200"
+                          style={{
+                            color: active ? '#7c3aed' : 'rgba(255,255,255,0.8)',
+                            backgroundColor: active ? 'rgba(255,255,255,0.95)' : 'transparent',
+                            fontWeight: active ? 700 : 500,
+                          }}
+                          onMouseEnter={e => { if (!active) { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'white' } }}
+                          onMouseLeave={e => { if (!active) { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.8)' } }}>
+                          {label}
+                          {notifKey && notifs[notifKey] > 0 && (
+                            <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold text-white"
+                              style={{ backgroundColor: '#7c3aed' }}>
+                              {notifs[notifKey] > 9 ? '9+' : notifs[notifKey]}
+                            </span>
+                          )}
+                        </Link>
+                      )
+                    })()
               }
             </li>
           ))}
@@ -308,11 +319,17 @@ export default function Navbar() {
               )}
             </div>
 
+            {/* Separator */}
+            <div style={{ width: 1, height: 24, backgroundColor: 'rgba(255,255,255,0.12)', flexShrink: 0 }} />
+
             {/* ── Avatar dropdown ── */}
             <div className="relative" ref={userRef}>
-              <button onClick={() => setUserOpen(o => !o)} className="relative focus:outline-none">
-                <UserAvatar profile={profile} />
-                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400" style={{ boxShadow: '0 0 0 2px var(--b-secondary)' }} />
+              <button onClick={() => setUserOpen(o => !o)} className="relative focus:outline-none flex items-center gap-1.5">
+                <div className="relative">
+                  <UserAvatar profile={profile} />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400" style={{ boxShadow: '0 0 0 2px #0e0020' }} />
+                </div>
+                <ChevronDown className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.5)' }} />
               </button>
 
               {userOpen && (
