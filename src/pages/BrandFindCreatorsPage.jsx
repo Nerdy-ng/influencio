@@ -92,48 +92,33 @@ function BrandCreatorCard({ talent, from = '/brand/find-creators' }) {
       </div>
 
       {/* Info */}
-      <div className="p-4 flex flex-col gap-2.5">
+      <div className="p-4 flex flex-col gap-2">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1 mb-0.5">
-              <p className="font-black text-base truncate leading-snug" style={{ color: '#0F0020' }}>{talent.name}</p>
+            <div className="flex items-center gap-1">
+              <p className="font-black text-base truncate leading-snug" style={{ color: '#0F0020' }}>@{talent.handle}</p>
               {talent.completedCampaigns >= 10 && (
                 <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: purple }}>
                   <BadgeCheck className="w-2.5 h-2.5 text-white" strokeWidth={3} />
                 </span>
               )}
             </div>
-            <p className="text-xs" style={{ color: 'rgba(76,29,149,0.5)' }}>@{talent.handle}</p>
           </div>
           <StarRating rating={talent.avgRating} />
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
-          {(talent.niches || []).slice(0, 2).map(n => {
-            const nicheObj = NICHES.find(x => x.label === n)
-            return (
-              <span key={n} className="text-xs font-semibold px-2.5 py-0.5 rounded-full"
-                style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple }}>
-                {nicheObj ? nicheObj.emoji + ' ' : ''}{n}
-              </span>
-            )
-          })}
-          {talent.availableForHire && (
-            <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full"
-              style={{ backgroundColor: 'rgba(22,163,74,0.07)', color: '#16a34a', border: '1px solid rgba(22,163,74,0.15)' }}>
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
-              Available
+        {(talent.niches || [])[0] && (() => {
+          const n = (talent.niches || [])[0]
+          const nicheObj = NICHES.find(x => x.label === n)
+          return (
+            <span className="self-start text-xs font-semibold px-2.5 py-0.5 rounded-full"
+              style={{ backgroundColor: 'rgba(124,58,237,0.08)', color: purple }}>
+              {nicheObj ? nicheObj.emoji + ' ' : ''}{n}
             </span>
-          )}
-        </div>
+          )
+        })()}
 
-        <p className="text-xs" style={{ color: 'rgba(76,29,149,0.5)' }}>
-          {formatFollowers(talent.totalFollowers)} followers
-          {' · '}{Number(talent.avgEngagement || 0).toFixed(1)}% eng
-          {' · '}{talent.completedCampaigns || 0} jobs
-        </p>
-
-        <div className="flex items-center justify-between gap-2 pt-2.5 mt-auto"
+        <div className="flex items-center justify-between gap-2 pt-2 mt-auto"
           style={{ borderTop: '1px solid rgba(124,58,237,0.08)' }}>
           <span className="text-sm font-black" style={{ color: purple }}>
             From {formatNGN(talent.minPrice)}
