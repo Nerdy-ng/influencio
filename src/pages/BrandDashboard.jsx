@@ -189,8 +189,8 @@ function PaymentModal({ order, onClose, onSuccess }) {
             <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(124,58,237,0.1)' }}>
               <Loader2 className="w-8 h-8 animate-spin" style={{ color: purple }} />
             </div>
-            <p className="font-bold mb-1" style={{ color: '#0F0020' }}>Redirecting to Paystack...</p>
-            <p className="text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>Please wait while we process your payment</p>
+            <p className="font-bold mb-1" style={{ color: '#0F0020' }}>Processing payment…</p>
+            <p className="text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>Please wait while we set up your payment</p>
           </div>
         )}
 
@@ -1312,10 +1312,6 @@ function SidebarContent({ activeTab, setActiveTab, dashLogo, onSwitchToCreator }
           >
             <Icon className="w-4 h-4 flex-shrink-0" />
             <span className="flex-1">{label}</span>
-            {id === 'messages' && (
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white"
-                style={{ backgroundColor: pink }}>1</span>
-            )}
           </button>
         ))}
       </nav>
@@ -2437,7 +2433,8 @@ function WalletTab() {
   const [method,   setMethod]   = useState('card')
   const [funding,  setFunding]  = useState(false)
   const [success,  setSuccess]  = useState(false)
-  const [txns,     setTxns]     = useState([])
+  const [txns,      setTxns]      = useState([])
+  const [fundError, setFundError] = useState('')
 
   async function reload(uid) {
     const [profileRes, collabsRes, topupsRes] = await Promise.all([
@@ -2516,7 +2513,7 @@ function WalletTab() {
       }, (msg) => { alert(msg); setFunding(false) })
     } else {
       setFunding(false)
-      alert('Bank transfer: Coming soon. Wallet will be credited after transfer confirms.')
+      setFundError('Bank transfer coming soon. Use card for now.')
     }
   }
 
@@ -2635,8 +2632,11 @@ function WalletTab() {
           </div>
         </div>
 
+        {fundError && (
+          <p className="text-sm font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">{fundError}</p>
+        )}
         <button
-          onClick={handleFund}
+          onClick={() => { setFundError(''); handleFund() }}
           disabled={!amount || Number(amount) < 5000 || funding}
           className="w-full py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-opacity disabled:opacity-40"
           style={{ backgroundColor: purple }}

@@ -1193,13 +1193,13 @@ function BrowseTab({ setActiveTab }) {
                     <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginBottom: 10 }}>Pick up to 3 niches</p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                       {BROWSE_NICHES.map(n => (
-                        <button key={n} onClick={() => setFormNiches(prev => prev.includes(n) ? prev.filter(x => x !== n) : prev.length < 3 ? [...prev, n] : prev)}
+                        <button key={n} onClick={() => setFormNiches(prev => prev.includes(n) ? prev.filter(x => x !== n) : prev.length < 2 ? [...prev, n] : prev)}
                           style={{ padding: '7px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: formNiches.includes(n) ? 'none' : '1px solid rgba(255,255,255,0.2)', backgroundColor: formNiches.includes(n) ? '#fff' : 'rgba(255,255,255,0.1)', color: formNiches.includes(n) ? '#6d28d9' : 'rgba(255,255,255,0.8)' }}>
                           {n}
                         </button>
                       ))}
                     </div>
-                    {formNiches.length < 3 && (
+                    {formNiches.length < 2 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '6px 10px', border: '1px solid rgba(255,255,255,0.15)' }}>
                         <input
                           placeholder="Add your own niche…"
@@ -1207,7 +1207,7 @@ function BrowseTab({ setActiveTab }) {
                           onKeyDown={e => {
                             if (e.key === 'Enter') {
                               const val = e.target.value.trim()
-                              if (val && !formNiches.includes(val) && formNiches.length < 3) {
+                              if (val && !formNiches.includes(val) && formNiches.length < 2) {
                                 setFormNiches(prev => [...prev, val])
                                 e.target.value = ''
                               }
@@ -1611,11 +1611,21 @@ function MyCollabsTab({ completion = 100, setActiveTab }) {
   async function submitBrandReview() {
     if (!reviewCollab || reviewRating === 0 || reviewComment.trim().length < 20) return
     setReviewSubmitting(true)
-    await supabase.from('collabs').update({
+    const { data: { user: rUser } } = await supabase.auth.getUser()
+    const { error: collabErr } = await supabase.from('collabs').update({
       creator_review_rating: reviewRating,
       creator_review_comment: reviewComment.trim(),
       creator_reviewed_at: new Date().toISOString(),
     }).eq('id', reviewCollab.id)
+    if (!collabErr && rUser) {
+      await supabase.from('collab_ratings').insert({
+        collab_id:   reviewCollab.id,
+        reviewer_id: rUser.id,
+        role:        'creator',
+        rating:      reviewRating,
+        comment:     reviewComment.trim(),
+      })
+    }
     setCollabs(prev => prev.map(c => c.id === reviewCollab.id ? { ...c, creator_review_rating: reviewRating } : c))
     setReviewSubmitting(false)
     setReviewDone(true)

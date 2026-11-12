@@ -110,11 +110,7 @@ export function openPhylloConnect({ token, userId, platformId, onConnected, onEx
 
 // Step 4 — fetch account data from Phyllo after connection
 export async function fetchPhylloAccountData(phylloUserId, accountId) {
-  const CLIENT_ID = import.meta.env.VITE_PHYLLO_CLIENT_ID
-  const CLIENT_SECRET = import.meta.env.VITE_PHYLLO_CLIENT_SECRET
-
-  // Fetch via our backend to keep credentials safe
-  const res = await fetch(`/api/phyllo/account-data?user_id=${phylloUserId}&account_id=${accountId}`)
+  const res = await fetch(`/api/phyllo-account-data?user_id=${phylloUserId}&account_id=${accountId}`)
   const data = await res.json()
   return data
 }
