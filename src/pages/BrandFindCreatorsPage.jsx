@@ -323,10 +323,10 @@ export function BrandFindCreatorsContent() {
 
       {/* ── Sticky search + controls bar ────────────────────────── */}
       <div
-        className="sticky z-30 px-4 sm:px-6 lg:px-8 py-3"
+        className="sticky z-30 py-3"
         style={{ top: '64px', backgroundColor: 'rgba(243,238,255,0.95)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid #e9d5ff' }}
       >
-        <div className="max-w-7xl mx-auto flex items-center gap-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2">
 
           {/* Search input */}
           <div className="relative flex-1">
