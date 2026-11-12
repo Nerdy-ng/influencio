@@ -5342,14 +5342,42 @@ const NOTIF_ICONS = {
   default:            { color: 'rgba(15,0,32,0.4)', bg: 'rgba(124,58,237,0.04)', label: 'Notification'    },
 }
 
+const PUSH_PREF_ITEMS = [
+  { key: 'new_invite', label: 'Campaign Invites',    desc: 'When a brand invites you to a campaign', color: '#7c3aed' },
+  { key: 'proposal',   label: 'Proposal Updates',    desc: 'When brands respond to your pitches',    color: '#2563eb' },
+  { key: 'messages',   label: 'Messages',             desc: 'New messages in your collabs',           color: '#0284c7' },
+  { key: 'review',     label: 'Reviews',              desc: 'When a brand leaves you a review',       color: '#f59e0b' },
+  { key: 'payment',    label: 'Payments',             desc: 'Payment released or pending',            color: '#16a34a' },
+  { key: 'deadline',   label: 'Deadlines',            desc: 'Upcoming collab deadlines',              color: '#ea580c' },
+]
+const EMAIL_PREF_ITEMS = [
+  { key: 'digest',  label: 'Weekly Digest',       desc: 'Weekly summary of your activity',   color: '#7c3aed' },
+  { key: 'account', label: 'Account Alerts',      desc: 'Sign-ins, password changes, security', color: '#0284c7' },
+  { key: 'tips',    label: 'Tips & Best Practices', desc: 'How to get more from Brandior',    color: '#94a3b8' },
+]
+const DEF_PUSH  = { new_invite: true, proposal: true, messages: true, review: true, payment: true, deadline: true }
+const DEF_EMAIL = { digest: true, account: true, tips: false }
+
 function NotificationsTab() {
-  const [notifs,  setNotifs]  = useState([])
-  const [loading, setLoading] = useState(true)
+  const [notifs,     setNotifs]     = useState([])
+  const [loading,    setLoading]    = useState(true)
+  const [uid,        setUid]        = useState(null)
+  const [pushPrefs,  setPushPrefs]  = useState(DEF_PUSH)
+  const [emailPrefs, setEmailPrefs] = useState(DEF_EMAIL)
 
   useEffect(() => {
     ;(async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
+      setUid(user.id)
+      try {
+        const stored = localStorage.getItem(`brandior_notif_${user.id}`)
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          if (parsed.push)  setPushPrefs(p  => ({ ...p,  ...parsed.push  }))
+          if (parsed.email) setEmailPrefs(e => ({ ...e, ...parsed.email }))
+        }
+      } catch {}
       const { data } = await supabase
         .from('notifications')
         .select('*')
@@ -5364,44 +5392,126 @@ function NotificationsTab() {
     })()
   }, [])
 
+  function savePrefs(nextPush, nextEmail) {
+    if (!uid) return
+    try { localStorage.setItem(`brandior_notif_${uid}`, JSON.stringify({ push: nextPush, email: nextEmail })) } catch {}
+  }
+  function togglePush(key) {
+    setPushPrefs(p => { const n = { ...p, [key]: !p[key] }; savePrefs(n, emailPrefs); return n })
+  }
+  function toggleEmail(key) {
+    setEmailPrefs(e => { const n = { ...e, [key]: !e[key] }; savePrefs(pushPrefs, n); return n })
+  }
+  function toggleAllPush(val) {
+    const n = Object.fromEntries(PUSH_PREF_ITEMS.map(i => [i.key, val]))
+    setPushPrefs(n); savePrefs(n, emailPrefs)
+  }
+  function toggleAllEmail(val) {
+    const n = Object.fromEntries(EMAIL_PREF_ITEMS.map(i => [i.key, val]))
+    setEmailPrefs(n); savePrefs(pushPrefs, n)
+  }
+
   if (loading) return <div className="flex justify-center py-20"><div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" /></div>
 
+  const allPushOn  = PUSH_PREF_ITEMS.every(i  => pushPrefs[i.key])
+  const allEmailOn = EMAIL_PREF_ITEMS.every(i => emailPrefs[i.key])
+
+  const Toggle = ({ on, onClick }) => (
+    <button onClick={onClick}
+      className="w-11 h-6 rounded-full flex items-center transition-colors duration-200 flex-shrink-0"
+      style={{ backgroundColor: on ? darkPurple : '#d1d5db' }}>
+      <span className="rounded-full bg-white shadow-sm transition-transform duration-200 ml-0.5"
+        style={{ transform: on ? 'translateX(20px)' : 'translateX(0)', width: '18px', height: '18px', minWidth: '18px' }} />
+    </button>
+  )
+
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-black" style={{ color: darkPurple }}>Notifications</h2>
-        {notifs.length > 0 && (
-          <span className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>{notifs.filter(n => !n.read).length} unread</span>
+    <div className="max-w-3xl mx-auto space-y-6">
+      {/* Push notification preferences */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xl font-black" style={{ color: darkPurple }}>Push Notifications</h2>
+          <button onClick={() => toggleAllPush(!allPushOn)} className="text-xs font-bold" style={{ color: purple }}>
+            Turn all {allPushOn ? 'off' : 'on'}
+          </button>
+        </div>
+        <div className="bg-white rounded-2xl border border-brand-lav shadow-sm divide-y divide-gray-50">
+          {PUSH_PREF_ITEMS.map(({ key, label, desc, color }) => (
+            <div key={key} className="flex items-center justify-between px-5 py-4">
+              <div className="flex items-center gap-3">
+                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                <div>
+                  <p className="text-sm font-bold" style={{ color: '#0F0020' }}>{label}</p>
+                  <p className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>{desc}</p>
+                </div>
+              </div>
+              <Toggle on={pushPrefs[key]} onClick={() => togglePush(key)} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Email notification preferences */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xl font-black" style={{ color: darkPurple }}>Email Notifications</h2>
+          <button onClick={() => toggleAllEmail(!allEmailOn)} className="text-xs font-bold" style={{ color: purple }}>
+            Turn all {allEmailOn ? 'off' : 'on'}
+          </button>
+        </div>
+        <div className="bg-white rounded-2xl border border-brand-lav shadow-sm divide-y divide-gray-50">
+          {EMAIL_PREF_ITEMS.map(({ key, label, desc, color }) => (
+            <div key={key} className="flex items-center justify-between px-5 py-4">
+              <div className="flex items-center gap-3">
+                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                <div>
+                  <p className="text-sm font-bold" style={{ color: '#0F0020' }}>{label}</p>
+                  <p className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>{desc}</p>
+                </div>
+              </div>
+              <Toggle on={emailPrefs[key]} onClick={() => toggleEmail(key)} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Activity feed */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-black" style={{ color: darkPurple }}>Recent Activity</h2>
+          {notifs.length > 0 && (
+            <span className="text-xs" style={{ color: 'rgba(15,0,32,0.4)' }}>{notifs.filter(n => !n.read).length} unread</span>
+          )}
+        </div>
+        {notifs.length === 0 ? (
+          <div className="text-center py-20">
+            <Bell className="w-12 h-12 mx-auto mb-4 opacity-20" style={{ color: purple }} />
+            <p className="font-semibold" style={{ color: 'rgba(15,0,32,0.4)' }}>No notifications yet</p>
+            <p className="text-sm mt-1" style={{ color: 'rgba(15,0,32,0.4)' }}>We'll notify you when brands place orders or respond to your work</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {notifs.map(n => {
+              const meta = NOTIF_ICONS[n.type] || NOTIF_ICONS.default
+              return (
+                <div key={n.id} className="flex items-start gap-3 p-4 rounded-2xl"
+                  style={{ backgroundColor: n.read ? 'white' : meta.bg, border: `1px solid ${n.read ? '#e9d5ff' : meta.color + '30'}` }}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: meta.bg, border: `1px solid ${meta.color}30` }}>
+                    <Bell className="w-4 h-4" style={{ color: meta.color }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold" style={{ color: '#0F0020' }}>{n.title}</p>
+                    <p className="text-xs mt-0.5 leading-relaxed" style={{ color: 'rgba(15,0,32,0.4)' }}>{n.body}</p>
+                    <p className="text-[10px] mt-1.5" style={{ color: 'rgba(15,0,32,0.4)' }}>{new Date(n.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                  </div>
+                  {!n.read && <span className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: meta.color }} />}
+                </div>
+              )
+            })}
+          </div>
         )}
       </div>
-      {notifs.length === 0 ? (
-        <div className="text-center py-20">
-          <Bell className="w-12 h-12 mx-auto mb-4 opacity-20" style={{ color: purple }} />
-          <p className="font-semibold" style={{ color: 'rgba(15,0,32,0.4)' }}>No notifications yet</p>
-          <p className="text-sm mt-1" style={{ color: 'rgba(15,0,32,0.4)' }}>We'll notify you when brands place orders or respond to your work</p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {notifs.map(n => {
-            const meta = NOTIF_ICONS[n.type] || NOTIF_ICONS.default
-            return (
-              <div key={n.id} className="flex items-start gap-3 p-4 rounded-2xl"
-                style={{ backgroundColor: n.read ? 'white' : meta.bg, border: `1px solid ${n.read ? '#e9d5ff' : meta.color + '30'}` }}>
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: meta.bg, border: `1px solid ${meta.color}30` }}>
-                  <Bell className="w-4 h-4" style={{ color: meta.color }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold" style={{ color: '#0F0020' }}>{n.title}</p>
-                  <p className="text-xs mt-0.5 leading-relaxed" style={{ color: 'rgba(15,0,32,0.4)' }}>{n.body}</p>
-                  <p className="text-[10px] mt-1.5" style={{ color: 'rgba(15,0,32,0.4)' }}>{new Date(n.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                </div>
-                {!n.read && <span className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: meta.color }} />}
-              </div>
-            )
-          })}
-        </div>
-      )}
     </div>
   )
 }

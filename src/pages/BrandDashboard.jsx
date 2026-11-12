@@ -2806,6 +2806,25 @@ function SettingsTab() {
   const [pwMsg,          setPwMsg]          = useState(null)
   const [downloading,    setDownloading]    = useState(false)
   const [brandStats,     setBrandStats]     = useState({ completions: 0, creators: 0 })
+  const [mfaFactor,     setMfaFactor]     = useState(null)
+  const [mfaLoading,    setMfaLoading]    = useState(false)
+  const [mfaEnrolling,  setMfaEnrolling]  = useState(false)
+  const [mfaStep,       setMfaStep]       = useState(0)
+  const [mfaQr,         setMfaQr]         = useState('')
+  const [mfaEnrollId,   setMfaEnrollId]   = useState('')
+  const [mfaCode,       setMfaCode]       = useState('')
+  const [mfaCodeErr,    setMfaCodeErr]    = useState('')
+  const [mfaMsg,        setMfaMsg]        = useState(null)
+
+  async function loadMfa() {
+    setMfaLoading(true)
+    try {
+      const { data } = await supabase.auth.mfa.listFactors()
+      const verified = (data?.totp || []).find(f => f.status === 'verified')
+      setMfaFactor(verified || null)
+    } catch {}
+    setMfaLoading(false)
+  }
 
   useEffect(() => {
     ;(async () => {
@@ -2830,6 +2849,7 @@ function SettingsTab() {
         email:       user.email            || '',
       })
       setLoading(false)
+      loadMfa()
     })()
   }, [])
 
@@ -2895,6 +2915,45 @@ function SettingsTab() {
     } finally {
       setDownloading(false)
     }
+  }
+
+  async function handleEnroll2FA() {
+    setMfaEnrolling(true); setMfaCodeErr('')
+    try {
+      const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' })
+      if (error) { setMfaCodeErr(error.message); setMfaEnrolling(false); return }
+      setMfaQr(data.totp.qr_code)
+      setMfaEnrollId(data.id)
+      setMfaStep(1)
+    } catch (e) { setMfaCodeErr(e.message) }
+    setMfaEnrolling(false)
+  }
+
+  async function handleVerify2FA() {
+    if (!mfaCode || mfaCode.length !== 6) { setMfaCodeErr('Enter the 6-digit code from your authenticator app.'); return }
+    setMfaEnrolling(true); setMfaCodeErr('')
+    try {
+      const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: mfaEnrollId, code: mfaCode })
+      if (error) { setMfaCodeErr(error.message); setMfaEnrolling(false); return }
+      setMfaStep(0); setMfaCode(''); setMfaQr(''); setMfaEnrollId('')
+      setMfaMsg({ type: 'success', text: '2FA enabled. Your account is now more secure.' })
+      await loadMfa()
+      setTimeout(() => setMfaMsg(null), 5000)
+    } catch (e) { setMfaCodeErr(e.message) }
+    setMfaEnrolling(false)
+  }
+
+  async function handleDisable2FA() {
+    if (!mfaFactor) return
+    setMfaEnrolling(true)
+    try {
+      const { error } = await supabase.auth.mfa.unenroll({ factorId: mfaFactor.id })
+      if (error) { setMfaMsg({ type: 'error', text: error.message }); setMfaEnrolling(false); return }
+      setMfaFactor(null)
+      setMfaMsg({ type: 'success', text: '2FA disabled.' })
+      setTimeout(() => setMfaMsg(null), 4000)
+    } catch (e) { setMfaMsg({ type: 'error', text: e.message }) }
+    setMfaEnrolling(false)
   }
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" /></div>
@@ -3037,6 +3096,77 @@ function SettingsTab() {
         </button>
       </div>
 
+      {/* Two-Factor Authentication */}
+      <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-6 space-y-4">
+        <div className="flex items-center gap-2 mb-1">
+          <Shield className="w-4 h-4" style={{ color: darkPurple }} />
+          <p className="text-xs font-bold uppercase tracking-wide" style={{ color: 'rgba(15,0,32,0.4)' }}>Two-Factor Authentication</p>
+        </div>
+        {mfaMsg && (
+          <p className={`text-xs font-semibold ${mfaMsg.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>{mfaMsg.text}</p>
+        )}
+        {mfaLoading ? (
+          <div className="flex items-center gap-2 py-2">
+            <Loader2 className="w-4 h-4 animate-spin" style={{ color: purple }} />
+            <span className="text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>Checking 2FA status…</span>
+          </div>
+        ) : mfaFactor ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.2)' }}>
+              <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+              <p className="text-sm font-semibold text-green-700">2FA is enabled on your account</p>
+            </div>
+            <button onClick={handleDisable2FA} disabled={mfaEnrolling}
+              className="w-full py-3 rounded-full text-sm font-bold border transition-colors disabled:opacity-50"
+              style={{ color: '#ef4444', borderColor: '#fca5a5' }}>
+              {mfaEnrolling ? 'Disabling…' : 'Disable 2FA'}
+            </button>
+          </div>
+        ) : mfaStep === 0 ? (
+          <div className="space-y-3">
+            <p className="text-sm" style={{ color: 'rgba(15,0,32,0.5)' }}>Add an extra layer of security using an authenticator app like Google Authenticator or Authy.</p>
+            {mfaCodeErr && <p className="text-xs text-red-500 font-semibold">{mfaCodeErr}</p>}
+            <button onClick={handleEnroll2FA} disabled={mfaEnrolling}
+              className="w-full py-3 rounded-full text-sm font-bold text-white transition-colors disabled:opacity-50"
+              style={{ backgroundColor: darkPurple }}>
+              {mfaEnrolling ? 'Setting up…' : 'Enable 2FA'}
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <p className="text-sm font-semibold" style={{ color: '#0F0020' }}>Step 1 — Scan this QR code with your authenticator app</p>
+            {mfaQr && (
+              <div className="flex justify-center p-4 rounded-2xl bg-white" style={{ border: '1px solid #e9d5ff' }}>
+                <img src={mfaQr} alt="2FA QR code" style={{ width: 160, height: 160 }} />
+              </div>
+            )}
+            <p className="text-sm font-semibold" style={{ color: '#0F0020' }}>Step 2 — Enter the 6-digit code from the app</p>
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              value={mfaCode}
+              onChange={e => { setMfaCode(e.target.value.replace(/\D/g, '')); setMfaCodeErr('') }}
+              placeholder="000000"
+              className="w-full px-4 py-3 text-center text-xl font-bold tracking-widest border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300"
+            />
+            {mfaCodeErr && <p className="text-xs text-red-500 font-semibold">{mfaCodeErr}</p>}
+            <div className="flex gap-3">
+              <button onClick={() => { setMfaStep(0); setMfaCode(''); setMfaQr(''); setMfaEnrollId(''); setMfaCodeErr('') }}
+                className="flex-1 py-3 rounded-full text-sm font-bold border border-gray-200"
+                style={{ color: 'rgba(15,0,32,0.5)' }}>
+                Cancel
+              </button>
+              <button onClick={handleVerify2FA} disabled={mfaEnrolling || mfaCode.length !== 6}
+                className="flex-1 py-3 rounded-full text-sm font-bold text-white transition-colors disabled:opacity-50"
+                style={{ backgroundColor: darkPurple }}>
+                {mfaEnrolling ? 'Verifying…' : 'Verify & Enable'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Privacy & Data */}
       <div className="bg-white rounded-2xl border border-brand-lav shadow-sm p-6">
         <p className="text-xs font-bold uppercase tracking-wide mb-4" style={{ color: 'rgba(15,0,32,0.4)' }}>Privacy & Data</p>
@@ -3068,28 +3198,27 @@ const BRAND_NOTIF_ICONS = {
   default:            { color: 'rgba(15,0,32,0.4)', bg: '#f3f4f6' },
 }
 
+const BRAND_PREF_ITEMS = [
+  { key: 'creatorMatch',   label: 'Creator Matches', desc: 'Creators matching your active campaigns', color: '#c084fc' },
+  { key: 'platformUpdate', label: 'New Features',    desc: 'New features and announcements',          color: '#94a3b8' },
+]
+const DEF_BRAND_PREFS = { creatorMatch: true, platformUpdate: false }
+
 function BrandNotificationsTab() {
   const [notifs,  setNotifs]  = useState([])
   const [loading, setLoading] = useState(true)
-  const [prefs, setPrefs] = useState({ creatorMatch: true, platformUpdate: true })
-
-  useEffect(() => {
-    const stored = localStorage.getItem('brandior_notif_prefs')
-    if (stored) { try { setPrefs(JSON.parse(stored)) } catch {} }
-  }, [])
-
-  function togglePref(key) {
-    setPrefs(p => {
-      const next = { ...p, [key]: !p[key] }
-      localStorage.setItem('brandior_notif_prefs', JSON.stringify(next))
-      return next
-    })
-  }
+  const [uid,     setUid]     = useState(null)
+  const [prefs,   setPrefs]   = useState(DEF_BRAND_PREFS)
 
   useEffect(() => {
     ;(async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
+      setUid(user.id)
+      try {
+        const stored = localStorage.getItem(`brandior_brand_notif_${user.id}`)
+        if (stored) setPrefs(p => ({ ...p, ...JSON.parse(stored) }))
+      } catch {}
       const { data } = await supabase
         .from('notifications')
         .select('*')
@@ -3104,24 +3233,38 @@ function BrandNotificationsTab() {
     })()
   }, [])
 
+  function saveBrandPrefs(next) {
+    if (!uid) return
+    try { localStorage.setItem(`brandior_brand_notif_${uid}`, JSON.stringify(next)) } catch {}
+  }
+  function togglePref(key) {
+    setPrefs(p => { const n = { ...p, [key]: !p[key] }; saveBrandPrefs(n); return n })
+  }
+  function toggleAll(val) {
+    const n = Object.fromEntries(BRAND_PREF_ITEMS.map(i => [i.key, val]))
+    setPrefs(n); saveBrandPrefs(n)
+  }
+
   if (loading) return (
     <div className="flex justify-center py-20">
       <div className="w-6 h-6 rounded-full border-2 border-purple-300 border-t-purple-600 animate-spin" />
     </div>
   )
 
-  const PREF_ITEMS = [
-    { key: 'creatorMatch',   label: 'Creator Matches',  desc: 'Creators matching your active campaigns',   color: '#c084fc' },
-    { key: 'platformUpdate', label: 'New Features',     desc: 'New features and announcements',            color: '#94a3b8' },
-  ]
+  const allOn = BRAND_PREF_ITEMS.every(i => prefs[i.key])
 
   return (
     <div className="space-y-6">
       {/* Preferences section */}
       <div>
-        <h2 className="text-xl font-black mb-4" style={{ color: darkPurple }}>Notification Preferences</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-black" style={{ color: darkPurple }}>Notification Preferences</h2>
+          <button onClick={() => toggleAll(!allOn)} className="text-xs font-bold" style={{ color: purple }}>
+            Turn all {allOn ? 'off' : 'on'}
+          </button>
+        </div>
         <div className="bg-white rounded-2xl border border-brand-lav shadow-sm divide-y divide-gray-50">
-          {PREF_ITEMS.map(({ key, label, desc, color }) => (
+          {BRAND_PREF_ITEMS.map(({ key, label, desc, color }) => (
             <div key={key} className="flex items-center justify-between px-5 py-4">
               <div className="flex items-center gap-3">
                 <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
@@ -3133,7 +3276,7 @@ function BrandNotificationsTab() {
               <button onClick={() => togglePref(key)}
                 className="w-11 h-6 rounded-full flex items-center transition-colors duration-200 flex-shrink-0"
                 style={{ backgroundColor: prefs[key] ? darkPurple : '#d1d5db' }}>
-                <span className="w-4.5 h-4.5 rounded-full bg-white shadow-sm transition-transform duration-200 ml-0.5"
+                <span className="rounded-full bg-white shadow-sm transition-transform duration-200 ml-0.5"
                   style={{ transform: prefs[key] ? 'translateX(20px)' : 'translateX(0)', width: '18px', height: '18px', minWidth: '18px' }} />
               </button>
             </div>
