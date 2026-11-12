@@ -301,7 +301,7 @@ export function BrandFindCreatorsContent() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 flex items-center justify-between gap-6">
           <div className="flex-1 min-w-0">
             <h1 className="text-3xl sm:text-4xl font-black leading-tight mb-2 text-white drop-shadow">
-              Find <span style={{ color: '#c4b5fd' }}>Creators</span>
+              Find <span style={{ color: pink }}>Creators</span>
             </h1>
             <p className="text-sm sm:text-base mb-5 text-white/75">
               Discover verified African creators for your next campaign.
