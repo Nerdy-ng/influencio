@@ -326,12 +326,28 @@ export function BrandFindCreatorsContent() {
         className="sticky z-30 px-4 sm:px-6 lg:px-8 py-3"
         style={{ top: '64px', backgroundColor: 'rgba(243,238,255,0.95)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid #e9d5ff' }}
       >
-        <div className="max-w-7xl mx-auto space-y-2.5">
+        <div className="max-w-7xl mx-auto flex items-center gap-2">
 
-          {/* Search row */}
-          <div className="relative">
+          {/* Mobile-only filter trigger */}
+          <button
+            onClick={() => setMobileFiltersOpen(true)}
+            className="lg:hidden relative inline-flex items-center gap-1.5 text-sm font-semibold transition-all flex-shrink-0"
+            style={{ padding: '0.75rem 1rem', borderRadius: '0.75rem', border: '1.5px solid #e9d5ff', color: darkPurple, backgroundColor: '#fff' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#c4b5fd'; e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.04)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = '#e9d5ff'; e.currentTarget.style.backgroundColor = '#fff' }}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" style={{ color: purple }} />
+            Filters
+            {activeFilterCount > 0 && (
+              <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-white text-[9px] font-black"
+                style={{ backgroundColor: pink }}>{activeFilterCount}</span>
+            )}
+          </button>
+
+          {/* Search input */}
+          <div className="relative flex-1">
             <Search
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 pointer-events-none"
+              className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"
               style={{ color: 'rgba(124,58,237,0.5)', width: '1.1rem', height: '1.1rem' }}
             />
             <input
@@ -366,42 +382,8 @@ export function BrandFindCreatorsContent() {
             )}
           </div>
 
-          {/* Filters + sort row */}
-          <div className="flex items-center gap-2">
-            {/* Mobile-only filter trigger — hidden on lg+ where the panel is visible */}
-            <button
-              onClick={() => setMobileFiltersOpen(true)}
-              className="lg:hidden relative inline-flex items-center gap-1.5 text-sm font-semibold transition-all flex-shrink-0"
-              style={{ padding: '0.5rem 1rem', borderRadius: '0.75rem', border: '1.5px solid #e9d5ff', color: darkPurple, backgroundColor: '#fff' }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = '#c4b5fd'; e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.04)' }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = '#e9d5ff'; e.currentTarget.style.backgroundColor = '#fff' }}
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5" style={{ color: purple }} />
-              Filters
-              {activeFilterCount > 0 && (
-                <>
-                  <span className="inline-flex items-center justify-center w-4 h-4 rounded-full text-white text-[9px] font-black"
-                    style={{ backgroundColor: pink }}>{activeFilterCount}</span>
-                  <span className="sr-only">{activeFilterCount} active</span>
-                </>
-              )}
-            </button>
-
-            {activeFilterCount > 0 && (
-              <button
-                onClick={resetFilters}
-                className="lg:hidden text-xs font-semibold transition-colors flex-shrink-0"
-                style={{ color: 'rgba(76,29,149,0.5)', padding: '0.5rem 0.75rem' }}
-                onMouseEnter={e => e.currentTarget.style.color = darkPurple}
-                onMouseLeave={e => e.currentTarget.style.color = 'rgba(76,29,149,0.5)'}
-              >
-                Clear all
-              </button>
-            )}
-
-            <div className="flex-1" />
-            <SortDropdown value={sort} onChange={v => { setSort(v); setVisibleCount(PAGE_SIZE) }} />
-          </div>
+          {/* Sort */}
+          <SortDropdown value={sort} onChange={v => { setSort(v); setVisibleCount(PAGE_SIZE) }} />
         </div>
       </div>
 
