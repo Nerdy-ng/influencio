@@ -395,11 +395,11 @@ export default function App() {
             : <CrossDomainRedirect to={`${APP_URL}/brand/my-campaigns`} />} />
         <Route path="/collab/brief"
           element={IS_APP
-            ? <PrivateRoute isRecoverySession={isRecoverySession}><AppShell><CollabBriefPage /></AppShell></PrivateRoute>
+            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><AppShell><CollabBriefPage /></AppShell></PrivateRoute>
             : <CrossDomainRedirect to={`${APP_URL}/collab/brief`} />} />
         <Route path="/collab/review"
           element={IS_APP
-            ? <PrivateRoute isRecoverySession={isRecoverySession}><AppShell><CollabReviewPage /></AppShell></PrivateRoute>
+            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><AppShell><CollabReviewPage /></AppShell></PrivateRoute>
             : <CrossDomainRedirect to={`${APP_URL}/collab/review`} />} />
 
         {/* ── Admin — app.brandior.africa only (vercel.json redirects www→app) ─ */}

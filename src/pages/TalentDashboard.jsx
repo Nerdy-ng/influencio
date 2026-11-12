@@ -2337,6 +2337,16 @@ export default function TalentDashboard() {
   const [pwSaving,    setPwSaving]    = useState(false)
   const [pwMsg,       setPwMsg]       = useState(null)
   const [downloading, setDownloading] = useState(false)
+  // 2FA / MFA state
+  const [mfaFactor,    setMfaFactor]    = useState(null)
+  const [mfaLoading,   setMfaLoading]   = useState(false)
+  const [mfaEnrolling, setMfaEnrolling] = useState(false)
+  const [mfaStep,      setMfaStep]      = useState(0)
+  const [mfaQr,        setMfaQr]        = useState('')
+  const [mfaEnrollId,  setMfaEnrollId]  = useState('')
+  const [mfaCode,      setMfaCode]      = useState('')
+  const [mfaCodeErr,   setMfaCodeErr]   = useState('')
+  const [mfaMsg,       setMfaMsg]       = useState(null)
 
   // KYC verification state
   const [kycSubmission, setKycSubmission] = useState(null)
@@ -2348,6 +2358,21 @@ export default function TalentDashboard() {
   const [kycPhone,      setKycPhone]      = useState('')
   const [kycFirstName,  setKycFirstName]  = useState('')
   const [kycLastName,   setKycLastName]   = useState('')
+
+  async function loadMfa() {
+    setMfaLoading(true)
+    try {
+      const { data } = await supabase.auth.mfa.listFactors()
+      const verified = (data?.totp || []).find(f => f.status === 'verified')
+      setMfaFactor(verified || null)
+    } catch {}
+    setMfaLoading(false)
+  }
+
+  useEffect(() => {
+    if (activeTab === 'settings') loadMfa()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab])
 
   useEffect(() => {
     if (activeTab === 'settings' && !kycLoaded) {
@@ -2465,6 +2490,45 @@ export default function TalentDashboard() {
     } finally {
       setDownloading(false)
     }
+  }
+
+  async function handleEnroll2FA() {
+    setMfaEnrolling(true); setMfaCodeErr('')
+    try {
+      const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' })
+      if (error) { setMfaCodeErr(error.message); setMfaEnrolling(false); return }
+      setMfaQr(data.totp.qr_code)
+      setMfaEnrollId(data.id)
+      setMfaStep(1)
+    } catch (e) { setMfaCodeErr(e.message) }
+    setMfaEnrolling(false)
+  }
+
+  async function handleVerify2FA() {
+    if (!mfaCode || mfaCode.length !== 6) { setMfaCodeErr('Enter the 6-digit code from your authenticator app.'); return }
+    setMfaEnrolling(true); setMfaCodeErr('')
+    try {
+      const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: mfaEnrollId, code: mfaCode })
+      if (error) { setMfaCodeErr(error.message); setMfaEnrolling(false); return }
+      setMfaStep(0); setMfaCode(''); setMfaQr(''); setMfaEnrollId('')
+      setMfaMsg({ type: 'success', text: '2FA enabled. Your account is now more secure.' })
+      await loadMfa()
+      setTimeout(() => setMfaMsg(null), 5000)
+    } catch (e) { setMfaCodeErr(e.message) }
+    setMfaEnrolling(false)
+  }
+
+  async function handleDisable2FA() {
+    if (!mfaFactor) return
+    setMfaEnrolling(true)
+    try {
+      const { error } = await supabase.auth.mfa.unenroll({ factorId: mfaFactor.id })
+      if (error) { setMfaMsg({ type: 'error', text: error.message }); setMfaEnrolling(false); return }
+      setMfaFactor(null)
+      setMfaMsg({ type: 'success', text: '2FA disabled.' })
+      setTimeout(() => setMfaMsg(null), 4000)
+    } catch (e) { setMfaMsg({ type: 'error', text: e.message }) }
+    setMfaEnrolling(false)
   }
 
   // Shared brand-setup modal
@@ -4347,6 +4411,78 @@ export default function TalentDashboard() {
                   style={{ backgroundColor: darkPurple }}>
                   {pwSaving ? 'Updating…' : 'Update Password'}
                 </button>
+              </div>
+
+              {/* Two-Factor Authentication */}
+              <div className="rounded-2xl p-6 shadow-sm space-y-4" style={{ border: '1px solid #e9d5ff', backgroundColor: 'white' }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <Shield className="w-4 h-4" style={{ color: darkPurple }} />
+                  <p className="text-xs font-bold uppercase tracking-wide" style={{ color: 'rgba(15,0,32,0.4)' }}>Two-Factor Authentication</p>
+                </div>
+                {mfaMsg && (
+                  <p className={`text-xs font-semibold ${mfaMsg.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>{mfaMsg.text}</p>
+                )}
+                {mfaLoading ? (
+                  <div className="flex items-center gap-2 py-2">
+                    <Loader2 className="w-4 h-4 animate-spin" style={{ color: purple }} />
+                    <span className="text-sm" style={{ color: 'rgba(15,0,32,0.4)' }}>Checking 2FA status…</span>
+                  </div>
+                ) : mfaFactor ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.2)' }}>
+                      <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      <p className="text-sm font-semibold text-green-700">2FA is enabled on your account</p>
+                    </div>
+                    <button onClick={handleDisable2FA} disabled={mfaEnrolling}
+                      className="w-full py-3 rounded-full text-sm font-bold border transition-colors disabled:opacity-50"
+                      style={{ color: '#ef4444', borderColor: '#fca5a5' }}>
+                      {mfaEnrolling ? 'Disabling…' : 'Disable 2FA'}
+                    </button>
+                  </div>
+                ) : mfaStep === 0 ? (
+                  <div className="space-y-3">
+                    <p className="text-sm" style={{ color: 'rgba(15,0,32,0.5)' }}>Add an extra layer of security using an authenticator app like Google Authenticator or Authy.</p>
+                    {mfaCodeErr && <p className="text-xs text-red-500 font-semibold">{mfaCodeErr}</p>}
+                    <button onClick={handleEnroll2FA} disabled={mfaEnrolling}
+                      className="w-full py-3 rounded-full text-sm font-bold text-white transition-colors disabled:opacity-50"
+                      style={{ backgroundColor: darkPurple }}>
+                      {mfaEnrolling ? 'Setting up…' : 'Enable 2FA'}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-sm font-semibold" style={{ color: '#0F0020' }}>Step 1 — Scan this QR code with your authenticator app</p>
+                    {mfaQr && (
+                      <div className="flex justify-center p-4 rounded-2xl bg-white" style={{ border: '1px solid #e9d5ff' }}>
+                        <img src={mfaQr} alt="2FA QR code" style={{ width: 160, height: 160 }} />
+                      </div>
+                    )}
+                    <p className="text-sm font-semibold" style={{ color: '#0F0020' }}>Step 2 — Enter the 6-digit code from the app</p>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={mfaCode}
+                      onChange={e => { setMfaCode(e.target.value.replace(/\D/g, '')); setMfaCodeErr('') }}
+                      placeholder="000000"
+                      className="w-full px-4 py-3 text-center text-xl font-bold tracking-widest rounded-2xl focus:outline-none"
+                      style={{ border: '1.5px solid #e9d5ff' }}
+                    />
+                    {mfaCodeErr && <p className="text-xs text-red-500 font-semibold">{mfaCodeErr}</p>}
+                    <div className="flex gap-3">
+                      <button onClick={() => { setMfaStep(0); setMfaCode(''); setMfaQr(''); setMfaEnrollId(''); setMfaCodeErr('') }}
+                        className="flex-1 py-3 rounded-full text-sm font-bold border border-gray-200"
+                        style={{ color: 'rgba(15,0,32,0.5)' }}>
+                        Cancel
+                      </button>
+                      <button onClick={handleVerify2FA} disabled={mfaEnrolling || mfaCode.length !== 6}
+                        className="flex-1 py-3 rounded-full text-sm font-bold text-white transition-colors disabled:opacity-50"
+                        style={{ backgroundColor: darkPurple }}>
+                        {mfaEnrolling ? 'Verifying…' : 'Verify & Enable'}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Privacy & Data */}

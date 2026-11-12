@@ -2414,14 +2414,15 @@ const FUND_METHODS = [
   { id: 'bank',  label: 'Bank Transfer',        icon: Building2,   desc: 'Transfer to virtual account' },
 ]
 
-function loadInterswitchScript(cb) {
+function loadInterswitchScript(cb, onErr) {
   if (window.PaymentEngine) { cb(); return }
   const existing = document.getElementById('interswitch-js')
   if (existing) { existing.addEventListener('load', cb); return }
   const s = document.createElement('script')
   s.id  = 'interswitch-js'
-  s.src = 'https://newwebpay.interswitchng.com/collection/w/pay/js/pay.js'
-  s.onload = cb
+  s.src = 'https://newwebpay.interswitchng.com/collections/javascript/plugin.js'
+  s.onload  = cb
+  s.onerror = () => onErr?.('Could not load payment SDK. Please try again.')
   document.head.appendChild(s)
 }
 
@@ -2512,7 +2513,7 @@ function WalletTab() {
           },
           onClose: () => setFunding(false),
         })
-      })
+      }, (msg) => { alert(msg); setFunding(false) })
     } else {
       setFunding(false)
       alert('Bank transfer: Coming soon. Wallet will be credited after transfer confirms.')

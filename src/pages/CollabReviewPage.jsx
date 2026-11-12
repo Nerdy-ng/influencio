@@ -46,7 +46,9 @@ export default function CollabReviewPage() {
       .reduce((s, b) => s + b.amount, 0)
     const addonsCost = Math.max((total ?? 0) - productionCost - postingCost, 0)
     const platformFee = Math.round((total ?? 0) * PLATFORM_FEE_RATE)
-    const brandId = localStorage.getItem('brandiór_user')
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (!authUser) { setError('You must be signed in to create a collab.'); setSubmitting(false); return }
+    const brandId = authUser.id
 
     const { error: dbError } = await supabase.from('collabs').insert({
       brand_id: brandId,
