@@ -576,15 +576,12 @@ function ReviewModal({ order, onClose, onSubmitted }) {
       const meta = user?.user_metadata || {}
       const brandName = meta.brand_name || meta.full_name || 'A Brand'
       const initials = brandName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-      await supabase.from('reviews').insert({
-        talent_id: order.creatorId || order.creator_id || order.talent?._id,
-        reviewer_id: user.id,
+      await supabase.from('collab_ratings').insert({
         collab_id: order._id,
+        reviewer_id: user.id,
+        role: 'brand',
         rating,
         comment,
-        brand_name: brandName,
-        brand_initials: initials,
-        campaign_type: order.package?.name || null,
       })
     } catch { /* offline — store locally */ }
     setDone(true)

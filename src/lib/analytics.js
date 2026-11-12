@@ -41,7 +41,7 @@ function dailyCountFromRows(rows, dateCol = 'created_at', days = 30) {
 export async function getBrandAnalytics(brandId) {
   const [collabsRes, reviewsRes] = await Promise.all([
     supabase.from('collabs').select('*').eq('brand_id', brandId),
-    supabase.from('reviews').select('rating').eq('reviewer_id', brandId),
+    supabase.from('collab_ratings').select('rating').eq('reviewer_id', brandId),
   ])
   const collabs = collabsRes.data || []
   const reviews = reviewsRes.data || []
@@ -81,12 +81,18 @@ export async function getBrandAnalytics(brandId) {
 }
 
 export async function getTalentAnalytics(talentId) {
-  const [collabsRes, reviewsRes] = await Promise.all([
-    supabase.from('collabs').select('*').eq('creator_id', talentId),
-    supabase.from('reviews').select('*').eq('talent_id', talentId),
-  ])
+  const collabsRes = await supabase.from('collabs').select('*').eq('creator_id', talentId)
   const collabs = collabsRes.data || []
-  const reviews = reviewsRes.data || []
+
+  const collabIds = collabs.map(c => c.id).filter(Boolean)
+  let reviews = []
+  if (collabIds.length > 0) {
+    const { data: ratingsData } = await supabase
+      .from('collab_ratings')
+      .select('*')
+      .in('collab_id', collabIds)
+    reviews = ratingsData || []
+  }
 
   const completed = collabs.filter(c => c.status === 'completed').length
   const cancelled = collabs.filter(c => c.status === 'cancelled').length
