@@ -309,7 +309,6 @@ export function BrandFindCreatorsContent() {
             <div className="flex flex-wrap gap-2">
               {[
                 { icon: '🛡️', label: 'Vetted Creators' },
-                { icon: '🌍', label: 'Across Africa' },
                 { icon: '⚡', label: 'Ready to Collaborate' },
               ].map(({ icon, label }) => (
                 <span key={label} className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full"
