@@ -1,10 +1,11 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Search, SlidersHorizontal, X, Users, Heart, BadgeCheck, Play } from 'lucide-react'
 import { useCreatorSearch, PAGE_SIZE } from '../hooks/useCreatorSearch'
-import { FilterSidebar, SkeletonCard, SortDropdown, StarRating } from './Marketplace'
+import { SkeletonCard, SortDropdown, StarRating } from './Marketplace'
 import { useNavigate } from 'react-router-dom'
 import { useFavorites } from '../hooks/useFavorites'
-import { NICHES, formatNGN, formatFollowers } from '../lib/creatorFilters'
+import { NICHES, NICHE_LABELS, LOCATIONS, GENDERS, formatNGN, formatFollowers } from '../lib/creatorFilters'
+import { supabase } from '../lib/supabase'
 
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '')
 
@@ -24,6 +25,117 @@ const TIERS = [
   { value: 'next-rated',  label: 'Next Rated',  color: '#a78bfa', diamond: true },
   { value: 'top-rated',   label: 'Top Rated',   color: '#D4AF37', diamond: true },
 ]
+
+const PLATFORM_VALUES = ['Instagram', 'TikTok', 'YouTube', 'Twitter', 'Facebook', 'Snapchat']
+const BANNER_CACHE_KEY = 'brandior_marketplace_banner'
+const BANNER_SETTING_KEY = 'marketplace_banner'
+
+function FilterChip({ active, onClick, children }) {
+  return (
+    <button
+      onClick={onClick}
+      className="text-xs font-semibold px-2.5 py-1 rounded-full border transition-all"
+      style={active
+        ? { backgroundColor: darkPurple, color: '#fff', borderColor: darkPurple }
+        : { backgroundColor: 'transparent', color: purple, borderColor: '#e9d5ff' }
+      }
+    >
+      {children}
+    </button>
+  )
+}
+
+function FilterSection({ title, children }) {
+  return (
+    <div>
+      <p className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: 'rgba(76,29,149,0.38)' }}>{title}</p>
+      {children}
+    </div>
+  )
+}
+
+function FilterPanelLight({
+  selectedNiches, selectedPlatforms, minPrice, setMinPrice, maxPrice, setMaxPrice,
+  selectedTiers, selectedLocations, selectedGenders,
+  toggleNiche, toggleTier, togglePlatform, toggleLocation, toggleGender,
+}) {
+  return (
+    <div className="flex flex-col gap-4 py-1 px-1">
+
+      <FilterSection title="Niche">
+        <div className="flex flex-wrap gap-1.5">
+          {NICHE_LABELS.map(n => (
+            <FilterChip key={n} active={selectedNiches.includes(n)} onClick={() => toggleNiche(n)}>{n}</FilterChip>
+          ))}
+        </div>
+      </FilterSection>
+
+      <FilterSection title="Tier">
+        <div className="flex flex-col gap-1.5">
+          {TIERS.map(t => {
+            const active = selectedTiers.includes(t.value)
+            return (
+              <button key={t.value} onClick={() => toggleTier(t.value)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all text-left"
+                style={active
+                  ? { backgroundColor: 'rgba(76,29,149,0.08)', color: darkPurple, border: `1.5px solid ${t.color}` }
+                  : { backgroundColor: 'transparent', color: 'rgba(76,29,149,0.6)', border: '1.5px solid #e9d5ff' }
+                }
+              >
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: t.color }} />
+                {t.label}
+              </button>
+            )
+          })}
+        </div>
+      </FilterSection>
+
+      <FilterSection title="Platform">
+        <div className="flex flex-wrap gap-1.5">
+          {PLATFORM_VALUES.map(p => (
+            <FilterChip key={p} active={selectedPlatforms.includes(p)} onClick={() => togglePlatform(p)}>{p}</FilterChip>
+          ))}
+        </div>
+      </FilterSection>
+
+      <FilterSection title="Budget (₦)">
+        <div className="flex gap-2">
+          {[
+            { placeholder: 'Min', value: minPrice, onChange: setMinPrice },
+            { placeholder: 'Max', value: maxPrice, onChange: setMaxPrice },
+          ].map(({ placeholder, value, onChange }) => (
+            <input key={placeholder} type="number" placeholder={placeholder} value={value}
+              onChange={e => onChange(e.target.value)}
+              className="flex-1 w-0 px-3 py-1.5 text-xs rounded-xl focus:outline-none"
+              style={{ border: '1.5px solid #e9d5ff', color: '#0e0020', backgroundColor: '#f9f6ff' }}
+              onFocus={e => { e.target.style.borderColor = '#c4b5fd' }}
+              onBlur={e => { e.target.style.borderColor = '#e9d5ff' }}
+            />
+          ))}
+        </div>
+      </FilterSection>
+
+      <FilterSection title="Location">
+        <div className="flex flex-wrap gap-1.5">
+          {LOCATIONS.map(l => (
+            <FilterChip key={l} active={selectedLocations.includes(l)} onClick={() => toggleLocation(l)}>
+              {l.split(',')[0]}
+            </FilterChip>
+          ))}
+        </div>
+      </FilterSection>
+
+      <FilterSection title="Gender">
+        <div className="flex flex-wrap gap-1.5">
+          {GENDERS.map(g => (
+            <FilterChip key={g} active={selectedGenders.includes(g)} onClick={() => toggleGender(g)}>{g}</FilterChip>
+          ))}
+        </div>
+      </FilterSection>
+
+    </div>
+  )
+}
 
 function BrandCreatorCard({ talent, from = '/brand/find-creators' }) {
   const navigate = useNavigate()
@@ -156,18 +268,42 @@ export function BrandFindCreatorsContent() {
     activeFilterCount,
   } = hook
 
+  const [bannerUrl, setBannerUrl] = useState(() => {
+    try { return localStorage.getItem(BANNER_CACHE_KEY) || '' } catch { return '' }
+  })
+
+  useEffect(() => {
+    supabase.from('site_settings').select('value').eq('key', BANNER_SETTING_KEY).maybeSingle()
+      .then(({ data }) => {
+        const url = data?.value || ''
+        setBannerUrl(url)
+        try { url ? localStorage.setItem(BANNER_CACHE_KEY, url) : localStorage.removeItem(BANNER_CACHE_KEY) } catch {}
+      })
+    function onUpdate() {
+      try { setBannerUrl(localStorage.getItem(BANNER_CACHE_KEY) || '') } catch {}
+    }
+    window.addEventListener('brandior:marketplace-banner-updated', onUpdate)
+    return () => window.removeEventListener('brandior:marketplace-banner-updated', onUpdate)
+  }, [])
+
   return (
     <div style={{ backgroundColor: '#f3eeff', minHeight: '100%' }}>
 
-      {/* ── Hero banner ─────────────────────────────────────────── */}
-      <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #f3eeff 0%, #ede9fe 60%, #ddd6fe 100%)' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 flex items-center justify-between gap-6">
+      {/* ── Marketplace banner ──────────────────────────────────── */}
+      <div className="relative overflow-hidden" style={{ minHeight: 200 }}>
+        {bannerUrl
+          ? <img src={bannerUrl} alt="Find Creators banner" className="absolute inset-0 w-full h-full object-cover" />
+          : <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #2d0a6b 0%, #4c1d95 40%, #7c3aed 80%, #a855f7 100%)' }} />
+        }
+        {/* Overlay for legibility */}
+        <div className="absolute inset-0" style={{ background: bannerUrl ? 'linear-gradient(to right, rgba(14,0,32,0.7) 0%, rgba(14,0,32,0.3) 60%, transparent 100%)' : 'linear-gradient(to right, rgba(14,0,32,0.25) 0%, transparent 100%)' }} />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 flex items-center justify-between gap-6">
           <div className="flex-1 min-w-0">
-            <h1 className="text-3xl sm:text-4xl font-black leading-tight mb-2">
-              <span style={{ color: '#0e0020' }}>Find </span>
-              <span style={{ color: '#7c3aed' }}>Creators</span>
+            <h1 className="text-3xl sm:text-4xl font-black leading-tight mb-2 text-white drop-shadow">
+              Find <span style={{ color: '#c4b5fd' }}>Creators</span>
             </h1>
-            <p className="text-sm sm:text-base mb-5" style={{ color: 'rgba(15,0,32,0.55)' }}>
+            <p className="text-sm sm:text-base mb-5 text-white/75">
               Discover verified African creators for your next campaign.
             </p>
             <div className="flex flex-wrap gap-2">
@@ -177,16 +313,11 @@ export function BrandFindCreatorsContent() {
                 { icon: '⚡', label: 'Ready to Collaborate' },
               ].map(({ icon, label }) => (
                 <span key={label} className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full"
-                  style={{ backgroundColor: 'rgba(124,58,237,0.1)', color: darkPurple, border: '1px solid rgba(124,58,237,0.15)' }}>
+                  style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', backdropFilter: 'blur(8px)' }}>
                   {icon} {label}
                 </span>
               ))}
             </div>
-          </div>
-          {/* Decorative circle motif */}
-          <div className="hidden sm:block flex-shrink-0 relative w-32 h-32 sm:w-40 sm:h-40">
-            <div className="absolute inset-0 rounded-full opacity-20" style={{ background: 'radial-gradient(circle, #7c3aed 0%, transparent 70%)' }} />
-            <div className="absolute inset-4 rounded-full opacity-15" style={{ background: 'radial-gradient(circle, #F72585 0%, transparent 70%)' }} />
           </div>
         </div>
       </div>
@@ -331,8 +462,8 @@ export function BrandFindCreatorsContent() {
                 </button>
               )}
             </div>
-            <div className="px-3">
-              <FilterSidebar {...hook} hideReset />
+            <div className="px-2">
+              <FilterPanelLight {...hook} />
             </div>
           </aside>
 

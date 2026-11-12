@@ -438,6 +438,49 @@ export default function AdminPanel() {
   )
   const [logoUploading, setLogoUploading] = useState({})
 
+  const [marketplaceBanner, setMarketplaceBanner] = useState(() => {
+    try { return localStorage.getItem('brandior_marketplace_banner') || '' } catch { return '' }
+  })
+  const [bannerUploading, setBannerUploading] = useState(false)
+
+  async function handleBannerUpload(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setBannerUploading(true)
+    try {
+      const dataUrl = await new Promise((res, rej) => {
+        const r = new FileReader()
+        r.onload = ev => res(ev.target.result)
+        r.onerror = rej
+        r.readAsDataURL(file)
+      })
+      await supabase.from('site_settings').upsert({ key: 'marketplace_banner', value: dataUrl, updated_at: new Date().toISOString() })
+      setMarketplaceBanner(dataUrl)
+      try { localStorage.setItem('brandior_marketplace_banner', dataUrl) } catch {}
+      window.dispatchEvent(new CustomEvent('brandior:marketplace-banner-updated'))
+      setToast({ type: 'success', msg: 'Marketplace banner updated.' })
+    } catch (err) {
+      setToast({ type: 'error', msg: 'Upload failed: ' + (err.message || 'Unknown error') })
+    } finally {
+      setBannerUploading(false)
+    }
+  }
+
+  async function handleBannerRemove() {
+    setBannerUploading(true)
+    try {
+      await supabase.from('site_settings').delete().eq('key', 'marketplace_banner')
+      setMarketplaceBanner('')
+      try { localStorage.removeItem('brandior_marketplace_banner') } catch {}
+      window.dispatchEvent(new CustomEvent('brandior:marketplace-banner-updated'))
+      setToast({ type: 'success', msg: 'Marketplace banner removed.' })
+    } catch (err) {
+      setToast({ type: 'error', msg: 'Remove failed: ' + (err.message || 'Unknown error') })
+    } finally {
+      setBannerUploading(false)
+    }
+  }
+
   const DEFAULT_BRAND_TIERS = {
     Partner:  { label: 'Brandior Partner',  campaigns: 0,  creators: 0  },
     Elite:    { label: 'Brandior Elite',    campaigns: 3,  creators: 5  },
@@ -2272,6 +2315,32 @@ export default function AdminPanel() {
             </div>
           ))}
           <p className="text-xs text-gray-400">PNG, JPG or SVG. Recommended: 200×200px or wider for header/footer.</p>
+        </div>
+
+        {/* Marketplace Banner */}
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-semibold text-gray-800">Marketplace Banner</label>
+            <p className="text-xs text-gray-400 mt-0.5">Displayed at the top of Brand → Find Creators. Recommended: 1440×280px. PNG or JPG.</p>
+          </div>
+          <div className="w-full rounded-xl border-2 border-dashed border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center" style={{ height: 120 }}>
+            {marketplaceBanner
+              ? <img src={marketplaceBanner} alt="Marketplace banner" className="w-full h-full object-cover" />
+              : <span className="text-xs text-gray-400">No banner uploaded — a purple gradient is used as fallback.</span>
+            }
+          </div>
+          <div className="flex items-center gap-3">
+            <label className={`cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${bannerUploading ? 'opacity-50 cursor-not-allowed border-gray-200 text-gray-400' : 'border-gray-200 text-gray-700 hover:border-indigo-400 hover:text-indigo-600'}`}>
+              <input type="file" accept="image/*" className="hidden" disabled={bannerUploading} onChange={handleBannerUpload} />
+              {bannerUploading ? 'Uploading…' : marketplaceBanner ? 'Replace banner' : 'Upload banner'}
+            </label>
+            {marketplaceBanner && !bannerUploading && (
+              <button type="button" onClick={handleBannerRemove}
+                className="text-xs text-red-400 hover:text-red-600 transition-colors">
+                Remove
+              </button>
+            )}
+          </div>
         </div>
 
         <div>
