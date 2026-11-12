@@ -470,14 +470,6 @@ export function BrandFindCreatorsContent() {
           {/* ── Creator grid ────────────────────────────────────── */}
           <div className="flex-1 min-w-0">
 
-            {/* Count row */}
-            {!loading && (
-              <p className="text-xs mb-5" style={{ color: 'rgba(76,29,149,0.45)' }}>
-                <span className="font-black" style={{ color: darkPurple }}>{total.toLocaleString()}</span>
-                {' '}creator{total !== 1 ? 's' : ''} found
-                {search && <span> matching <em style={{ fontStyle: 'normal', color: purple }}>"{search}"</em></span>}
-              </p>
-            )}
 
             {/* Error */}
             {error && !loading && talents.length === 0 && (
