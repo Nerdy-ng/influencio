@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { supabase } from '../lib/supabase'
 
-const TARGET = new Date('2026-10-09T00:00:00').getTime()
+const TARGET = new Date('2026-12-12T00:00:00').getTime()
 
 function pad(n) { return String(n).padStart(2, '0') }
 
