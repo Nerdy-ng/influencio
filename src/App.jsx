@@ -6,6 +6,7 @@ import { getSetting, loadSettingsFromDB } from './lib/siteSettings'
 import { loadLogosFromDB } from './lib/brandSettings'
 import { loadThemeFromDB } from './lib/themeSettings'
 import { resolveWorkspaceDestination } from './lib/workspace'
+import AppFooter from './components/AppFooter'
 
 // Capture at module load time — before Supabase processes/strips the ?code= parameter.
 // This is the only reliable way to detect a password-recovery link click.
@@ -56,6 +57,15 @@ function PageLoader() {
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f3eeff' }}>
       <div className="w-8 h-8 rounded-full border-4 border-purple-200 border-t-purple-600 animate-spin" />
     </div>
+  )
+}
+
+function AppShell({ children }) {
+  return (
+    <>
+      {children}
+      <AppFooter />
+    </>
   )
 }
 
@@ -333,63 +343,63 @@ export default function App() {
         {/* ── App pages — app.brandior.africa only ───────────────────────────── */}
         <Route path="/marketplace"
           element={IS_APP
-            ? <Marketplace />
+            ? <AppShell><Marketplace /></AppShell>
             : <CrossDomainRedirect to={`${APP_URL}/marketplace`} />} />
         <Route path="/creators/:handle"
           element={IS_APP
-            ? <TalentProfilePage />
+            ? <AppShell><TalentProfilePage /></AppShell>
             : <ParamRedirect baseUrl={APP_URL} path="/creators/:handle" />} />
         <Route path="/marketplace/:handle"
           element={IS_APP
-            ? <TalentProfilePage />
+            ? <AppShell><TalentProfilePage /></AppShell>
             : <ParamRedirect baseUrl={APP_URL} path="/marketplace/:handle" />} />
         <Route path="/workspace-select"
           element={IS_APP
-            ? <PrivateRoute isRecoverySession={isRecoverySession}><WorkspaceSelectorPage /></PrivateRoute>
+            ? <PrivateRoute isRecoverySession={isRecoverySession}><AppShell><WorkspaceSelectorPage /></AppShell></PrivateRoute>
             : <CrossDomainRedirect to={`${APP_URL}/workspace-select`} />} />
         <Route path="/dashboard"
           element={IS_APP
-            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="creator"><TalentDashboard /></PrivateRoute>
+            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="creator"><AppShell><TalentDashboard /></AppShell></PrivateRoute>
             : <CrossDomainRedirect to={`${APP_URL}/dashboard`} />} />
         <Route path="/brand-dashboard"
           element={IS_APP
-            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><BrandDashboard /></PrivateRoute>
+            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><AppShell><BrandDashboard /></AppShell></PrivateRoute>
             : <CrossDomainRedirect to={`${APP_URL}/brand-dashboard`} />} />
         <Route path="/creator/find-work"
           element={IS_APP
-            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="creator"><CreatorFindWorkPage /></PrivateRoute>
+            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="creator"><AppShell><CreatorFindWorkPage /></AppShell></PrivateRoute>
             : <CrossDomainRedirect to={`${APP_URL}/creator/find-work`} />} />
         <Route path="/campaigns/:id"
           element={IS_APP
-            ? <PrivateRoute isRecoverySession={isRecoverySession}><CampaignDetailPage /></PrivateRoute>
+            ? <PrivateRoute isRecoverySession={isRecoverySession}><AppShell><CampaignDetailPage /></AppShell></PrivateRoute>
             : <CrossDomainRedirect to={`${APP_URL}/campaigns`} />} />
         <Route path="/brand/find-creators"
           element={IS_APP
-            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><BrandDashboard /></PrivateRoute>
+            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><AppShell><BrandDashboard /></AppShell></PrivateRoute>
             : <CrossDomainRedirect to={`${APP_URL}/brand/find-creators`} />} />
         <Route path="/brand/post-campaign"
           element={IS_APP
-            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><BrandDashboard /></PrivateRoute>
+            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><AppShell><BrandDashboard /></AppShell></PrivateRoute>
             : <CrossDomainRedirect to={`${APP_URL}/brand/post-campaign`} />} />
         <Route path="/brand/my-campaigns"
           element={IS_APP
-            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><BrandCampaignsPage /></PrivateRoute>
+            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><AppShell><BrandCampaignsPage /></AppShell></PrivateRoute>
             : <CrossDomainRedirect to={`${APP_URL}/brand/my-campaigns`} />} />
         <Route path="/brand/my-campaigns/:id"
           element={IS_APP
-            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><BrandCampaignsPage /></PrivateRoute>
+            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><AppShell><BrandCampaignsPage /></AppShell></PrivateRoute>
             : <CrossDomainRedirect to={`${APP_URL}/brand/my-campaigns`} />} />
         <Route path="/brand/my-campaigns/:id/pitches"
           element={IS_APP
-            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><BrandCampaignsPage /></PrivateRoute>
+            ? <PrivateRoute isRecoverySession={isRecoverySession} requiredWorkspace="brand"><AppShell><BrandCampaignsPage /></AppShell></PrivateRoute>
             : <CrossDomainRedirect to={`${APP_URL}/brand/my-campaigns`} />} />
         <Route path="/collab/brief"
           element={IS_APP
-            ? <PrivateRoute isRecoverySession={isRecoverySession}><CollabBriefPage /></PrivateRoute>
+            ? <PrivateRoute isRecoverySession={isRecoverySession}><AppShell><CollabBriefPage /></AppShell></PrivateRoute>
             : <CrossDomainRedirect to={`${APP_URL}/collab/brief`} />} />
         <Route path="/collab/review"
           element={IS_APP
-            ? <PrivateRoute isRecoverySession={isRecoverySession}><CollabReviewPage /></PrivateRoute>
+            ? <PrivateRoute isRecoverySession={isRecoverySession}><AppShell><CollabReviewPage /></AppShell></PrivateRoute>
             : <CrossDomainRedirect to={`${APP_URL}/collab/review`} />} />
 
         {/* ── Admin — app.brandior.africa only (vercel.json redirects www→app) ─ */}
