@@ -8,6 +8,13 @@ import { NICHES, formatNGN, formatFollowers } from '../lib/creatorFilters'
 
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '')
 
+function formatDisplayName(fullName) {
+  if (!fullName) return '—'
+  const parts = fullName.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0]
+  return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`
+}
+
 const darkPurple = '#4c1d95'
 const purple     = '#7c3aed'
 const pink       = '#F72585'
@@ -96,7 +103,7 @@ function BrandCreatorCard({ talent, from = '/brand/find-creators' }) {
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1">
-              <p className="font-black text-base truncate leading-snug" style={{ color: '#0F0020' }}>@{talent.handle}</p>
+              <p className="font-black text-base truncate leading-snug" style={{ color: '#0F0020' }}>{formatDisplayName(talent.name)}</p>
               {talent.completedCampaigns >= 10 && (
                 <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: purple }}>
                   <BadgeCheck className="w-2.5 h-2.5 text-white" strokeWidth={3} />
