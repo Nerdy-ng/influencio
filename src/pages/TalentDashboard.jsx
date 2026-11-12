@@ -451,6 +451,52 @@ function MyPitchesTab({ setActiveTab }) {
   const [loading, setLoading]     = useState(true)
   const [refreshing, setRefreshing] = useState(false)
 
+  // ── Pitch balance state ──
+  const [packSize, setPackSize]         = useState(10)
+  const [packPrice, setPackPrice]       = useState(500)
+  const [pitchLimit, setPitchLimit]     = useState(10)
+  const [monthCount, setMonthCount]     = useState(0)
+  const [extraPitches, setExtraPitches] = useState(0)
+  const [walletBal, setWalletBal]       = useState(0)
+  const [hasRubies, setHasRubies]       = useState(false)
+  const [balLoading, setBalLoading]     = useState(true)
+
+  // ── Buy modal state ──
+  const [buyOpen, setBuyOpen]               = useState(false)
+  const [buying, setBuying]                 = useState(false)
+  const [buyingCard, setBuyingCard]         = useState(false)
+  const [cardProcessing, setCardProcessing] = useState(false)
+  const [buyError, setBuyError]             = useState('')
+
+  async function loadBalance(uid) {
+    const start = new Date(); start.setDate(1); start.setHours(0, 0, 0, 0)
+    const [settingsRes, profileRes, countRes] = await Promise.all([
+      supabase.from('site_settings').select('value').eq('key', 'app_config').single(),
+      supabase.from('profiles').select('extra_pitches, rubies_account_number').eq('id', uid).single(),
+      supabase.from('job_applications').select('id', { count: 'exact', head: true })
+        .eq('creator_id', uid).gte('created_at', start.toISOString()),
+    ])
+    if (settingsRes.data?.value) {
+      try {
+        const cfg = JSON.parse(settingsRes.data.value)
+        if (cfg.max_pitches_per_month) setPitchLimit(Number(cfg.max_pitches_per_month))
+        if (cfg.pitch_pack_size)       setPackSize(Number(cfg.pitch_pack_size))
+        if (cfg.pitch_pack_price)      setPackPrice(Number(cfg.pitch_pack_price))
+      } catch {}
+    }
+    setExtraPitches(profileRes.data?.extra_pitches ?? 0)
+    setMonthCount(countRes.count ?? 0)
+    const hasWallet = !!profileRes.data?.rubies_account_number
+    setHasRubies(hasWallet)
+    if (hasWallet) {
+      try {
+        const { data: rb } = await supabase.functions.invoke('rubies-balance')
+        if (rb?.ok) setWalletBal(Number(rb.balance ?? 0))
+      } catch {}
+    }
+    setBalLoading(false)
+  }
+
   async function loadPitches() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setLoading(false); return }
@@ -510,6 +556,12 @@ function MyPitchesTab({ setActiveTab }) {
   useEffect(() => { loadPitches() }, [])
 
   useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) loadBalance(user.id)
+    })
+  }, [])
+
+  useEffect(() => {
     let channel = null
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
@@ -521,12 +573,78 @@ function MyPitchesTab({ setActiveTab }) {
     return () => { if (channel) supabase.removeChannel(channel) }
   }, [])
 
+  async function handleBuyWallet() {
+    setBuying(true)
+    setBuyError('')
+    try {
+      const { data, error } = await supabase.functions.invoke('buy-pitch-pack')
+      if (error || !data?.ok) throw new Error(data?.error ?? error?.message ?? 'Purchase failed')
+      setExtraPitches(data.extra_pitches ?? extraPitches + packSize)
+      if (data.new_balance !== undefined) setWalletBal(data.new_balance)
+      setBuyOpen(false)
+    } catch (e) {
+      setBuyError(e.message ?? 'Purchase failed. Please try again.')
+    } finally {
+      setBuying(false)
+    }
+  }
+
+  function loadIsw(cb) {
+    if (window.PaymentEngine) { cb(); return }
+    const s = document.createElement('script')
+    s.src = 'https://newwebpay.interswitchng.com/collections/javascript/plugin.js'
+    s.onload = cb
+    s.onerror = () => setBuyError('Could not load payment SDK. Please try again.')
+    document.head.appendChild(s)
+  }
+
+  async function handleBuyCard() {
+    setBuyingCard(true)
+    setBuyError('')
+    try {
+      const { data, error } = await supabase.functions.invoke('rubies-fund-pitches')
+      if (error || !data?.ok) throw new Error(data?.error ?? error?.message ?? 'Failed to set up payment')
+      if (!data.inline) throw new Error('Payment setup failed. Please try again.')
+      setBuyOpen(false)
+      loadIsw(() => {
+        window.PaymentEngine.init({
+          merchantCode:         data.inline.merchantCode,
+          payItemId:            data.inline.payItemId,
+          transactionReference: data.inline.txnRef,
+          amount:               Number(data.inline.amount),
+          currency:             data.inline.currency,
+          mode:                 data.inline.mode,
+          customerEmail:        data.inline.customerEmail || '',
+          onSuccess: async () => {
+            setCardProcessing(true)
+            setTimeout(async () => {
+              const { data: { user } } = await supabase.auth.getUser()
+              if (user) await loadBalance(user.id)
+              setCardProcessing(false)
+            }, 2000)
+          },
+          onError: () => setBuyError('Card payment failed. Please try again.'),
+          onClose: () => {},
+        })
+      })
+    } catch (e) {
+      setBuyError(e.message ?? 'Payment setup failed. Please try again.')
+    } finally {
+      setBuyingCard(false)
+    }
+  }
+
   const submitted  = pitches.filter(p => p.bucket === 'submitted')
   const discussion = pitches.filter(p => p.bucket === 'discussion')
   const hired      = pitches.filter(p => p.bucket === 'hired')
   const archived   = pitches.filter(p => p.bucket === 'archived')
   const buckets    = [submitted, discussion, hired, archived]
   const currentList = buckets[tab] ?? []
+
+  const freeLeft  = Math.max(0, pitchLimit - monthCount)
+  const totalLeft = freeLeft + extraPitches
+  const barPct    = Math.min(monthCount / Math.max(pitchLimit, 1), 1)
+  const barColor  = barPct >= 1 ? '#ef4444' : barPct >= 0.8 ? '#f59e0b' : purple
 
   if (loading) {
     return (
@@ -538,6 +656,62 @@ function MyPitchesTab({ setActiveTab }) {
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
+
+      {/* ── Pitch Balance Card ── */}
+      <div className="rounded-2xl bg-white p-5" style={{ border: '1px solid #e9d5ff', boxShadow: '0 2px 8px rgba(124,58,237,0.04)' }}>
+        {balLoading ? (
+          <div className="flex justify-center py-4">
+            <div className="w-5 h-5 rounded-full border-2 border-purple-200 border-t-purple-500 animate-spin" />
+          </div>
+        ) : (
+          <>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'rgba(15,0,32,0.4)' }}>Monthly pitches</p>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-black" style={{ color: barPct >= 1 ? '#ef4444' : '#0F0020' }}>{monthCount}</span>
+                  <span className="text-base font-bold" style={{ color: 'rgba(15,0,32,0.35)' }}>/ {pitchLimit}</span>
+                </div>
+              </div>
+              <span className="text-xs font-bold px-3 py-1.5 rounded-full" style={{ backgroundColor: totalLeft === 0 ? '#fee2e2' : '#f3eeff', color: totalLeft === 0 ? '#ef4444' : purple }}>
+                {totalLeft} left
+              </span>
+            </div>
+
+            {/* Progress bar */}
+            <div className="h-1.5 rounded-full mb-2 overflow-hidden" style={{ backgroundColor: '#f3eeff' }}>
+              <div className="h-full rounded-full transition-all" style={{ width: `${barPct * 100}%`, backgroundColor: barColor }} />
+            </div>
+            <p className="text-[11px] mb-4" style={{ color: 'rgba(15,0,32,0.35)' }}>Resets on the 1st of every month</p>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${pink}15` }}>
+                  <Zap className="w-4 h-4" style={{ color: pink }} />
+                </div>
+                <div>
+                  <p className="text-xs font-black" style={{ color: '#0F0020' }}>Extra pitches</p>
+                  <p className="text-[11px]" style={{ color: 'rgba(15,0,32,0.4)' }}>Purchased · never expire</p>
+                </div>
+                <span className="text-2xl font-black ml-2" style={{ color: extraPitches > 0 ? pink : 'rgba(15,0,32,0.25)' }}>{extraPitches}</span>
+              </div>
+              <button
+                onClick={() => { setBuyError(''); setBuyOpen(true) }}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-white"
+                style={{ backgroundColor: purple }}>
+                <Plus className="w-4 h-4" /> Buy More
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+
+      {buyError && (
+        <div className="text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+          {buyError}
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-xl font-black" style={{ color: '#0F0020' }}>My Pitches</h2>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: '#f3eeff', color: purple }}>
@@ -640,6 +814,86 @@ function MyPitchesTab({ setActiveTab }) {
           )
         })
       )}
+
+      {/* ── Buy Pitches Modal ── */}
+      {buyOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-4 pb-0 sm:pb-4"
+          onClick={() => setBuyOpen(false)}>
+          <div className="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 pb-8 sm:pb-6"
+            style={{ border: '1px solid #e9d5ff', boxShadow: '0 20px 60px rgba(124,58,237,0.15)' }}
+            onClick={e => e.stopPropagation()}>
+
+            <div className="w-9 h-1 rounded-full mx-auto mb-5 sm:hidden" style={{ backgroundColor: '#e9d5ff' }} />
+
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4" style={{ backgroundColor: `${purple}18` }}>
+              <Send className="w-6 h-6" style={{ color: purple }} />
+            </div>
+            <h3 className="text-lg font-black mb-1" style={{ color: '#0F0020' }}>Buy Extra Pitches</h3>
+            <p className="text-xs mb-5" style={{ color: 'rgba(15,0,32,0.5)', lineHeight: 1.6 }}>
+              Purchased pitches never expire — they roll over every month until you use them.
+            </p>
+
+            {/* Pack */}
+            <div className="flex items-center justify-between p-4 rounded-2xl mb-4"
+              style={{ backgroundColor: `${purple}0d`, border: `1px solid ${purple}25` }}>
+              <div>
+                <p className="text-sm font-black" style={{ color: '#0F0020' }}>{packSize} Pitches</p>
+                <p className="text-xs" style={{ color: 'rgba(15,0,32,0.45)' }}>Added to your balance immediately</p>
+              </div>
+              <span className="text-xl font-black" style={{ color: purple }}>₦{packPrice.toLocaleString()}</span>
+            </div>
+
+            {/* Wallet balance row */}
+            <div className="flex items-center gap-2 mb-5">
+              <Wallet className="w-4 h-4" style={{ color: 'rgba(15,0,32,0.4)' }} />
+              <span className="text-xs" style={{ color: 'rgba(15,0,32,0.5)' }}>
+                Wallet balance:{' '}
+                <span className="font-black" style={{ color: hasRubies ? (walletBal >= packPrice ? '#16a34a' : '#ef4444') : 'rgba(15,0,32,0.4)' }}>
+                  {hasRubies ? `₦${walletBal.toLocaleString()}` : 'Wallet not set up'}
+                </span>
+              </span>
+            </div>
+
+            {buyError && (
+              <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2 mb-4">{buyError}</p>
+            )}
+
+            {/* Pay from Wallet */}
+            <button
+              onClick={handleBuyWallet}
+              disabled={buying || buyingCard || !hasRubies || walletBal < packPrice}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-black text-white mb-3 transition-opacity"
+              style={{ backgroundColor: purple, opacity: (buying || buyingCard || !hasRubies || walletBal < packPrice) ? 0.4 : 1 }}>
+              {buying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wallet className="w-4 h-4" />}
+              {buying ? 'Processing…' : 'Pay from Wallet'}
+            </button>
+
+            {/* Pay by Card */}
+            <button
+              onClick={handleBuyCard}
+              disabled={buying || buyingCard}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold transition-opacity"
+              style={{ border: `1.5px solid ${purple}`, color: purple, backgroundColor: 'transparent', opacity: (buying || buyingCard) ? 0.5 : 1 }}>
+              {buyingCard ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+              {buyingCard ? 'Setting up…' : 'Pay by Card (Interswitch)'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Card processing overlay ── */}
+      {cardProcessing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
+          <div className="bg-white rounded-3xl p-8 flex flex-col items-center gap-4" style={{ border: '1px solid #e9d5ff', maxWidth: 300, width: '100%' }}>
+            <Loader2 className="w-10 h-10 animate-spin" style={{ color: purple }} />
+            <p className="text-sm font-bold text-center" style={{ color: '#0F0020' }}>Confirming payment…</p>
+            <p className="text-xs text-center" style={{ color: 'rgba(15,0,32,0.45)' }}>
+              Payment received! Your pitches will appear in your balance within a few seconds.
+            </p>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
