@@ -566,27 +566,46 @@ function ReviewModal({ order, onClose, onSubmitted }) {
   const [comment, setComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   async function submit(e) {
     e.preventDefault()
     if (!rating || !comment.trim()) return
     setSubmitting(true)
+    setSubmitError('')
     try {
       const { data: { user } } = await supabase.auth.getUser()
       const meta = user?.user_metadata || {}
       const brandName = meta.brand_name || meta.full_name || 'A Brand'
       const initials = brandName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-      await supabase.from('collab_ratings').insert({
+
+      const { error: ratingErr } = await supabase.from('collab_ratings').insert({
         collab_id: order._id,
         reviewer_id: user.id,
         role: 'brand',
         rating,
         comment,
       })
-    } catch { /* offline — store locally */ }
-    setDone(true)
+      if (ratingErr) throw ratingErr
+
+      const { error: reviewErr } = await supabase.from('reviews').insert({
+        talent_id: order.creatorId,
+        brand_name: brandName,
+        brand_initials: initials,
+        campaign_type: order.package?.name || order.type || 'Collaboration',
+        rating,
+        comment,
+        hidden: false,
+        featured: false,
+      })
+      if (reviewErr) throw reviewErr
+
+      setDone(true)
+      onSubmitted?.()
+    } catch (err) {
+      setSubmitError(err?.message || 'Failed to submit review. Please try again.')
+    }
     setSubmitting(false)
-    onSubmitted?.()
   }
 
   return (
@@ -654,6 +673,9 @@ function ReviewModal({ order, onClose, onSubmitted }) {
               {comment.length}/500
             </p>
 
+            {submitError && (
+              <p className="text-sm mb-3 text-center" style={{ color: '#dc2626' }}>{submitError}</p>
+            )}
             <button
               type="submit"
               disabled={!rating || !comment.trim() || submitting}
