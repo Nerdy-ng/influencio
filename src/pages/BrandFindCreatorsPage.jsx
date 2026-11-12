@@ -164,7 +164,7 @@ function BrandCreatorCard({ talent, from = '/brand/find-creators' }) {
       {/* Portrait image */}
       <div
         className="relative overflow-hidden flex-shrink-0"
-        style={{ aspectRatio: '5/4' }}
+        style={{ aspectRatio: '1/1' }}
         onMouseEnter={() => { if (videoRef.current && talent.featuredVideo) { videoRef.current.play().catch(() => {}); setVideoPlaying(true) } }}
         onMouseLeave={() => { if (videoRef.current && talent.featuredVideo) { videoRef.current.pause(); videoRef.current.currentTime = 0; setVideoPlaying(false) } }}
       >
