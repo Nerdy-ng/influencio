@@ -2698,6 +2698,20 @@ function WalletTab() {
 
 function FavoritesTab() {
   const { favorites, toggle, isFav } = useFavorites()
+  const [liveAvatars, setLiveAvatars] = useState({})
+
+  useEffect(() => {
+    const ids = favorites.map(f => f._id || f.id).filter(Boolean)
+    if (ids.length === 0) { setLiveAvatars({}); return }
+    supabase.from('profiles').select('id, avatar_url').in('id', ids)
+      .then(({ data }) => {
+        if (!data) return
+        const map = {}
+        data.forEach(p => { if (p.avatar_url) map[p.id] = p.avatar_url })
+        setLiveAvatars(map)
+      })
+      .catch(() => {})
+  }, [favorites])
 
   if (favorites.length === 0) {
     return (
@@ -2728,17 +2742,20 @@ function FavoritesTab() {
         {favorites.map(talent => {
           const faved = isFav(talent._id || talent.id)
           const tier = TIER_STYLE[talent.tier] || TIER_STYLE['fast-rising']
+          const talentId = talent._id || talent.id
+          const avatarSrc = liveAvatars[talentId] || talent.avatar || talent.avatar_url
+          const fallbackSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(talent.name || 'T')}&background=4c1d95&color=fff&size=48`
           return (
-            <div key={talent._id || talent.id}
+            <div key={talentId}
               className="bg-white rounded-2xl border border-brand-lav shadow-sm p-4 flex flex-col gap-3 hover:shadow-md transition-shadow">
               {/* Header */}
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <img
-                    src={talent.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(talent.name || 'T')}&background=4c1d95&color=fff&size=48`}
+                    src={avatarSrc || fallbackSrc}
                     alt={talent.name}
                     className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-                    onError={e => { e.target.src = `https://ui-avatars.com/api/?name=T&background=4c1d95&color=fff&size=48` }}
+                    onError={e => { e.target.src = fallbackSrc }}
                   />
                   <div className="min-w-0">
                     <p className="font-bold text-sm truncate" style={{ color: '#0F0020' }}>{talent.name}</p>
