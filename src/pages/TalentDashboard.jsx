@@ -459,6 +459,7 @@ function MyPitchesTab({ setActiveTab }) {
   const [extraPitches, setExtraPitches] = useState(0)
   const [walletBal, setWalletBal]       = useState(0)
   const [hasRubies, setHasRubies]       = useState(false)
+  const [kycVerified, setKycVerified]   = useState(false)
   const [balLoading, setBalLoading]     = useState(true)
 
   // ── Buy modal state ──
@@ -472,7 +473,7 @@ function MyPitchesTab({ setActiveTab }) {
     const start = new Date(); start.setDate(1); start.setHours(0, 0, 0, 0)
     const [settingsRes, profileRes, countRes] = await Promise.all([
       supabase.from('site_settings').select('value').eq('key', 'app_config').single(),
-      supabase.from('profiles').select('extra_pitches, rubies_account_number').eq('id', uid).single(),
+      supabase.from('profiles').select('extra_pitches, rubies_account_number, kyc_verified').eq('id', uid).single(),
       supabase.from('job_applications').select('id', { count: 'exact', head: true })
         .eq('creator_id', uid).gte('created_at', start.toISOString()),
     ])
@@ -486,6 +487,7 @@ function MyPitchesTab({ setActiveTab }) {
     }
     setExtraPitches(profileRes.data?.extra_pitches ?? 0)
     setMonthCount(countRes.count ?? 0)
+    setKycVerified(!!profileRes.data?.kyc_verified)
     const hasWallet = !!profileRes.data?.rubies_account_number
     setHasRubies(hasWallet)
     if (hasWallet) {
@@ -825,58 +827,86 @@ function MyPitchesTab({ setActiveTab }) {
 
             <div className="w-9 h-1 rounded-full mx-auto mb-5 sm:hidden" style={{ backgroundColor: '#e9d5ff' }} />
 
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4" style={{ backgroundColor: `${purple}18` }}>
-              <Send className="w-6 h-6" style={{ color: purple }} />
-            </div>
-            <h3 className="text-lg font-black mb-1" style={{ color: '#0F0020' }}>Buy Extra Pitches</h3>
-            <p className="text-xs mb-5" style={{ color: 'rgba(15,0,32,0.5)', lineHeight: 1.6 }}>
-              Purchased pitches never expire — they roll over every month until you use them.
-            </p>
+            {!kycVerified ? (
+              /* ── KYC gate (mirrors mobile checkKyc alert) ── */
+              <>
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4" style={{ backgroundColor: '#fef3c718' }}>
+                  <Shield className="w-6 h-6" style={{ color: '#d97706' }} />
+                </div>
+                <h3 className="text-lg font-black mb-1" style={{ color: '#0F0020' }}>Verification Required</h3>
+                <p className="text-xs mb-6" style={{ color: 'rgba(15,0,32,0.5)', lineHeight: 1.6 }}>
+                  You need to complete identity verification before buying pitch credits. This keeps the platform safe for everyone.
+                </p>
+                <button
+                  onClick={() => { setBuyOpen(false); setActiveTab('settings') }}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-black text-white mb-3"
+                  style={{ backgroundColor: purple }}>
+                  <Shield className="w-4 h-4" /> Complete Verification
+                </button>
+                <button
+                  onClick={() => setBuyOpen(false)}
+                  className="w-full py-3 rounded-2xl text-sm font-semibold"
+                  style={{ color: 'rgba(15,0,32,0.4)' }}>
+                  Later
+                </button>
+              </>
+            ) : (
+              /* ── Normal purchase flow ── */
+              <>
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4" style={{ backgroundColor: `${purple}18` }}>
+                  <Send className="w-6 h-6" style={{ color: purple }} />
+                </div>
+                <h3 className="text-lg font-black mb-1" style={{ color: '#0F0020' }}>Buy Extra Pitches</h3>
+                <p className="text-xs mb-5" style={{ color: 'rgba(15,0,32,0.5)', lineHeight: 1.6 }}>
+                  Purchased pitches never expire — they roll over every month until you use them.
+                </p>
 
-            {/* Pack */}
-            <div className="flex items-center justify-between p-4 rounded-2xl mb-4"
-              style={{ backgroundColor: `${purple}0d`, border: `1px solid ${purple}25` }}>
-              <div>
-                <p className="text-sm font-black" style={{ color: '#0F0020' }}>{packSize} Pitches</p>
-                <p className="text-xs" style={{ color: 'rgba(15,0,32,0.45)' }}>Added to your balance immediately</p>
-              </div>
-              <span className="text-xl font-black" style={{ color: purple }}>₦{packPrice.toLocaleString()}</span>
-            </div>
+                {/* Pack */}
+                <div className="flex items-center justify-between p-4 rounded-2xl mb-4"
+                  style={{ backgroundColor: `${purple}0d`, border: `1px solid ${purple}25` }}>
+                  <div>
+                    <p className="text-sm font-black" style={{ color: '#0F0020' }}>{packSize} Pitches</p>
+                    <p className="text-xs" style={{ color: 'rgba(15,0,32,0.45)' }}>Added to your balance immediately</p>
+                  </div>
+                  <span className="text-xl font-black" style={{ color: purple }}>₦{packPrice.toLocaleString()}</span>
+                </div>
 
-            {/* Wallet balance row */}
-            <div className="flex items-center gap-2 mb-5">
-              <Wallet className="w-4 h-4" style={{ color: 'rgba(15,0,32,0.4)' }} />
-              <span className="text-xs" style={{ color: 'rgba(15,0,32,0.5)' }}>
-                Wallet balance:{' '}
-                <span className="font-black" style={{ color: hasRubies ? (walletBal >= packPrice ? '#16a34a' : '#ef4444') : 'rgba(15,0,32,0.4)' }}>
-                  {hasRubies ? `₦${walletBal.toLocaleString()}` : 'Wallet not set up'}
-                </span>
-              </span>
-            </div>
+                {/* Wallet balance row */}
+                <div className="flex items-center gap-2 mb-5">
+                  <Wallet className="w-4 h-4" style={{ color: 'rgba(15,0,32,0.4)' }} />
+                  <span className="text-xs" style={{ color: 'rgba(15,0,32,0.5)' }}>
+                    Wallet balance:{' '}
+                    <span className="font-black" style={{ color: hasRubies ? (walletBal >= packPrice ? '#16a34a' : '#ef4444') : 'rgba(15,0,32,0.4)' }}>
+                      {hasRubies ? `₦${walletBal.toLocaleString()}` : 'Wallet not set up'}
+                    </span>
+                  </span>
+                </div>
 
-            {buyError && (
-              <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2 mb-4">{buyError}</p>
+                {buyError && (
+                  <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2 mb-4">{buyError}</p>
+                )}
+
+                {/* Pay from Wallet */}
+                <button
+                  onClick={handleBuyWallet}
+                  disabled={buying || buyingCard || !hasRubies || walletBal < packPrice}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-black text-white mb-3 transition-opacity"
+                  style={{ backgroundColor: purple, opacity: (buying || buyingCard || !hasRubies || walletBal < packPrice) ? 0.4 : 1 }}>
+                  {buying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wallet className="w-4 h-4" />}
+                  {buying ? 'Processing…' : 'Pay from Wallet'}
+                </button>
+
+                {/* Pay by Card */}
+                <button
+                  onClick={handleBuyCard}
+                  disabled={buying || buyingCard}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold transition-opacity"
+                  style={{ border: `1.5px solid ${purple}`, color: purple, backgroundColor: 'transparent', opacity: (buying || buyingCard) ? 0.5 : 1 }}>
+                  {buyingCard ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+                  {buyingCard ? 'Setting up…' : 'Pay by Card (Interswitch)'}
+                </button>
+              </>
             )}
-
-            {/* Pay from Wallet */}
-            <button
-              onClick={handleBuyWallet}
-              disabled={buying || buyingCard || !hasRubies || walletBal < packPrice}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-black text-white mb-3 transition-opacity"
-              style={{ backgroundColor: purple, opacity: (buying || buyingCard || !hasRubies || walletBal < packPrice) ? 0.4 : 1 }}>
-              {buying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wallet className="w-4 h-4" />}
-              {buying ? 'Processing…' : 'Pay from Wallet'}
-            </button>
-
-            {/* Pay by Card */}
-            <button
-              onClick={handleBuyCard}
-              disabled={buying || buyingCard}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold transition-opacity"
-              style={{ border: `1.5px solid ${purple}`, color: purple, backgroundColor: 'transparent', opacity: (buying || buyingCard) ? 0.5 : 1 }}>
-              {buyingCard ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-              {buyingCard ? 'Setting up…' : 'Pay by Card (Interswitch)'}
-            </button>
           </div>
         </div>
       )}
