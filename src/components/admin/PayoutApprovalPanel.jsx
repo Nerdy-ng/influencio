@@ -53,28 +53,58 @@ export default function PayoutApprovalPanel({ showToast, auditLog }) {
   async function handleApprove(req) {
     setProcessing(req.id);
     const now = new Date().toISOString();
-    const { error } = await supabase.from("payout_requests").update({
-      status: "approved",
-      reviewed_by: adminName,
-      reviewed_at: now,
-      updated_at: now,
-    }).eq("id", req.id);
 
-    if (error) {
-      showToast?.("Failed to approve request", "error");
+    // CAS guard: only transitions from 'pending' → 'processing', preventing double-approval
+    const { data: locked, error: lockErr } = await supabase
+      .from("payout_requests")
+      .update({ status: "processing", reviewed_by: adminName, reviewed_at: now, updated_at: now })
+      .eq("id", req.id)
+      .eq("status", "pending")
+      .select("id");
+
+    if (lockErr || !locked?.length) {
+      showToast?.("Could not process — request may already be in progress.", "error");
+      setProcessing(null);
+      load();
+      return;
+    }
+
+    const adminToken = localStorage.getItem("brandiór_admin_token");
+    if (!adminToken) {
+      await supabase.from("payout_requests")
+        .update({ status: "pending", reviewed_by: null, reviewed_at: null, updated_at: now })
+        .eq("id", req.id);
+      showToast?.("Session expired. Please log in again.", "error");
       setProcessing(null);
       return;
     }
 
-    // Deduct from wallet
-    await supabase.functions.invoke("admin-adjust-wallet", {
+    const { data, error } = await supabase.functions.invoke("rubies-payout", {
       body: {
-        action: "debit",
-        user_id: req.user_id,
-        amount: Number(req.amount),
-        note: `Payout approved — ${req.bank_name} ${req.account_number}`,
+        target_user_id:    req.user_id,
+        bankName:          req.bank_name,
+        bankAccountNumber: req.account_number,
+        amount:            Number(req.amount),
       },
+      headers: { "x-admin-token": adminToken },
     });
+
+    if (error || !data?.ok) {
+      await supabase.from("payout_requests")
+        .update({ status: "pending", reviewed_by: null, reviewed_at: null, updated_at: now })
+        .eq("id", req.id);
+      const msg = data?.error || error?.message || "Transfer failed";
+      showToast?.(`Payout failed: ${msg}`, "error");
+      setProcessing(null);
+      return;
+    }
+
+    // Transfer accepted by Rubies — mark approved
+    const approvedAt = new Date().toISOString();
+    await supabase.from("payout_requests").update({
+      status: "approved",
+      updated_at: approvedAt,
+    }).eq("id", req.id);
 
     // Notify creator
     await supabase.from("notifications").insert({
@@ -82,7 +112,7 @@ export default function PayoutApprovalPanel({ showToast, auditLog }) {
       type: "payout_approved",
       message: `Your withdrawal of ${fmtMoney(req.amount)} has been approved and is being processed to ${req.bank_name} (${req.account_number}). Allow 1–3 business days.`,
       read: false,
-      created_at: now,
+      created_at: approvedAt,
     });
 
     await supabase.from("email_logs").insert({
@@ -94,6 +124,7 @@ export default function PayoutApprovalPanel({ showToast, auditLog }) {
       triggered_by: adminName,
       metadata:     { request_id: req.id, amount: req.amount, bank: req.bank_name, account: req.account_number },
     }).then(() => {}).catch(() => {});
+
     auditLog?.("payout_approve", { request_id: req.id, creator: req.creator_name, amount: req.amount });
     showToast?.(`Payout of ${fmtMoney(req.amount)} approved for ${req.creator_name}`);
     setRequests(prev => prev.map(r => r.id === req.id

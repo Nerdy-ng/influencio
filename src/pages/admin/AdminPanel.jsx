@@ -1089,14 +1089,39 @@ export default function AdminPanel() {
       if (amt < 100) { showToast('Minimum payout is ₦100', 'error'); return }
       const adminToken = getAdminToken()
       if (!adminToken) { showToast('Session expired. Please log in again.', 'error'); return }
-      const { data, error } = await supabase.functions.invoke('payout-transfer', {
-        body: { amount: amt, target_profile_id: payoutTarget.id },
-        headers: { 'x-admin-token': adminToken },
-      })
-      if (error || !data?.ok) {
-        showToast(data?.error || error?.message || 'Transfer failed', 'error')
-        return
+
+      const isCreator = ['creator', 'talent'].includes((payoutTarget.role ?? '').toLowerCase())
+
+      if (isCreator) {
+        const account = payoutTarget.payout_accounts?.[0]
+        if (!account) {
+          showToast('No saved bank account for this creator. Use the Payout Approval Queue.', 'error')
+          return
+        }
+        const { data, error } = await supabase.functions.invoke('rubies-payout', {
+          body: {
+            target_user_id:    payoutTarget.id,
+            bankName:          account.bankName,
+            bankAccountNumber: account.accountNumber,
+            amount:            amt,
+          },
+          headers: { 'x-admin-token': adminToken },
+        })
+        if (error || !data?.ok) {
+          showToast(data?.error || error?.message || 'Transfer failed', 'error')
+          return
+        }
+      } else {
+        const { data, error } = await supabase.functions.invoke('payout-transfer', {
+          body: { amount: amt, target_profile_id: payoutTarget.id },
+          headers: { 'x-admin-token': adminToken },
+        })
+        if (error || !data?.ok) {
+          showToast(data?.error || error?.message || 'Transfer failed', 'error')
+          return
+        }
       }
+
       showToast(`Transferred ₦${amt.toLocaleString()} to ${pName(payoutTarget)}`)
       setPayoutTarget(null); setPayoutAmount('')
       loadFinancials()
