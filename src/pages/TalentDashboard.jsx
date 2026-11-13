@@ -3829,7 +3829,7 @@ export default function TalentDashboard() {
           {/* ── TRANSACTIONS TAB ── */}
           {activeTab === 'transactions' && (
             <div className="max-w-5xl mx-auto">
-              <TransactionsTab showWithdraw={showWithdraw} setShowWithdraw={setShowWithdraw} />
+              <TransactionsTab showWithdraw={showWithdraw} setShowWithdraw={setShowWithdraw} setActiveTab={setActiveTab} />
             </div>
           )}
 
@@ -4668,7 +4668,7 @@ const TX_STATUS = {
   'withdrawn': { label: 'Withdrawn',        color: 'rgba(15,0,32,0.4)', bg: 'rgba(15,0,32,0.4)15', dot: 'rgba(15,0,32,0.4)' },
 }
 
-function TransactionsTab({ showWithdraw, setShowWithdraw }) {
+function TransactionsTab({ showWithdraw, setShowWithdraw, setActiveTab }) {
   const [withdrawAmount, setWithdrawAmount] = useState('')
   const [withdrawStep, setWithdrawStep] = useState('account') // 'account' | 'confirm' | 'success'
   const [processing, setProcessing] = useState(false)
@@ -4682,6 +4682,7 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
   const [txProfile, setTxProfile]         = useState(null)
   const [payoutAccounts, setPayoutAccounts] = useState([])
   const [selectedAccountId, setSelectedAccountId] = useState(null)
+  const [identityVerified, setIdentityVerified] = useState(null)
 
   function isAccountRestricted(acc) {
     if (!acc.added_at) return false
@@ -4726,8 +4727,9 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setTxLoading(false); setRubiesLoading(false); return }
       setTxUser(user)
-      const { data: prof } = await supabase.from('profiles').select('full_name, role, payout_accounts').eq('id', user.id).maybeSingle()
+      const { data: prof } = await supabase.from('profiles').select('full_name, role, payout_accounts, identity_verified').eq('id', user.id).maybeSingle()
       setTxProfile(prof)
+      setIdentityVerified(prof?.identity_verified ?? false)
       if (prof?.payout_accounts) {
         setPayoutAccounts(prof.payout_accounts)
         const def = prof.payout_accounts.find(a => a.isDefault && !isAccountRestricted(a))
@@ -4746,6 +4748,9 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'rubies_transactions', filter: `user_id=eq.${user.id}` }, () => {
           loadData(user.id)
           supabase.functions.invoke('rubies-balance').then(({ data: rb }) => { if (rb?.ok) setRubiesBalance(rb.balance) })
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, (payload) => {
+          if (payload.new?.identity_verified !== undefined) setIdentityVerified(!!payload.new.identity_verified)
         })
         .subscribe()
     })()
@@ -4807,9 +4812,34 @@ function TransactionsTab({ showWithdraw, setShowWithdraw }) {
   }
 
   const filtered = filter === 'all' ? transactions : transactions.filter(t => t.status === filter)
+  const hasReleasedEarning = transactions.some(t => t.status === 'available')
+  const showKycPrompt = hasReleasedEarning && identityVerified === false
 
   return (
     <div className="space-y-5">
+
+      {/* First-earnings KYC prompt */}
+      {showKycPrompt && (
+        <div className="rounded-2xl p-5 flex items-start gap-4"
+          style={{ backgroundColor: '#fffbeb', border: '1px solid #fcd34d' }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#fef3c7' }}>
+            <ShieldCheck className="w-5 h-5" style={{ color: '#d97706' }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold" style={{ color: '#92400e' }}>Verify your identity to access your earnings</p>
+            <p className="text-xs mt-1 leading-relaxed" style={{ color: '#b45309' }}>
+              You have earnings ready, but identity verification is required before you can withdraw. This is a one-time security check — it takes under two minutes.
+            </p>
+            <button
+              onClick={() => setActiveTab?.('settings')}
+              className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full text-white"
+              style={{ backgroundColor: '#d97706' }}>
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Complete Verification
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Wallet Balance */}
       <div className="rounded-2xl p-5 text-white" style={{ background: 'linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%)' }}>
