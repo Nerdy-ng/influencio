@@ -5,6 +5,9 @@ import { supabase } from '../lib/supabase'
 import { getLogo } from '../lib/brandSettings'
 const stripInjection = (s) => String(s ?? '').replace(/[<>{}\''`]/g, '');
 
+// Same launch target as LaunchBanner — Nov 30, 2026 00:00 WAT (UTC+1)
+const LAUNCH_TARGET = new Date('2026-11-30T00:00:00+01:00').getTime()
+
 const pink = '#F72585'
 const gold = '#D4AF37'
 const purple = '#c084fc'
@@ -259,6 +262,32 @@ export default function SignupPage() {
     const clean = field.toLowerCase().includes('password') ? value : stripInjection(value)
     setForm(f => ({ ...f, [field]: clean }))
     if (errors[field]) setErrors(e => ({ ...e, [field]: '' }))
+  }
+
+  // Registration gate — block new accounts until November 30, 2026.
+  // step=complete is exempt: it completes the profile of an already-authenticated OAuth user.
+  if (Date.now() < LAUNCH_TARGET && step !== 'complete') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-6" style={{ backgroundColor: '#f3eeff' }}>
+        <Link to="/" className="flex items-center mb-8">
+          <img src={authLogo} alt="Brandior" className="object-contain rounded-xl" style={{ height: '120px', width: 'auto' }} />
+        </Link>
+        <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-sm text-center" style={{ border: '1px solid #e9d5ff' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '12px', lineHeight: 1 }}>🚀</div>
+          <h1 className="text-2xl font-black text-brand-dark mb-3">Brandior launches November 30th</h1>
+          <p className="text-brand-dark/50 text-sm leading-relaxed mb-8">
+            Registration is currently closed. Come back on launch day to create your account.
+          </p>
+          <Link to="/login"
+            className="inline-flex items-center justify-center gap-2 font-bold px-8 py-3 rounded-full text-sm text-white w-full"
+            style={{ backgroundColor: '#7c3aed' }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#6d28d9'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = '#7c3aed'}>
+            Already have an account? Log in
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   return (
