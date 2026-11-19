@@ -147,7 +147,7 @@ function PrivateRoute({ children, isRecoverySession, requiredWorkspace }) {
 }
 
 function RootRoute() {
-  if (!IS_APP) return <PublicOnly><ComingSoon /></PublicOnly>
+  if (!IS_APP) return <Landing />
   const user = localStorage.getItem('brandiór_user')
   if (user) {
     const role = localStorage.getItem('brandiór_role')

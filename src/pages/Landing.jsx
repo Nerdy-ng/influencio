@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async'
+import LaunchBanner from '../components/LaunchBanner'
 import Navbar from '../components/Navbar'
 import Hero from '../components/Hero'
 import TrustBar from '../components/TrustBar'
@@ -25,6 +26,7 @@ export default function Landing() {
         <meta name="twitter:card" content="summary_large_image" />
         <link rel="canonical" href="https://brandior.africa" />
       </Helmet>
+      <LaunchBanner />
       <Navbar />
       <Hero />
       <TrustBar />

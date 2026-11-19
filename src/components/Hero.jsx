@@ -4,6 +4,8 @@ import { ArrowRight } from 'lucide-react'
 import { getSetting } from '../lib/siteSettings'
 import { GooglePlayBadge, AppStoreBadge } from './AppShowcase'
 
+const IS_APP = ['app.brandior.africa', 'localhost', '127.0.0.1'].includes(window.location.hostname)
+
 const gold = '#D4AF37'
 const pink = '#F72585'
 
@@ -78,11 +80,29 @@ export default function Hero() {
 
           {/* 3 — CTA */}
           <div className="flex flex-col sm:flex-row gap-3 pt-1 justify-center">
-            <Link to={isLoggedIn ? '/marketplace' : '/signup'}
-              className="group flex items-center justify-center gap-2 bg-white text-brand-dark font-bold px-7 py-4 rounded-full hover:bg-brand-sand transition-colors text-sm">
-              {isLoggedIn ? 'Go to Dashboard' : 'Get Started'}
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
+            {IS_APP ? (
+              <Link to={isLoggedIn ? '/marketplace' : '/signup'}
+                className="group flex items-center justify-center gap-2 bg-white text-brand-dark font-bold px-7 py-4 rounded-full hover:bg-brand-sand transition-colors text-sm">
+                {isLoggedIn ? 'Go to Dashboard' : 'Get Started'}
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            ) : (
+              <>
+                <span
+                  className="flex items-center justify-center gap-2 font-bold px-7 py-4 rounded-full text-sm"
+                  style={{ background: 'rgba(240,235,248,0.1)', color: '#F4A942', border: '1px solid rgba(244,169,66,0.3)', cursor: 'default' }}>
+                  Launching November 30
+                </span>
+                <a href="https://app.brandior.africa/login"
+                  className="group flex items-center justify-center gap-2 font-semibold px-6 py-4 rounded-full text-sm transition-colors"
+                  style={{ color: 'rgba(255,255,255,0.6)', background: 'rgba(255,255,255,0.05)' }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}>
+                  Already have an account? Log in
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </a>
+              </>
+            )}
           </div>
 
           {/* 3b — App download badges */}

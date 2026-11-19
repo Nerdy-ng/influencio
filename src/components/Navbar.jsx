@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
+
+const IS_APP = ['app.brandior.africa', 'localhost', '127.0.0.1'].includes(window.location.hostname)
 import { Menu, X, Zap, LayoutDashboard, ImagePlus, TrendingUp, Wallet, Mail, Settings, UserPlus, HelpCircle, Eye, LogOut, Briefcase, Bell, ChevronDown, ArrowLeftRight, CreditCard } from 'lucide-react'
 import { getLogo } from '../lib/brandSettings'
 import { getSetting } from '../lib/siteSettings'
@@ -410,7 +412,8 @@ export default function Navbar({ forceRole } = {}) {
                 Log in
               </Link>
 
-              <div className="relative" ref={joinRef}>
+              {/* Get Started / join dropdown — hidden on www (pre-launch) */}
+              <div className="relative" ref={joinRef} style={IS_APP ? undefined : { display: 'none' }}>
                 <button
                   onClick={() => setJoinOpen(o => !o)}
                   className="flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-full text-white transition-colors"
